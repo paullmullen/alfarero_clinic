@@ -14,7 +14,7 @@ import { SaveFilled } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { useAlert } from "../hooks/alert";
 import { firestore } from "./../helpers/firebaseConfig";
-import checkDuplicateRecord from "../helpers/checkDuplicateRecord";
+import { checkDuplicateRecord } from "../helpers/checkDuplicateRecord";
 
 import moment from "moment";
 

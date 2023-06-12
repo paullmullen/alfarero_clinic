@@ -6,7 +6,7 @@ import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
 import { useAlert } from "../hooks/alert";
 import { firestore } from "./../helpers/firebaseConfig";
-import checkDuplicateRecord from "../helpers/checkDuplicateRecord";
+import { checkDuplicateRecord, getDuplicateRecordRef } from "../helpers/checkDuplicateRecord";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -62,12 +62,10 @@ export const IngresarHost = () => {
         await firestore.collection("hosts").add(hostData);
         showAlert("Success", "Datos guardados correctamente", "success");
       } else {
-        const hostRef = firestore.collection("hosts").where("host", "==", host);
-        const hostSnapshot = await hostRef.get();
+        const hostRef = await getDuplicateRecordRef("hosts", "host", host);
   
-        if (!hostSnapshot.empty) {
-          const docRef = hostSnapshot.docs[0].ref;
-          await docRef.update({ servicio });
+        if (hostRef) {
+          await hostRef.update({ servicio });
           showAlert("Success", "Servicio actualizado correctamente", "success");
         }
       }
