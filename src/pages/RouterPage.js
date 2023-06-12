@@ -57,16 +57,15 @@ export const RouterPage = () => {
   ];
 
   return (
-    <Router>
-      <Layout style={{ minHeight: "100vh" }}>
-        <Sider
-          collapsible
-          collapsedWidth={0}
-          breakpoint="md"
-          hidden={ocultarMenu}
-        >
-          <div className="logo" />
-          <Menu theme="dark" mode="inline" defaultSelectedKeys={["1"]} items={menuItems} />
+    <Layout style={{ minHeight: "100vh", minWidth: "100%" }}>
+      <Router>
+        <Sider collapsedWidth="0" breakpoint="lg" hidden={ocultarMenu}>
+          <Menu
+            theme="dark"
+            mode="inline"
+            defaultSelectedKeys={["1"]}
+            items={menuItems}
+          />
         </Sider>
         <Layout className="site-layout">
           <Header
@@ -76,7 +75,6 @@ export const RouterPage = () => {
               justifyContent: "space-between",
               backgroundColor: "#fff",
               alignItems: "center",
-              padding: "0 16px",
             }}
           >
             <div className="header" />
@@ -105,7 +103,7 @@ export const RouterPage = () => {
             </AlertProvider>
           </Content>
         </Layout>
-      </Layout>
-    </Router>
+      </Router>
+    </Layout>
   );
 };

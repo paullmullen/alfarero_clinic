@@ -7,11 +7,14 @@ import {
   Divider,
   InputNumber,
   Select,
+  Col,
+  Row,
 } from "antd";
 import { SaveFilled } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { useAlert } from "../hooks/alert";
 import { firestore } from "./../helpers/firebaseConfig";
+import checkDuplicateRecord from "../helpers/checkDuplicateRecord";
 
 import moment from "moment";
 
@@ -67,6 +70,15 @@ export const Registro = () => {
   };
 
   const onFinish = async (patient) => {
+    const isDuplicate = await checkDuplicateRecord(
+      "patients",
+      "patient_name",
+      patient.paciente
+    );
+    if (isDuplicate) {
+      showAlert("Advertencia!", "Este usuario ya existe", "warning");
+      return;
+    }
     const tiempo = moment().format("D [de] MMMM [de] YYYY, HH:mm:ss [UTC]Z");
     const formattedPatient = {
       complete: false,
@@ -104,85 +116,107 @@ export const Registro = () => {
   };
 
   return (
-    <>
-      <Title level={2}>Registro de Paciente</Title>
-      <Text>Ingrese los siguientes datos</Text>
-      <Divider />
-
-      <Form
-        {...layout}
-        form={form}
-        name="basic"
-        initialValues={{ remember: true }}
-        onFinish={onFinish}
-        onFinishFailed={onFinishFailed}
-      >
-        <Form.Item
-          label="Nombre del paciente"
-          name="paciente"
-          rules={[{ required: true, message: "Ingrese su nombre" }]}
+    <Row gutter={24} style={{ display: "contents" }}>
+      <Col xs={24} sm={24}>
+        <Title level={2}>Registro de Paciente</Title>
+        <Text>Ingrese los siguientes datos</Text>
+        <Divider />
+        <Form
+          {...layout}
+          form={form}
+          name="basic"
+          initialValues={{ remember: true }}
+          onFinish={onFinish}
+          onFinishFailed={onFinishFailed}
         >
-          <Input />
-        </Form.Item>
+          <Row gutter={24}>
+            <Col xs={24} sm={24}>
+              <Form.Item
+                label="Nombre del paciente"
+                name="paciente"
+                rules={[{ required: true, message: "Ingrese su nombre" }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={24}>
+            <Col xs={24} sm={24}>
+              <Form.Item
+                label="Edad"
+                name="edad"
+                rules={[{ required: true, message: "Ingrese su edad" }]}
+              >
+                <InputNumber min={1} max={99} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={24}>
+            <Col xs={24} sm={24}>
+              <Form.Item
+                label="Número de télefono"
+                name="tel"
+                rules={[
+                  {
+                    required: true,
+                    message: "Ingrese un número teléfonico",
+                    pattern: new RegExp(/^\d+$/),
+                  },
+                ]}
+              >
+                <Input type={"tel"} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={24}>
+            <Col xs={24} sm={24}>
+              <Form.Item
+                label="Motivo de visita"
+                name="motivo"
+                rules={[{ required: true, message: "Ingrese su nombre" }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+          </Row>
 
-        <Form.Item
-          label="Edad"
-          name="edad"
-          rules={[{ required: true, message: "Ingrese su edad" }]}
-        >
-          <InputNumber min={1} max={99} />
-        </Form.Item>
+          <Row gutter={24}>
+            <Col xs={24} sm={24}>
+              <Form.Item
+                label="Estaciones"
+                name="estaciones"
+                rules={[
+                  {
+                    required: true,
+                    message: "Ingrese estaciones que el paciente visitará",
+                  },
+                ]}
+              >
+                <Select
+                  mode="multiple"
+                  showArrow
+                  style={{
+                    width: "100%",
+                  }}
+                  options={stations}
+                  onChange={handleChange}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-        <Form.Item
-          label="Número de télefono"
-          name="tel"
-          rules={[
-            {
-              required: true,
-              message: "Ingrese un número teléfonico",
-              pattern: new RegExp(/^\d+$/),
-            },
-          ]}
-        >
-          <Input type={"tel"} />
-        </Form.Item>
-
-        <Form.Item
-          label="Motivo de visita"
-          name="motivo"
-          rules={[{ required: true, message: "Ingrese su nombre" }]}
-        >
-          <Input />
-        </Form.Item>
-
-        <Form.Item
-          label="Estaciones"
-          name="estaciones"
-          rules={[
-            {
-              required: true,
-              message: "Ingrese estaciones que el paciente visitará",
-            },
-          ]}
-        >
-          <Select
-            mode="multiple"
-            showArrow
-            style={{
-              width: "100%",
-            }}
-            options={stations}
-            onChange={handleChange}
-          />
-        </Form.Item>
-
-        <Form.Item {...tailLayout}>
-          <Button type="primary" htmlType="submit" shape="round">
-            <SaveFilled />
-            Registrar
-          </Button>
-        </Form.Item>
-      </Form>
-    </>
+          <Row style={{ display: "contents" }} gutter={24}>
+            <Col xs={14} sm={24}>
+              <Form.Item {...tailLayout}>
+                <Button type="primary" htmlType="submit" shape="round">
+                  <SaveFilled />
+                  Registrar
+                </Button>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Col>
+    </Row>
   );
 };
