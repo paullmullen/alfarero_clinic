@@ -6,6 +6,7 @@ import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
 import { useAlert } from "../hooks/alert";
 import { firestore } from "./../helpers/firebaseConfig";
+import checkDuplicateRecord from "../helpers/checkDuplicateRecord";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -49,31 +50,33 @@ export const IngresarHost = () => {
 
   const onFinish = async ({ host, servicio }) => {
     if (host.trim() === "" || !servicio) {
-      showAlert("error", "Por favor ingrese todos los campos");
+      showAlert("Error", "Por favor ingrese todos los campos", "warning");
       return;
     }
-
+  
     try {
-      const hostRef = firestore.collection("hosts").where("host", "==", host);
-      const hostSnapshot = await hostRef.get();
-
-      if (hostSnapshot.empty) {
-        // si el nombre no existe, se inserta un nuevo registro
+      const isDuplicate = await checkDuplicateRecord("hosts", "host", host);
+  
+      if (!isDuplicate) {
         const hostData = { host, servicio };
         await firestore.collection("hosts").add(hostData);
-        showAlert("success", "Datos guardados correctamente");
+        showAlert("Success", "Datos guardados correctamente", "success");
       } else {
-        // si el nombre existe, se actualiza el servicio
-        const docRef = hostSnapshot.docs[0].ref;
-        await docRef.update({ servicio });
-        showAlert("success", "Servicio actualizado correctamente");
+        const hostRef = firestore.collection("hosts").where("host", "==", host);
+        const hostSnapshot = await hostRef.get();
+  
+        if (!hostSnapshot.empty) {
+          const docRef = hostSnapshot.docs[0].ref;
+          await docRef.update({ servicio });
+          showAlert("Success", "Servicio actualizado correctamente", "success");
+        }
       }
-
+  
       localStorage.setItem("host", host);
       localStorage.setItem("servicio", servicio);
       history.push("/escritorio");
     } catch (error) {
-      showAlert("error", "Error al guardar los datos en Firebase");
+      showAlert("Error", "Error al guardar los datos en Firebase", "error");
     }
   };
 
@@ -119,7 +122,7 @@ export const IngresarHost = () => {
           rules={[
             {
               required: true,
-              message: "Por favor ingrese el número de servicio asignado",
+              message: "Por favor ingrese el servicio asignado",
             },
           ]}
           {...halfLayout}
