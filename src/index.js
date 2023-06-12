@@ -2,9 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 
-import { TicketApp } from './TicketApp';
+import { AlfareroApp } from './AlfareroApp';
 
 ReactDOM.render(
-  <TicketApp />,
+  <AlfareroApp />,
   document.getElementById('root')
 );

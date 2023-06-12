@@ -31,21 +31,22 @@
   background-repeat: no-repeat;
   object-fit: contain;
   width: 50%;
+  margin-top: 6px;
+  height: 90%;
 }
 
 .titulo-registro {
   color: rgba(28, 12, 173, 0.89);
 }
-/* .ant-layout-content {
-  margin: 0px !important;
-  padding: 9px !important;
-} */
+.ant-layout-header {
+  margin: 0px 15px !important;
+}
 
-.ant-table-sticky-holder{
+.ant-table-sticky-holder {
   top: 33px !important;
 }
 
-.ant-table-header{
+.ant-table-header {
   height: 90px !important;
   padding: 0 !important;
 }

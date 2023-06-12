@@ -1,10 +1,9 @@
 import React, { useContext } from "react";
 
-import { Layout, Menu } from "antd";
+import { Layout, Menu, Typography } from "antd";
 import {
   UserOutlined,
   FileTextFilled,
-  UploadOutlined,
   LoginOutlined,
   IdcardOutlined,
 } from "@ant-design/icons";
@@ -16,7 +15,7 @@ import {
   Link,
   Redirect,
 } from "react-router-dom";
-
+import { AlertProvider } from "../hooks/alert";
 import { Registro } from "./Registro";
 import { Turno } from "./Turno";
 import { CrearTurno } from "./CrearTurno";
@@ -25,6 +24,7 @@ import { UiContext } from "../context/UiContext";
 import { IngresarHost } from "./IngresarHost";
 
 const { Sider, Content, Header } = Layout;
+const { Title } = Typography;
 
 export const RouterPage = () => {
   const { ocultarMenu } = useContext(UiContext);
@@ -32,7 +32,7 @@ export const RouterPage = () => {
     {
       key: "1",
       icon: <LoginOutlined />,
-      label: <Link to="/ingresar-host">Ingresar Huésped</Link>,
+      label: <Link to="/ingresar-host">Ingresar</Link>,
     },
     {
       key: "2",
@@ -41,26 +41,20 @@ export const RouterPage = () => {
     },
     {
       key: "3",
-      icon: <UploadOutlined />,
-      label: <Link to="/crear">Crear</Link>,
-    },
-    {
-      key: "4",
       icon: <FileTextFilled />,
       label: <Link to="/turnos">Turnos</Link>,
     },
     {
-      key: "5",
+      key: "4",
       icon: <IdcardOutlined />,
       label: <Link to="/escritorio">Escritorio</Link>,
     },
   ];
 
   return (
-    <Router>
-      <Layout style={{ height: "100vh" }}>
-        <Sider collapsedWidth="0" breakpoint="md" hidden={ocultarMenu}>
-          <div className="logo" />
+    <Layout style={{ minHeight: "100vh", minWidth: "100%" }}>
+      <Router>
+        <Sider collapsedWidth="0" breakpoint="lg" hidden={ocultarMenu}>
           <Menu
             theme="dark"
             mode="inline"
@@ -71,17 +65,16 @@ export const RouterPage = () => {
         <Layout className="site-layout">
           <Header
             style={{
-              position: "sticky",
-              zIndex: 100,
-              top: 0,
               display: "flex",
               flexDirection: "row",
               justifyContent: "space-between",
               backgroundColor: "#fff",
+              alignItems: "center",
             }}
           >
             <div className="header"></div>
-            <div>Plan de Cuidado de Pacientes</div>
+
+            <Title level={5}>Plan de Cuidado de Pacientes</Title>
           </Header>
           <Content
             className="site-layout-background"
@@ -91,19 +84,21 @@ export const RouterPage = () => {
               minHeight: 280,
             }}
           >
-            <Switch>
-              <Route path="/ingresar-host" component={IngresarHost} />
-              <Route path="/registro" component={Registro} />
-              <Route path="/turnos" component={Turno} />
-              <Route path="/crear" component={CrearTurno} />
+            <AlertProvider>
+              <Switch>
+                <Route path="/ingresar-host" component={IngresarHost} />
+                <Route path="/registro" component={Registro} />
+                <Route path="/turnos" component={Turno} />
+                <Route path="/crear" component={CrearTurno} />
 
-              <Route path="/escritorio" component={Escritorio} />
+                <Route path="/escritorio" component={Escritorio} />
 
-              <Redirect to="/ingresar-host" />
-            </Switch>
+                <Redirect to="/ingresar-host" />
+              </Switch>
+            </AlertProvider>
           </Content>
         </Layout>
-      </Layout>
-    </Router>
+      </Router>
+    </Layout>
   );
 };

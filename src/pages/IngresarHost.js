@@ -21,7 +21,6 @@ const tailLayout = {
 export const IngresarHost = () => {
   const history = useHistory();
   const [usuario] = useState(getUsuarioStorage());
-  console.log(usuario);
 
   useHideMenu(false);
 
