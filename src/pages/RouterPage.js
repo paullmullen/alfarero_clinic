@@ -59,12 +59,23 @@ export const RouterPage = () => {
   return (
     <Layout style={{ minHeight: "100vh", minWidth: "100%" }}>
       <Router>
-        <Sider collapsedWidth="0" breakpoint="lg" hidden={ocultarMenu}>
+        <Sider
+          collapsedWidth="0"
+          breakpoint="lg"
+          hidden={ocultarMenu}
+          style={{
+            backgroundColor: "#c0dadd",
+            minHeight: "100vh",
+          }}
+        >
           <Menu
-            theme="dark"
             mode="inline"
             defaultSelectedKeys={["1"]}
             items={menuItems}
+            style={{
+              backgroundColor: "#c0dadd",
+              minHeight: "100vh",
+            }}
           />
         </Sider>
         <Layout className="site-layout">
