@@ -14,25 +14,12 @@ import { SaveFilled } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { useAlert } from "../hooks/alert";
 import { firestore } from "./../helpers/firebaseConfig";
-import checkDuplicateRecord from "../helpers/checkDuplicateRecord";
-
+import { checkDuplicateRecord } from "../helpers/checkDuplicateRecord";
+import { stations } from "../helpers/stations";
 import moment from "moment";
 
 const { Title, Text } = Typography;
-const stations = [
-  { value: "reg", label: "Registro" },
-  { value: "nur", label: "Enfermera" },
-  { value: "doc", label: "Doctor" },
-  { value: "pt", label: "Terapia Fisica" },
-  { value: "ped", label: "Pediatria" },
-  { value: "nut", label: "Nutricion" },
-  { value: "obs", label: "Obstetricia" },
-  { value: "pha", label: "Farmacia" },
-  { value: "lab", label: "Laboratorio" },
-  { value: "pra", label: "Práctica" },
-  { value: "pay", label: "Pago" },
-  { value: "fin", label: "Finalizar" },
-];
+
 const layout = {
   labelCol: { span: 8 },
   wrapperCol: { span: 14 },
