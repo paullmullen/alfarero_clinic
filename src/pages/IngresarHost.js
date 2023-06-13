@@ -1,30 +1,28 @@
 import React, { useState } from "react";
-import { Form, Input, Button, Typography, Divider, Select } from "antd";
+import {
+  Form,
+  Input,
+  Button,
+  Typography,
+  Divider,
+  Select,
+  Row,
+  Col,
+} from "antd";
 import { SaveOutlined } from "@ant-design/icons";
 import { useHistory, Redirect } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
 import { useAlert } from "../hooks/alert";
 import { firestore } from "./../helpers/firebaseConfig";
-import { checkDuplicateRecord, getDuplicateRecordRef } from "../helpers/checkDuplicateRecord";
+import {
+  checkDuplicateRecord,
+  getDuplicateRecordRef,
+} from "../helpers/checkDuplicateRecord";
+import { stations } from "../helpers/stations";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
-
-const stations = [
-  { value: "reg", label: "Registro" },
-  { value: "nur", label: "Enfermera" },
-  { value: "doc", label: "Doctor" },
-  { value: "pt", label: "Terapia Fisica" },
-  { value: "ped", label: "Pediatria" },
-  { value: "nut", label: "Nutricion" },
-  { value: "obs", label: "Obstetricia" },
-  { value: "pha", label: "Farmacia" },
-  { value: "lab", label: "Laboratorio" },
-  { value: "pra", label: "Práctica" },
-  { value: "pay", label: "Pago" },
-  { value: "fin", label: "Finalizar" },
-];
 
 const layout = {
   labelCol: { span: 8 },
@@ -53,23 +51,23 @@ export const IngresarHost = () => {
       showAlert("Error", "Por favor ingrese todos los campos", "warning");
       return;
     }
-  
+
     try {
       const isDuplicate = await checkDuplicateRecord("hosts", "host", host);
-  
+
       if (!isDuplicate) {
         const hostData = { host, servicio };
         await firestore.collection("hosts").add(hostData);
         showAlert("Success", "Datos guardados correctamente", "success");
       } else {
         const hostRef = await getDuplicateRecordRef("hosts", "host", host);
-  
+
         if (hostRef) {
           await hostRef.update({ servicio });
           showAlert("Success", "Servicio actualizado correctamente", "success");
         }
       }
-  
+
       localStorage.setItem("host", host);
       localStorage.setItem("servicio", servicio);
       history.push("/escritorio");
@@ -81,66 +79,82 @@ export const IngresarHost = () => {
   const onFinishFailed = (errorInfo) => {
     console.log("Failed:", errorInfo);
   };
-  
+
   if (usuario.host && usuario.servicio) {
     return <Redirect to="/escritorio" />;
   }
-  
+
   return (
-    <>
-      <Title level={1} style={{ color: "rgba(28, 12, 173, 0.89)" }}>
-        ¡Bienvenido!
-      </Title>
-      <Title level={2}>Ingresar</Title>
-      <Text>Ingrese su nombre y número de escritorio</Text>
-      <Divider />
-  
-      <Form
-        {...layout}
-        name="basic"
-        initialValues={{ remember: true }}
-        onFinish={onFinish}
-        onFinishFailed={onFinishFailed}
-        form={form}
-      >
-        <Form.Item
-          label="Nombre del huésped"
-          name="host"
-          rules={[
-            { required: true, message: "Por favor ingrese nombre del huésped" },
-          ]}
-          {...halfLayout}
+    <Row gutter={24} style={{ display: "contents" }}>
+      <Col xs={24} sm={24} style={{ overflow: "hidden" }}>
+        <Title level={1} style={{ color: "rgba(28, 12, 173, 0.89)" }}>
+          ¡Bienvenido!
+        </Title>
+        <Title level={2}>Ingresar</Title>
+        <Text>Ingrese su nombre y número de escritorio</Text>
+        <Divider />
+        <Form
+          {...layout}
+          name="basic"
+          initialValues={{ remember: true }}
+          onFinish={onFinish}
+          onFinishFailed={onFinishFailed}
+          form={form}
         >
-          <Input />
-        </Form.Item>
-  
-        <Form.Item
-          label="Servicio"
-          name="servicio"
-          rules={[
-            {
-              required: true,
-              message: "Por favor ingrese el servicio asignado",
-            },
-          ]}
-          {...halfLayout}
-        >
-          <Select>
-            {stations.map((station) => (
-              <Option key={station.value} value={station.value}>
-                {station.label}
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
-  
-        <Form.Item {...tailLayout}>
-          <Button type="primary" htmlType="submit" shape="round">
-            <SaveOutlined />
-            Ingresar
-          </Button>
-        </Form.Item>
-      </Form>
-    </>
+          <Row gutter={24}>
+            <Col xs={24} sm={24}>
+              <Form.Item
+                label="Nombre del huésped"
+                name="host"
+                rules={[
+                  {
+                    required: true,
+                    message: "Por favor ingrese nombre del huésped",
+                  },
+                ]}
+                {...halfLayout}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={24}>
+            <Col xs={24} sm={24}>
+              <Form.Item
+                label="Servicio"
+                name="servicio"
+                rules={[
+                  {
+                    required: true,
+                    message: "Por favor ingrese el servicio asignado",
+                  },
+                ]}
+                {...halfLayout}
+              >
+                <Select>
+                  {stations.map((station) => (
+                    <Option key={station.value} value={station.value}>
+                      {station.label}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={24}>
+            <Col xs={24} sm={24}>
+              <Form.Item {...tailLayout}>
+                <Button type="primary" htmlType="submit" shape="round">
+                  <SaveOutlined />
+                  Ingresar
+                </Button>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Col>
+    </Row>
   );
 };
