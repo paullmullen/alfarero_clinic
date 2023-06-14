@@ -1,20 +1,30 @@
 import React, { useEffect, useState } from "react";
 
-import { Row, Col, Typography, Button, Divider, Table } from "antd";
+import { Row, Col, Typography, Button, Divider, Table, Image, Alert, Switch, Radio, Modal} from "antd";
 import { CloseCircleOutlined, RightOutlined } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
 import { Redirect, useHistory } from "react-router-dom";
 
 import { firestore } from "./../helpers/firebaseConfig";
+import Input from "antd/lib/input/Input";
 
 const { Title, Text } = Typography;
+
 
 export const Escritorio = () => {
   const [documents, setDocuments] = useState([]);
   const [usuario] = useState(getUsuarioStorage());
   const history = useHistory();
 
+  const [visible, setVisible] = useState(true);
+  const [status, setStatus] = useState(1);
+  const [editableData, setEditableData] = useState({});
+
+  const handleClose = () => {
+    setVisible(false);
+  }
+  
   useEffect(() => {
     let isMounted = true;
     const fetchData = async () => {
@@ -43,6 +53,7 @@ export const Escritorio = () => {
     fetchData();
   }, []);
 
+
   const salir = () => {
     localStorage.clear();
     history.replace("/ingresar-host");
@@ -58,6 +69,50 @@ export const Escritorio = () => {
     return <Redirect to="/ingresar-host" />;
   }
 
+  const changeStatus = (e) => {
+    console.log('radio checked', e.target.value);
+    setStatus(e.target.value);
+  };
+  
+  const warning = () => {
+    Modal.warning({
+      title: "¿Está seguro que desea cambiar el estatus?",
+      content: (
+        <div className="warning-content">
+          <p>
+            <Radio onChange={changeStatus} value={status} size="large"></Radio>
+          </p>
+          <p>
+            <Radio onChange={changeStatus} value={status} size="large"></Radio>
+          </p>
+          <p>
+            <Radio onChange={changeStatus} value={status} size="large"></Radio>
+          </p>
+          <p>
+            <Radio onChange={changeStatus} value={status} size="large"></Radio>
+          </p>
+        </div>
+      ),
+    });
+  };
+
+
+  const handleCellEdit = (record, dataIndex) => {
+    return {
+      onChange: (e) => {
+        const newData = { ...editableData };
+        newData[record.key] = { ...newData[record.key] };
+        newData[record.key][dataIndex] = e.target.value;
+        setEditableData(newData);
+      },
+      onBlur: () => {
+        const newData = { ...editableData };
+        newData[record.key] = { ...newData[record.key] };
+        newData[record.key][dataIndex] = editableData[record.key][dataIndex];
+        setEditableData(newData);
+      },
+    };
+  };
   const columns = [
     {
       title: "Nombre del paciente",
@@ -70,21 +125,99 @@ export const Escritorio = () => {
       key: "edad",
     },
     {
-      title: "Número de télefono",
-      dataIndex: "tel",
-      key: "tel",
-    },
-    {
       title: "Síntomas",
       dataIndex: "sintomas",
       key: "sintomas",
     },
+    {
+      title: "Observaciones",
+      dataIndex: "obs",
+      key: "obs",
+      render: (text, record) => (
+        <Input
+          value={editableData[record.key]?.obs || text}
+          {...handleCellEdit(record, "observaciones")}
+        />
+      ),
+    },
+    {
+      title: "Estatus del paciente",
+      dataIndex: "status",
+      key: "status",
+      width: 90,
+      render: () => (
+        <div className="center-cell">
+          <Radio
+            onClick={warning}
+            onChange={changeStatus}
+            value={status}
+            size="large"
+          ></Radio>
+        </div>
+      ),
+    },
   ];
+
+  const getRowClassName = (record, index) => {
+    return index % 2 === 0 ? "even-row" : "odd-row";
+  };
+
 
   return (
     <>
+      {visible && (
+        <Alert
+          message="Información del Estatus del Paciente"
+          description={
+            <>
+              <p>
+                <Image
+                  src={require("../img/not_planned.svg")}
+                  width={15}
+                  height={10}
+                />
+                {"Procesando información del paciente"}
+              </p>
+              <p>
+                <Image
+                  src={require("../img/waiting.svg")}
+                  width={15}
+                  height={10}
+                />
+                {"Paciente en espera"}
+              </p>
+              <p>
+                <Image
+                  src={require("../img/in_process.svg")}
+                  width={15}
+                  height={10}
+                />
+                {"Paciente siendo atendido"}
+              </p>
+              <p>
+                <Image
+                  src={require("../img/complete.svg")}
+                  width={15}
+                  height={10}
+                />
+                {"El paciente completó su visita"}
+              </p>
+            </>
+          }
+          type="info"
+          showIcon
+          closable
+          afterClose={handleClose}
+        />
+      )}
       <Row>
         <Col span={20}>
+          <Switch
+            onChange={setVisible}
+            checked={visible}
+            disabled={visible}
+          ></Switch>
+          <Divider />
           <Title level={2}>{usuario.host}</Title>
           <Text>Usted está ofreciendo el servicio: </Text>
           <Text type="success">{usuario.servicio}</Text>
@@ -117,10 +250,15 @@ export const Escritorio = () => {
           </Button>
         </Col>
       </Row>
+      <Divider />
       <Row>
         <Col span={24}>
           {documents.length > 0 ? (
-            <Table dataSource={documents} columns={columns} />
+            <Table
+              dataSource={documents}
+              columns={columns}
+              rowClassName={getRowClassName}
+            />
           ) : (
             <>
               <Text>No hay datos disponibles</Text>

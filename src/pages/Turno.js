@@ -1,12 +1,101 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button } from "antd";
+import { Table, Image, Alert, Divider, Typography, Space } from "antd";
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
+import StationEnum from "../helpers/stationEnum";
+const { Title } = Typography;
 
 export const Turno = () => {
   useHideMenu(true);
   const [data, setData] = useState([]);
-  console.log(data);
+
+  const renderStatusIcon = (status) => {
+    switch (status) {
+      case "pending":
+        return (
+          <Image
+            src={require("../img/not_planned.svg")}
+            width={20}
+            height={80}
+          />
+        );
+      case "in_process":
+        return (
+          <Image src={require("../img/waiting.svg")} width={20} height={80} />
+        );
+      case "waiting":
+        return (
+          <Image src={require("../img/waiting.svg")} width={20} height={80} />
+        );
+      case "pay":
+        return <Image src={require("../img/pay.svg")} width={20} height={80} />;
+      case "complete":
+        return (
+          <Image src={require("../img/complete.svg")} width={20} height={80} />
+        );
+      default:
+        return (
+          <Image
+            src={require("../img/not_planned.svg")}
+            width={20}
+            height={80}
+          />
+        );
+    }
+  };
+
+  const generateTableData = (extractedPlanOfCare) => {
+    const uniqueStations = {};
+    extractedPlanOfCare.forEach((item) => {
+      // eslint-disable-next-line no-unused-expressions
+      item.plan_of_care?.forEach((plan) => {
+        if (!uniqueStations[plan.station]) {
+          uniqueStations[plan.station] = {
+            dataIndex: plan.station,
+            key: plan.station,
+            title: StationEnum[plan.station],
+            render: (status) => renderStatusIcon(status),
+            width: 100,
+            align: "center",
+          };
+        }
+      });
+    });
+    const columns = [
+      {
+        title: "Patient",
+        dataIndex: "patient_name",
+        key: "patient",
+        width: 100,
+        fixed: "left",
+      },
+      ...Object.values(uniqueStations),
+      {
+        title: "Tiempo de espera",
+        dataIndex: "",
+        key: "",
+        width: 100,
+        fixed: "right",
+      },
+    ];
+
+    const dataSource = extractedPlanOfCare.map((item) => {
+      const stations = {};
+      item.plan_of_care.forEach((plan) => {
+        stations[plan.station] = plan.status;
+      });
+      return {
+        pt_no: item.pt_no,
+        patient_name: item.patient_name,
+        ...stations,
+      };
+    });
+
+    return { columns, dataSource };
+  };
+
+  const { columns, dataSource } = generateTableData(data);
+
   useEffect(() => {
     let isMounted = true;
     const fetchData = async () => {
@@ -19,7 +108,6 @@ export const Turno = () => {
       if (isMounted) {
         setData(initialData);
       }
-
       const unsubscribe = collectionRef.onSnapshot((snapshot) => {
         const updatedData = snapshot.docs.map((doc) => doc.data());
 
@@ -37,103 +125,68 @@ export const Turno = () => {
     fetchData();
   }, []);
 
-  const columns = [
-    {
-      title: "Paciente",
-      dataIndex: "paciente", // Nuevo campo: Paciente
-      key: "11",
-      width: 150,
-    },
-    {
-      title: "Síntomas",
-      dataIndex: "sintomas",
-      key: "12",
-      width: 150,
-    },
-    {
-      title: "Tel",
-      dataIndex: "tel", // Nuevo campo: Tel
-      key: "13",
-      width: 200,
-    },
-    {
-      title: "Tiempo",
-      dataIndex: "tiempo", // Nuevo campo: Timestamp
-      key: "14",
-      width: 150,
-    },
-    {
-      title: "Reg",
-      dataIndex: "reg",
-      key: "1",
-      width: 100,
-    },
-    {
-      title: "Enf",
-      dataIndex: "enf",
-      key: "2",
-      width: 100,
-    },
-    {
-      title: "Doc",
-      dataIndex: "doc",
-      key: "3",
-      width: 100,
-    },
-    {
-      title: "Fis",
-      dataIndex: "fis",
-      key: "4",
-      width: 100,
-    },
-    {
-      title: "Ped",
-      dataIndex: "ped",
-      key: "5",
-      width: 100,
-    },
-    {
-      title: "Nut",
-      dataIndex: "nut",
-      key: "6",
-      width: 100,
-    },
-    {
-      title: "Obs",
-      dataIndex: "obs",
-      key: "7",
-      width: 100,
-    },
-    {
-      title: "Ora",
-      dataIndex: "ora",
-      key: "9",
-      width: 100,
-    },
-    {
-      title: "Edad", // Nuevo campo: Edad
-      dataIndex: "edad",
-      key: "10",
-    },
-
-    {
-      title: "Acción",
-      key: "17",
-      fixed: "right",
-      width: 100,
-      render: () => <Button type="primary">Acción</Button>,
-    },
-  ];
+  const getRowClassName = (record, index) => {
+    return index % 2 === 0 ? "even-row" : "odd-row";
+  };
 
   return (
     <>
+      <Alert
+        message="Información del Estatus del Paciente "
+        description={
+          <Space
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "center",
+            }}
+          >
+            <Space>
+              <Image
+                src={require("../img/waiting.svg")}
+                width={20}
+                height={80}
+              />
+              <Title level={5}>{"Paciente en espera "}</Title>
+            </Space>
+            <Divider />
+            <Space>
+              <Image
+                src={require("../img/in_process.svg")}
+                width={20}
+                height={80}
+              />
+              <Title level={5}>{"Paciente siendo atendido "}</Title>
+            </Space>
+            <Divider />
+            <Space>
+              <Image src={require("../img/pay.svg")} width={20} height={80} />
+              <Title level={5}> {"Paciente realizó el pago "}</Title>
+            </Space>
+            <Divider />
+            <Space>
+              <Image
+                src={require("../img/complete.svg")}
+                width={20}
+                height={80}
+              />
+              <Title level={5}> {"Paciente completó su visita "}</Title>
+            </Space>
+          </Space>
+        }
+        type="info"
+        showIcon
+      />
+
+      <Divider />
       <Table
-        rowKey={"paciente"}
+        rowKey={"pt_no"}
         columns={columns}
-        dataSource={data.some((d) => d === undefined) ? [] : data}
+        dataSource={data.some((d) => d === undefined) ? [] : dataSource}
         scroll={{ x: 1500, y: 1500 }}
         sticky
         offsetScroll={3}
+        rowClassName={getRowClassName}
       />
     </>
   );
