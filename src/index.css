@@ -46,17 +46,12 @@
   top: 33px !important;
 }
 
-.ant-table-header {
-  height: 90px !important;
-  padding: 0 !important;
-}
-
 .even-row {
-  background-color: #c0dadd; /* Color de fondo para filas pares */
+  background-color: #f0f0f0; /* Color de fondo para filas pares */
 }
 
 .odd-row {
-  background-color: #d1d1d1; /* Color de fondo para filas impares */
+  background-color: #bfbfbf; /* Color de fondo para filas impares */
 }
 
 .ant-image-preview-wrap {
@@ -85,4 +80,7 @@
 
 .warning-content {
   text-align: center;
+}
+h5 {
+  margin-top: 9px !important;
 }
