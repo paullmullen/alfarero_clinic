@@ -1,16 +1,13 @@
 import React, { useEffect, useState } from "react";
-
-import { Row, Col, Typography, Button, Divider, Table, Image, Alert, Switch, Radio, Modal} from "antd";
+import { Row, Col, Typography, Button, Divider, Table, Image, Alert, Switch, Radio, Modal } from "antd";
 import { CloseCircleOutlined, RightOutlined } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
 import { Redirect, useHistory } from "react-router-dom";
-
 import { firestore } from "./../helpers/firebaseConfig";
 import Input from "antd/lib/input/Input";
 
 const { Title, Text } = Typography;
-
 
 export const Escritorio = () => {
   const [documents, setDocuments] = useState([]);
@@ -24,7 +21,7 @@ export const Escritorio = () => {
   const handleClose = () => {
     setVisible(false);
   }
-  
+
   useEffect(() => {
     let isMounted = true;
     const fetchData = async () => {
@@ -33,14 +30,20 @@ export const Escritorio = () => {
       const initialData = snapshot.docs.map((doc) => doc.data());
 
       if (isMounted) {
-        setDocuments(initialData);
+        const filteredData = initialData.filter(
+          (doc) => doc.plan_of_care.some((item) => item.station === usuario.servicio)
+        );
+        setDocuments(filteredData);
       }
 
       const unsubscribe = collectionRef.onSnapshot((snapshot) => {
         const updatedData = snapshot.docs.map((doc) => doc.data());
 
         if (isMounted) {
-          setDocuments(updatedData);
+          const filteredData = updatedData.filter(
+            (doc) => doc.plan_of_care.some((item) => item.station === usuario.servicio)
+          );
+          setDocuments(filteredData);
         }
       });
 
@@ -51,8 +54,7 @@ export const Escritorio = () => {
     };
 
     fetchData();
-  }, []);
-
+  }, [usuario.servicio]);
 
   const salir = () => {
     localStorage.clear();
@@ -73,7 +75,7 @@ export const Escritorio = () => {
     console.log('radio checked', e.target.value);
     setStatus(e.target.value);
   };
-  
+
   const warning = () => {
     Modal.warning({
       title: "¿Está seguro que desea cambiar el estatus?",
@@ -96,7 +98,6 @@ export const Escritorio = () => {
     });
   };
 
-
   const handleCellEdit = (record, dataIndex) => {
     return {
       onChange: (e) => {
@@ -113,20 +114,26 @@ export const Escritorio = () => {
       },
     };
   };
+  
   const columns = [
     {
       title: "Nombre del paciente",
-      dataIndex: "paciente",
+      dataIndex: "patient_name",
       key: "paciente",
     },
     {
       title: "Edad",
-      dataIndex: "edad",
+      dataIndex: "age",
+      key: "edad",
+    },
+    {
+      title: "Numero telefonico",
+      dataIndex: "tel",
       key: "edad",
     },
     {
       title: "Síntomas",
-      dataIndex: "sintomas",
+      dataIndex: "reason_for_visit",
       key: "sintomas",
     },
     {
@@ -157,11 +164,10 @@ export const Escritorio = () => {
       ),
     },
   ];
-
+  
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";
   };
-
 
   return (
     <>
@@ -252,21 +258,21 @@ export const Escritorio = () => {
       </Row>
       <Divider />
       <Row>
-        <Col span={24}>
-          {documents.length > 0 ? (
-            <Table
-              dataSource={documents}
-              columns={columns}
-              rowClassName={getRowClassName}
-            />
-          ) : (
-            <>
-              <Text>No hay datos disponibles</Text>
-              {console.log("No hay datos disponibles")}
-            </>
-          )}
-        </Col>
-      </Row>
-    </>
+      <Col span={24}>
+        {documents.length > 0 ? (
+          <Table
+            dataSource={documents}
+            columns={columns}
+            rowClassName={getRowClassName}
+          />
+        ) : (
+          <>
+            <Text>No hay datos disponibles</Text>
+            {console.log("No hay datos disponibles")}
+          </>
+        )}
+      </Col>
+    </Row>
+  </>
   );
 };
