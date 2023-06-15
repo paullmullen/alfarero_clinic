@@ -214,74 +214,83 @@ const changeStatus = (record) => {
       dataIndex: "",
       key: "",
       render: (text, record) => {
-        let statusPhrase = "";
         const currentStatus = record.plan_of_care.find(item => item.station === usuario.servicio)?.status || '';
+        let statusIcon = null;
   
         switch (currentStatus) {
           case "in_process":
-            statusPhrase = "Paciente siendo atendido";
+            statusIcon = (
+              <Image
+                src={require("../img/in_process.svg")}
+                width={15}
+                height={10}
+              />
+            );
             break;
           case "waiting":
-            statusPhrase = "Paciente en espera";
+            statusIcon = (
+              <Image
+                src={require("../img/waiting.svg")}
+                width={15}
+                height={10}
+              />
+            );
             break;
           case "complete":
-            statusPhrase = "El paciente completó su visita";
+            statusIcon = (
+              <Image
+                src={require("../img/complete.svg")}
+                width={15}
+                height={10}
+              />
+            );
             break;
           case "not_planned":
-            statusPhrase = "Procesando información del paciente";
+            statusIcon = (
+              <Image
+                src={require("../img/not_planned.svg")}
+                width={15}
+                height={10}
+              />
+            );
             break;
           default:
-            statusPhrase = "";
+            statusIcon = null;
             break;
         }
   
-        return <span>{statusPhrase}</span>;
+        return statusIcon;
       },
     },
     {
       title: "Estatus del paciente",
       dataIndex: "status",
       key: "status",
-      width: 90,
+      width: 250,
       render: (text, record) => (
         <div className="center-cell">
           <Select
             value={record.status}
             onChange={(value) => handleStatusChange(record, value)}
             size="large"
+            style={{ width: '100%' }} // Ajustar el ancho del Select al 100%
           >
             <Option value="in_process">
-              <Image
-                src={require("../img/in_process.svg")}
-                width={15}
-                height={10}
-              />
+              Atendiendo
             </Option>
             <Option value="waiting">
-              <Image
-                src={require("../img/waiting.svg")}
-                width={15}
-                height={10}
-              />
+              En espera
             </Option>
             <Option value="complete">
-              <Image
-                src={require("../img/complete.svg")}
-                width={15}
-                height={10}
-              />
+              Finalizado
             </Option>
             <Option value="not_planned">
-              <Image
-                src={require("../img/not_planned.svg")}
-                width={15}
-                height={10}
-              />
+              Preparando
             </Option>
           </Select>
         </div>
       ),
-    }
+    },
   ];
 
   const handleStatusChange = (record, value) => {
