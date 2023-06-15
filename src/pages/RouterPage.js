@@ -89,7 +89,7 @@ export const RouterPage = () => {
             }}
           >
             <div className="header" />
-            <Image src={require("../img/full_logo.png")} style={{margin: 0, flex: 1, justifyContent: 'flex-start'}}></Image>
+            <Image src={require("../img/full_logo.png")} style={{margin: 0, flex: 1, justifyContent: 'flex-start'}} preview={false}></Image>
             <Title level={5} style={{ margin: 0, flex: 1, textAlign: "end", textOverflow: 'ellipsis' }}>
               Plan de Cuidado de Pacientes
             </Title>

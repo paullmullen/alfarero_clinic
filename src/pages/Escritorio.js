@@ -136,7 +136,6 @@ export const Escritorio = () => {
             size="large"
             style={{ width: "100%" }} // Ajustar el ancho del Select al 100%
           >
-            <Option value="waiting">En espera</Option>
             <Option value="in_process">Atendiendo</Option>
             <Option value="complete">Finalizado</Option>
           </Select>
@@ -172,30 +171,30 @@ export const Escritorio = () => {
           message="Información del Estatus del Paciente"
           description={
             <>
-              <p>
+              <div>
                 <Image
                   src={require("../img/waiting.svg")}
                   width={15}
                   height={10}
                 />
                 {"En espera"}
-              </p>
-              <p>
+              </div>
+              <div>
                 <Image
                   src={require("../img/in_process.svg")}
                   width={15}
                   height={10}
                 />
                 {"Paciente siendo atendido"}
-              </p>
-              <p>
+              </div>
+              <div>
                 <Image
                   src={require("../img/complete.svg")}
                   width={15}
                   height={10}
                 />
                 {"El paciente finalizó su visita"}
-              </p>
+              </div>
             </>
           }
           type="info"
