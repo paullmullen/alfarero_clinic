@@ -21,7 +21,7 @@ export const Turno = () => {
         );
       case "in_process":
         return (
-          <Image src={require("../img/waiting.svg")} width={20} height={80} />
+          <Image src={require("../img/in_process.svg")} width={20} height={80} />
         );
       case "waiting":
         return (
@@ -42,7 +42,7 @@ export const Turno = () => {
           />
         );
     }
-  };
+  };  
 
   const generateTableData = (extractedPlanOfCare) => {
     const uniqueStations = {};

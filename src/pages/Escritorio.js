@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Row, Col, Typography, Button, Divider, Table, Image, Alert, Switch, Radio, Modal, Select } from "antd";
-import { CheckCircleOutlined, CloseCircleOutlined, RightOutlined } from "@ant-design/icons";
+import { CloseCircleOutlined, RightOutlined } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
 import { Redirect, useHistory } from "react-router-dom";
 import { firestore } from "./../helpers/firebaseConfig";
-import Input from "antd/lib/input/Input";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -16,9 +15,6 @@ export const Escritorio = () => {
   const history = useHistory();
 
   const [visible, setVisible] = useState(true);
-  const [status, setStatus] = useState(<CheckCircleOutlined />);
-  const [editableData, setEditableData] = useState({});
-  const [selectedIcon, setSelectedIcon] = useState("");
 
   const handleClose = () => {
     setVisible(false);
@@ -74,119 +70,6 @@ export const Escritorio = () => {
   if (!usuario.host || !usuario.servicio) {
     return <Redirect to="/ingresar-host" />;
   }
-
-  const warning = (record) => {
-  Modal.warning({
-    title: "¿Está seguro que desea cambiar el estatus?",
-    content: (
-      <div className="warning-content">
-        <p>
-          <Radio
-            onChange={() => setSelectedIcon("in_process")}
-            checked={selectedIcon === "in_process"}
-            value="in_process"
-            size="large"
-          />
-          <Image
-            src={require("../img/in_process.svg")}
-            width={15}
-            height={10}
-          />
-          {"Paciente siendo atendido"}
-        </p>
-        <p>
-          <Radio
-            onChange={() => setSelectedIcon("waiting")}
-            checked={selectedIcon === "waiting"}
-            value="waiting"
-            size="large"
-          />
-          <Image
-            src={require("../img/waiting.svg")}
-            width={15}
-            height={10}
-          />
-          {"Paciente en espera"}
-        </p>
-        <p>
-          <Radio
-            onChange={() => setSelectedIcon("complete")}
-            checked={selectedIcon === "complete"}
-            value="complete"
-            size="large"
-          />
-          <Image
-            src={require("../img/complete.svg")}
-            width={15}
-            height={10}
-          />
-          {"El paciente completó su visita"}
-        </p>
-        <p>
-          <Radio
-            onChange={() => setSelectedIcon("not_planned")}
-            checked={selectedIcon === "not_planned"}
-            value="not_planned"
-            size="large"
-          />
-          <Image
-            src={require("../img/not_planned.svg")}
-            width={15}
-            height={10}
-          />
-          {"Procesando información del paciente"}
-        </p>
-      </div>
-    ),
-    onOk: () => changeStatus(record),
-  });
-};
-
-const changeStatus = (record) => {
-  // Obtener el paciente seleccionado para modificar su estado
-  const selectedPatient = documents.find(
-    (doc) => doc.plan_of_care.some((item) => item.station === usuario.servicio)
-  );
-
-  // Validar que se haya seleccionado un icono
-  if (selectedIcon) {
-    const updatedPlanOfCare = selectedPatient.plan_of_care.map((item) => {
-      if (item.station === usuario.servicio) {
-        return {
-          ...item,
-          status: selectedIcon,
-        };
-      }
-      return item;
-    });
-
-    // Actualizar el estado del paciente en Firestore
-    firestore.collection("patients").doc(selectedPatient.pt_no).update({
-      plan_of_care: updatedPlanOfCare,
-    });
-  }
-
-  // Cerrar el modal
-  handleClose();
-};
-  
-
-  const handleCellEdit = (record, dataIndex) => {
-    return {
-      onChange: (e) => {
-        const newData = { ...editableData };
-        newData[record.key] = { ...newData[record.key] };
-        newData[record.key][dataIndex] = e.target.value;
-        setEditableData(newData);
-      },
-      onBlur: () => {
-        const newData = { ...editableData };
-        newData[record.key] = { ...newData[record.key] };
-        newData[record.key][dataIndex] = editableData[record.key][dataIndex];
-        setEditableData(newData);
-      },
-    };
-  };
   
   const columns = [
     {

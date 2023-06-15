@@ -111,7 +111,6 @@ export const Registro = () => {
       showAlert("Advertencia!", "Este usuario ya existe", "warning");
       return;
     }
-    const tiempo = moment().format("D [de] MMMM [de] YYYY, HH:mm:ss [UTC]Z");
     const formattedPatient = {
       complete: false,
       last_update: new Date(),
@@ -121,7 +120,7 @@ export const Registro = () => {
       reason_for_visit: patient.motivo,
       age: patient.edad,
       tel: patient.tel,
-      start_time: tiempo,
+      start_time: new Date(),
       stop_time: new Date(),
       wait_time: 0,
     };
