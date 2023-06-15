@@ -205,7 +205,7 @@ const changeStatus = (record) => {
       key: "edad",
     },
     {
-      title: "Síntomas",
+      title: "Motivo de visita",
       dataIndex: "reason_for_visit",
       key: "sintomas",
     },
