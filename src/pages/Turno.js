@@ -63,7 +63,7 @@ export const Turno = () => {
     });
     const columns = [
       {
-        title: "Patient",
+        title: "Paciente",
         dataIndex: "patient_name",
         key: "patient",
         width: 100,

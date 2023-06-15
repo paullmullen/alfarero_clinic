@@ -5,6 +5,7 @@ import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
 import { Redirect, useHistory } from "react-router-dom";
 import { firestore } from "./../helpers/firebaseConfig";
+import StationEnum from "../helpers/stationEnum";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -61,9 +62,35 @@ export const Escritorio = () => {
     history.replace("/ingresar-host");
   };
 
-  const siguienteTicket = () => {
-    console.log("siguienteTicket");
-  };
+  const statusPaciente = (record) => {
+    const currentStatus =
+    record.plan_of_care.find((item) => item.station === usuario.servicio)
+      ?.status || "";
+  let statusIcon = null;
+
+  switch (currentStatus) {
+    case "waiting":
+      statusIcon = (
+        <Image src={require("../img/waiting.svg")} width={15} height={10} preview={false} />
+      );
+      break;
+    case "in_process":
+      statusIcon = (
+        <Image src={require("../img/in_process.svg")} width={15} height={10} preview={false} />
+      );
+      break;
+    case "complete":
+      statusIcon = (
+        <Image src={require("../img/complete.svg")} width={15} height={10}  preview={false}/>
+      );
+      break;
+    default:
+      statusIcon = null;
+      break;
+  }
+
+  return statusIcon;
+  }
 
   useHideMenu(false);
 
@@ -83,93 +110,35 @@ export const Escritorio = () => {
       key: "edad",
     },
     {
-      title: "Numero telefonico",
-      dataIndex: "tel",
-      key: "edad",
-    },
-    {
       title: "Motivo de visita",
       dataIndex: "reason_for_visit",
       key: "sintomas",
     },
     {
-      title: "Estatus actual",
+      title: "Estatus vigente",
       dataIndex: "",
       key: "",
-      render: (text, record) => {
-        const currentStatus = record.plan_of_care.find(item => item.station === usuario.servicio)?.status || '';
-        let statusIcon = null;
-  
-        switch (currentStatus) {
-          case "in_process":
-            statusIcon = (
-              <Image
-                src={require("../img/in_process.svg")}
-                width={15}
-                height={10}
-              />
-            );
-            break;
-          case "waiting":
-            statusIcon = (
-              <Image
-                src={require("../img/waiting.svg")}
-                width={15}
-                height={10}
-              />
-            );
-            break;
-          case "complete":
-            statusIcon = (
-              <Image
-                src={require("../img/complete.svg")}
-                width={15}
-                height={10}
-              />
-            );
-            break;
-          case "not_planned":
-            statusIcon = (
-              <Image
-                src={require("../img/not_planned.svg")}
-                width={15}
-                height={10}
-              />
-            );
-            break;
-          default:
-            statusIcon = null;
-            break;
-        }
-  
-        return statusIcon;
-      },
+      render: (record) => statusPaciente(record),
+      width: 100,
+      align: 'center'
     },
     {
-      title: "Estatus del paciente",
+      title: "Actualizar estatus",
       dataIndex: "status",
       key: "status",
       width: 250,
+      align: 'center',
       render: (text, record) => (
         <div className="center-cell">
           <Select
             value={record.status}
             onChange={(value) => handleStatusChange(record, value)}
             size="large"
-            style={{ width: '100%' }} // Ajustar el ancho del Select al 100%
+            style={{ width: "100%" }} // Ajustar el ancho del Select al 100%
           >
-            <Option value="in_process">
-              Atendiendo
-            </Option>
-            <Option value="waiting">
-              En espera
-            </Option>
-            <Option value="complete">
-              Finalizado
-            </Option>
-            <Option value="not_planned">
-              Preparando
-            </Option>
+            <Option value="waiting">En espera</Option>
+            <Option value="in_process">Atendiendo</Option>
+            <Option value="complete">Finalizado</Option>
           </Select>
         </div>
       ),
@@ -205,19 +174,11 @@ export const Escritorio = () => {
             <>
               <p>
                 <Image
-                  src={require("../img/not_planned.svg")}
-                  width={15}
-                  height={10}
-                />
-                {"Procesando información del paciente"}
-              </p>
-              <p>
-                <Image
                   src={require("../img/waiting.svg")}
                   width={15}
                   height={10}
                 />
-                {"Paciente en espera"}
+                {"En espera"}
               </p>
               <p>
                 <Image
@@ -233,7 +194,7 @@ export const Escritorio = () => {
                   width={15}
                   height={10}
                 />
-                {"El paciente completó su visita"}
+                {"El paciente finalizó su visita"}
               </p>
             </>
           }
@@ -248,58 +209,42 @@ export const Escritorio = () => {
           <Switch
             onChange={setVisible}
             checked={visible}
-            disabled={visible}
+            style={{ marginTop: "10px" }}
           ></Switch>
           <Divider />
           <Title level={2}>{usuario.host}</Title>
           <Text>Usted está ofreciendo el servicio: </Text>
-          <Text type="success">{usuario.servicio}</Text>
+          <Text type="success">{StationEnum[usuario.servicio]}</Text>
         </Col>
-
         <Col span={4} align="right">
-          <Button shape="round" type="danger" onClick={salir}>
+          <Button
+            shape="round"
+            type="danger"
+            onClick={salir}
+            style={{ marginTop: "10px" }}
+          >
             <CloseCircleOutlined />
             Salir
           </Button>
         </Col>
       </Row>
-
-      <Divider />
-
-      <Row>
-        <Col>
-          <Text>Atendiendo el paciente número: </Text>
-          <Text style={{ fontSize: 30 }} type="danger">
-            55
-          </Text>
-        </Col>
-      </Row>
-
-      <Row>
-        <Col style={{ padding: 9 }} offset={18} span={6} align="right">
-          <Button onClick={siguienteTicket} shape="round" type="primary">
-            <RightOutlined />
-            Siguiente
-          </Button>
-        </Col>
-      </Row>
       <Divider />
       <Row>
-      <Col span={24}>
-        {documents.length > 0 ? (
-          <Table
-            dataSource={documents}
-            columns={columns}
-            rowClassName={getRowClassName}
-          />
-        ) : (
-          <>
-            <Text>No hay datos disponibles</Text>
-            {console.log("No hay datos disponibles")}
-          </>
-        )}
-      </Col>
-    </Row>
-  </>
+        <Col span={24}>
+          {documents.length > 0 ? (
+            <Table
+              dataSource={documents}
+              columns={columns}
+              rowClassName={getRowClassName}
+            />
+          ) : (
+            <>
+              <Text>No hay datos disponibles</Text>
+              {console.log("No hay datos disponibles")}
+            </>
+          )}
+        </Col>
+      </Row>
+    </>
   );
 };
