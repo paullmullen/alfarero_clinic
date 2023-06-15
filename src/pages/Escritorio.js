@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Row, Col, Typography, Button, Divider, Table, Image, Alert, Switch, Radio, Modal, Select } from "antd";
-import { CloseCircleOutlined, RightOutlined } from "@ant-design/icons";
+import { Row, Col, Typography, Button, Divider, Table, Image, Alert, Switch, Select } from "antd";
+import { CloseCircleOutlined } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
 import { Redirect, useHistory } from "react-router-dom";

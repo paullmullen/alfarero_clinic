@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Layout, Menu, Typography } from "antd";
+import { Layout, Menu, Typography, Image } from "antd";
 import {
   UserOutlined,
   FileTextFilled,
@@ -89,7 +89,8 @@ export const RouterPage = () => {
             }}
           >
             <div className="header" />
-            <Title level={5} style={{ margin: 0, flex: 1, textAlign: "center" }}>
+            <Image src={require("../img/full_logo.png")} style={{margin: 0, flex: 1, justifyContent: 'flex-start'}}></Image>
+            <Title level={5} style={{ margin: 0, flex: 1, textAlign: "end", textOverflow: 'ellipsis' }}>
               Plan de Cuidado de Pacientes
             </Title>
           </Header>
