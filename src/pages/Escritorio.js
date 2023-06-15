@@ -28,33 +28,35 @@ export const Escritorio = () => {
     let isMounted = true;
     const fetchData = async () => {
       const collectionRef = firestore.collection("patients");
-      const snapshot = await collectionRef.get();
+      const snapshot = await collectionRef.orderBy("start_time", "asc").get();
       const initialData = snapshot.docs.map((doc) => doc.data());
-
+  
       if (isMounted) {
         const filteredData = initialData.filter(
           (doc) => doc.plan_of_care.some((item) => item.station === usuario.servicio)
         );
+        filteredData.sort((a, b) => a.start_time.toMillis() - b.start_time.toMillis());
         setDocuments(filteredData);
       }
-
+  
       const unsubscribe = collectionRef.onSnapshot((snapshot) => {
         const updatedData = snapshot.docs.map((doc) => doc.data());
-
+  
         if (isMounted) {
           const filteredData = updatedData.filter(
             (doc) => doc.plan_of_care.some((item) => item.station === usuario.servicio)
           );
+          filteredData.sort((a, b) => a.start_time.toMillis() - b.start_time.toMillis());
           setDocuments(filteredData);
         }
       });
-
+  
       return () => {
         unsubscribe();
         isMounted = false;
       };
     };
-
+  
     fetchData();
   }, [usuario.servicio]);
 
@@ -206,6 +208,11 @@ const changeStatus = (record) => {
       title: "Síntomas",
       dataIndex: "reason_for_visit",
       key: "sintomas",
+    },
+    {
+      title: "Estatus actual",
+      dataIndex: "reason_for_visit",
+      key: "estatus",
     },
     {
       title: "Estatus del paciente",
