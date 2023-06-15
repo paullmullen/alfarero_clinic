@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState} from "react";
 import {
   Form,
   Input,
@@ -43,7 +43,7 @@ export const Registro = () => {
         procedure_end: new Date(),
         procedure_start: new Date(),
         station: visit,
-        status: "in_process",
+        status: "waiting",
         wait_end: new Date(),
         wait_start: new Date(),
       };

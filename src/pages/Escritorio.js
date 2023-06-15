@@ -233,6 +233,7 @@ export const Escritorio = () => {
         <Col span={24}>
           {documents.length > 0 ? (
             <Table
+              rowKey={"pt_no"}
               dataSource={documents}
               columns={columns}
               rowClassName={getRowClassName}
