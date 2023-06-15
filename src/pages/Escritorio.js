@@ -211,8 +211,32 @@ const changeStatus = (record) => {
     },
     {
       title: "Estatus actual",
-      dataIndex: "reason_for_visit",
-      key: "estatus",
+      dataIndex: "",
+      key: "",
+      render: (text, record) => {
+        let statusPhrase = "";
+        const currentStatus = record.plan_of_care.find(item => item.station === usuario.servicio)?.status || '';
+  
+        switch (currentStatus) {
+          case "in_process":
+            statusPhrase = "Paciente siendo atendido";
+            break;
+          case "waiting":
+            statusPhrase = "Paciente en espera";
+            break;
+          case "complete":
+            statusPhrase = "El paciente completó su visita";
+            break;
+          case "not_planned":
+            statusPhrase = "Procesando información del paciente";
+            break;
+          default:
+            statusPhrase = "";
+            break;
+        }
+  
+        return <span>{statusPhrase}</span>;
+      },
     },
     {
       title: "Estatus del paciente",
