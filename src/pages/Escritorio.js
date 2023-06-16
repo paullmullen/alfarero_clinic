@@ -1,6 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Row, Col, Typography, Button, Divider, Table, Image, Alert, Switch, Select } from "antd";
-import { CheckOutlined, CloseOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import {
+  Row,
+  Col,
+  Typography,
+  Button,
+  Divider,
+  Table,
+  Image,
+  Alert,
+  Switch,
+  Select,
+} from "antd";
+import {
+  CloseCircleOutlined,
+} from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
 import { Redirect, useHistory } from "react-router-dom";
@@ -30,7 +43,7 @@ export const Escritorio = () => {
       const collectionRef = firestore.collection("patients");
       const snapshot = await collectionRef.orderBy("start_time", "asc").get();
       const initialData = snapshot.docs.map((doc) => doc.data());
-    
+
       if (isMounted) {
         const filteredData = initialData.filter(
           (doc) =>
@@ -42,16 +55,16 @@ export const Escritorio = () => {
           return obj;
         }, {});
         setPatientStatus(statusObj);
-        filteredData.sort((a, b) =>
-          a.start_time.toMillis() - b.start_time.toMillis()
+        filteredData.sort(
+          (a, b) => a.start_time.toMillis() - b.start_time.toMillis()
         );
         setDocuments(filteredData);
         setFilteredDocuments(filteredData);
       }
-    
+
       const unsubscribe = collectionRef.onSnapshot((snapshot) => {
         const updatedData = snapshot.docs.map((doc) => doc.data());
-    
+
         if (isMounted) {
           const filteredData = updatedData.filter(
             (doc) =>
@@ -63,21 +76,21 @@ export const Escritorio = () => {
             return obj;
           }, {});
           setPatientStatus(statusObj);
-          filteredData.sort((a, b) =>
-            a.start_time.toMillis() - b.start_time.toMillis()
+          filteredData.sort(
+            (a, b) => a.start_time.toMillis() - b.start_time.toMillis()
           );
           setDocuments(filteredData);
           setFilteredDocuments(filteredData);
         }
       });
-    
+
       return () => {
         unsubscribe();
         isMounted = false;
       };
-    };    
+    };
     fetchData();
-  }, [usuario.servicio]);  
+  }, [usuario.servicio]);
 
   const salir = () => {
     localStorage.clear();
@@ -86,40 +99,55 @@ export const Escritorio = () => {
 
   const statusPaciente = (record) => {
     const currentStatus =
-    record.plan_of_care.find((item) => item.station === usuario.servicio)
-      ?.status || "";
-  let statusIcon = null;
+      record.plan_of_care.find((item) => item.station === usuario.servicio)
+        ?.status || "";
+    let statusIcon = null;
 
-  switch (currentStatus) {
-    case "waiting":
-      statusIcon = (
-        <Image src={require("../img/waiting.svg")} width={15} height={10} preview={false} />
-      );
-      break;
-    case "in_process":
-      statusIcon = (
-        <Image src={require("../img/in_process.svg")} width={15} height={10} preview={false} />
-      );
-      break;
-    case "complete":
-      statusIcon = (
-        <Image src={require("../img/complete.svg")} width={15} height={10}  preview={false}/>
-      );
-      break;
-    default:
-      statusIcon = null;
-      break;
-  }
+    switch (currentStatus) {
+      case "waiting":
+        statusIcon = (
+          <Image
+            src={require("../img/waiting.svg")}
+            width={15}
+            height={10}
+            preview={false}
+          />
+        );
+        break;
+      case "in_process":
+        statusIcon = (
+          <Image
+            src={require("../img/in_process.svg")}
+            width={15}
+            height={10}
+            preview={false}
+          />
+        );
+        break;
+      case "complete":
+        statusIcon = (
+          <Image
+            src={require("../img/complete.svg")}
+            width={15}
+            height={10}
+            preview={false}
+          />
+        );
+        break;
+      default:
+        statusIcon = null;
+        break;
+    }
 
-  return statusIcon;
-  }
+    return statusIcon;
+  };
 
   useHideMenu(false);
 
   if (!usuario.host || !usuario.servicio) {
     return <Redirect to="/ingresar-host" />;
   }
-  
+
   const columns = [
     {
       title: "Nombre del paciente",
@@ -142,14 +170,14 @@ export const Escritorio = () => {
       key: "",
       render: (record) => statusPaciente(record),
       width: 100,
-      align: 'center'
+      align: "center",
     },
     {
       title: "Actualizar estatus",
       dataIndex: "status",
       key: "status",
       width: 250,
-      align: 'center',
+      align: "center",
       render: (text, record) => (
         <div className="center-cell">
           <Select
@@ -182,7 +210,7 @@ export const Escritorio = () => {
 
   const handleCompleteChange = (record) => {
     const updatedComplete = !record.complete;
-  
+
     firestore.collection("patients").doc(record.pt_no).update({
       complete: updatedComplete,
     });
@@ -198,17 +226,17 @@ export const Escritorio = () => {
       }
       return item;
     });
-  
+
     firestore.collection("patients").doc(record.pt_no).update({
       plan_of_care: updatedPlanOfCare,
     });
-  
+
     setPatientStatus((prevState) => ({
       ...prevState,
-      [record.pt_no]: value === 'complete',
+      [record.pt_no]: value === "complete",
     }));
   };
-  
+
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";
   };
@@ -219,7 +247,13 @@ export const Escritorio = () => {
         <Alert
           message="Información del Estatus del Paciente"
           description={
-            <>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-evenly",
+                marginTop: 18,
+              }}
+            >
               <div>
                 <Image
                   src={require("../img/waiting.svg")}
@@ -244,7 +278,7 @@ export const Escritorio = () => {
                 />
                 {"El paciente finalizó su visita"}
               </div>
-            </>
+            </div>
           }
           type="info"
           showIcon
@@ -262,7 +296,9 @@ export const Escritorio = () => {
           <Divider />
           <Title level={2}>{usuario.host}</Title>
           <Text>Usted está ofreciendo el servicio: </Text>
-          <Text type="success">{StationEnum[usuario.servicio]}</Text>
+          <Text type="success" strong>
+            {StationEnum[usuario.servicio]}
+          </Text>
         </Col>
         <Col span={4} align="right">
           <Button
@@ -285,11 +321,10 @@ export const Escritorio = () => {
               dataSource={filteredDocuments}
               columns={columns}
               rowClassName={getRowClassName}
-          />
+            />
           ) : (
             <>
               <Text>No hay datos disponibles</Text>
-              {console.log("No hay datos disponibles")}
             </>
           )}
         </Col>

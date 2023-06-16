@@ -30,10 +30,7 @@
 }
 .ant-layout-header {
   margin: 0px 15px !important;
-}
-
-.ant-table-sticky-holder {
-  top: 33px !important;
+  padding: 0 27px;
 }
 
 .even-row {
