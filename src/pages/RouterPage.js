@@ -1,11 +1,11 @@
 import React, { useContext } from "react";
-import { Layout, Menu, Typography } from "antd";
+import { Layout, Menu, Typography, Image, Row, Col } from "antd";
 import {
   UserOutlined,
   FileTextFilled,
   LoginOutlined,
   IdcardOutlined,
-  BarChartOutlined
+  BarChartOutlined,
 } from "@ant-design/icons";
 import {
   BrowserRouter as Router,
@@ -59,23 +59,12 @@ export const RouterPage = () => {
   return (
     <Layout style={{ minHeight: "100vh", minWidth: "100%" }}>
       <Router>
-        <Sider
-          collapsedWidth="0"
-          breakpoint="lg"
-          hidden={ocultarMenu}
-          style={{
-            backgroundColor: "#c0dadd",
-            minHeight: "100vh",
-          }}
-        >
+        <Sider collapsedWidth="0" breakpoint="lg" hidden={ocultarMenu}>
           <Menu
+            theme="dark"
             mode="inline"
             defaultSelectedKeys={["1"]}
             items={menuItems}
-            style={{
-              backgroundColor: "#c0dadd",
-              minHeight: "100vh",
-            }}
           />
         </Sider>
         <Layout className="site-layout">
@@ -88,10 +77,21 @@ export const RouterPage = () => {
               alignItems: "center",
             }}
           >
-            <div className="header" />
-            <Title level={5} style={{ margin: 0, flex: 1, textAlign: "center" }}>
-              Plan de Cuidado de Pacientes
-            </Title>
+            <Row>
+              <div className="header" />
+              <Col xs={24} sm={24} md={24} lg={24}>
+                <Image
+                  src={require("../img/full_logo.png")}
+                  style={{ margin: 0, flex: 1, justifyContent: "flex-start" }}
+                  preview={false}
+                />
+              </Col>
+            </Row>
+            <Row justify="center">
+              <Col xs={24} sm={24} md={24} lg={24}>
+                <Title level={5}>Plan de Cuidado de Pacientes</Title>
+              </Col>
+            </Row>
           </Header>
           <Content
             className="site-layout-background"

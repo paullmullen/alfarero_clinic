@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState} from "react";
 import {
   Form,
   Input,
@@ -43,7 +43,7 @@ export const Registro = () => {
         procedure_end: new Date(),
         procedure_start: new Date(),
         station: visit,
-        status: "in_process",
+        status: "waiting",
         wait_end: new Date(),
         wait_start: new Date(),
       };
@@ -56,6 +56,51 @@ export const Registro = () => {
     form.resetFields();
   };
 
+  const updateStatsCollection = async (station) => {
+    const currentDate = moment();
+    const currentMonth = currentDate.month() + 1; // Obtener el número del mes actual
+    const currentYear = currentDate.year();
+    const currentMonthYear = `${currentMonth}/${currentYear}`;
+    const statsRef = firestore.collection("stats").doc(station);
+  
+    // Obtener el documento de estadísticas de la estación actual
+    const statsDoc = await statsRef.get();
+  
+    if (statsDoc.exists) {
+      // El documento de estadísticas ya existe
+      const statsData = statsDoc.data();
+  
+      if (statsData.date !== currentMonthYear) {
+        // La fecha es diferente, crear un nuevo documento en la misma colección
+        const newStatsRef = firestore.collection("stats").doc();
+        const newStatsData = {
+          station_type: statsData.station_type,
+          number_of_patients: 1,
+          date: currentMonthYear,
+        };
+        await newStatsRef.set(newStatsData);
+      } else {
+        // La fecha es la misma, actualizar el número de pacientes del mes actual
+        const currentMonthPatients = statsData.number_of_patients || 0;
+        await statsRef.update({
+          number_of_patients: currentMonthPatients + 1,
+        });
+      }
+    } else {
+      // El documento de estadísticas no existe, crearlo con el número de pacientes del mes actual
+      const statsData = {
+        station_type: station,
+        number_of_patients: 1,
+        date: currentMonthYear,
+      };
+      await statsRef.set(statsData);
+    }
+  };  
+
+  const handleChange = (selectedOption) => {
+    generateVisits(selectedOption);
+  };
+
   const onFinish = async (patient) => {
     const isDuplicate = await checkDuplicateRecord(
       "patients",
@@ -66,7 +111,6 @@ export const Registro = () => {
       showAlert("Advertencia!", "Este usuario ya existe", "warning");
       return;
     }
-    const tiempo = moment().format("D [de] MMMM [de] YYYY, HH:mm:ss [UTC]Z");
     const formattedPatient = {
       complete: false,
       last_update: new Date(),
@@ -74,28 +118,27 @@ export const Registro = () => {
       plan_of_care: patientPlanOfCare,
       pt_no: "",
       reason_for_visit: patient.motivo,
-      start_time: tiempo,
+      age: patient.edad,
+      tel: patient.tel,
+      start_time: new Date(),
       stop_time: new Date(),
       wait_time: 0,
     };
 
-    await firestore
-      .collection("patients")
-      .add(formattedPatient)
-      .then((docRef) => {
-        const ptNo = docRef.id;
-        const updatedPatient = { ...formattedPatient, pt_no: ptNo };
-        docRef.update(updatedPatient);
-        showAlert("Success", "Paciente creado exitosamente", "success");
-        handleReset();
-      })
-      .catch((error) => {
-        console.log(error);
-        showAlert("Error", error, "error");
-      });
-  };
-  const handleChange = (selectedOption) => {
-    generateVisits(selectedOption);
+    const patientRef = await firestore.collection("patients").add(formattedPatient);
+    const ptNo = patientRef.id;
+    const updatedPatient = { ...formattedPatient, pt_no: ptNo };
+
+    await patientRef.update(updatedPatient);
+
+    // Actualizar el número de pacientes del mes actual en la colección "stats"
+    const selectedStations = patientPlanOfCare.map((visit) => visit.station);
+    selectedStations.forEach((station) => {
+      updateStatsCollection(station);
+    });
+
+    showAlert("Success", "Paciente creado exitosamente", "success");
+    handleReset();
   };
 
   const onFinishFailed = (errorInfo) => {
@@ -166,7 +209,6 @@ export const Registro = () => {
               </Form.Item>
             </Col>
           </Row>
-
           <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
@@ -191,7 +233,6 @@ export const Registro = () => {
               </Form.Item>
             </Col>
           </Row>
-
           <Row style={{ display: "contents" }} gutter={24}>
             <Col xs={14} sm={24}>
               <Form.Item {...tailLayout}>

@@ -25,25 +25,12 @@
   background: #fff;
 }
 
-.header {
-  background-color: #fff;
-  background-image: url("./img/full_logo.png");
-  background-repeat: no-repeat;
-  object-fit: contain;
-  width: 50%;
-  margin-top: 6px;
-  height: 90%;
-}
-
 .titulo-registro {
   color: rgba(28, 12, 173, 0.89);
 }
 .ant-layout-header {
   margin: 0px 15px !important;
-}
-
-.ant-table-sticky-holder {
-  top: 33px !important;
+  padding: 0 27px;
 }
 
 .even-row {
@@ -54,26 +41,6 @@
   background-color: #bfbfbf; /* Color de fondo para filas impares */
 }
 
-.ant-image-preview-wrap {
-  box-shadow: none !important;
-}
-
-.ant-radio-wrapper input:checked + .ant-radio-inner {
-  background-color: #1a8b32; /* Cambia el color de fondo */
-  border-color: #1a8b32; /* Cambia el color del borde */
-}
-
-.ant-radio-wrapper input:checked + .ant-radio-inner::after {
-  background-color: #1a8b32; /* Cambia el color del punto seleccionado */
-}
-
-.ant-radio {
-  display: flex;
-  justify-content: center;
-  font-size: 10px; /* Cambia el tamaño de fuente */
-  line-height: 1.5; /* Cambia el tamaño de línea */
-}
-
 .center-cell {
   text-align: center;
 }
@@ -81,6 +48,7 @@
 .warning-content {
   text-align: center;
 }
+
 h5 {
   margin-top: 9px !important;
 }
