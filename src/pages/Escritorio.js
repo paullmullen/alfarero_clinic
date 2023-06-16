@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Row, Col, Typography, Button, Divider, Table, Image, Alert, Switch, Select } from "antd";
-import { CloseCircleOutlined } from "@ant-design/icons";
+import { CheckOutlined, CloseOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
 import { Redirect, useHistory } from "react-router-dom";
 import { firestore } from "./../helpers/firebaseConfig";
 import StationEnum from "../helpers/stationEnum";
+import { Link } from "react-router-dom";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -13,9 +14,11 @@ const { Option } = Select;
 export const Escritorio = () => {
   const [documents, setDocuments] = useState([]);
   const [usuario] = useState(getUsuarioStorage());
+  const [filteredDocuments, setFilteredDocuments] = useState([]);
   const history = useHistory();
 
   const [visible, setVisible] = useState(true);
+  const [patientStatus, setPatientStatus] = useState({});
 
   const handleClose = () => {
     setVisible(false);
@@ -27,35 +30,54 @@ export const Escritorio = () => {
       const collectionRef = firestore.collection("patients");
       const snapshot = await collectionRef.orderBy("start_time", "asc").get();
       const initialData = snapshot.docs.map((doc) => doc.data());
-  
+    
       if (isMounted) {
         const filteredData = initialData.filter(
-          (doc) => doc.plan_of_care.some((item) => item.station === usuario.servicio)
+          (doc) =>
+            doc.complete !== true &&
+            doc.plan_of_care.some((item) => item.station === usuario.servicio)
         );
-        filteredData.sort((a, b) => a.start_time.toMillis() - b.start_time.toMillis());
+        const statusObj = filteredData.reduce((obj, doc) => {
+          obj[doc.pt_no] = doc.complete;
+          return obj;
+        }, {});
+        setPatientStatus(statusObj);
+        filteredData.sort((a, b) =>
+          a.start_time.toMillis() - b.start_time.toMillis()
+        );
         setDocuments(filteredData);
+        setFilteredDocuments(filteredData);
       }
-  
+    
       const unsubscribe = collectionRef.onSnapshot((snapshot) => {
         const updatedData = snapshot.docs.map((doc) => doc.data());
-  
+    
         if (isMounted) {
           const filteredData = updatedData.filter(
-            (doc) => doc.plan_of_care.some((item) => item.station === usuario.servicio)
+            (doc) =>
+              doc.complete !== true &&
+              doc.plan_of_care.some((item) => item.station === usuario.servicio)
           );
-          filteredData.sort((a, b) => a.start_time.toMillis() - b.start_time.toMillis());
+          const statusObj = filteredData.reduce((obj, doc) => {
+            obj[doc.pt_no] = doc.complete;
+            return obj;
+          }, {});
+          setPatientStatus(statusObj);
+          filteredData.sort((a, b) =>
+            a.start_time.toMillis() - b.start_time.toMillis()
+          );
           setDocuments(filteredData);
+          setFilteredDocuments(filteredData);
         }
       });
-  
+    
       return () => {
         unsubscribe();
         isMounted = false;
       };
-    };
-  
+    };    
     fetchData();
-  }, [usuario.servicio]);
+  }, [usuario.servicio]);  
 
   const salir = () => {
     localStorage.clear();
@@ -143,7 +165,29 @@ export const Escritorio = () => {
         </div>
       ),
     },
+    {
+      title: "",
+      dataIndex: "complete",
+      key: "estado",
+      render: (complete, record) => (
+        <Link
+          to="#"
+          onClick={() => handleCompleteChange(record)}
+          style={{ color: complete ? "green" : "red", cursor: "pointer" }}
+        >
+          {complete ? "Completo" : "Remover"}
+        </Link>
+      ),
+    },
   ];
+
+  const handleCompleteChange = (record) => {
+    const updatedComplete = !record.complete;
+  
+    firestore.collection("patients").doc(record.pt_no).update({
+      complete: updatedComplete,
+    });
+  };
 
   const handleStatusChange = (record, value) => {
     const updatedPlanOfCare = record.plan_of_care.map((item) => {
@@ -159,6 +203,11 @@ export const Escritorio = () => {
     firestore.collection("patients").doc(record.pt_no).update({
       plan_of_care: updatedPlanOfCare,
     });
+  
+    setPatientStatus((prevState) => ({
+      ...prevState,
+      [record.pt_no]: value === 'complete',
+    }));
   };
   
   const getRowClassName = (record, index) => {
@@ -234,10 +283,10 @@ export const Escritorio = () => {
           {documents.length > 0 ? (
             <Table
               rowKey={"pt_no"}
-              dataSource={documents}
+              dataSource={filteredDocuments}
               columns={columns}
               rowClassName={getRowClassName}
-            />
+          />
           ) : (
             <>
               <Text>No hay datos disponibles</Text>

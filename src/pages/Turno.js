@@ -61,6 +61,13 @@ export const Turno = () => {
         }
       });
     });
+  
+    extractedPlanOfCare.sort((a, b) => {
+      const startTimeA = new Date(a.start_time.toMillis());
+      const startTimeB = new Date(b.start_time.toMillis());
+      return startTimeA - startTimeB;
+    });
+  
     const columns = [
       {
         title: "Paciente",
@@ -78,7 +85,7 @@ export const Turno = () => {
         fixed: "right",
       },
     ];
-
+  
     const dataSource = extractedPlanOfCare.map((item) => {
       const stations = {};
       item.plan_of_care.forEach((plan) => {
@@ -90,17 +97,19 @@ export const Turno = () => {
         ...stations,
       };
     });
-
+  
     return { columns, dataSource };
   };
+  
 
   const { columns, dataSource } = generateTableData(data);
 
   useEffect(() => {
     let isMounted = true;
+
     const fetchData = async () => {
       const collectionRef = firestore.collection("patients");
-      const snapshot = await collectionRef.get();
+      const snapshot = await collectionRef.orderBy("start_time").get();
       const initialData = snapshot.docs.map((doc) => {
         return doc.data();
       });
@@ -108,6 +117,7 @@ export const Turno = () => {
       if (isMounted) {
         setData(initialData);
       }
+
       const unsubscribe = collectionRef.onSnapshot((snapshot) => {
         const updatedData = snapshot.docs.map((doc) => doc.data());
 
@@ -123,7 +133,11 @@ export const Turno = () => {
     };
 
     fetchData();
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []); 
 
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";
