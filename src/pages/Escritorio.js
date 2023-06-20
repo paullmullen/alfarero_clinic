@@ -102,7 +102,7 @@ export const Escritorio = () => {
       record.plan_of_care.find((item) => item.station === usuario.servicio)
         ?.status || "";
     let statusIcon = null;
-
+  
     switch (currentStatus) {
       case "waiting":
         statusIcon = (
@@ -138,16 +138,16 @@ export const Escritorio = () => {
         statusIcon = null;
         break;
     }
-
+  
     return statusIcon;
   };
-
+  
   useHideMenu(false);
-
+  
   if (!usuario.host || !usuario.servicio) {
     return <Redirect to="/ingresar-host" />;
   }
-
+  
   const columns = [
     {
       title: "Nombre del paciente",
@@ -187,6 +187,7 @@ export const Escritorio = () => {
             style={{ width: "100%" }} // Ajustar el ancho del Select al 100%
           >
             <Option value="in_process">Atendiendo</Option>
+            <Option value="waiting">En espera</Option>
             <Option value="complete">Finalizado</Option>
           </Select>
         </div>
@@ -207,36 +208,84 @@ export const Escritorio = () => {
       ),
     },
   ];
-
+  
   const handleCompleteChange = (record) => {
     const updatedComplete = !record.complete;
-
+  
     firestore.collection("patients").doc(record.pt_no).update({
       complete: updatedComplete,
     });
   };
+//
+const handleStatusChange = async (record, value) => {
+  const currentStation = usuario.servicio;
+  const updatedPlanOfCare = record.plan_of_care.map((item) => {
+    if (item.station === currentStation) {
+      const updatedItem = {
+        ...item,
+        status: value,
+      };
 
-  const handleStatusChange = (record, value) => {
-    const updatedPlanOfCare = record.plan_of_care.map((item) => {
-      if (item.station === usuario.servicio) {
-        return {
-          ...item,
-          status: value,
-        };
+      if (value === "waiting" && item.status !== "waiting") {
+        updatedItem.wait_start = Math.floor(Date.now() / 1000); // Obtiene el tiempo actual en segundos
+      } else if (value === "in_process" && item.status !== "in_process") {
+        updatedItem.procedure_start = Math.floor(Date.now() / 1000); // Obtiene el tiempo actual en segundos
+      } else if (value !== "waiting" && item.status === "waiting") {
+        updatedItem.wait_end = Math.floor(Date.now() / 1000); // Obtiene el tiempo actual en segundos
+        updatedItem.waiting_time = Math.abs(updatedItem.wait_end - updatedItem.wait_start);
+      } else if (value !== "in_process" && item.status === "in_process") {
+        updatedItem.procedure_end = Math.floor(Date.now() / 1000); // Obtiene el tiempo actual en segundos
+        updatedItem.procedure_time = Math.abs(updatedItem.procedure_start - updatedItem.procedure_end);
       }
-      return item;
+
+      return updatedItem;
+    }
+
+    return item;
+  });
+
+  await firestore.collection("patients").doc(record.pt_no).update({
+    plan_of_care: updatedPlanOfCare,
+  });
+
+  const statsDocRef = firestore.collection("stats").doc(currentStation);
+const doc = await statsDocRef.get();
+
+if (doc.exists) {
+  const statsData = doc.data();
+  const updatedItem = updatedPlanOfCare.find((item) => item.station === currentStation);
+
+  if (value === "waiting" && updatedItem.wait_start && updatedItem.wait_end) {
+    const waitDifference = Math.abs(updatedItem.waiting_time);
+    await statsDocRef.update({
+      waiting_time: [...(statsData.waiting_time || []), waitDifference],
     });
+  }
 
-    firestore.collection("patients").doc(record.pt_no).update({
-      plan_of_care: updatedPlanOfCare,
+  if (value === "in_process" && updatedItem.procedure_start && updatedItem.procedure_end) {
+    const inProcessDifference = Math.abs(updatedItem.procedure_time);
+    await statsDocRef.update({
+      procedure_time: [...(statsData.procedure_time || []), inProcessDifference],
     });
+  }
 
-    setPatientStatus((prevState) => ({
-      ...prevState,
-      [record.pt_no]: value === "complete",
-    }));
-  };
+  const { waiting_time, procedure_time, number_of_patients } = statsData;
 
+  if (waiting_time && number_of_patients) {
+    const waitingAverage = waiting_time.reduce((acc, time) => acc + time, 0) / number_of_patients;
+    await statsDocRef.update({
+      average_waiting_seconds: waitingAverage,
+    });
+  }
+
+  if (procedure_time && number_of_patients) {
+    const procedureAverage = procedure_time.reduce((acc, time) => acc + time, 0) / number_of_patients;
+    await statsDocRef.update({
+      average_procedure_seconds: procedureAverage,
+    });
+  }
+}
+}  
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";
   };
