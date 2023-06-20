@@ -71,6 +71,7 @@ export const IngresarHost = () => {
       localStorage.setItem("host", host);
       localStorage.setItem("servicio", servicio);
       history.push("/escritorio");
+      history.push('/anfitrion');
     } catch (error) {
       showAlert("Error", "Error al guardar los datos en Firebase", "error");
     }
@@ -80,8 +81,10 @@ export const IngresarHost = () => {
     console.log("Failed:", errorInfo);
   };
 
-  if (usuario.host && usuario.servicio) {
+  if (usuario.host && usuario.servicio !== 'pfm') {
     return <Redirect to="/escritorio" />;
+  } else if (usuario.host && usuario.servicio === "pfm") {
+    return <Redirect to="/anfitrion" />;
   }
 
   return (
@@ -91,7 +94,7 @@ export const IngresarHost = () => {
           ¡Bienvenido!
         </Title>
         <Title level={2}>Ingresar</Title>
-        <Text>Ingrese su nombre y número de escritorio</Text>
+        <Text>Ingrese su nombre y el servicio a otorgar</Text>
         <Divider />
         <Form
           {...layout}
@@ -104,12 +107,12 @@ export const IngresarHost = () => {
           <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
-                label="Nombre del huésped"
+                label="Nombre del usuario"
                 name="host"
                 rules={[
                   {
                     required: true,
-                    message: "Por favor ingrese nombre del huésped",
+                    message: "Por favor ingrese nombre del anfitrión",
                   },
                 ]}
                 {...halfLayout}

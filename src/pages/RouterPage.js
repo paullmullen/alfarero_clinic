@@ -22,6 +22,7 @@ import { Escritorio } from "./Escritorio";
 import { UiContext } from "../context/UiContext";
 import { IngresarHost } from "./IngresarHost";
 import Stats from "./Stats";
+import { Anfitrion } from "./Anfitrion";
 
 const { Sider, Content, Header } = Layout;
 const { Title } = Typography;
@@ -50,7 +51,7 @@ export const RouterPage = () => {
       label: <Link to="/escritorio">Escritorio</Link>,
     },
     {
-      key: "5",
+      key: "6",
       icon: <BarChartOutlined />,
       label: <Link to="/estadisticas">Estadisticas de hoy</Link>,
     },
@@ -108,6 +109,7 @@ export const RouterPage = () => {
                 <Route path="/turnos" component={Turno} />
                 <Route path="/crear" component={CrearTurno} />
                 <Route path="/escritorio" component={Escritorio} />
+                <Route path="/anfitrion" component={Anfitrion} />
                 <Route path="/estadisticas" component={Stats} />
                 <Redirect to="/ingresar-host" />
               </Switch>
