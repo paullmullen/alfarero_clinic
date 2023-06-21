@@ -12,6 +12,8 @@ import {
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
 import StationEnum from "../helpers/stationEnum";
+import Footer from "./Footer";
+
 const { Title } = Typography;
 
 export const Turno = () => {
@@ -230,6 +232,7 @@ export const Turno = () => {
         offsetScroll={3}
         rowClassName={getRowClassName}
       />
+      <Footer />
     </>
   );
 };
