@@ -23,8 +23,8 @@ const Footer = () => {
   const filteredStats = stats.filter(
     (stat) =>
       stat.station_type &&
-      stat.average_waiting_seconds !== undefined &&
-      stat.average_procedure_seconds !== undefined
+      stat.avg_procedure_time !== undefined &&
+      stat.avg_waiting_time !== undefined
   );
 
   const formatTimeInMinutes = (timeInSeconds) => {
@@ -37,8 +37,8 @@ const Footer = () => {
       {filteredStats.map((stat, index) => (
         <Card key={index} style={{ margin: 8, width: 300 }}>
           <p><strong>Estacion:</strong> {stat.station_type}</p>
-          <p><strong>Tiempo promedio de espera:</strong> {formatTimeInMinutes(stat.average_waiting_seconds)}</p>
-          <p><strong>Tiempo promedio del proceso:</strong> {formatTimeInMinutes(stat.average_procedure_seconds)}</p>
+          <p><strong>Promedio de espera:</strong> {stat.avg_waiting_time}</p>
+          <p><strong>Promedio del proceso:</strong> {stat.avg_procedure_time}</p>
         </Card>
       ))}
     </div>
