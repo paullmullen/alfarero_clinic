@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Table, Image, Space, Popover } from "antd";
+import { Table, Image, Space, Popover, Divider, Button } from "antd";
+import { CloseCircleOutlined } from "@ant-design/icons";
 import { firestore } from "./../helpers/firebaseConfig";
 import { handleStatusChange } from "./../helpers/updateStationStatus";
+import { useHistory } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
 import StationEnum from "../helpers/stationEnum";
 import { AlertInfo } from "../components/AlertInfo";
@@ -11,6 +13,7 @@ export const Anfitrion = () => {
   const [data, setData] = useState([]);
   const [station, setStation] = useState("");
   const [hoveredRowKey, setHoveredRowKey] = useState(null);
+  const history = useHistory();
 
   const handleMouseEnter = (record) => {
     setHoveredRowKey(record.pt_no);
@@ -18,6 +21,11 @@ export const Anfitrion = () => {
 
   const handleMouseLeave = () => {
     setHoveredRowKey("");
+  };
+
+  const salir = () => {
+    localStorage.clear();
+    history.replace("/ingresar-host");
   };
 
   useEffect(() => {
@@ -269,6 +277,17 @@ export const Anfitrion = () => {
           onMouseLeave: () => handleMouseLeave(),
         })}
       />
+         <Divider>
+        <Button
+          shape="round"
+          type="danger"
+          onClick={salir}
+          style={{ marginTop: "10px" }}
+        >
+          <CloseCircleOutlined />
+          Salir
+        </Button>
+      </Divider>
     </>
   );
 };

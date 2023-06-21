@@ -70,8 +70,12 @@ export const IngresarHost = () => {
 
       localStorage.setItem("host", host);
       localStorage.setItem("servicio", servicio);
-      history.push("/escritorio");
-      history.push('/anfitrion');
+      if (servicio !== 'pfm') {
+        history.push("/escritorio");  
+      } else if (servicio === 'pfm') {
+        // history.push("/escritorio");
+        history.push("/anfitrion");
+      }
     } catch (error) {
       showAlert("Error", "Error al guardar los datos en Firebase", "error");
     }
