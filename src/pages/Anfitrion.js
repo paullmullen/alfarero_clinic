@@ -1,26 +1,24 @@
 import React, { useEffect, useState } from "react";
-import {
-  Table,
-  Image,
-  Alert,
-  Divider,
-  Typography,
-  Space,
-  Row,
-  Col,
-  Popover,
-} from "antd";
+import { Table, Image, Space, Popover } from "antd";
 import { firestore } from "./../helpers/firebaseConfig";
+import { handleStatusChange } from "./../helpers/updateStationStatus";
 import { useHideMenu } from "../hooks/useHideMenu";
 import StationEnum from "../helpers/stationEnum";
-const { Title } = Typography;
+import { AlertInfo } from "../components/AlertInfo";
 
 export const Anfitrion = () => {
   useHideMenu(true);
   const [data, setData] = useState([]);
-  const [alignment, setAlignment] = useState("start");
-  const [direction, setDirection] = useState("horizontal");
+  const [station, setStation] = useState("");
+  const [hoveredRowKey, setHoveredRowKey] = useState(null);
 
+  const handleMouseEnter = (record) => {
+    setHoveredRowKey(record.pt_no);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredRowKey("");
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -29,7 +27,7 @@ export const Anfitrion = () => {
       try {
         const collectionRef = firestore.collection("patients");
         const snapshot = await collectionRef.orderBy("start_time").get();
-        const initialData = snapshot.docs.map((doc) => {
+        const initialData = snapshot.docs?.map((doc) => {
           return doc.data();
         });
 
@@ -38,7 +36,7 @@ export const Anfitrion = () => {
         }
 
         const unsubscribe = collectionRef.onSnapshot((snapshot) => {
-          const updatedData = snapshot.docs.map((doc) => doc.data());
+          const updatedData = snapshot.docs?.map((doc) => doc.data());
 
           if (isMounted) {
             setData(updatedData);
@@ -61,9 +59,8 @@ export const Anfitrion = () => {
     };
   }, []);
 
-  const renderStatusIcon = (status, record) => {
+  const renderStatusIcon = (status, station) => {
     let statusIcon = null;
-    console.log(record);
     switch (status) {
       case "pending":
         statusIcon = (
@@ -73,6 +70,9 @@ export const Anfitrion = () => {
               width={20}
               height={80}
               preview={false}
+              onMouseEnter={() => {
+                setStation(station);
+              }}
             />
           </Popover>
         );
@@ -85,6 +85,9 @@ export const Anfitrion = () => {
               width={20}
               height={80}
               preview={false}
+              onMouseEnter={() => {
+                setStation(station);
+              }}
             />
           </Popover>
         );
@@ -97,6 +100,9 @@ export const Anfitrion = () => {
               width={20}
               height={80}
               preview={false}
+              onMouseEnter={() => {
+                setStation(station);
+              }}
             />
           </Popover>
         );
@@ -104,25 +110,31 @@ export const Anfitrion = () => {
       case "pay":
         statusIcon = (
           <Popover content={content} title="Cambiar estatus" trigger="hover">
-          <Image
-            src={require("../img/pay.svg")}
-            width={20}
-            height={80}
-            preview={false}
-          />
-        </Popover>
+            <Image
+              src={require("../img/pay.svg")}
+              width={20}
+              height={80}
+              preview={false}
+              onMouseEnter={() => {
+                setStation(station);
+              }}
+            />
+          </Popover>
         );
         break;
       case "complete":
         statusIcon = (
           <Popover content={content} title="Cambiar estatus" trigger="hover">
-          <Image
-            src={require("../img/complete.svg")}
-            width={20}
-            height={80}
-            preview={false}
-          />
-        </Popover>
+            <Image
+              src={require("../img/complete.svg")}
+              width={20}
+              height={80}
+              preview={false}
+              onMouseEnter={() => {
+                setStation(station);
+              }}
+            />
+          </Popover>
         );
         break;
       default:
@@ -139,6 +151,9 @@ export const Anfitrion = () => {
         width={20}
         height={80}
         preview={false}
+        onClick={() =>
+          handleStatusChange("not_planned", hoveredRowKey, station)
+        }
       />
 
       <Image
@@ -146,6 +161,7 @@ export const Anfitrion = () => {
         width={20}
         height={80}
         preview={false}
+        onClick={() => handleStatusChange("in_process", hoveredRowKey, station)}
       />
 
       <Image
@@ -153,6 +169,7 @@ export const Anfitrion = () => {
         width={20}
         height={80}
         preview={false}
+        onClick={() => handleStatusChange("waiting", hoveredRowKey, station)}
       />
 
       <Image
@@ -160,6 +177,7 @@ export const Anfitrion = () => {
         width={20}
         height={80}
         preview={false}
+        onClick={() => handleStatusChange("pay", hoveredRowKey, station)}
       />
 
       <Image
@@ -167,32 +185,33 @@ export const Anfitrion = () => {
         width={20}
         height={80}
         preview={false}
+        onClick={() => handleStatusChange("complete", hoveredRowKey, station)}
       />
     </Space>
   );
 
   const generateTableData = (extractedPlanOfCare) => {
     const uniqueStations = {};
-    extractedPlanOfCare.forEach((item) => {
-      // eslint-disable-next-line no-unused-expressions
-      item.plan_of_care?.forEach((plan) => {
-        if (!uniqueStations[plan.station]) {
-          uniqueStations[plan.station] = {
-            dataIndex: plan.station,
-            key: plan.station,
-            title: StationEnum[plan.station],
-            render: (status, record) => renderStatusIcon(status),
-            width: 100,
-            align: "center",
-          };
-        }
-      });
-    });
 
     extractedPlanOfCare.sort((a, b) => {
       const startTimeA = new Date(a.start_time.toMillis());
       const startTimeB = new Date(b.start_time.toMillis());
       return startTimeA - startTimeB;
+    });
+    extractedPlanOfCare.forEach((item) => {
+      // eslint-disable-next-line no-unused-expressions
+      return item.plan_of_care?.forEach((plan) => {
+        if (!uniqueStations[plan.station]) {
+          uniqueStations[plan.station] = {
+            dataIndex: plan.station,
+            key: plan.station,
+            title: StationEnum[plan.station],
+            render: (status) => renderStatusIcon(status, plan.station),
+            width: 100,
+            align: "center",
+          };
+        }
+      });
     });
 
     const columns = [
@@ -213,7 +232,7 @@ export const Anfitrion = () => {
       },
     ];
 
-    const dataSource = extractedPlanOfCare.map((item) => {
+    const dataSource = extractedPlanOfCare?.map((item, index) => {
       const stations = {};
       item.plan_of_care.forEach((plan) => {
         stations[plan.station] = plan.status;
@@ -230,83 +249,13 @@ export const Anfitrion = () => {
 
   const { columns, dataSource } = generateTableData(data);
 
-  const handleStatusChange = (record, value) => {
-    const updatedPlanOfCare = record.plan_of_care.map((item) => {
-      if (item.station) {
-        return {
-          ...item,
-          status: value,
-        };
-      }
-      return item;
-    });
-
-    firestore.collection("patients").doc(record.pt_no).update({
-      plan_of_care: updatedPlanOfCare,
-    });
-  };
-
-
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";
   };
 
   return (
     <>
-      <Alert
-        message="Información del Estatus del Paciente "
-        description={
-          <Row justify="center">
-            <Col xs={24} sm={12} md={8} lg={24} style={{ textAlign: "center" }}>
-              <Space
-                direction={direction}
-                align={alignment === "start" ? "start" : "center"}
-                wrap
-              >
-                <Space>
-                  <Image
-                    src={require("../img/waiting.svg")}
-                    width={20}
-                    height={80}
-                  />
-                  <Title level={5}>{"Paciente en espera "}</Title>
-                </Space>
-                <Divider />
-                <Space>
-                  <Image
-                    src={require("../img/in_process.svg")}
-                    width={20}
-                    height={80}
-                  />
-                  <Title level={5}>{"Paciente siendo atendido "}</Title>
-                </Space>
-                <Divider />
-                <Space>
-                  <Image
-                    src={require("../img/pay.svg")}
-                    width={20}
-                    height={80}
-                  />
-                  <Title level={5}> {"Paciente realizó el pago "}</Title>
-                </Space>
-                <Divider />
-                <Space>
-                  <Image
-                    src={require("../img/complete.svg")}
-                    width={20}
-                    height={80}
-                  />
-                  <Title level={5}> {"Paciente completó su visita "}</Title>
-                </Space>
-              </Space>
-            </Col>
-          </Row>
-        }
-        type="info"
-        showIcon
-      />
-
-      <Divider />
+      <AlertInfo />
       <Table
         rowKey={"pt_no"}
         columns={columns}
@@ -315,6 +264,10 @@ export const Anfitrion = () => {
         sticky
         offsetScroll={3}
         rowClassName={getRowClassName}
+        onRow={(record) => ({
+          onMouseEnter: () => handleMouseEnter(record),
+          onMouseLeave: () => handleMouseLeave(),
+        })}
       />
     </>
   );

@@ -52,3 +52,6 @@
 h5 {
   margin-top: 9px !important;
 }
+.ant-image-img {
+  cursor: pointer !important;
+}
