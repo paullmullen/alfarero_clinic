@@ -55,3 +55,11 @@ h5 {
 .ant-image-img {
   cursor: pointer !important;
 }
+.ant-popover-title {
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.ant-popover-inner-content {
+  background: #f0f0f0;
+}

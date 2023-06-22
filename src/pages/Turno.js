@@ -16,7 +16,7 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/not_planned.svg")}
-            width={20}
+            width={30}
             height={80}
             preview={false}
           />
@@ -26,7 +26,7 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/in_process.svg")}
-            width={20}
+            width={30}
             height={80}
             preview={false}
           />
@@ -36,7 +36,7 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/waiting.svg")}
-            width={20}
+            width={30}
             height={80}
             preview={false}
           />
@@ -46,7 +46,7 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/pay.svg")}
-            width={20}
+            width={30}
             height={80}
             preview={false}
           />
@@ -56,14 +56,91 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/complete.svg")}
-            width={20}
+            width={30}
+            height={80}
+            preview={false}
+          />
+        );
+        break;
+      case "1":
+        statusIcon = (
+          <Image
+            src={require("../img/1.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
+        );
+        break;
+      case "2":
+        statusIcon = (
+          <Image
+            src={require("../img/2.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
+        );
+        break;
+      case "3":
+        statusIcon = (
+          <Image
+            src={require("../img/3.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
+        );
+        break;
+      case "4":
+        statusIcon = (
+          <Image
+            src={require("../img/4.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
+        );
+        break;
+      case "5":
+        statusIcon = (
+          <Image
+            src={require("../img/5.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
+        );
+        break;
+      case "6":
+        statusIcon = (
+          <Image
+            src={require("../img/6.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
+        );
+        break;
+      case "7":
+        statusIcon = (
+          <Image
+            src={require("../img/7.svg")}
+            width={30}
             height={80}
             preview={false}
           />
         );
         break;
       default:
-        statusIcon = null;
+        statusIcon = (
+          <Image
+            src={require("../img/not_planned.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
+        );
         break;
     }
     return statusIcon;

@@ -75,7 +75,7 @@ export const Anfitrion = () => {
           <Popover content={content} title="Cambiar estatus" trigger="hover">
             <Image
               src={require("../img/not_planned.svg")}
-              width={20}
+              width={30}
               height={80}
               preview={false}
               onMouseEnter={() => {
@@ -90,7 +90,7 @@ export const Anfitrion = () => {
           <Popover content={content} title="Cambiar estatus" trigger="hover">
             <Image
               src={require("../img/in_process.svg")}
-              width={20}
+              width={30}
               height={80}
               preview={false}
               onMouseEnter={() => {
@@ -105,7 +105,7 @@ export const Anfitrion = () => {
           <Popover content={content} title="Cambiar estatus" trigger="hover">
             <Image
               src={require("../img/waiting.svg")}
-              width={20}
+              width={30}
               height={80}
               preview={false}
               onMouseEnter={() => {
@@ -120,7 +120,7 @@ export const Anfitrion = () => {
           <Popover content={content} title="Cambiar estatus" trigger="hover">
             <Image
               src={require("../img/pay.svg")}
-              width={20}
+              width={30}
               height={80}
               preview={false}
               onMouseEnter={() => {
@@ -135,7 +135,112 @@ export const Anfitrion = () => {
           <Popover content={content} title="Cambiar estatus" trigger="hover">
             <Image
               src={require("../img/complete.svg")}
-              width={20}
+              width={30}
+              height={80}
+              preview={false}
+              onMouseEnter={() => {
+                setStation(station);
+              }}
+            />
+          </Popover>
+        );
+        break;
+      case "1":
+        statusIcon = (
+          <Popover content={content} title="Cambiar estatus" trigger="hover">
+            <Image
+              src={require("../img/1.svg")}
+              width={30}
+              height={80}
+              preview={false}
+              onMouseEnter={() => {
+                setStation(station);
+              }}
+            />
+          </Popover>
+        );
+        break;
+      case "2":
+        statusIcon = (
+          <Popover content={content} title="Cambiar estatus" trigger="hover">
+            <Image
+              src={require("../img/2.svg")}
+              width={30}
+              height={80}
+              preview={false}
+              onMouseEnter={() => {
+                setStation(station);
+              }}
+            />
+          </Popover>
+        );
+        break;
+      case "3":
+        statusIcon = (
+          <Popover content={content} title="Cambiar estatus" trigger="hover">
+            <Image
+              src={require("../img/3.svg")}
+              width={30}
+              height={80}
+              preview={false}
+              onMouseEnter={() => {
+                setStation(station);
+              }}
+            />
+          </Popover>
+        );
+        break;
+      case "4":
+        statusIcon = (
+          <Popover content={content} title="Cambiar estatus" trigger="hover">
+            <Image
+              src={require("../img/4.svg")}
+              width={30}
+              height={80}
+              preview={false}
+              onMouseEnter={() => {
+                setStation(station);
+              }}
+            />
+          </Popover>
+        );
+        break;
+      case "5":
+        statusIcon = (
+          <Popover content={content} title="Cambiar estatus" trigger="hover">
+            <Image
+              src={require("../img/5.svg")}
+              width={30}
+              height={80}
+              preview={false}
+              onMouseEnter={() => {
+                setStation(station);
+              }}
+            />
+          </Popover>
+        );
+        break;
+      case "6":
+        statusIcon = (
+          <Popover content={content} title="Cambiar estatus" trigger="hover">
+            <Image
+              src={require("../img/6.svg")}
+              width={30}
+              height={80}
+              preview={false}
+              onMouseEnter={() => {
+                setStation(station);
+              }}
+            />
+          </Popover>
+        );
+        break;
+      case "7":
+        statusIcon = (
+          <Popover content={content} title="Cambiar estatus" trigger="hover">
+            <Image
+              src={require("../img/7.svg")}
+              width={30}
               height={80}
               preview={false}
               onMouseEnter={() => {
@@ -146,7 +251,19 @@ export const Anfitrion = () => {
         );
         break;
       default:
-        statusIcon = null;
+        statusIcon = (
+          <Popover content={content} title="Cambiar estatus" trigger="hover">
+            <Image
+              src={require("../img/not_planned.svg")}
+              width={30}
+              height={80}
+              preview={false}
+              onMouseEnter={() => {
+                setStation(station);
+              }}
+            />
+          </Popover>
+        );
         break;
     }
     return statusIcon;
@@ -156,7 +273,7 @@ export const Anfitrion = () => {
     <Space wrap>
       <Image
         src={require("../img/not_planned.svg")}
-        width={20}
+        width={30}
         height={80}
         preview={false}
         onClick={() =>
@@ -166,7 +283,7 @@ export const Anfitrion = () => {
 
       <Image
         src={require("../img/in_process.svg")}
-        width={20}
+        width={30}
         height={80}
         preview={false}
         onClick={() => handleStatusChange("in_process", hoveredRowKey, station)}
@@ -174,7 +291,7 @@ export const Anfitrion = () => {
 
       <Image
         src={require("../img/waiting.svg")}
-        width={20}
+        width={30}
         height={80}
         preview={false}
         onClick={() => handleStatusChange("waiting", hoveredRowKey, station)}
@@ -182,7 +299,7 @@ export const Anfitrion = () => {
 
       <Image
         src={require("../img/pay.svg")}
-        width={20}
+        width={30}
         height={80}
         preview={false}
         onClick={() => handleStatusChange("pay", hoveredRowKey, station)}
@@ -190,10 +307,60 @@ export const Anfitrion = () => {
 
       <Image
         src={require("../img/complete.svg")}
-        width={20}
+        width={30}
         height={80}
         preview={false}
         onClick={() => handleStatusChange("complete", hoveredRowKey, station)}
+      />
+
+      <Image
+        src={require("../img/1.svg")}
+        width={30}
+        height={80}
+        preview={false}
+        onClick={() => handleStatusChange("1", hoveredRowKey, station)}
+      />
+      <Image
+        src={require("../img/2.svg")}
+        width={30}
+        height={80}
+        preview={false}
+        onClick={() => handleStatusChange("2", hoveredRowKey, station)}
+      />
+      <Image
+        src={require("../img/3.svg")}
+        width={30}
+        height={80}
+        preview={false}
+        onClick={() => handleStatusChange("3", hoveredRowKey, station)}
+      />
+      <Image
+        src={require("../img/4.svg")}
+        width={30}
+        height={80}
+        preview={false}
+        onClick={() => handleStatusChange("4", hoveredRowKey, station)}
+      />
+      <Image
+        src={require("../img/5.svg")}
+        width={30}
+        height={80}
+        preview={false}
+        onClick={() => handleStatusChange("5", hoveredRowKey, station)}
+      />
+      <Image
+        src={require("../img/6.svg")}
+        width={30}
+        height={80}
+        preview={false}
+        onClick={() => handleStatusChange("6", hoveredRowKey, station)}
+      />
+      <Image
+        src={require("../img/7.svg")}
+        width={30}
+        height={80}
+        preview={false}
+        onClick={() => handleStatusChange("7", hoveredRowKey, station)}
       />
     </Space>
   );
@@ -277,7 +444,7 @@ export const Anfitrion = () => {
           onMouseLeave: () => handleMouseLeave(),
         })}
       />
-         <Divider>
+      <Divider>
         <Button
           shape="round"
           type="danger"
