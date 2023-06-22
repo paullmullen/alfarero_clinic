@@ -20,10 +20,12 @@ const fetchStatsData = async () => {
   const statsSnapshot = await getDocs(statsCollection);
 
   statsSnapshot.forEach((doc) => {
-    const { station_type, number_of_patients } = doc.data();
+    const { station_type, number_of_patients, avg_waiting_time, avg_procedure_time } = doc.data();
     const dataEntry = {
       station_type,
       Pacientes: number_of_patients,
+      TiempoPromedioEspera: avg_waiting_time,
+      TiempoPromedioProcedimiento: avg_procedure_time,
       fill: "#8884d8", // Opcional: Asigna colores personalizados a cada barra
     };
     statsData.push(dataEntry);
@@ -80,8 +82,8 @@ const Stats = () => {
       <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
         Total de visitas por servicio
       </h2>
-      <div style={{ width: "100%", height: "80%", position: "relative" }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div style={{ display: "flex", width: "100%", height: "80%" }}>
+        <ResponsiveContainer width="50%" height="100%">
           <BarChart data={statsData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="station_type" />
@@ -92,6 +94,31 @@ const Stats = () => {
               {statsData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
+                  fill={barColors[entry.station_type]}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+        <ResponsiveContainer width="50%" height="100%">
+          <BarChart data={statsData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="station_type" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="TiempoPromedioEspera">
+              {statsData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={barColors[entry.station_type]}
+                />
+              ))}
+            </Bar>
+            <Bar dataKey="TiempoPromedioProcedimiento">
+              {statsData.map((entry, index) => (
+                <Cell
+                  key={`cell2-${index}`}
                   fill={barColors[entry.station_type]}
                 />
               ))}

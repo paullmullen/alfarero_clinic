@@ -33,12 +33,32 @@ const Footer = () => {
   };
 
   return (
-    <div style={{ display: "flex", flexWrap: "wrap" }}>
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        justifyContent: "center", // Centra las tarjetas horizontalmente
+      }}
+    >
       {filteredStats.map((stat, index) => (
-        <Card key={index} style={{ margin: 8, width: 300 }}>
-          <p><strong>Estacion:</strong> {stat.station_type}</p>
-          <p><strong>Promedio de espera:</strong> {stat.avg_waiting_time}</p>
-          <p><strong>Promedio del proceso:</strong> {stat.avg_procedure_time}</p>
+        <Card
+          key={index}
+          style={{
+            margin: 8,
+            flexBasis: 180, // Establece el ancho inicial de la tarjeta
+            flexGrow: 1, // Permite que la tarjeta crezca si hay espacio disponible
+            maxWidth: 180, // Establece el ancho máximo de la tarjeta
+          }}
+        >
+          <p>
+            <strong>Estacion:</strong> {stat.station_type}
+          </p>
+          <p>
+            <strong>Espera:</strong> {stat.avg_waiting_time} minutos
+          </p>
+          <p>
+            <strong>Proceso:</strong> {stat.avg_procedure_time} minutos
+          </p>
         </Card>
       ))}
     </div>
@@ -46,4 +66,3 @@ const Footer = () => {
 };
 
 export default Footer;
-
