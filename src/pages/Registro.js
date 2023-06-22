@@ -119,7 +119,7 @@ export const Registro = () => {
       pt_no: "",
       reason_for_visit: patient.motivo,
       age: patient.edad,
-      tel: patient.tel,
+      tel: patient.tel ?? null,
       start_time: new Date(),
       stop_time: new Date(),
       wait_time: 0,

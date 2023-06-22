@@ -105,15 +105,16 @@ export const Turno = () => {
         key: "countdown",
         width: 100,
         fixed: "right",
+        align: "center", // Agregado para centrar el contenido
         render: (pt_no) => {
           const remainingTime = countdown[pt_no] || 0;
           return (
-            <span style={{ color: remainingTime === 0 ? "red" : "inherit" }}>
+            <span style={{ color: remainingTime === 0 ? "red" : "inherit", fontSize: "18px" }}>
               {remainingTime} min
             </span>
           );
         },
-      },
+      },         
     ];
 
     const dataSource = extractedPlanOfCare.map((item) => {
@@ -155,7 +156,7 @@ export const Turno = () => {
         initialData.forEach((item) => {
           const pt_no = item.pt_no;
           const avgWaitingTime = item.avg_waiting_time || 0;
-          const remainingTime = Math.max(Math.ceil(avgWaitingTime / 60), 0);
+          const remainingTime = Math.max(Math.ceil(avgWaitingTime), 0);
 
           updatedCountdownData[pt_no] = countdownData[pt_no] || remainingTime;
 
