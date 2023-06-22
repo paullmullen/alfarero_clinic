@@ -20,7 +20,12 @@ const fetchStatsData = async () => {
   const statsSnapshot = await getDocs(statsCollection);
 
   statsSnapshot.forEach((doc) => {
-    const { station_type, number_of_patients, avg_waiting_time, avg_procedure_time } = doc.data();
+    const {
+      station_type,
+      number_of_patients,
+      avg_waiting_time,
+      avg_procedure_time,
+    } = doc.data();
     const dataEntry = {
       station_type,
       Pacientes: number_of_patients,

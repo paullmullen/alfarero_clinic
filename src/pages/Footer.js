@@ -27,11 +27,6 @@ const Footer = () => {
       stat.avg_waiting_time !== undefined
   );
 
-  const formatTimeInMinutes = (timeInSeconds) => {
-    const minutes = Math.floor(timeInSeconds / 60);
-    return `${minutes} minutos`;
-  };
-
   return (
     <div
       style={{

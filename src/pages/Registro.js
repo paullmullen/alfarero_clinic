@@ -1,4 +1,4 @@
-import React, { useState} from "react";
+import React, { useState } from "react";
 import {
   Form,
   Input,
@@ -62,14 +62,14 @@ export const Registro = () => {
     const currentYear = currentDate.year();
     const currentMonthYear = `${currentMonth}/${currentYear}`;
     const statsRef = firestore.collection("stats").doc(station);
-  
+
     // Obtener el documento de estadísticas de la estación actual
     const statsDoc = await statsRef.get();
-  
+
     if (statsDoc.exists) {
       // El documento de estadísticas ya existe
       const statsData = statsDoc.data();
-  
+
       if (statsData.date !== currentMonthYear) {
         // La fecha es diferente, crear un nuevo documento en la misma colección
         const newStatsRef = firestore.collection("stats").doc();
@@ -95,7 +95,7 @@ export const Registro = () => {
       };
       await statsRef.set(statsData);
     }
-  };  
+  };
 
   const handleChange = (selectedOption) => {
     generateVisits(selectedOption);
@@ -125,7 +125,9 @@ export const Registro = () => {
       wait_time: 0,
     };
 
-    const patientRef = await firestore.collection("patients").add(formattedPatient);
+    const patientRef = await firestore
+      .collection("patients")
+      .add(formattedPatient);
     const ptNo = patientRef.id;
     const updatedPatient = { ...formattedPatient, pt_no: ptNo };
 
