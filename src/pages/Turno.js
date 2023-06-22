@@ -21,6 +21,8 @@ export const Turno = () => {
   const [data, setData] = useState([]);
   const [alignment, setAlignment] = useState("start");
   const [direction, setDirection] = useState("horizontal");
+  const [countdown, setCountdown] = useState({});
+
 
   const renderStatusIcon = (status) => {
     let statusIcon = null;
@@ -100,10 +102,14 @@ export const Turno = () => {
       ...Object.values(uniqueStations),
       {
         title: "Tiempo de espera",
-        dataIndex: "",
-        key: "",
+        dataIndex: "pt_no",
+        key: "countdown",
         width: 100,
         fixed: "right",
+        render: (pt_no) => {
+          const remainingTime = countdown[pt_no] || 0;
+          return <span>{remainingTime}</span>;
+        },
       },
     ];
 
@@ -126,7 +132,7 @@ export const Turno = () => {
 
   useEffect(() => {
     let isMounted = true;
-
+  
     const fetchData = async () => {
       try {
         const collectionRef = firestore.collection("patients");
@@ -134,19 +140,37 @@ export const Turno = () => {
         const initialData = snapshot.docs.map((doc) => {
           return doc.data();
         });
-
+  
         if (isMounted) {
           setData(initialData);
         }
-
+  
+        const countdownData = {};
+        initialData.forEach((item) => {
+          const avgWaitingTime = item.avg_waiting_time || 0;
+          countdownData[item.pt_no] = avgWaitingTime;
+  
+          // Start countdown timer for each patient
+          const countdownInterval = setInterval(() => {
+            countdownData[item.pt_no] = Math.max(countdownData[item.pt_no] - 1, 0);
+            setCountdown({ ...countdownData });
+  
+            if (countdownData[item.pt_no] === 0) {
+              clearInterval(countdownInterval);
+            }
+          }, 1000); // Update countdown every second
+        });
+  
+        setCountdown(countdownData);
+  
         const unsubscribe = collectionRef.onSnapshot((snapshot) => {
           const updatedData = snapshot.docs.map((doc) => doc.data());
-
+  
           if (isMounted) {
             setData(updatedData);
           }
         });
-
+  
         return () => {
           unsubscribe();
           isMounted = false;
@@ -155,13 +179,13 @@ export const Turno = () => {
         console.log(error);
       }
     };
-
+  
     fetchData();
-
+  
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, []);  
 
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";

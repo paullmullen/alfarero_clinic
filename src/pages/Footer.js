@@ -54,10 +54,10 @@ const Footer = () => {
             <strong>Estacion:</strong> {stat.station_type}
           </p>
           <p>
-            <strong>Espera:</strong> {stat.avg_waiting_time} minutos
+            <strong>Espera:</strong> {stat.avg_waiting_time} segundos
           </p>
           <p>
-            <strong>Proceso:</strong> {stat.avg_procedure_time} minutos
+            <strong>Proceso:</strong> {stat.avg_procedure_time} segundos
           </p>
         </Card>
       ))}

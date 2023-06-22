@@ -43,7 +43,7 @@ export const Registro = () => {
         procedure_end: new Date(),
         procedure_start: new Date(),
         station: visit,
-        status: "waiting",
+        status: "pending",
         wait_end: new Date(),
         wait_start: new Date(),
       };
