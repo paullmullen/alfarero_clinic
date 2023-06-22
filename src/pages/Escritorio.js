@@ -276,6 +276,11 @@ const handleStatusChange = async (record, value) => {
       await statsDocRef.update({
         avg_waiting_time: waitingAverage,
       });
+
+      // Guardar el promedio también en la colección "patients"
+      await firestore.collection("patients").doc(record.pt_no).update({
+        avg_waiting_time: waitingAverage,
+      });
     }
 
     if (procedure_time_data && number_of_patients) {
@@ -283,10 +288,14 @@ const handleStatusChange = async (record, value) => {
       await statsDocRef.update({
         avg_procedure_time: procedureAverage,
       });
+
+      // Guardar el promedio también en la colección "patients"
+      await firestore.collection("patients").doc(record.pt_no).update({
+        avg_procedure_time: procedureAverage,
+      });
     }
   }
 };
-
 
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";
