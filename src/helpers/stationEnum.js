@@ -9,8 +9,7 @@ const StationEnum = {
   pha: "Farmacia",
   lab: "Laboratorio",
   pra: "Sala de Procedimientos A",
-  fin: "Finalizar",
-  pay: "Pago",
+  pfm: 'Anfitrión'
 };
 
 export default StationEnum;

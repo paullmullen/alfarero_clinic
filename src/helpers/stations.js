@@ -9,6 +9,5 @@ export const stations = [
   { value: "pha", label: "Farmacia" },
   { value: "lab", label: "Laboratorio" },
   { value: "pra", label: "Práctica" },
-  { value: "pay", label: "Pago" },
-  { value: "fin", label: "Finalizar" },
+  { value: "pfm", label: "Anfitrión" },
 ];

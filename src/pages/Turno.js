@@ -1,24 +1,13 @@
 import React, { useEffect, useState } from "react";
-import {
-  Table,
-  Image,
-  Alert,
-  Divider,
-  Typography,
-  Space,
-  Row,
-  Col,
-} from "antd";
+import { Table, Image } from "antd";
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
 import StationEnum from "../helpers/stationEnum";
-const { Title } = Typography;
+import { AlertInfo } from "../components/AlertInfo";
 
 export const Turno = () => {
   useHideMenu(true);
   const [data, setData] = useState([]);
-  const [alignment, setAlignment] = useState("start");
-  const [direction, setDirection] = useState("horizontal");
 
   const renderStatusIcon = (status) => {
     let statusIcon = null;
@@ -27,8 +16,9 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/not_planned.svg")}
-            width={20}
+            width={30}
             height={80}
+            preview={false}
           />
         );
         break;
@@ -36,28 +26,121 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/in_process.svg")}
-            width={20}
+            width={30}
             height={80}
+            preview={false}
           />
         );
         break;
       case "waiting":
         statusIcon = (
-          <Image src={require("../img/waiting.svg")} width={20} height={80} />
+          <Image
+            src={require("../img/waiting.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
         );
         break;
       case "pay":
         statusIcon = (
-          <Image src={require("../img/pay.svg")} width={20} height={80} />
+          <Image
+            src={require("../img/pay.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
         );
         break;
       case "complete":
         statusIcon = (
-          <Image src={require("../img/complete.svg")} width={20} height={80} />
+          <Image
+            src={require("../img/complete.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
+        );
+        break;
+      case "1":
+        statusIcon = (
+          <Image
+            src={require("../img/1.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
+        );
+        break;
+      case "2":
+        statusIcon = (
+          <Image
+            src={require("../img/2.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
+        );
+        break;
+      case "3":
+        statusIcon = (
+          <Image
+            src={require("../img/3.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
+        );
+        break;
+      case "4":
+        statusIcon = (
+          <Image
+            src={require("../img/4.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
+        );
+        break;
+      case "5":
+        statusIcon = (
+          <Image
+            src={require("../img/5.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
+        );
+        break;
+      case "6":
+        statusIcon = (
+          <Image
+            src={require("../img/6.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
+        );
+        break;
+      case "7":
+        statusIcon = (
+          <Image
+            src={require("../img/7.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
         );
         break;
       default:
-        statusIcon = null;
+        statusIcon = (
+          <Image
+            src={require("../img/not_planned.svg")}
+            width={30}
+            height={80}
+            preview={false}
+          />
+        );
         break;
     }
     return statusIcon;
@@ -65,6 +148,11 @@ export const Turno = () => {
 
   const generateTableData = (extractedPlanOfCare) => {
     const uniqueStations = {};
+    extractedPlanOfCare.sort((a, b) => {
+      const startTimeA = new Date(a.start_time.toMillis());
+      const startTimeB = new Date(b.start_time.toMillis());
+      return startTimeA - startTimeB;
+    });
     extractedPlanOfCare.forEach((item) => {
       // eslint-disable-next-line no-unused-expressions
       item.plan_of_care?.forEach((plan) => {
@@ -79,12 +167,6 @@ export const Turno = () => {
           };
         }
       });
-    });
-
-    extractedPlanOfCare.sort((a, b) => {
-      const startTimeA = new Date(a.start_time.toMillis());
-      const startTimeB = new Date(b.start_time.toMillis());
-      return startTimeA - startTimeB;
     });
 
     const columns = [
@@ -167,60 +249,7 @@ export const Turno = () => {
 
   return (
     <>
-      <Alert
-        message="Información del Estatus del Paciente "
-        description={
-          <Row justify="center">
-            <Col xs={24} sm={12} md={8} lg={24} style={{ textAlign: "center" }}>
-              <Space
-                direction={direction}
-                align={alignment === "start" ? "start" : "center"}
-                wrap
-              >
-                <Space>
-                  <Image
-                    src={require("../img/waiting.svg")}
-                    width={20}
-                    height={80}
-                  />
-                  <Title level={5}>{"Paciente en espera "}</Title>
-                </Space>
-                <Divider />
-                <Space>
-                  <Image
-                    src={require("../img/in_process.svg")}
-                    width={20}
-                    height={80}
-                  />
-                  <Title level={5}>{"Paciente siendo atendido "}</Title>
-                </Space>
-                <Divider />
-                <Space>
-                  <Image
-                    src={require("../img/pay.svg")}
-                    width={20}
-                    height={80}
-                  />
-                  <Title level={5}> {"Paciente realizó el pago "}</Title>
-                </Space>
-                <Divider />
-                <Space>
-                  <Image
-                    src={require("../img/complete.svg")}
-                    width={20}
-                    height={80}
-                  />
-                  <Title level={5}> {"Paciente completó su visita "}</Title>
-                </Space>
-              </Space>
-            </Col>
-          </Row>
-        }
-        type="info"
-        showIcon
-      />
-
-      <Divider />
+      <AlertInfo />
       <Table
         rowKey={"pt_no"}
         columns={columns}
