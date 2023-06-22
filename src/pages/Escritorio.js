@@ -132,6 +132,16 @@ export const Escritorio = () => {
           />
         );
         break;
+      case "pay":
+        statusIcon = (
+          <Image
+            src={require("../img/pay.svg")}
+            width={15}
+            height={10}
+            preview={false}
+          />
+        );
+        break;
       default:
         statusIcon = null;
         break;
@@ -187,6 +197,7 @@ export const Escritorio = () => {
             <Option value="in_process">Atendiendo</Option>
             <Option value="waiting">En espera</Option>
             <Option value="complete">Finalizado</Option>
+            <Option value="pay">Pagando</Option>
           </Select>
         </div>
       ),

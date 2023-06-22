@@ -177,26 +177,45 @@ export const Registro = () => {
               <Form.Item
                 label="Edad"
                 name="edad"
-                rules={[{ required: true, message: "Ingrese su edad" }]}
-              >
-                <InputNumber min={1} max={99} />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={24}>
-            <Col xs={24} sm={24}>
-              <Form.Item
-                label="Número de télefono"
-                name="tel"
                 rules={[
                   {
-                    required: true,
-                    message: "Ingrese un número teléfonico",
-                    pattern: new RegExp(/^\d+$/),
+                    validator: (_, value) => {
+                      if (value === undefined || value === "") {
+                        return Promise.resolve();
+                      }
+                      if (value >= 1 && value <= 99) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(
+                        new Error("Ingrese una edad válida")
+                      );
+                    },
                   },
                 ]}
               >
-                <Input type={"tel"} />
+                <InputNumber min={1} max={99} />
+              </Form.Item>
+
+              <Form.Item
+                label="Número de teléfono"
+                name="tel"
+                rules={[
+                  {
+                    validator: (_, value) => {
+                      if (value === undefined || value === "") {
+                        return Promise.resolve();
+                      }
+                      if (/^\d+$/.test(value)) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(
+                        new Error("Ingrese un número telefónico válido")
+                      );
+                    },
+                  },
+                ]}
+              >
+                <Input type="tel" />
               </Form.Item>
             </Col>
           </Row>

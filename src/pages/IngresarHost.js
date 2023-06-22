@@ -104,12 +104,12 @@ export const IngresarHost = () => {
           <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
-                label="Nombre del huésped"
+                label="Nombre del anfitrión"
                 name="host"
                 rules={[
                   {
                     required: true,
-                    message: "Por favor ingrese nombre del huésped",
+                    message: "Por favor ingrese nombre del anfitrión",
                   },
                 ]}
                 {...halfLayout}

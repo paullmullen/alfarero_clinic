@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { firestore } from "./../helpers/firebaseConfig";
 import { Card } from "antd";
 
+import StationEnum from "./../helpers/stationEnum";
+
 const Footer = () => {
   const [stats, setStats] = useState([]);
 
@@ -27,6 +29,16 @@ const Footer = () => {
       stat.avg_waiting_time !== undefined
   );
 
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
+
+  const getStationName = (stationCode) => {
+    return StationEnum[stationCode] || "";
+  };
+
   return (
     <div
       style={{
@@ -46,13 +58,13 @@ const Footer = () => {
           }}
         >
           <p>
-            <strong>Estacion:</strong> {stat.station_type}
+            <strong>{getStationName(stat.station_type)}</strong> 
           </p>
           <p>
-            <strong>Espera:</strong> {stat.avg_waiting_time} segundos
+            <strong>Espera:</strong> {formatTime(stat.avg_waiting_time)} (mm:ss)
           </p>
           <p>
-            <strong>Proceso:</strong> {stat.avg_procedure_time} segundos
+            <strong>Proceso:</strong> {formatTime(stat.avg_procedure_time)} (mm:ss)
           </p>
         </Card>
       ))}
@@ -61,3 +73,4 @@ const Footer = () => {
 };
 
 export default Footer;
+
