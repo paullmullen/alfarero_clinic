@@ -108,7 +108,11 @@ export const Turno = () => {
         fixed: "right",
         render: (pt_no) => {
           const remainingTime = countdown[pt_no] || 0;
-          return <span>{remainingTime}</span>;
+          return (
+            <span style={{ color: remainingTime === 0 ? "red" : "inherit" }}>
+              {remainingTime} min
+            </span>
+          );
         },
       },
     ];
@@ -145,21 +149,32 @@ export const Turno = () => {
           setData(initialData);
         }
   
-        const countdownData = {};
+        let countdownData = JSON.parse(localStorage.getItem("countdownData")) || {};
+        const updatedCountdownData = {};
+  
         initialData.forEach((item) => {
+          const pt_no = item.pt_no;
           const avgWaitingTime = item.avg_waiting_time || 0;
-          countdownData[item.pt_no] = avgWaitingTime;
+          const remainingTime = Math.max(Math.ceil(avgWaitingTime / 60), 0);
   
-          // Start countdown timer for each patient
+          updatedCountdownData[pt_no] = countdownData[pt_no] || remainingTime;
+  
           const countdownInterval = setInterval(() => {
-            countdownData[item.pt_no] = Math.max(countdownData[item.pt_no] - 1, 0);
-            setCountdown({ ...countdownData });
+            updatedCountdownData[pt_no] = Math.max(updatedCountdownData[pt_no] - 1, 0);
+            setCountdown({ ...updatedCountdownData });
   
-            if (countdownData[item.pt_no] === 0) {
+            if (updatedCountdownData[pt_no] === 0) {
               clearInterval(countdownInterval);
             }
-          }, 1000); // Update countdown every second
+          }, 60000);
+  
+          if (updatedCountdownData[pt_no] === 0) {
+            clearInterval(countdownInterval);
+          }
         });
+  
+        countdownData = updatedCountdownData;
+        localStorage.setItem("countdownData", JSON.stringify(countdownData));
   
         setCountdown(countdownData);
   

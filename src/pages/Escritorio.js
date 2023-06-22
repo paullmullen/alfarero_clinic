@@ -258,40 +258,42 @@ const handleStatusChange = async (record, value) => {
     if (value === "waiting" && updatedItem.wait_start && updatedItem.wait_end) {
       const waitDifference = Math.abs(updatedItem.waiting_time);
       await statsDocRef.update({
-        waiting_time_data: [...(statsData.waiting_time_data || []), waitDifference],
+        waiting_time_data: [...(statsData.waiting_time_data || []), waitDifference].filter((time) => !isNaN(time)),
       });
     }
 
     if (value === "in_process" && updatedItem.procedure_start && updatedItem.procedure_end) {
       const inProcessDifference = Math.abs(updatedItem.procedure_time);
       await statsDocRef.update({
-        procedure_time_data: [...(statsData.procedure_time_data || []), inProcessDifference],
+        procedure_time_data: [...(statsData.procedure_time_data || []), inProcessDifference].filter((time) => !isNaN(time)),
       });
     }
 
     const { waiting_time_data, procedure_time_data, number_of_patients } = statsData;
 
     if (waiting_time_data && number_of_patients) {
-      const waitingAverage = Math.floor(waiting_time_data.reduce((acc, time) => acc + time, 0) / number_of_patients);
+      const validWaitingTimeData = waiting_time_data.filter((time) => !isNaN(time));
+      const waitingAverage = Math.floor(validWaitingTimeData.reduce((acc, time) => acc + time, 0) / validWaitingTimeData.length);
       await statsDocRef.update({
         avg_waiting_time: waitingAverage,
       });
 
       // Guardar el promedio también en la colección "patients"
       await firestore.collection("patients").doc(record.pt_no).update({
-        avg_waiting_time: waitingAverage,
+        avg_waiting_time: Math.floor(waitingAverage/60),
       });
     }
 
     if (procedure_time_data && number_of_patients) {
-      const procedureAverage = Math.floor(procedure_time_data.reduce((acc, time) => acc + time, 0) / number_of_patients);
+      const validProcedureTimeData = procedure_time_data.filter((time) => !isNaN(time));
+      const procedureAverage = Math.floor(validProcedureTimeData.reduce((acc, time) => acc + time, 0) / validProcedureTimeData.length);
       await statsDocRef.update({
         avg_procedure_time: procedureAverage,
       });
 
       // Guardar el promedio también en la colección "patients"
       await firestore.collection("patients").doc(record.pt_no).update({
-        avg_procedure_time: procedureAverage,
+        avg_procedure_time: Math.floor(procedureAverage / 60),
       });
     }
   }
