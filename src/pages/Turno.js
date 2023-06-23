@@ -105,16 +105,33 @@ export const Turno = () => {
         key: "countdown",
         width: 100,
         fixed: "right",
-        align: "center", // Agregado para centrar el contenido
+        align: "center",
         render: (pt_no) => {
-          const remainingTime = countdown[pt_no] || 0;
+          let remainingTime = countdown[pt_no] || 0;
+      
+          // Verificar si el remainingTime debe ser avg_procedure_time
+          const item = data.find((item) => item.pt_no === pt_no);
+          if (item) {
+            const inProcessItem = item.plan_of_care.find(
+              (planItem) => planItem.status === 'in_process'
+            );
+            if (inProcessItem) {
+              remainingTime = item.avg_procedure_time;
+            }
+          }
+      
           return (
-            <span style={{ color: remainingTime === 0 ? "red" : "inherit", fontSize: "18px" }}>
+            <span
+              style={{
+                color: remainingTime === 0 ? "red" : "inherit",
+                fontSize: "18px"
+              }}
+            >
               {remainingTime} min
             </span>
           );
         },
-      },         
+      },             
     ];
 
     const dataSource = extractedPlanOfCare.map((item) => {
@@ -136,7 +153,7 @@ export const Turno = () => {
 
   useEffect(() => {
     let isMounted = true;
-
+  
     const fetchData = async () => {
       try {
         const collectionRef = firestore.collection("patients");
@@ -144,52 +161,61 @@ export const Turno = () => {
         const initialData = snapshot.docs.map((doc) => {
           return doc.data();
         });
-
+  
         if (isMounted) {
           setData(initialData);
         }
-
+  
         let countdownData =
           JSON.parse(localStorage.getItem("countdownData")) || {};
         const updatedCountdownData = {};
-
+  
         initialData.forEach((item) => {
           const pt_no = item.pt_no;
           const avgWaitingTime = item.avg_waiting_time || 0;
-          const remainingTime = Math.max(Math.ceil(avgWaitingTime), 0);
-
+          let remainingTime = Math.max(Math.ceil(avgWaitingTime), 0);
+  
+          // Verificar si algún objeto en el arreglo plan_of_care tiene status 'in_process'
+          const inProcessItem = item.plan_of_care.find(
+            (planItem) => planItem.status === 'in_process'
+          );
+  
+          if (inProcessItem) {
+            remainingTime = item.avg_procedure_time;
+          }
+  
           updatedCountdownData[pt_no] = countdownData[pt_no] || remainingTime;
-
+  
           const countdownInterval = setInterval(() => {
             updatedCountdownData[pt_no] = Math.max(
               updatedCountdownData[pt_no] - 1,
               0
             );
             setCountdown({ ...updatedCountdownData });
-
+  
             if (updatedCountdownData[pt_no] === 0) {
               clearInterval(countdownInterval);
             }
           }, 60000);
-
+  
           if (updatedCountdownData[pt_no] === 0) {
             clearInterval(countdownInterval);
           }
         });
-
+  
         countdownData = updatedCountdownData;
         localStorage.setItem("countdownData", JSON.stringify(countdownData));
-
+  
         setCountdown(countdownData);
-
+  
         const unsubscribe = collectionRef.onSnapshot((snapshot) => {
           const updatedData = snapshot.docs.map((doc) => doc.data());
-
+  
           if (isMounted) {
             setData(updatedData);
           }
         });
-
+  
         return () => {
           unsubscribe();
           isMounted = false;
@@ -198,13 +224,13 @@ export const Turno = () => {
         console.log(error);
       }
     };
-
+  
     fetchData();
-
+  
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, []);  
 
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";
@@ -264,7 +290,6 @@ export const Turno = () => {
         type="info"
         showIcon
       />
-
       <Divider />
       <Table
         rowKey={"pt_no"}
