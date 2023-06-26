@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Table, Image } from "antd";
+import { Table, Image, Typography } from "antd";
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
 import StationEnum from "../helpers/stationEnum";
