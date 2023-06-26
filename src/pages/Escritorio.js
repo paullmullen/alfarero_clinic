@@ -307,7 +307,7 @@ export const Escritorio = () => {
         );
         const waitingAverage = Math.floor(
           validWaitingTimeData.reduce((acc, time) => acc + time, 0) /
-            validWaitingTimeData.length
+            number_of_patients
         );
         await statsDocRef.update({
           avg_waiting_time: waitingAverage,
@@ -318,7 +318,7 @@ export const Escritorio = () => {
           .collection("patients")
           .doc(record.pt_no)
           .update({
-            avg_waiting_time: Math.floor(waitingAverage / 60),
+            avg_time: Math.floor(waitingAverage / 60),
           });
       }
 
@@ -328,19 +328,21 @@ export const Escritorio = () => {
         );
         const procedureAverage = Math.floor(
           validProcedureTimeData.reduce((acc, time) => acc + time, 0) /
-            validProcedureTimeData.length
+            number_of_patients
         );
         await statsDocRef.update({
           avg_procedure_time: procedureAverage,
         });
 
-        // Guardar el promedio también en la colección "patients"
+        if (value === 'in_process') {
+
         await firestore
           .collection("patients")
           .doc(record.pt_no)
           .update({
-            avg_procedure_time: Math.floor(procedureAverage / 60),
+            avg_time: Math.floor(procedureAverage / 60),
           });
+        }
       }
     }
   };

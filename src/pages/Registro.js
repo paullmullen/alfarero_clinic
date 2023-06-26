@@ -118,7 +118,7 @@ export const Registro = () => {
       plan_of_care: patientPlanOfCare,
       pt_no: "",
       reason_for_visit: patient.motivo,
-      age: patient.edad,
+      age: patient.edad !== undefined ? patient.edad : null,
       tel: patient.tel ?? null,
       start_time: new Date(),
       stop_time: new Date(),

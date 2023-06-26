@@ -107,18 +107,7 @@ export const Turno = () => {
         fixed: "right",
         align: "center",
         render: (pt_no) => {
-          let remainingTime = countdown[pt_no] || 0;
-      
-          // Verificar si el remainingTime debe ser avg_procedure_time
-          const item = data.find((item) => item.pt_no === pt_no);
-          if (item) {
-            const inProcessItem = item.plan_of_care.find(
-              (planItem) => planItem.status === 'in_process'
-            );
-            if (inProcessItem) {
-              remainingTime = item.avg_procedure_time;
-            }
-          }
+          const remainingTime = countdown[pt_no] || 0;
       
           return (
             <span
@@ -166,25 +155,14 @@ export const Turno = () => {
           setData(initialData);
         }
   
-        let countdownData =
-          JSON.parse(localStorage.getItem("countdownData")) || {};
         const updatedCountdownData = {};
   
         initialData.forEach((item) => {
           const pt_no = item.pt_no;
-          const avgWaitingTime = item.avg_waiting_time || 0;
-          let remainingTime = Math.max(Math.ceil(avgWaitingTime), 0);
+          const avgWaitingTime = item.avg_time || 0;
+          const remainingTime = Math.max(Math.ceil(avgWaitingTime), 0);
   
-          // Verificar si algún objeto en el arreglo plan_of_care tiene status 'in_process'
-          const inProcessItem = item.plan_of_care.find(
-            (planItem) => planItem.status === 'in_process'
-          );
-  
-          if (inProcessItem) {
-            remainingTime = item.avg_procedure_time;
-          }
-  
-          updatedCountdownData[pt_no] = countdownData[pt_no] || remainingTime;
+          updatedCountdownData[pt_no] = remainingTime;
   
           const countdownInterval = setInterval(() => {
             updatedCountdownData[pt_no] = Math.max(
@@ -203,10 +181,7 @@ export const Turno = () => {
           }
         });
   
-        countdownData = updatedCountdownData;
-        localStorage.setItem("countdownData", JSON.stringify(countdownData));
-  
-        setCountdown(countdownData);
+        setCountdown(updatedCountdownData);
   
         const unsubscribe = collectionRef.onSnapshot((snapshot) => {
           const updatedData = snapshot.docs.map((doc) => doc.data());
