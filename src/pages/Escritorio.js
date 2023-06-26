@@ -334,13 +334,16 @@ export const Escritorio = () => {
           avg_procedure_time: procedureAverage,
         });
 
-        if (value === 'in_process') {
-
-        await firestore
-          .collection("patients")
-          .doc(record.pt_no)
-          .update({
-            avg_time: Math.floor(procedureAverage / 60),
+        if (value === "in_process") {
+          await firestore
+            .collection("patients")
+            .doc(record.pt_no)
+            .update({
+              avg_time: Math.floor(procedureAverage / 60),
+            });
+        } else if (value !== "in_process" && value !== "waiting") {
+          await firestore.collection("patients").doc(record.pt_no).update({
+            avg_time: 0,
           });
         }
       }
