@@ -7,6 +7,7 @@ import { useHistory } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
 import StationEnum from "../helpers/stationEnum";
 import { AlertInfo } from "../components/AlertInfo";
+import Footer from "./Footer";
 
 export const Anfitrion = () => {
   useHideMenu(true);
@@ -527,6 +528,7 @@ export const Anfitrion = () => {
           Salir
         </Button>
       </Divider>
+      <Footer />
     </>
   );
 };
