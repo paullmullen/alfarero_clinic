@@ -132,6 +132,16 @@ export const Turno = () => {
           />
         );
         break;
+        case "fin":
+          statusIcon = (
+            <Image
+              src={require("../img/fin.png")}
+              width={45}
+              height={35}
+              preview={false}
+            />
+          );
+          break;
       default:
         statusIcon = (
           <Image

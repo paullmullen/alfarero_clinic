@@ -29,5 +29,26 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
       .catch((error) => {
         console.log("Error getting document:", error);
       });
-  }
+  } 
+};
+
+export const handleDelete = async (hoveredRowKey) => {
+  const docPatientRefFin = firestore.collection("patients").doc(hoveredRowKey);
+
+  if (docPatientRefFin) {
+    docPatientRefFin
+      .get()
+      .then((doc) => {
+        if (doc.exists) {
+          docPatientRefFin.update({
+            complete: true
+          });
+        } else {
+          console.log("No such document!");
+        }
+      })
+      .catch((error) => {
+        console.log("Error getting document:", error);
+      });
+  } 
 };

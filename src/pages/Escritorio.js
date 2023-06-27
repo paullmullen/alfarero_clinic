@@ -134,6 +134,16 @@ export const Escritorio = () => {
           />
         );
         break;
+        case "fin":
+        statusIcon = (
+          <Image
+            src={require("../img/fin.png")}
+            width={20}
+            height={15}
+            preview={false}
+          />
+        );
+        break;
       default:
         statusIcon = null;
         break;
