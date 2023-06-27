@@ -53,7 +53,7 @@ export const RouterPage = () => {
     {
       key: "6",
       icon: <BarChartOutlined />,
-      label: <Link to="/estadisticas">Estadisticas de hoy</Link>,
+      label: <Link to="/estadisticas">Estadisticas</Link>,
     },
   ];
 

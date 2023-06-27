@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Table, Image } from "antd";
+import { Table, Image, Typography } from "antd";
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
 import StationEnum from "../helpers/stationEnum";
 import { AlertInfo } from "../components/AlertInfo";
+import Footer from "./Footer";
+
+const { Title } = Typography;
 
 export const Turno = () => {
   useHideMenu(true);
   const [data, setData] = useState([]);
+  const [alignment, setAlignment] = useState("start");
+  const [direction, setDirection] = useState("horizontal");
+  const [countdown, setCountdown] = useState({});
 
   const renderStatusIcon = (status) => {
     let statusIcon = null;
@@ -190,10 +196,25 @@ export const Turno = () => {
       ...Object.values(uniqueStations),
       {
         title: "Tiempo de espera",
-        dataIndex: "",
-        key: "",
+        dataIndex: "pt_no",
+        key: "countdown",
         width: 100,
         fixed: "right",
+        align: "center",
+        render: (pt_no) => {
+          const remainingTime = countdown[pt_no] || 0;
+
+          return (
+            <span
+              style={{
+                color: remainingTime === 0 ? "red" : "inherit",
+                fontSize: "18px",
+              }}
+            >
+              {remainingTime} min
+            </span>
+          );
+        },
       },
     ];
 
@@ -214,6 +235,8 @@ export const Turno = () => {
 
   const { columns, dataSource } = generateTableData(data);
 
+  // ...
+
   useEffect(() => {
     let isMounted = true;
 
@@ -228,6 +251,46 @@ export const Turno = () => {
         if (isMounted) {
           setData(initialData);
         }
+
+        const updatedCountdownData = {};
+
+        initialData.forEach((item) => {
+          const pt_no = item.pt_no;
+          const avgWaitingTime = item.avg_time || 0;
+          const remainingTime = Math.max(Math.ceil(avgWaitingTime), 0);
+
+          updatedCountdownData[pt_no] = remainingTime;
+
+          const countdownInterval = setInterval(() => {
+            updatedCountdownData[pt_no] = Math.max(
+              updatedCountdownData[pt_no] - 1,
+              0
+            );
+            setCountdown({ ...updatedCountdownData });
+
+            if (updatedCountdownData[pt_no] === 0) {
+              clearInterval(countdownInterval);
+            }
+          }, 60000);
+
+          if (updatedCountdownData[pt_no] === 0) {
+            clearInterval(countdownInterval);
+          }
+        });
+
+        const hasWaitingOrInProgress = initialData.some((item) =>
+          item.plan_of_care?.some(
+            (plan) => plan.status === "waiting" || plan.status === "in_process"
+          )
+        );
+
+        if (!hasWaitingOrInProgress) {
+          Object.keys(updatedCountdownData).forEach((pt_no) => {
+            updatedCountdownData[pt_no] = 0;
+          });
+        }
+
+        setCountdown(updatedCountdownData);
 
         const unsubscribe = collectionRef.onSnapshot((snapshot) => {
           const updatedData = snapshot.docs.map((doc) => doc.data());
@@ -269,6 +332,7 @@ export const Turno = () => {
         offsetScroll={3}
         rowClassName={getRowClassName}
       />
+      <Footer />
     </>
   );
 };
