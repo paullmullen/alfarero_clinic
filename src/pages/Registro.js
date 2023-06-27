@@ -43,7 +43,7 @@ export const Registro = () => {
         procedure_end: new Date(),
         procedure_start: new Date(),
         station: visit,
-        status: "waiting",
+        status: "pending",
         wait_end: new Date(),
         wait_start: new Date(),
       };
@@ -118,8 +118,8 @@ export const Registro = () => {
       plan_of_care: patientPlanOfCare,
       pt_no: "",
       reason_for_visit: patient.motivo,
-      age: patient.edad,
-      tel: patient.tel,
+      age: patient.edad !== undefined ? patient.edad : null,
+      tel: patient.tel ?? null,
       start_time: new Date(),
       stop_time: new Date(),
       wait_time: 0,
@@ -177,26 +177,45 @@ export const Registro = () => {
               <Form.Item
                 label="Edad"
                 name="edad"
-                rules={[{ required: true, message: "Ingrese su edad" }]}
-              >
-                <InputNumber min={1} max={99} />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={24}>
-            <Col xs={24} sm={24}>
-              <Form.Item
-                label="Número de télefono"
-                name="tel"
                 rules={[
                   {
-                    required: true,
-                    message: "Ingrese un número teléfonico",
-                    pattern: new RegExp(/^\d+$/),
+                    validator: (_, value) => {
+                      if (value === undefined || value === "") {
+                        return Promise.resolve();
+                      }
+                      if (value >= 1 && value <= 99) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(
+                        new Error("Ingrese una edad válida")
+                      );
+                    },
                   },
                 ]}
               >
-                <Input type={"tel"} />
+                <InputNumber min={1} max={99} />
+              </Form.Item>
+
+              <Form.Item
+                label="Número de teléfono"
+                name="tel"
+                rules={[
+                  {
+                    validator: (_, value) => {
+                      if (value === undefined || value === "") {
+                        return Promise.resolve();
+                      }
+                      if (/^\d+$/.test(value)) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(
+                        new Error("Ingrese un número telefónico válido")
+                      );
+                    },
+                  },
+                ]}
+              >
+                <Input type="tel" />
               </Form.Item>
             </Col>
           </Row>
