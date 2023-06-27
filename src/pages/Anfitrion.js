@@ -41,7 +41,7 @@ export const Anfitrion = () => {
         });
 
         if (isMounted) {
-          setData(initialData);
+          setData(initialData.filter((item) => item.complete !== true));
         }
 
       const unsubscribe = collectionRef.onSnapshot((snapshot) => {
