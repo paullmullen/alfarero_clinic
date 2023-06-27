@@ -29,8 +29,8 @@ const fetchStatsData = async () => {
     const dataEntry = {
       station_type,
       Pacientes: number_of_patients,
-      TiempoPromedioEspera: avg_waiting_time,
-      TiempoPromedioProcedimiento: avg_procedure_time,
+      "Tiempo Promedio Espera": avg_waiting_time,
+      "Tiempo Promedio Procedimiento": avg_procedure_time,
       fill: "#8884d8", // Opcional: Asigna colores personalizados a cada barra
     };
     statsData.push(dataEntry);
@@ -112,7 +112,7 @@ const Stats = () => {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="TiempoPromedioEspera">
+            <Bar dataKey="Tiempo Promedio Espera">
               {statsData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
@@ -120,7 +120,7 @@ const Stats = () => {
                 />
               ))}
             </Bar>
-            <Bar dataKey="TiempoPromedioProcedimiento">
+            <Bar dataKey="Tiempo Promedio Procedimiento">
               {statsData.map((entry, index) => (
                 <Cell
                   key={`cell2-${index}`}
