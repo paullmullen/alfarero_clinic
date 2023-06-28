@@ -222,7 +222,7 @@ export const Escritorio = () => {
           onClick={() => handleCompleteChange(record)}
           style={{ color: complete ? "green" : "red", cursor: "pointer" }}
         >
-          {complete ? "Completo" : "Remover"}
+          {complete ? "Completo" : "Eliminar"}
         </Link>
       ),
     },

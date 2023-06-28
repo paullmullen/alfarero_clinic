@@ -335,19 +335,7 @@ export const Anfitrion = () => {
         );
         break;
       default:
-        statusIcon = (
-          <Popover content={content} title="Cambiar estatus" trigger="hover">
-            <Image
-              src={require("../img/not_planned.svg")}
-              width={30}
-              height={80}
-              preview={false}
-              onMouseEnter={() => {
-                setStation(station);
-              }}
-            />
-          </Popover>
-        );
+        statusIcon = null;
         break;
     }
     return statusIcon;

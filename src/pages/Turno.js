@@ -149,14 +149,7 @@ export const Turno = () => {
           );
           break;
       default:
-        statusIcon = (
-          <Image
-            src={require("../img/not_planned.svg")}
-            width={30}
-            height={80}
-            preview={false}
-          />
-        );
+        statusIcon = null;
         break;
     }
     return statusIcon;
