@@ -135,3 +135,26 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
     }
   }
 };
+
+export const handleDelete = async (hoveredRowKey) => {
+  const docPatientRefFin = firestore.collection("patients").doc(hoveredRowKey);
+
+  if (docPatientRefFin) {
+    try {
+      const doc = await docPatientRefFin.get();
+
+      if (doc.exists) {
+        await docPatientRefFin.update({
+          complete: true,
+        });
+      } else {
+        console.log("No such document!");
+      }
+    } catch (error) {
+      console.log("Error getting document:", error);
+    }
+  } else {
+    console.log("No such document!");
+  }
+};
+

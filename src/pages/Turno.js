@@ -138,15 +138,18 @@ export const Turno = () => {
           />
         );
         break;
+        case "fin":
+          statusIcon = (
+            <Image
+              src={require("../img/fin.png")}
+              width={45}
+              height={35}
+              preview={false}
+            />
+          );
+          break;
       default:
-        statusIcon = (
-          <Image
-            src={require("../img/not_planned.svg")}
-            width={30}
-            height={80}
-            preview={false}
-          />
-        );
+        statusIcon = null;
         break;
     }
     return statusIcon;

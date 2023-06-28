@@ -1,12 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { Table, Image, Space, Popover, Divider, Button } from "antd";
+import {
+  Table,
+  Image,
+  Space,
+  Popover,
+  Divider,
+  Button,
+  Popconfirm,
+} from "antd";
 import { CloseCircleOutlined } from "@ant-design/icons";
 import { firestore } from "./../helpers/firebaseConfig";
-import { handleStatusChange } from "./../helpers/updateStationStatus";
+import {
+  handleStatusChange,
+  handleDelete,
+} from "./../helpers/updateStationStatus";
 import { useHistory } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
 import StationEnum from "../helpers/stationEnum";
 import { AlertInfo } from "../components/AlertInfo";
+import { Link } from "react-router-dom";
 import Footer from "./Footer";
 
 export const Anfitrion = () => {
@@ -15,7 +27,7 @@ export const Anfitrion = () => {
   const [station, setStation] = useState("");
   const [hoveredRowKey, setHoveredRowKey] = useState(null);
   const [countdown, setCountdown] = useState({});
-  
+
   const history = useHistory();
 
   const handleMouseEnter = (record) => {
@@ -33,7 +45,8 @@ export const Anfitrion = () => {
 
   useEffect(() => {
     let isMounted = true;
-  
+    let unsubscribe;
+
     const fetchData = async () => {
       try {
         const collectionRef = firestore.collection("patients");
@@ -41,89 +54,102 @@ export const Anfitrion = () => {
         const initialData = initialSnapshot.docs.map((doc) => {
           return doc.data();
         });
-  
+
+        const filteredData = initialData.filter(
+          (item) => item.complete !== true
+        );
+
         if (isMounted) {
-          setData(initialData);
+          setData(filteredData);
         }
-  
+
         const updatedCountdownData = {};
-  
-        initialData.forEach((item) => {
+
+        filteredData.forEach((item) => {
           const pt_no = item.pt_no;
           const avgWaitingTime = item.avg_time || 0;
           const remainingTime = Math.max(Math.ceil(avgWaitingTime), 0);
-  
+
           updatedCountdownData[pt_no] = remainingTime;
-  
-          const countdownInterval = setInterval(() => {
-            updatedCountdownData[pt_no] = Math.max(
-              updatedCountdownData[pt_no] - 1,
-              0
-            );
-            setCountdown({ ...updatedCountdownData });
-  
-            if (updatedCountdownData[pt_no] === 0) {
-              clearInterval(countdownInterval);
-            }
-          }, 60000);
-  
-          if (updatedCountdownData[pt_no] === 0) {
-            clearInterval(countdownInterval);
+
+          if (!item.complete) {
+            const countdownInterval = setInterval(() => {
+              updatedCountdownData[pt_no] = Math.max(
+                updatedCountdownData[pt_no] - 1,
+                0
+              );
+              setCountdown({ ...updatedCountdownData });
+
+              if (updatedCountdownData[pt_no] === 0) {
+                clearInterval(countdownInterval);
+              }
+            }, 60000);
           }
         });
-  
-        const hasWaitingOrInProgress = initialData.some((item) =>
+
+        const hasWaitingOrInProgress = filteredData.some((item) =>
           item.plan_of_care?.some(
             (plan) => plan.status === "waiting" || plan.status === "in_process"
           )
         );
-  
+
         if (!hasWaitingOrInProgress) {
           Object.keys(updatedCountdownData).forEach((pt_no) => {
             updatedCountdownData[pt_no] = 0;
           });
         }
-  
+
         setCountdown(updatedCountdownData);
-  
-        const unsubscribe = collectionRef.onSnapshot((snapshot) => {
+
+        unsubscribe = collectionRef.onSnapshot((snapshot) => {
           const updatedData = snapshot.docs.map((doc) => doc.data());
-  
+
           if (isMounted) {
-            // Update the data
-            setData(updatedData);
-  
-            // Update avg_time and perform countdown logic
-            updatedData.forEach((item) => {
+            const filteredUpdatedData = updatedData.filter(
+              (item) => item.complete !== true
+            );
+            setData(filteredUpdatedData);
+
+            filteredUpdatedData.forEach((item) => {
               const pt_no = item.pt_no;
               const avgWaitingTime = item.avg_time || 0;
               const remainingTime = Math.max(Math.ceil(avgWaitingTime), 0);
-  
-              // Check if avg_time has changed
+
               if (updatedCountdownData[pt_no] !== remainingTime) {
-                // Update the countdown value
                 updatedCountdownData[pt_no] = remainingTime;
                 setCountdown({ ...updatedCountdownData });
+
+                if (!item.complete && updatedCountdownData[pt_no] > 0) {
+                  const countdownInterval = setInterval(() => {
+                    updatedCountdownData[pt_no] = Math.max(
+                      updatedCountdownData[pt_no] - 1,
+                      0
+                    );
+                    setCountdown({ ...updatedCountdownData });
+
+                    if (updatedCountdownData[pt_no] === 0) {
+                      clearInterval(countdownInterval);
+                    }
+                  }, 60000);
+                }
               }
             });
           }
         });
-  
-        return () => {
-          unsubscribe();
-          isMounted = false;
-        };
       } catch (error) {
         console.log(error);
       }
     };
-  
+
     fetchData();
-  
+
     return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
       isMounted = false;
     };
-  }, []);    
+  }, []);
 
   const renderStatusIcon = (status, station) => {
     let statusIcon = null;
@@ -193,21 +219,6 @@ export const Anfitrion = () => {
           <Popover content={content} title="Cambiar estatus" trigger="hover">
             <Image
               src={require("../img/complete.svg")}
-              width={30}
-              height={80}
-              preview={false}
-              onMouseEnter={() => {
-                setStation(station);
-              }}
-            />
-          </Popover>
-        );
-        break;
-      case "1":
-        statusIcon = (
-          <Popover content={content} title="Cambiar estatus" trigger="hover">
-            <Image
-              src={require("../img/1.svg")}
               width={30}
               height={80}
               preview={false}
@@ -308,13 +319,13 @@ export const Anfitrion = () => {
           </Popover>
         );
         break;
-      default:
+      case "fin":
         statusIcon = (
           <Popover content={content} title="Cambiar estatus" trigger="hover">
             <Image
-              src={require("../img/not_planned.svg")}
-              width={30}
-              height={80}
+              src={require("../img/fin.png")}
+              width={45}
+              height={35}
               preview={false}
               onMouseEnter={() => {
                 setStation(station);
@@ -322,6 +333,9 @@ export const Anfitrion = () => {
             />
           </Popover>
         );
+        break;
+      default:
+        statusIcon = null;
         break;
     }
     return statusIcon;
@@ -372,13 +386,6 @@ export const Anfitrion = () => {
       />
 
       <Image
-        src={require("../img/1.svg")}
-        width={30}
-        height={80}
-        preview={false}
-        onClick={() => handleStatusChange("1", hoveredRowKey, station)}
-      />
-      <Image
         src={require("../img/2.svg")}
         width={30}
         height={80}
@@ -420,21 +427,29 @@ export const Anfitrion = () => {
         preview={false}
         onClick={() => handleStatusChange("7", hoveredRowKey, station)}
       />
+      <Image
+        src={require("../img/fin.png")}
+        width={45}
+        height={35}
+        preview={false}
+        onClick={() => handleStatusChange("fin", hoveredRowKey, station)}
+      />
     </Space>
   );
 
   const generateTableData = (extractedPlanOfCare) => {
     const uniqueStations = {};
 
-    extractedPlanOfCare.sort((a, b) => {
-      const startTimeA = new Date(a.start_time.toMillis());
-      const startTimeB = new Date(b.start_time.toMillis());
+    // eslint-disable-next-line no-unused-expressions
+    extractedPlanOfCare?.sort((a, b) => {
+      const startTimeA = new Date(a?.start_time?.toMillis());
+      const startTimeB = new Date(b?.start_time?.toMillis());
       return startTimeA - startTimeB;
     });
-    extractedPlanOfCare.forEach((item) => {
-      // eslint-disable-next-line no-unused-expressions
+    // eslint-disable-next-line no-unused-expressions
+    extractedPlanOfCare?.forEach((item) => {
       return item.plan_of_care?.forEach((plan) => {
-        if (!uniqueStations[plan.station]) {
+        if (!uniqueStations[plan.station] && item.fin !== true) {
           uniqueStations[plan.station] = {
             dataIndex: plan.station,
             key: plan.station,
@@ -465,7 +480,7 @@ export const Anfitrion = () => {
         align: "center",
         render: (pt_no) => {
           const remainingTime = countdown[pt_no] || 0;
-      
+
           return (
             <span
               style={{
@@ -477,12 +492,32 @@ export const Anfitrion = () => {
             </span>
           );
         },
-      },      
+      },
+      {
+        title: "Acción",
+        dataIndex: "pt_no",
+        key: "estado",
+        width: 100,
+        fixed: "right",
+        render: () =>
+          dataSource.length >= 1 ? (
+            <Popconfirm
+              title="Está seguro que quiere eliminar el paciente de la cola?"
+              onConfirm={() => handleDelete(hoveredRowKey)}
+            >
+              <Link to={"#"} style={{ color: "red" }}>
+                Eliminar
+              </Link>
+            </Popconfirm>
+          ) : null,
+      },
     ];
 
     const dataSource = extractedPlanOfCare?.map((item, index) => {
       const stations = {};
-      item.plan_of_care.forEach((plan) => {
+
+      // eslint-disable-next-line no-unused-expressions
+      item.plan_of_care?.forEach((plan) => {
         stations[plan.station] = plan.status;
       });
       return {

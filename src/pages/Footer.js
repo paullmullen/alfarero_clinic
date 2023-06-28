@@ -8,18 +8,12 @@ const Footer = () => {
   const [stats, setStats] = useState([]);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const collectionRef = firestore.collection("stats");
-        const snapshot = await collectionRef.get();
-        const statsData = snapshot.docs.map((doc) => doc.data());
-        setStats(statsData);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    fetchStats();
+    const collectionRef = firestore.collection("stats");
+    const unsubscribe = collectionRef.onSnapshot((snapshot) => {
+      const statsData = snapshot.docs.map((doc) => doc.data());
+      setStats(statsData);
+    });
+    return () => unsubscribe();
   }, []);
 
   const filteredStats = stats.filter(
@@ -32,7 +26,9 @@ const Footer = () => {
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   const getStationName = (stationCode) => {
@@ -58,13 +54,14 @@ const Footer = () => {
           }}
         >
           <p>
-            <strong>{getStationName(stat.station_type)}</strong> 
+            <strong>{getStationName(stat.station_type)}</strong>
           </p>
           <p>
             <strong>Espera:</strong> {formatTime(stat.avg_waiting_time)} (mm:ss)
           </p>
           <p>
-            <strong>Proceso:</strong> {formatTime(stat.avg_procedure_time)} (mm:ss)
+            <strong>Proceso:</strong> {formatTime(stat.avg_procedure_time)}{" "}
+            (mm:ss)
           </p>
         </Card>
       ))}
@@ -73,4 +70,3 @@ const Footer = () => {
 };
 
 export default Footer;
-
