@@ -17,7 +17,6 @@ import {
 import { AlertProvider } from "../hooks/alert";
 import { Registro } from "./Registro";
 import { Turno } from "./Turno";
-import { CrearTurno } from "./CrearTurno";
 import { Escritorio } from "./Escritorio";
 import { UiContext } from "../context/UiContext";
 import { IngresarHost } from "./IngresarHost";
@@ -111,7 +110,6 @@ export const RouterPage = () => {
                 <Route path="/ingresar-host" component={IngresarHost} />
                 <Route path="/registro" component={Registro} />
                 <Route path="/turnos" component={Turno} />
-                <Route path="/crear" component={CrearTurno} />
                 <Route path="/escritorio" component={Escritorio} />
                 <Route path="/anfitrion" component={Anfitrion} />
                 <Route path="/estadisticas" component={Stats} />
