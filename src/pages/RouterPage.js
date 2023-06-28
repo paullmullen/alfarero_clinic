@@ -27,6 +27,8 @@ import { Anfitrion } from "./Anfitrion";
 const { Sider, Content, Header } = Layout;
 const { Title } = Typography;
 
+// Info in the side bar
+
 export const RouterPage = () => {
   const { ocultarMenu } = useContext(UiContext);
   const menuItems = [
@@ -56,6 +58,8 @@ export const RouterPage = () => {
       label: <Link to="/estadisticas">Estadisticas</Link>,
     },
   ];
+
+    // Renders the visible screen
 
   return (
     <Layout style={{ minHeight: "100vh", minWidth: "100%" }}>

@@ -15,6 +15,8 @@ export const Turno = () => {
   const [direction, setDirection] = useState("horizontal");
   const [countdown, setCountdown] = useState({});
 
+    // Shows editable icons in the patients table
+
   const renderStatusIcon = (status) => {
     let statusIcon = null;
     switch (status) {
@@ -154,6 +156,8 @@ export const Turno = () => {
     }
     return statusIcon;
   };
+
+    // Makes render the table that changes in real time (patients and their status)
 
   const generateTableData = (extractedPlanOfCare) => {
     const uniqueStations = {};
@@ -312,6 +316,8 @@ export const Turno = () => {
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";
   };
+
+    // Renders the visible screen
 
   return (
     <>

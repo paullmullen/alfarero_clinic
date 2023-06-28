@@ -35,6 +35,8 @@ export const Escritorio = () => {
     setVisible(false);
   };
 
+    // Connects info to render on the app with firebase in real time (comunication react-firebase)
+
   useEffect(() => {
     let isMounted = true;
     const fetchData = async () => {
@@ -95,6 +97,8 @@ export const Escritorio = () => {
     history.replace("/ingresar-host");
   };
 
+    // Shows editable icons in doctors/healthcare personal table
+    
   const statusPaciente = (record) => {
     const currentStatus =
       record.plan_of_care.find((item) => item.station === usuario.servicio)
@@ -166,6 +170,8 @@ export const Escritorio = () => {
     return <Redirect to="/ingresar-host" />;
   }
 
+  // Content of the whole rendered table
+
   const columns = [
     {
       title: "Nombre del paciente",
@@ -227,6 +233,8 @@ export const Escritorio = () => {
       ),
     },
   ];
+
+  // Functionality of changing and update status
 
   const handleCompleteChange = (record) => {
     const updatedComplete = !record.complete;
@@ -360,9 +368,13 @@ export const Escritorio = () => {
     }
   };
 
+    // Helper to add different color on the table depending if it's even or row
+
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";
   };
+
+    // Renders the visible screen
 
   return (
     <>

@@ -143,6 +143,8 @@ export const Registro = () => {
     console.log("Failed:", errorInfo);
   };
 
+    // Renders the visible screen
+    
   return (
     <Row gutter={24} style={{ display: "contents" }}>
       <Col xs={24} sm={24}>

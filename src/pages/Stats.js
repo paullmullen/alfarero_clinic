@@ -14,6 +14,8 @@ import {
 } from "recharts";
 import StationEnum from "../helpers/stationEnum";
 
+// Stats functionality
+
 const fetchStatsData = async () => {
   const statsData = [];
   const statsCollection = collection(firestore, "stats");
@@ -72,6 +74,8 @@ const Stats = () => {
   };
 
   const barColors = getBarColors();
+
+    // Renders the visible screen
 
   return (
     <div

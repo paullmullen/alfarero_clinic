@@ -4,6 +4,8 @@ import { Card } from "antd";
 
 import StationEnum from "./../helpers/stationEnum";
 
+// Time footer cards below tables
+
 const Footer = () => {
   const [stats, setStats] = useState([]);
 
@@ -34,6 +36,8 @@ const Footer = () => {
   const getStationName = (stationCode) => {
     return StationEnum[stationCode] || "";
   };
+
+    // Renders the visible screen
 
   return (
     <div

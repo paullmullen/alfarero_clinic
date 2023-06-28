@@ -43,6 +43,8 @@ export const Anfitrion = () => {
     history.replace("/ingresar-host");
   };
 
+  // Connects info to render on the app with firebase in real time (comunication react-firebase)
+
   useEffect(() => {
     let isMounted = true;
     let unsubscribe;
@@ -64,6 +66,8 @@ export const Anfitrion = () => {
         }
 
         const updatedCountdownData = {};
+
+        // Filtered data with processing time per patient
 
         filteredData.forEach((item) => {
           const pt_no = item.pt_no;
@@ -150,6 +154,8 @@ export const Anfitrion = () => {
       isMounted = false;
     };
   }, []);
+
+  // Shows editable icons in the host table
 
   const renderStatusIcon = (status, station) => {
     let statusIcon = null;
@@ -341,6 +347,8 @@ export const Anfitrion = () => {
     return statusIcon;
   };
 
+  // Editable content inside the popover (status)
+
   const content = (
     <Space wrap>
       <Image
@@ -437,6 +445,7 @@ export const Anfitrion = () => {
     </Space>
   );
 
+  // Makes render the table that changes in real time (patients and their status)
   const generateTableData = (extractedPlanOfCare) => {
     const uniqueStations = {};
 
@@ -532,9 +541,13 @@ export const Anfitrion = () => {
 
   const { columns, dataSource } = generateTableData(data);
 
+  // Helper to add different color on the table depending if it's even or row
+
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";
   };
+
+  // Renders the visible screen
 
   return (
     <>

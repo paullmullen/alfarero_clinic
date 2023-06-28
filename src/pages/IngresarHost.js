@@ -46,6 +46,8 @@ export const IngresarHost = () => {
 
   useHideMenu(false);
 
+  // Validation functionality on the screen's form
+
   const onFinish = async ({ host, servicio }) => {
     if (host.trim() === "" || !servicio) {
       showAlert("Error", "Por favor ingrese todos los campos", "warning");
@@ -70,9 +72,9 @@ export const IngresarHost = () => {
 
       localStorage.setItem("host", host);
       localStorage.setItem("servicio", servicio);
-      if (servicio !== 'pfm') {
-        history.push("/escritorio");  
-      } else if (servicio === 'pfm') {
+      if (servicio !== "pfm") {
+        history.push("/escritorio");
+      } else if (servicio === "pfm") {
         // history.push("/escritorio");
         history.push("/anfitrion");
       }
@@ -84,12 +86,15 @@ export const IngresarHost = () => {
   const onFinishFailed = (errorInfo) => {
     console.log("Failed:", errorInfo);
   };
+  // Checks if the person is a patient flow manager and redirect them depending on the response
 
-  if (usuario.host && usuario.servicio !== 'pfm') {
+  if (usuario.host && usuario.servicio !== "pfm") {
     return <Redirect to="/escritorio" />;
   } else if (usuario.host && usuario.servicio === "pfm") {
     return <Redirect to="/anfitrion" />;
   }
+
+  // Renders the visible screen
 
   return (
     <Row gutter={24} style={{ display: "contents" }}>
