@@ -1,8 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Table, Image, Space, Popover, Divider, Button, Popconfirm } from "antd";
+import {
+  Table,
+  Image,
+  Space,
+  Popover,
+  Divider,
+  Button,
+  Popconfirm,
+} from "antd";
 import { CloseCircleOutlined } from "@ant-design/icons";
 import { firestore } from "./../helpers/firebaseConfig";
-import { handleStatusChange, handleDelete } from "./../helpers/updateStationStatus";
+import {
+  handleStatusChange,
+  handleDelete,
+} from "./../helpers/updateStationStatus";
 import { useHistory } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
 import StationEnum from "../helpers/stationEnum";
@@ -16,7 +27,7 @@ export const Anfitrion = () => {
   const [station, setStation] = useState("");
   const [hoveredRowKey, setHoveredRowKey] = useState(null);
   const [countdown, setCountdown] = useState({});
-  
+
   const history = useHistory();
 
   const handleMouseEnter = (record) => {
@@ -35,7 +46,7 @@ export const Anfitrion = () => {
   useEffect(() => {
     let isMounted = true;
     let unsubscribe;
-  
+
     const fetchData = async () => {
       try {
         const collectionRef = firestore.collection("patients");
@@ -43,72 +54,95 @@ export const Anfitrion = () => {
         const initialData = initialSnapshot.docs.map((doc) => {
           return doc.data();
         });
-  
+
+        const filteredData = initialData.filter(
+          (item) => item.complete !== true
+        );
+
         if (isMounted) {
-          setData(initialData.filter((item) => item.complete !== true));
+          setData(filteredData);
         }
-  
+
         const updatedCountdownData = {};
-  
-        initialData.forEach((item) => {
+
+        filteredData.forEach((item) => {
           const pt_no = item.pt_no;
           const avgWaitingTime = item.avg_time || 0;
           const remainingTime = Math.max(Math.ceil(avgWaitingTime), 0);
-  
+
           updatedCountdownData[pt_no] = remainingTime;
-  
-          const countdownInterval = setInterval(() => {
-            updatedCountdownData[pt_no] = Math.max(updatedCountdownData[pt_no] - 1, 0);
-            setCountdown({ ...updatedCountdownData });
-  
-            if (updatedCountdownData[pt_no] === 0) {
-              clearInterval(countdownInterval);
-            }
-          }, 60000);
-  
-          if (updatedCountdownData[pt_no] === 0) {
-            clearInterval(countdownInterval);
+
+          if (!item.complete) {
+            const countdownInterval = setInterval(() => {
+              updatedCountdownData[pt_no] = Math.max(
+                updatedCountdownData[pt_no] - 1,
+                0
+              );
+              setCountdown({ ...updatedCountdownData });
+
+              if (updatedCountdownData[pt_no] === 0) {
+                clearInterval(countdownInterval);
+              }
+            }, 60000);
           }
         });
-  
-        const hasWaitingOrInProgress = initialData.some((item) =>
-          item.plan_of_care?.some((plan) => plan.status === "waiting" || plan.status === "in_process")
+
+        const hasWaitingOrInProgress = filteredData.some((item) =>
+          item.plan_of_care?.some(
+            (plan) => plan.status === "waiting" || plan.status === "in_process"
+          )
         );
-  
+
         if (!hasWaitingOrInProgress) {
           Object.keys(updatedCountdownData).forEach((pt_no) => {
             updatedCountdownData[pt_no] = 0;
           });
         }
-  
+
         setCountdown(updatedCountdownData);
-  
+
         unsubscribe = collectionRef.onSnapshot((snapshot) => {
           const updatedData = snapshot.docs.map((doc) => doc.data());
-  
+
           if (isMounted) {
-            setData(updatedData);
-  
-            updatedData.forEach((item) => {
+            const filteredUpdatedData = updatedData.filter(
+              (item) => item.complete !== true
+            );
+            setData(filteredUpdatedData);
+
+            filteredUpdatedData.forEach((item) => {
               const pt_no = item.pt_no;
               const avgWaitingTime = item.avg_time || 0;
               const remainingTime = Math.max(Math.ceil(avgWaitingTime), 0);
-  
+
               if (updatedCountdownData[pt_no] !== remainingTime) {
                 updatedCountdownData[pt_no] = remainingTime;
                 setCountdown({ ...updatedCountdownData });
+
+                if (!item.complete && updatedCountdownData[pt_no] > 0) {
+                  const countdownInterval = setInterval(() => {
+                    updatedCountdownData[pt_no] = Math.max(
+                      updatedCountdownData[pt_no] - 1,
+                      0
+                    );
+                    setCountdown({ ...updatedCountdownData });
+
+                    if (updatedCountdownData[pt_no] === 0) {
+                      clearInterval(countdownInterval);
+                    }
+                  }, 60000);
+                }
               }
             });
           }
         });
-  
       } catch (error) {
         console.log(error);
       }
     };
-  
+
     fetchData();
-  
+
     return () => {
       if (unsubscribe) {
         unsubscribe();
@@ -116,7 +150,7 @@ export const Anfitrion = () => {
       isMounted = false;
     };
   }, []);
-  
+
   const renderStatusIcon = (status, station) => {
     let statusIcon = null;
     switch (status) {
@@ -458,7 +492,7 @@ export const Anfitrion = () => {
         align: "center",
         render: (pt_no) => {
           const remainingTime = countdown[pt_no] || 0;
-      
+
           return (
             <span
               style={{
@@ -508,12 +542,12 @@ export const Anfitrion = () => {
     return { columns, dataSource };
   };
 
-  const { columns, dataSource} = generateTableData(data);
+  const { columns, dataSource } = generateTableData(data);
 
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";
   };
-  
+
   return (
     <>
       <AlertInfo />

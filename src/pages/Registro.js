@@ -40,12 +40,8 @@ export const Registro = () => {
     const planOfCare = visits.map((visit, key) => {
       return {
         order: key + 1,
-        procedure_end: new Date(),
-        procedure_start: new Date(),
         station: visit,
         status: "pending",
-        wait_end: new Date(),
-        wait_start: new Date(),
       };
     });
     setPatientPlanOfCare(planOfCare);
