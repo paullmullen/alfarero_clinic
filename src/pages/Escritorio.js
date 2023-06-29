@@ -16,8 +16,8 @@ import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
 import { Redirect, useHistory } from "react-router-dom";
 import { firestore } from "./../helpers/firebaseConfig";
-import StationEnum from "../helpers/stationEnum";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -30,12 +30,13 @@ export const Escritorio = () => {
 
   const [visible, setVisible] = useState(true);
   const [patientStatus, setPatientStatus] = useState({});
+  const [t, i18n] = useTranslation("global");
 
   const handleClose = () => {
     setVisible(false);
   };
 
-    // Connects info to render on the app with firebase in real time (comunication react-firebase)
+  // Connects info to render on the app with firebase in real time (comunication react-firebase)
 
   useEffect(() => {
     let isMounted = true;
@@ -97,8 +98,8 @@ export const Escritorio = () => {
     history.replace("/ingresar-host");
   };
 
-    // Shows editable icons in doctors/healthcare personal table
-    
+  // Shows editable icons in doctors/healthcare personal table
+
   const statusPaciente = (record) => {
     const currentStatus =
       record.plan_of_care.find((item) => item.station === usuario.servicio)
@@ -171,25 +172,24 @@ export const Escritorio = () => {
   }
 
   // Content of the whole rendered table
-
   const columns = [
     {
-      title: "Nombre del paciente",
+      title: t("patientName"),
       dataIndex: "patient_name",
       key: "paciente",
     },
     {
-      title: "Edad",
+      title: t("age"),
       dataIndex: "age",
       key: "edad",
     },
     {
-      title: "Motivo de visita",
+      title: t("reasonForVisit"),
       dataIndex: "reason_for_visit",
       key: "sintomas",
     },
     {
-      title: "Estatus vigente",
+      title: t("currentStatus"),
       dataIndex: "",
       key: "",
       render: (record) => statusPaciente(record),
@@ -197,7 +197,7 @@ export const Escritorio = () => {
       align: "center",
     },
     {
-      title: "Actualizar estatus",
+      title: t("updateStatus"),
       dataIndex: "status",
       key: "status",
       width: 250,
@@ -210,10 +210,10 @@ export const Escritorio = () => {
             size="large"
             style={{ width: "100%" }} // Ajustar el ancho del Select al 100%
           >
-            <Option value="in_process">Atendiendo</Option>
-            <Option value="waiting">En espera</Option>
-            <Option value="complete">Finalizado</Option>
-            <Option value="pay">Pagando</Option>
+            <Option value="in_process">{t("beingAttended")}</Option>
+            <Option value="waiting">{t("waiting")}</Option>
+            <Option value="complete">{t("visitCompleted")}</Option>
+            <Option value="pay">{t("visitPayed")}</Option>
           </Select>
         </div>
       ),
@@ -368,19 +368,19 @@ export const Escritorio = () => {
     }
   };
 
-    // Helper to add different color on the table depending if it's even or row
+  // Helper to add different color on the table depending if it's even or row
 
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";
   };
 
-    // Renders the visible screen
+  // Renders the visible screen
 
   return (
     <>
       {visible && (
         <Alert
-          message="Información del Estatus del Paciente"
+          message={t("infoPatient")}
           description={
             <div
               style={{
@@ -395,7 +395,7 @@ export const Escritorio = () => {
                   width={15}
                   height={10}
                 />
-                {"En espera"}
+                {t("waiting")}
               </div>
               <div>
                 <Image
@@ -403,7 +403,7 @@ export const Escritorio = () => {
                   width={15}
                   height={10}
                 />
-                {"Paciente siendo atendido"}
+                {t("beingAttended")}
               </div>
               <div>
                 <Image
@@ -411,7 +411,7 @@ export const Escritorio = () => {
                   width={15}
                   height={10}
                 />
-                {"El paciente finalizó su visita"}
+                {t("visitCompleted")}
               </div>
             </div>
           }
@@ -430,9 +430,9 @@ export const Escritorio = () => {
           ></Switch>
           <Divider />
           <Title level={2}>{usuario.host}</Title>
-          <Text>Usted está ofreciendo el servicio: </Text>
+          <Text>{t("currentService")} </Text>
           <Text type="success" strong>
-            {StationEnum[usuario.servicio]}
+            {t(usuario.servicio.toLowerCase())}
           </Text>
         </Col>
         <Col span={4} align="right">
@@ -443,7 +443,7 @@ export const Escritorio = () => {
             style={{ marginTop: "10px" }}
           >
             <CloseCircleOutlined />
-            Salir
+            {t("logout")}
           </Button>
         </Col>
       </Row>
@@ -459,7 +459,7 @@ export const Escritorio = () => {
             />
           ) : (
             <>
-              <Text>No hay datos disponibles</Text>
+              <Text>{t("noData")}</Text>
             </>
           )}
         </Col>

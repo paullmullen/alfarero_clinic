@@ -1,21 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { Table, Image, Typography } from "antd";
+import { Table, Image } from "antd";
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
-import StationEnum from "../helpers/stationEnum";
 import { AlertInfo } from "../components/AlertInfo";
 import Footer from "./Footer";
-
-const { Title } = Typography;
+import { useTranslation } from "react-i18next";
 
 export const Turno = () => {
   useHideMenu(true);
   const [data, setData] = useState([]);
-  const [alignment, setAlignment] = useState("start");
-  const [direction, setDirection] = useState("horizontal");
   const [countdown, setCountdown] = useState({});
+  const [t] = useTranslation("global");
 
-    // Shows editable icons in the patients table
+  // Shows editable icons in the patients table
 
   const renderStatusIcon = (status) => {
     let statusIcon = null;
@@ -140,16 +137,16 @@ export const Turno = () => {
           />
         );
         break;
-        case "fin":
-          statusIcon = (
-            <Image
-              src={require("../img/fin.png")}
-              width={45}
-              height={35}
-              preview={false}
-            />
-          );
-          break;
+      case "fin":
+        statusIcon = (
+          <Image
+            src={require("../img/fin.png")}
+            width={45}
+            height={35}
+            preview={false}
+          />
+        );
+        break;
       default:
         statusIcon = null;
         break;
@@ -157,8 +154,7 @@ export const Turno = () => {
     return statusIcon;
   };
 
-    // Makes render the table that changes in real time (patients and their status)
-
+  // Makes render the table that changes in real time (patients and their status)
   const generateTableData = (extractedPlanOfCare) => {
     const uniqueStations = {};
     extractedPlanOfCare.sort((a, b) => {
@@ -173,7 +169,7 @@ export const Turno = () => {
           uniqueStations[plan.station] = {
             dataIndex: plan.station,
             key: plan.station,
-            title: StationEnum[plan.station],
+            title: t(plan.station),
             render: (status) => renderStatusIcon(status),
             width: 100,
             align: "center",
@@ -184,7 +180,7 @@ export const Turno = () => {
 
     const columns = [
       {
-        title: "Paciente",
+        title: t("patient"),
         dataIndex: "patient_name",
         key: "patient",
         width: 100,
@@ -192,7 +188,7 @@ export const Turno = () => {
       },
       ...Object.values(uniqueStations),
       {
-        title: "Tiempo de espera",
+        title: t("waitingTime"),
         dataIndex: "pt_no",
         key: "countdown",
         width: 100,
@@ -231,8 +227,6 @@ export const Turno = () => {
   };
 
   const { columns, dataSource } = generateTableData(data);
-
-  // ...
 
   useEffect(() => {
     let isMounted = true;
@@ -317,7 +311,7 @@ export const Turno = () => {
     return index % 2 === 0 ? "even-row" : "odd-row";
   };
 
-    // Renders the visible screen
+  // Renders the visible screen
 
   return (
     <>

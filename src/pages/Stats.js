@@ -12,7 +12,7 @@ import {
   Cell,
   ResponsiveContainer,
 } from "recharts";
-import StationEnum from "../helpers/stationEnum";
+import { useTranslation } from "react-i18next";
 
 // Stats functionality
 
@@ -43,6 +43,7 @@ const fetchStatsData = async () => {
 
 const Stats = () => {
   const [statsData, setStatsData] = useState([]);
+  const [t] = useTranslation("global");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,14 +51,14 @@ const Stats = () => {
       const stats = data.map((s) => {
         return {
           ...s,
-          station_type: StationEnum[s.station_type],
+          station_type: t(s.station_type),
         };
       });
       setStatsData(stats);
     };
 
     fetchData();
-  }, []);
+  }, [t]);
 
   const getBarColors = () => {
     const uniqueStationTypes = [
@@ -75,7 +76,7 @@ const Stats = () => {
 
   const barColors = getBarColors();
 
-    // Renders the visible screen
+  // Renders the visible screen
 
   return (
     <div
@@ -89,7 +90,7 @@ const Stats = () => {
       }}
     >
       <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-        Total de visitas por servicio
+        {t("patientsPerService")}
       </h2>
       <div style={{ display: "flex", width: "100%", height: "80%" }}>
         <ResponsiveContainer width="50%" height="100%">

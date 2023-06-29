@@ -8,6 +8,6 @@ export const stations = [
   { value: "obs", label: "Obstetricia" },
   { value: "pha", label: "Farmacia" },
   { value: "lab", label: "Laboratorio" },
-  { value: "pra", label: "Práctica" },
   { value: "pfm", label: "Anfitrión" },
+  { value: "pra", label: "Práctica" },
 ];

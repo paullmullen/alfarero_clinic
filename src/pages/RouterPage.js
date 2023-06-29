@@ -22,6 +22,7 @@ import { UiContext } from "../context/UiContext";
 import { IngresarHost } from "./IngresarHost";
 import Stats from "./Stats";
 import { Anfitrion } from "./Anfitrion";
+import { useTranslation } from "react-i18next";
 
 const { Sider, Content, Header } = Layout;
 const { Title } = Typography;
@@ -30,35 +31,36 @@ const { Title } = Typography;
 
 export const RouterPage = () => {
   const { ocultarMenu } = useContext(UiContext);
+  const [t] = useTranslation("global");
   const menuItems = [
     {
       key: "1",
       icon: <LoginOutlined />,
-      label: <Link to="/ingresar-host">Ingresar</Link>,
+      label: <Link to="/ingresar-host">{t("hostLogin")}</Link>,
     },
     {
       key: "2",
       icon: <UserOutlined />,
-      label: <Link to="/registro">Registro</Link>,
+      label: <Link to="/registro">{t("register")}</Link>,
     },
     {
       key: "3",
       icon: <FileTextFilled />,
-      label: <Link to="/turnos">Turnos</Link>,
+      label: <Link to="/turnos">{t("turnTable")}</Link>,
     },
     {
       key: "4",
       icon: <IdcardOutlined />,
-      label: <Link to="/escritorio">Escritorio</Link>,
+      label: <Link to="/escritorio">{t("desk")}</Link>,
     },
     {
       key: "6",
       icon: <BarChartOutlined />,
-      label: <Link to="/estadisticas">Estadisticas</Link>,
+      label: <Link to="/estadisticas">{t("statistics")}</Link>,
     },
   ];
 
-    // Renders the visible screen
+  // Renders the visible screen
 
   return (
     <Layout style={{ minHeight: "100vh", minWidth: "100%" }}>
@@ -93,7 +95,7 @@ export const RouterPage = () => {
             </Row>
             <Row justify="center">
               <Col xs={24} sm={24} md={24} lg={24}>
-                <Title level={5}>Plan de Cuidado de Pacientes</Title>
+                <Title level={5}>{t("headerTitle")}</Title>
               </Col>
             </Row>
           </Header>

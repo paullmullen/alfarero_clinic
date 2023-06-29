@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { firestore } from "./../helpers/firebaseConfig";
 import { Card } from "antd";
-
-import StationEnum from "./../helpers/stationEnum";
+import { useTranslation } from "react-i18next";
 
 // Time footer cards below tables
 
 const Footer = () => {
   const [stats, setStats] = useState([]);
+  const [t] = useTranslation("global");
 
   useEffect(() => {
     const collectionRef = firestore.collection("stats");
@@ -18,14 +18,19 @@ const Footer = () => {
     return () => unsubscribe();
   }, []);
 
-  const filteredStats = stats.filter(
-    (stat) =>
-      stat.station_type &&
-      stat.avg_procedure_time !== undefined &&
-      stat.avg_waiting_time !== undefined
-  );
+  const filteredStats = stats.filter((stat) => {
+    const hasStationType = !!stat.station_type;
+    const hasProcedureTime = !isNaN(stat.avg_procedure_time) ? stat.avg_procedure_time : "-";
+    const hasWaitingTime = !isNaN(stat.avg_waiting_time) ? stat.avg_waiting_time : "-";
+  
+    return hasStationType && (hasProcedureTime !== "-" || hasWaitingTime !== "-");
+  });   
 
   const formatTime = (seconds) => {
+    if (isNaN(seconds)) {
+      return "-";
+    }
+  
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
@@ -34,10 +39,8 @@ const Footer = () => {
   };
 
   const getStationName = (stationCode) => {
-    return StationEnum[stationCode] || "";
+    return t(stationCode) || "";
   };
-
-    // Renders the visible screen
 
   return (
     <div
@@ -61,11 +64,12 @@ const Footer = () => {
             <strong>{getStationName(stat.station_type)}</strong>
           </p>
           <p>
-            <strong>Espera:</strong> {formatTime(stat.avg_waiting_time)} (mm:ss)
+            <strong>{t("waitingTime")}</strong>{" "}
+            {formatTime(stat.avg_waiting_time)} (mm:ss)
           </p>
           <p>
-            <strong>Proceso:</strong> {formatTime(stat.avg_procedure_time)}{" "}
-            (mm:ss)
+            <strong>{t("procedureTime")}</strong>{" "}
+            {formatTime(stat.avg_procedure_time)} (mm:ss)
           </p>
         </Card>
       ))}

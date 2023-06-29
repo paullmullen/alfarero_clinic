@@ -5,11 +5,11 @@ const StationEnum = {
   pt: "Terapia Física",
   ped: "Pediatría",
   nut: "Nutrición",
-  obs: "Observación",
+  obs: "Obstetricia",
   pha: "Farmacia",
   lab: "Laboratorio",
   pra: "Sala de Procedimientos A",
-  pfm: 'Anfitrión'
+  pfm: "Anfitrión"
 };
 
 export default StationEnum;
