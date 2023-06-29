@@ -436,13 +436,6 @@ export const Anfitrion = () => {
         preview={false}
         onClick={() => handleStatusChange("7", hoveredRowKey, station)}
       />
-      <Image
-        src={require("../img/fin.png")}
-        width={45}
-        height={35}
-        preview={false}
-        onClick={() => handleStatusChange("fin", hoveredRowKey, station)}
-      />
     </Space>
   );
 
@@ -515,9 +508,12 @@ export const Anfitrion = () => {
               title="Está seguro que quiere eliminar el paciente de la cola?"
               onConfirm={() => handleDelete(hoveredRowKey)}
             >
-              <Link to={"#"} style={{ color: "red" }}>
-                {t("delete")}
-              </Link>
+              <Image
+                src={require("../img/fin.png")}
+                width={45}
+                height={35}
+                preview={false}
+              />
             </Popconfirm>
           ) : null,
       },
@@ -558,6 +554,7 @@ export const Anfitrion = () => {
         dataSource={data.some((d) => d === undefined) ? [] : dataSource}
         scroll={{ x: 1500, y: 1500 }}
         sticky
+        pagination={false}
         offsetScroll={3}
         rowClassName={getRowClassName}
         onRow={(record) => ({

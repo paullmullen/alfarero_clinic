@@ -322,6 +322,7 @@ export const Turno = () => {
         dataSource={data.some((d) => d === undefined) ? [] : dataSource}
         scroll={{ x: 1500, y: 1500 }}
         sticky
+        pagination={false}
         offsetScroll={3}
         rowClassName={getRowClassName}
       />
