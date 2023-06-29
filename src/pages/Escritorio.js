@@ -454,6 +454,7 @@ export const Escritorio = () => {
             <Table
               rowKey={"pt_no"}
               dataSource={filteredDocuments}
+              pagination={false}
               columns={columns}
               rowClassName={getRowClassName}
             />
