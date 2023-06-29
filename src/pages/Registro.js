@@ -17,6 +17,7 @@ import { firestore } from "./../helpers/firebaseConfig";
 import { checkDuplicateRecord } from "../helpers/checkDuplicateRecord";
 import { stations } from "../helpers/stations";
 import moment from "moment";
+import { useTranslation } from "react-i18next";
 
 const { Title, Text } = Typography;
 
@@ -33,6 +34,7 @@ export const Registro = () => {
   const { showAlert } = useAlert();
   const [form] = Form.useForm();
   const [patientPlanOfCare, setPatientPlanOfCare] = useState([]);
+  const [t] = useTranslation("global");
 
   useHideMenu(false);
 
@@ -51,6 +53,11 @@ export const Registro = () => {
     form.setFieldsValue({ stations: [] });
     form.resetFields();
   };
+
+  const stationOptions = stations.slice(0, -1).map((station) => ({
+    label: t(station.value),
+    value: station.value,
+  }));
 
   const updateStatsCollection = async (station) => {
     const currentDate = moment();
@@ -104,7 +111,7 @@ export const Registro = () => {
       patient.paciente
     );
     if (isDuplicate) {
-      showAlert("Advertencia!", "Este usuario ya existe", "warning");
+      showAlert("Advertencia!", t("patientAlreadyExists"), "warning");
       return;
     }
     const formattedPatient = {
@@ -135,7 +142,7 @@ export const Registro = () => {
       updateStatsCollection(station);
     });
 
-    showAlert("Success", "Paciente creado exitosamente", "success");
+    showAlert("Success", t("patientWasCreated"), "success");
     handleReset();
   };
 
@@ -143,13 +150,13 @@ export const Registro = () => {
     console.log("Failed:", errorInfo);
   };
 
-    // Renders the visible screen
-    
+  // Renders the visible screen
+
   return (
     <Row gutter={24} style={{ display: "contents" }}>
       <Col xs={24} sm={24}>
-        <Title level={2}>Registro de Paciente</Title>
-        <Text>Ingrese los siguientes datos</Text>
+        <Title level={2}>{t("patientRegistration")}</Title>
+        <Text>{t("enterFields")}</Text>
         <Divider />
         <Form
           {...layout}
@@ -162,9 +169,9 @@ export const Registro = () => {
           <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
-                label="Nombre del paciente"
+                label={t("patientName")}
                 name="paciente"
-                rules={[{ required: true, message: "Ingrese su nombre" }]}
+                rules={[{ required: true, message: t("enterName") }]}
               >
                 <Input />
               </Form.Item>
@@ -173,7 +180,7 @@ export const Registro = () => {
           <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
-                label="Edad"
+                label={t("age")}
                 name="edad"
                 rules={[
                   {
@@ -184,9 +191,7 @@ export const Registro = () => {
                       if (value >= 1 && value <= 99) {
                         return Promise.resolve();
                       }
-                      return Promise.reject(
-                        new Error("Ingrese una edad válida")
-                      );
+                      return Promise.reject(new Error(t("enterValidAge")));
                     },
                   },
                 ]}
@@ -195,7 +200,7 @@ export const Registro = () => {
               </Form.Item>
 
               <Form.Item
-                label="Número de teléfono"
+                label={t("tel")}
                 name="tel"
                 rules={[
                   {
@@ -207,7 +212,7 @@ export const Registro = () => {
                         return Promise.resolve();
                       }
                       return Promise.reject(
-                        new Error("Ingrese un número telefónico válido")
+                        new Error(t("enterValidPhoneNumber"))
                       );
                     },
                   },
@@ -220,9 +225,9 @@ export const Registro = () => {
           <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
-                label="Motivo de visita"
+                label={t("reasonForVisit")}
                 name="motivo"
-                rules={[{ required: true, message: "Ingrese su nombre" }]}
+                rules={[{ required: true, message: t("reasonForVisit") }]}
               >
                 <Input />
               </Form.Item>
@@ -231,12 +236,12 @@ export const Registro = () => {
           <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
-                label="Estaciones"
+                label={t("stations")}
                 name="estaciones"
                 rules={[
                   {
                     required: true,
-                    message: "Ingrese estaciones que el paciente visitará",
+                    message: t("selectAstation"),
                   },
                 ]}
               >
@@ -246,7 +251,7 @@ export const Registro = () => {
                   style={{
                     width: "100%",
                   }}
-                  options={stations.slice(0, -1)}
+                  options={stationOptions}
                   onChange={handleChange}
                 />
               </Form.Item>
@@ -257,7 +262,7 @@ export const Registro = () => {
               <Form.Item {...tailLayout}>
                 <Button type="primary" htmlType="submit" shape="round">
                   <SaveFilled />
-                  Registrar
+                  {t("register")}
                 </Button>
               </Form.Item>
             </Col>

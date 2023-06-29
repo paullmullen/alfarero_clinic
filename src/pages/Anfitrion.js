@@ -16,10 +16,10 @@ import {
 } from "./../helpers/updateStationStatus";
 import { useHistory } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
-import StationEnum from "../helpers/stationEnum";
 import { AlertInfo } from "../components/AlertInfo";
 import { Link } from "react-router-dom";
 import Footer from "./Footer";
+import { useTranslation } from "react-i18next";
 
 export const Anfitrion = () => {
   useHideMenu(true);
@@ -27,6 +27,7 @@ export const Anfitrion = () => {
   const [station, setStation] = useState("");
   const [hoveredRowKey, setHoveredRowKey] = useState(null);
   const [countdown, setCountdown] = useState({});
+  const [t] = useTranslation("global");
 
   const history = useHistory();
 
@@ -162,7 +163,7 @@ export const Anfitrion = () => {
     switch (status) {
       case "pending":
         statusIcon = (
-          <Popover content={content} title="Cambiar estatus" trigger="hover">
+          <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/not_planned.svg")}
               width={30}
@@ -177,7 +178,7 @@ export const Anfitrion = () => {
         break;
       case "in_process":
         statusIcon = (
-          <Popover content={content} title="Cambiar estatus" trigger="hover">
+          <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/in_process.svg")}
               width={30}
@@ -192,7 +193,7 @@ export const Anfitrion = () => {
         break;
       case "waiting":
         statusIcon = (
-          <Popover content={content} title="Cambiar estatus" trigger="hover">
+          <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/waiting.svg")}
               width={30}
@@ -207,7 +208,7 @@ export const Anfitrion = () => {
         break;
       case "pay":
         statusIcon = (
-          <Popover content={content} title="Cambiar estatus" trigger="hover">
+          <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/pay.svg")}
               width={30}
@@ -222,7 +223,7 @@ export const Anfitrion = () => {
         break;
       case "complete":
         statusIcon = (
-          <Popover content={content} title="Cambiar estatus" trigger="hover">
+          <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/complete.svg")}
               width={30}
@@ -237,7 +238,7 @@ export const Anfitrion = () => {
         break;
       case "2":
         statusIcon = (
-          <Popover content={content} title="Cambiar estatus" trigger="hover">
+          <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/2.svg")}
               width={30}
@@ -252,7 +253,7 @@ export const Anfitrion = () => {
         break;
       case "3":
         statusIcon = (
-          <Popover content={content} title="Cambiar estatus" trigger="hover">
+          <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/3.svg")}
               width={30}
@@ -267,7 +268,7 @@ export const Anfitrion = () => {
         break;
       case "4":
         statusIcon = (
-          <Popover content={content} title="Cambiar estatus" trigger="hover">
+          <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/4.svg")}
               width={30}
@@ -282,7 +283,7 @@ export const Anfitrion = () => {
         break;
       case "5":
         statusIcon = (
-          <Popover content={content} title="Cambiar estatus" trigger="hover">
+          <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/5.svg")}
               width={30}
@@ -297,7 +298,7 @@ export const Anfitrion = () => {
         break;
       case "6":
         statusIcon = (
-          <Popover content={content} title="Cambiar estatus" trigger="hover">
+          <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/6.svg")}
               width={30}
@@ -312,7 +313,7 @@ export const Anfitrion = () => {
         break;
       case "7":
         statusIcon = (
-          <Popover content={content} title="Cambiar estatus" trigger="hover">
+          <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/7.svg")}
               width={30}
@@ -327,7 +328,7 @@ export const Anfitrion = () => {
         break;
       case "fin":
         statusIcon = (
-          <Popover content={content} title="Cambiar estatus" trigger="hover">
+          <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/fin.png")}
               width={45}
@@ -462,7 +463,7 @@ export const Anfitrion = () => {
           uniqueStations[plan.station] = {
             dataIndex: plan.station,
             key: plan.station,
-            title: StationEnum[plan.station],
+            title: t(plan.station),
             render: (status) => renderStatusIcon(status, plan.station),
             width: 100,
             align: "center",
@@ -473,7 +474,7 @@ export const Anfitrion = () => {
 
     const columns = [
       {
-        title: "Paciente",
+        title: t("patient"),
         dataIndex: "patient_name",
         key: "patient",
         width: 100,
@@ -481,7 +482,7 @@ export const Anfitrion = () => {
       },
       ...Object.values(uniqueStations),
       {
-        title: "Tiempo de espera",
+        title: t("waitingTime"),
         dataIndex: "pt_no",
         key: "countdown",
         width: 100,
@@ -503,7 +504,7 @@ export const Anfitrion = () => {
         },
       },
       {
-        title: "Acción",
+        title: t("action"),
         dataIndex: "pt_no",
         key: "estado",
         width: 100,
@@ -515,7 +516,7 @@ export const Anfitrion = () => {
               onConfirm={() => handleDelete(hoveredRowKey)}
             >
               <Link to={"#"} style={{ color: "red" }}>
-                Eliminar
+                {t("delete")}
               </Link>
             </Popconfirm>
           ) : null,
@@ -542,7 +543,6 @@ export const Anfitrion = () => {
   const { columns, dataSource } = generateTableData(data);
 
   // Helper to add different color on the table depending if it's even or row
-
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";
   };
@@ -573,7 +573,7 @@ export const Anfitrion = () => {
           style={{ marginTop: "10px" }}
         >
           <CloseCircleOutlined />
-          Salir
+          {t("logout")}
         </Button>
       </Divider>
       <Footer />
