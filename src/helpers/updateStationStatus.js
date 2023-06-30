@@ -81,6 +81,15 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
 
           const { waiting_time_data, procedure_time_data, number_of_patients } =
             statsData;
+          const options = {
+            day: "numeric",
+            month: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+            second: "numeric",
+            timeZoneName: "short",
+          };
 
           if (waiting_time_data && number_of_patients) {
             const validWaitingTimeData = waiting_time_data.filter(
@@ -97,7 +106,7 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
               .collection("patients")
               .doc(hoveredRowKey)
               .update({
-                avg_time: Math.floor(waitingAverage / 60),
+                avg_time: new Date().toLocaleString("en-US", options),
               });
           }
 
@@ -118,7 +127,7 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
                 .collection("patients")
                 .doc(hoveredRowKey)
                 .update({
-                  avg_time: Math.floor(procedureAverage / 60),
+                  avg_time: new Date().toLocaleString("en-US", options),
                 });
             } else if (value !== "in_process" && value !== "waiting") {
               await firestore.collection("patients").doc(hoveredRowKey).update({
@@ -157,4 +166,3 @@ export const handleDelete = async (hoveredRowKey) => {
     console.log("No such document!");
   }
 };
-
