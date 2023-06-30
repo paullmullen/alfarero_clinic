@@ -39,7 +39,7 @@
   "logout": "Salir",
   "currentService": "Usted está ofreciendo el servicio: ",
   "patient": "Paciente",
-  "waitingTime": "Tiempo de espera",
+  "waitingTime": "Tiempo de espera inicial",
   "action": "Acción",
   "modifyStatus": "CAMBIAR ESTATUS",
   "delete": "Eliminar",

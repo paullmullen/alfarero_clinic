@@ -26,7 +26,6 @@ export const Anfitrion = () => {
   const [data, setData] = useState([]);
   const [station, setStation] = useState("");
   const [hoveredRowKey, setHoveredRowKey] = useState(null);
-  const [countdown, setCountdown] = useState({});
   const [t] = useTranslation("global");
 
   const history = useHistory();
@@ -66,46 +65,6 @@ export const Anfitrion = () => {
           setData(filteredData);
         }
 
-        const updatedCountdownData = {};
-
-        // Filtered data with processing time per patient
-
-        filteredData.forEach((item) => {
-          const pt_no = item.pt_no;
-          const avgWaitingTime = item.avg_time || 0;
-          const remainingTime = Math.max(Math.ceil(avgWaitingTime), 0);
-
-          updatedCountdownData[pt_no] = remainingTime;
-
-          if (!item.complete) {
-            const countdownInterval = setInterval(() => {
-              updatedCountdownData[pt_no] = Math.max(
-                updatedCountdownData[pt_no] - 1,
-                0
-              );
-              setCountdown({ ...updatedCountdownData });
-
-              if (updatedCountdownData[pt_no] === 0) {
-                clearInterval(countdownInterval);
-              }
-            }, 60000);
-          }
-        });
-
-        const hasWaitingOrInProgress = filteredData.some((item) =>
-          item.plan_of_care?.some(
-            (plan) => plan.status === "waiting" || plan.status === "in_process"
-          )
-        );
-
-        if (!hasWaitingOrInProgress) {
-          Object.keys(updatedCountdownData).forEach((pt_no) => {
-            updatedCountdownData[pt_no] = 0;
-          });
-        }
-
-        setCountdown(updatedCountdownData);
-
         unsubscribe = collectionRef.onSnapshot((snapshot) => {
           const updatedData = snapshot.docs.map((doc) => doc.data());
 
@@ -114,31 +73,6 @@ export const Anfitrion = () => {
               (item) => item.complete !== true
             );
             setData(filteredUpdatedData);
-
-            filteredUpdatedData.forEach((item) => {
-              const pt_no = item.pt_no;
-              const avgWaitingTime = item.avg_time || 0;
-              const remainingTime = Math.max(Math.ceil(avgWaitingTime), 0);
-
-              if (updatedCountdownData[pt_no] !== remainingTime) {
-                updatedCountdownData[pt_no] = remainingTime;
-                setCountdown({ ...updatedCountdownData });
-
-                if (!item.complete && updatedCountdownData[pt_no] > 0) {
-                  const countdownInterval = setInterval(() => {
-                    updatedCountdownData[pt_no] = Math.max(
-                      updatedCountdownData[pt_no] - 1,
-                      0
-                    );
-                    setCountdown({ ...updatedCountdownData });
-
-                    if (updatedCountdownData[pt_no] === 0) {
-                      clearInterval(countdownInterval);
-                    }
-                  }, 60000);
-                }
-              }
-            });
           }
         });
       } catch (error) {
@@ -476,25 +410,10 @@ export const Anfitrion = () => {
       ...Object.values(uniqueStations),
       {
         title: t("waitingTime"),
-        dataIndex: "pt_no",
-        key: "countdown",
+        dataIndex: "avg_time",
+        key: "patient",
         width: 100,
         fixed: "right",
-        align: "center",
-        render: (pt_no) => {
-          const remainingTime = countdown[pt_no] || 0;
-
-          return (
-            <span
-              style={{
-                color: remainingTime === 0 ? "red" : "inherit",
-                fontSize: "18px",
-              }}
-            >
-              {remainingTime} min
-            </span>
-          );
-        },
       },
       {
         title: t("action"),
@@ -529,6 +448,7 @@ export const Anfitrion = () => {
       return {
         pt_no: item.pt_no,
         patient_name: item.patient_name,
+        avg_time: item.avg_time,
         ...stations,
       };
     });
