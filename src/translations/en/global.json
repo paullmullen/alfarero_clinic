@@ -39,7 +39,7 @@
   "logout": "Logout",
   "currentService": "You are offering the service: ",
   "patient": "Patient",
-  "waitingTime": "Initial waiting time",
+  "waitingTime": "Waiting time",
   "action": "Action",
   "modifyStatus": "CHANGE STATUS",
   "delete": "Delete",
