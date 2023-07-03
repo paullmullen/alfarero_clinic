@@ -208,7 +208,7 @@ export const Registro = () => {
                       if (value === undefined || value === "") {
                         return Promise.resolve();
                       }
-                      if (/^\d+$/.test(value)) {
+                      if (/^(\+\d{1,3}[-  *])?\(?([0-9]{3,4})\)?[-.●  *]?([0-9]{3,4})[-.●  *]?([0-9]{3,4})?$/.test(value)) {
                         return Promise.resolve();
                       }
                       return Promise.reject(
