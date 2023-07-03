@@ -311,13 +311,6 @@ export const Escritorio = () => {
       const { waiting_time_data, procedure_time_data, number_of_patients } =
         statsData;
 
-      await firestore
-        .collection("patients")
-        .doc(record.pt_no)
-        .update({
-          avg_time: Math.floor(Date.now() / 1000),
-        });
-
       if (number_of_patients) {
         const validWaitingTimeData = waiting_time_data.filter(
           (time) => !isNaN(time)
@@ -343,17 +336,13 @@ export const Escritorio = () => {
           avg_procedure_time: procedureAverage,
         });
 
-        if (value === "in_process") {
+        if (value === "in_process" || value === "waiting") {
           await firestore
             .collection("patients")
             .doc(record.pt_no)
             .update({
               avg_time: Math.floor(Date.now() / 1000),
             });
-        } else if (value !== "in_process" && value !== "waiting") {
-          await firestore.collection("patients").doc(record.pt_no).update({
-            avg_time: 0,
-          });
         }
       }
     }
