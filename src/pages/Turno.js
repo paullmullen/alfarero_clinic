@@ -191,7 +191,16 @@ export const Turno = () => {
         dataIndex: "avg_time",
         key: "patient",
         width: 100,
+        align: "center",
         fixed: "right",
+        render: (avg_time) => {
+          const displayValue = isNaN(avg_time) ? 0 : avg_time;
+          const style = {
+            fontSize: "18px",
+            color: displayValue === 0 ? "red" : "inherit",
+          };
+          return <span style={style}>{displayValue} min</span>;
+        },
       },
     ];
 
@@ -200,10 +209,16 @@ export const Turno = () => {
       item.plan_of_care.forEach((plan) => {
         stations[plan.station] = plan.status;
       });
+
+      const avg_time =
+        item.avg_time !== 0
+          ? Math.floor((Date.now() / 1000 - item.avg_time) / 60)
+          : 0;
+
       return {
         pt_no: item.pt_no,
         patient_name: item.patient_name,
-        avg_time: item.avg_time,
+        avg_time: avg_time,
         ...stations,
       };
     });

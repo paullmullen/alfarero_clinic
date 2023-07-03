@@ -53,8 +53,7 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
 
           if (
             value === "waiting" &&
-            updatedItem.wait_start &&
-            updatedItem.wait_end
+            updatedItem.wait_start
           ) {
             const waitDifference = Math.abs(updatedItem.waiting_time);
             await statsDocRef.update({
@@ -67,8 +66,7 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
 
           if (
             value === "in_process" &&
-            updatedItem.procedure_start &&
-            updatedItem.procedure_end
+            updatedItem.procedure_start
           ) {
             const inProcessDifference = Math.abs(updatedItem.procedure_time);
             await statsDocRef.update({
@@ -81,15 +79,7 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
 
           const { waiting_time_data, procedure_time_data, number_of_patients } =
             statsData;
-          const options = {
-            day: "numeric",
-            month: "numeric",
-            year: "numeric",
-            hour: "numeric",
-            minute: "numeric",
-            second: "numeric",
-            timeZoneName: "short",
-          };
+
 
           if (waiting_time_data && number_of_patients) {
             const validWaitingTimeData = waiting_time_data.filter(
@@ -106,11 +96,11 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
               .collection("patients")
               .doc(hoveredRowKey)
               .update({
-                avg_time: new Date().toLocaleString("en-US", options),
+                avg_time: Math.floor(Date.now() / 1000)
               });
           }
 
-          if (procedure_time_data && number_of_patients) {
+          if (number_of_patients) {
             const validProcedureTimeData = procedure_time_data.filter(
               (time) => !isNaN(time)
             );
@@ -127,7 +117,7 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
                 .collection("patients")
                 .doc(hoveredRowKey)
                 .update({
-                  avg_time: new Date().toLocaleString("en-US", options),
+                  avg_time: Math.floor(Date.now() / 1000)
                 });
             } else if (value !== "in_process" && value !== "waiting") {
               await firestore.collection("patients").doc(hoveredRowKey).update({
