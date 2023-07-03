@@ -311,7 +311,6 @@ export const Escritorio = () => {
       const { waiting_time_data, procedure_time_data, number_of_patients } =
         statsData;
 
-      // Guardar el promedio también en la colección "patients"
       await firestore
         .collection("patients")
         .doc(record.pt_no)
