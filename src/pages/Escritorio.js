@@ -288,10 +288,7 @@ export const Escritorio = () => {
         (item) => item.station === currentStation
       );
 
-      if (
-        value === "waiting" &&
-        updatedItem.wait_start
-      ) {
+      if (value === "waiting" && updatedItem.wait_start) {
         const waitDifference = Math.abs(updatedItem.waiting_time);
         await statsDocRef.update({
           waiting_time_data: [
@@ -301,10 +298,7 @@ export const Escritorio = () => {
         });
       }
 
-      if (
-        value === "in_process" &&
-        updatedItem.procedure_start
-      ) {
+      if (value === "in_process" && updatedItem.procedure_start) {
         const inProcessDifference = Math.abs(updatedItem.procedure_time);
         await statsDocRef.update({
           procedure_time_data: [
@@ -317,6 +311,14 @@ export const Escritorio = () => {
       const { waiting_time_data, procedure_time_data, number_of_patients } =
         statsData;
 
+      // Guardar el promedio también en la colección "patients"
+      await firestore
+        .collection("patients")
+        .doc(record.pt_no)
+        .update({
+          avg_time: Math.floor(Date.now() / 1000),
+        });
+
       if (number_of_patients) {
         const validWaitingTimeData = waiting_time_data.filter(
           (time) => !isNaN(time)
@@ -328,14 +330,6 @@ export const Escritorio = () => {
         await statsDocRef.update({
           avg_waiting_time: waitingAverage,
         });
-
-        // Guardar el promedio también en la colección "patients"
-        await firestore
-          .collection("patients")
-          .doc(record.pt_no)
-          .update({
-            avg_time: Math.floor(Date.now() / 1000),
-          });
       }
 
       if (procedure_time_data && number_of_patients) {

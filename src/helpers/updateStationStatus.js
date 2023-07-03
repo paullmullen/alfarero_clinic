@@ -80,6 +80,13 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
           const { waiting_time_data, procedure_time_data, number_of_patients } =
             statsData;
 
+            await firestore
+            .collection("patients")
+            .doc(hoveredRowKey)
+            .update({
+              avg_time: Math.floor(Date.now() / 1000)
+            });
+
 
           if (waiting_time_data && number_of_patients) {
             const validWaitingTimeData = waiting_time_data.filter(
@@ -92,12 +99,6 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
             await statsDocRef.update({
               avg_waiting_time: waitingAverage,
             });
-            await firestore
-              .collection("patients")
-              .doc(hoveredRowKey)
-              .update({
-                avg_time: Math.floor(Date.now() / 1000)
-              });
           }
 
           if (number_of_patients) {
