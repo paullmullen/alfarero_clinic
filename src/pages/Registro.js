@@ -251,7 +251,7 @@ export const Registro = () => {
                   style={{
                     width: "100%",
                   }}
-                  options={stationOptions}
+                  options={stationOptions.slice(0, -1)}
                   onChange={handleChange}
                 />
               </Form.Item>
