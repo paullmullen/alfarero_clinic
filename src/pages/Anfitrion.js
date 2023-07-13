@@ -60,7 +60,7 @@ export const Anfitrion = () => {
         });
 
         const filteredData = initialData.filter(
-          (item) => item.complete !== true
+          (item) => item.complete !== true,
         );
 
         if (isMounted) {
@@ -72,7 +72,7 @@ export const Anfitrion = () => {
 
           if (isMounted) {
             const filteredUpdatedData = updatedData.filter(
-              (item) => item.complete !== true
+              (item) => item.complete !== true,
             );
             setData(filteredUpdatedData);
           }
@@ -408,9 +408,7 @@ export const Anfitrion = () => {
         key: "patient",
         width: 100,
         fixed: "left",
-        // render: (patient_name) => {
-        //   return <div><b>{patient_name} </b><br></br>{reason_for_visit}</div>
-        // }
+        render: ((name) => <div><b> {name.split("|")[0]} </b><br></br> {name.split("|")[1]} </div>)
       },
       ...Object.values(uniqueStations),
       {
@@ -467,7 +465,8 @@ export const Anfitrion = () => {
 
       return {
         pt_no: item.pt_no,
-        patient_name: item.patient_name,
+        patient_name: item.patient_name + "|" + item.reason_for_visit,
+        reason_for_visit: item.reason_for_visit,
         avg_time: avg_time,
         ...stations,
       };
