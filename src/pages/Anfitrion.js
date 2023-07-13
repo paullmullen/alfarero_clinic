@@ -20,6 +20,8 @@ import { AlertInfo } from "../components/AlertInfo";
 import { Link } from "react-router-dom";
 import Footer from "./Footer";
 import { useTranslation } from "react-i18next";
+import IconSizes from "../helpers/iconSizes";
+import Icon from "@ant-design/icons/lib/components/Icon";
 
 export const Anfitrion = () => {
   useHideMenu(true);
@@ -100,8 +102,8 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/not_planned.svg")}
-              width={30}
-              height={80}
+              width={IconSizes.width}
+              height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
                 setStation(station);
@@ -115,8 +117,8 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/in_process.svg")}
-              width={30}
-              height={80}
+              width={IconSizes.width}
+              height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
                 setStation(station);
@@ -130,8 +132,8 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/waiting.svg")}
-              width={30}
-              height={80}
+              width={IconSizes.width}
+              height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
                 setStation(station);
@@ -145,8 +147,8 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/pay.svg")}
-              width={30}
-              height={80}
+              width={IconSizes.width}
+              height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
                 setStation(station);
@@ -160,8 +162,8 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/complete.svg")}
-              width={30}
-              height={80}
+              width={IconSizes.width}
+              height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
                 setStation(station);
@@ -175,8 +177,8 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/2.svg")}
-              width={30}
-              height={80}
+              width={IconSizes.width}
+              height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
                 setStation(station);
@@ -190,8 +192,8 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/3.svg")}
-              width={30}
-              height={80}
+              width={IconSizes.width}
+              height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
                 setStation(station);
@@ -205,8 +207,8 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/4.svg")}
-              width={30}
-              height={80}
+              width={IconSizes.width}
+              height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
                 setStation(station);
@@ -220,8 +222,8 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/5.svg")}
-              width={30}
-              height={80}
+              width={IconSizes.width}
+              height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
                 setStation(station);
@@ -235,8 +237,8 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/6.svg")}
-              width={30}
-              height={80}
+              width={IconSizes.width}
+              height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
                 setStation(station);
@@ -250,8 +252,8 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/7.svg")}
-              width={30}
-              height={80}
+              width={IconSizes.width}
+              height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
                 setStation(station);
@@ -288,8 +290,8 @@ export const Anfitrion = () => {
     <Space wrap>
       <Image
         src={require("../img/not_planned.svg")}
-        width={30}
-        height={80}
+        width={IconSizes.width}
+        height={IconSizes.height}
         preview={false}
         onClick={() =>
           handleStatusChange("not_planned", hoveredRowKey, station)
@@ -298,75 +300,75 @@ export const Anfitrion = () => {
 
       <Image
         src={require("../img/in_process.svg")}
-        width={30}
-        height={80}
+        width={IconSizes.width}
+        height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("in_process", hoveredRowKey, station)}
       />
 
       <Image
         src={require("../img/waiting.svg")}
-        width={30}
-        height={80}
+        width={IconSizes.width}
+        height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("waiting", hoveredRowKey, station)}
       />
 
       <Image
         src={require("../img/pay.svg")}
-        width={30}
-        height={80}
+        width={IconSizes.width}
+        height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("pay", hoveredRowKey, station)}
       />
 
       <Image
         src={require("../img/complete.svg")}
-        width={30}
-        height={80}
+        width={IconSizes.width}
+        height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("complete", hoveredRowKey, station)}
       />
 
       <Image
         src={require("../img/2.svg")}
-        width={30}
-        height={80}
+        width={IconSizes.width}
+        height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("2", hoveredRowKey, station)}
       />
       <Image
         src={require("../img/3.svg")}
-        width={30}
-        height={80}
+        width={IconSizes.width}
+        height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("3", hoveredRowKey, station)}
       />
       <Image
         src={require("../img/4.svg")}
-        width={30}
-        height={80}
+        width={IconSizes.width}
+        height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("4", hoveredRowKey, station)}
       />
       <Image
         src={require("../img/5.svg")}
-        width={30}
-        height={80}
+        width={IconSizes.width}
+        height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("5", hoveredRowKey, station)}
       />
       <Image
         src={require("../img/6.svg")}
-        width={30}
-        height={80}
+        width={IconSizes.width}
+        height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("6", hoveredRowKey, station)}
       />
       <Image
         src={require("../img/7.svg")}
-        width={30}
-        height={80}
+        width={IconSizes.width}
+        height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("7", hoveredRowKey, station)}
       />
@@ -406,6 +408,9 @@ export const Anfitrion = () => {
         key: "patient",
         width: 100,
         fixed: "left",
+        // render: (patient_name) => {
+        //   return <div><b>{patient_name} </b><br></br>{reason_for_visit}</div>
+        // }
       },
       ...Object.values(uniqueStations),
       {
@@ -487,7 +492,7 @@ export const Anfitrion = () => {
         rowKey={"pt_no"}
         columns={columns}
         dataSource={data.some((d) => d === undefined) ? [] : dataSource}
-        scroll={{ x: 1500, y: 1500 }}
+        // scroll={{ x: 1500, y: 1500 }}
         sticky
         pagination={false}
         offsetScroll={3}
@@ -504,8 +509,8 @@ export const Anfitrion = () => {
           onClick={salir}
           style={{ marginTop: "10px" }}
         >
-          <CloseCircleOutlined />
-          {t("logout")}
+          {/* <CloseCircleOutlined />
+          {t("logout")} */}
         </Button>
       </Divider>
       <Footer />

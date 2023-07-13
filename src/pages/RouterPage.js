@@ -6,6 +6,7 @@ import {
   LoginOutlined,
   IdcardOutlined,
   BarChartOutlined,
+  CoffeeOutlined,
 } from "@ant-design/icons";
 import {
   BrowserRouter as Router,
@@ -21,8 +22,10 @@ import { Escritorio } from "./Escritorio";
 import { UiContext } from "../context/UiContext";
 import { IngresarHost } from "./IngresarHost";
 import Stats from "./Stats";
+
 import { Anfitrion } from "./Anfitrion";
 import { useTranslation } from "react-i18next";
+
 
 const { Sider, Content, Header } = Layout;
 const { Title } = Typography;
@@ -37,19 +40,24 @@ export const RouterPage = () => {
       key: "1",
       icon: <LoginOutlined />,
       label: <Link to="/ingresar-host">{t("hostLogin")}</Link>,
-    },
-    {
+    },   {
       key: "2",
+      icon: <CoffeeOutlined />,
+      label: <Link to="/anfitrion">{t("pfm")}</Link>,
+    },
+
+    {
+      key: "3",
       icon: <UserOutlined />,
       label: <Link to="/registro">{t("register")}</Link>,
     },
     {
-      key: "3",
+      key: "4",
       icon: <FileTextFilled />,
       label: <Link to="/turnos">{t("turnTable")}</Link>,
     },
     {
-      key: "4",
+      key: "5",
       icon: <IdcardOutlined />,
       label: <Link to="/escritorio">{t("desk")}</Link>,
     },
@@ -59,6 +67,7 @@ export const RouterPage = () => {
       label: <Link to="/estadisticas">{t("statistics")}</Link>,
     },
   ];
+
 
   // Renders the visible screen
 
@@ -86,11 +95,14 @@ export const RouterPage = () => {
             <Row>
               <div className="header" />
               <Col xs={24} sm={24} md={24} lg={24}>
+                <a href="/ingresar-host">
                 <Image
                   src={require("../img/full_logo.png")}
                   style={{ margin: 0, flex: 1, justifyContent: "flex-start" }}
                   preview={false}
+                  height={100}
                 />
+                </a>
               </Col>
             </Row>
             <Row justify="center">

@@ -286,13 +286,13 @@ export const Turno = () => {
         rowKey={"pt_no"}
         columns={columns}
         dataSource={data.some((d) => d === undefined) ? [] : dataSource}
-        scroll={{ x: 1500, y: 1500 }}
+        // scroll={{ x: 1500, y: 1500 }}
         sticky
         pagination={false}
         offsetScroll={3}
         rowClassName={getRowClassName}
       />
-      <Footer />
+      {/* <Footer /> */}
     </>
   );
 };

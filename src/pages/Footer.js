@@ -20,17 +20,23 @@ const Footer = () => {
 
   const filteredStats = stats.filter((stat) => {
     const hasStationType = !!stat.station_type;
-    const hasProcedureTime = !isNaN(stat.avg_procedure_time) ? stat.avg_procedure_time : "-";
-    const hasWaitingTime = !isNaN(stat.avg_waiting_time) ? stat.avg_waiting_time : "-";
-  
-    return hasStationType && (hasProcedureTime !== "-" || hasWaitingTime !== "-");
-  });   
+    const hasProcedureTime = !isNaN(stat.avg_procedure_time)
+      ? stat.avg_procedure_time
+      : "-";
+    const hasWaitingTime = !isNaN(stat.avg_waiting_time)
+      ? stat.avg_waiting_time
+      : "-";
+
+    return (
+      hasStationType && (hasProcedureTime !== "-" || hasWaitingTime !== "-")
+    );
+  });
 
   const formatTime = (seconds) => {
     if (isNaN(seconds)) {
       return "-";
     }
-  
+
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
@@ -55,21 +61,19 @@ const Footer = () => {
           key={index}
           style={{
             margin: 8,
-            flexBasis: 180, // Establece el ancho inicial de la tarjeta
+            flexBasis: 50, // Establece el ancho inicial de la tarjeta
             flexGrow: 1, // Permite que la tarjeta crezca si hay espacio disponible
             maxWidth: 180, // Establece el ancho máximo de la tarjeta
           }}
         >
           <p>
             <strong>{getStationName(stat.station_type)}</strong>
-          </p>
-          <p>
+            <br></br>
             <strong>{t("waitingTime")}</strong>{" "}
-            {formatTime(stat.avg_waiting_time)} (mm:ss)
-          </p>
-          <p>
+            {formatTime(stat.avg_waiting_time)}
+            <br></br>
             <strong>{t("procedureTime")}</strong>{" "}
-            {formatTime(stat.avg_procedure_time)} (mm:ss)
+            {formatTime(stat.avg_procedure_time)}
           </p>
         </Card>
       ))}

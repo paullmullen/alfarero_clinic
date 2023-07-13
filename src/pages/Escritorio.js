@@ -65,12 +65,12 @@ export const Escritorio = () => {
 
       const unsubscribe = collectionRef.onSnapshot((snapshot) => {
         const updatedData = snapshot.docs.map((doc) => doc.data());
-
         if (isMounted) {
           const filteredData = updatedData.filter(
-            (doc) =>
+            (doc) => {            
               doc.complete !== true &&
               doc.plan_of_care.some((item) => item.station === usuario.servicio)
+            }
           );
           const statusObj = filteredData.reduce((obj, doc) => {
             obj[doc.pt_no] = doc.complete;
