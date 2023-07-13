@@ -48,7 +48,7 @@ export const IngresarHost = () => {
 
   useHideMenu(false);
 
-  const stationOptions = stations.slice(0, -1).map((station) => ({
+  const stationOptions = stations.map((station) => ({
     label: t(station.value),
     value: station.value,
   }));

@@ -54,7 +54,7 @@ export const Registro = () => {
     form.resetFields();
   };
 
-  const stationOptions = stations.slice(0, -1).map((station) => ({
+  const stationOptions = stations.map((station) => ({
     label: t(station.value),
     value: station.value,
   }));
@@ -105,15 +105,15 @@ export const Registro = () => {
   };
 
   const onFinish = async (patient) => {
-    const isDuplicate = await checkDuplicateRecord(
-      "patients",
-      "patient_name",
-      patient.paciente
-    );
-    if (isDuplicate) {
-      showAlert("Advertencia!", t("patientAlreadyExists"), "warning");
-      return;
-    }
+    // const isDuplicate = await checkDuplicateRecord(
+    //   "patients",
+    //   "patient_name",
+    //   patient.paciente
+    // );
+    // if (isDuplicate) {
+    //   showAlert("Advertencia!", t("patientAlreadyExists"), "warning");
+    //   return;
+    // }
     const formattedPatient = {
       complete: false,
       last_update: new Date(),

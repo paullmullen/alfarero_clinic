@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 import { Layout, Menu, Typography, Image, Row, Col } from "antd";
 import {
   UserOutlined,
-  FileTextFilled,
+  ClockCircleOutlined,
   LoginOutlined,
   IdcardOutlined,
   BarChartOutlined,
@@ -53,7 +53,7 @@ export const RouterPage = () => {
     },
     {
       key: "4",
-      icon: <FileTextFilled />,
+      icon: <ClockCircleOutlined />,
       label: <Link to="/turnos">{t("turnTable")}</Link>,
     },
     {
