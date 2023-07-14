@@ -46,7 +46,7 @@
   "waitingStatus": "Waiting to be attended",
   "attending": "Attending",
   "payedService": "Paying for the service",
-  "visitCompleted": "Visit completed",
+  "visitCompleted": "Service completed",
   "procedureTime": "Procedure time",
   "allFieldsAlert": "Please complete all fields",
   "infoSavedSuccessfully": "Data saved successfully",
@@ -60,5 +60,6 @@
   "enterValidPhoneNumber": "Enter a valid phone number",
   "selectAstation": "Select a station",
   "patientsPerService": "Total visits per service and average times",
-  "patients": "Patients"
+  "patients": "Patients",
+  "version": "1.0.1"
 }

@@ -39,7 +39,9 @@ export const Registro = () => {
   useHideMenu(false);
 
   const generateVisits = (visits) => {
+    console.log("Visits", visits);
     const planOfCare = visits.map((visit, key) => {
+      console.log(visit);
       return {
         order: key + 1,
         station: visit,
@@ -251,7 +253,7 @@ export const Registro = () => {
                   style={{
                     width: "100%",
                   }}
-                  options={stationOptions.slice(0, -1)}
+                  options={stationOptions.slice(0)}
                   onChange={handleChange}
                 />
               </Form.Item>

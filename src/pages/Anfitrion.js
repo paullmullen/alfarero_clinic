@@ -102,7 +102,7 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/not_planned.svg")}
-              width={IconSizes.width}
+              width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
@@ -117,7 +117,7 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/in_process.svg")}
-              width={IconSizes.width}
+              width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
@@ -132,7 +132,7 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/waiting.svg")}
-              width={IconSizes.width}
+              width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
@@ -147,7 +147,7 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/pay.svg")}
-              width={IconSizes.width}
+              width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
@@ -162,7 +162,7 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/complete.svg")}
-              width={IconSizes.width}
+              width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
@@ -177,7 +177,7 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/2.svg")}
-              width={IconSizes.width}
+              width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
@@ -192,7 +192,7 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/3.svg")}
-              width={IconSizes.width}
+              width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
@@ -207,7 +207,7 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/4.svg")}
-              width={IconSizes.width}
+              width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
@@ -222,7 +222,7 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/5.svg")}
-              width={IconSizes.width}
+              width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
@@ -237,7 +237,7 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/6.svg")}
-              width={IconSizes.width}
+              width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
@@ -252,7 +252,7 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/7.svg")}
-              width={IconSizes.width}
+              width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
@@ -267,8 +267,8 @@ export const Anfitrion = () => {
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
               src={require("../img/fin.png")}
-              width={45}
-              height={35}
+              width={IconSizes.height}
+              height={IconSizes.height}
               preview={false}
               onMouseEnter={() => {
                 setStation(station);
@@ -394,7 +394,7 @@ export const Anfitrion = () => {
             key: plan.station,
             title: t(plan.station),
             render: (status) => renderStatusIcon(status, plan.station),
-            width: 100,
+            width: IconSizes.width,
             align: "center",
           };
         }
@@ -406,23 +406,28 @@ export const Anfitrion = () => {
         title: t("patient"),
         dataIndex: "patient_name",
         key: "patient",
-        width: 100,
+        width: 175,
         fixed: "left",
-        render: ((name) => <div><b> {name.split("|")[0]} </b><br></br> {name.split("|")[1]} </div>)
+        render: (name) => (
+          <div>
+            <b> {name.split("|")[0]} </b>
+            <br></br> {name.split("|")[1]}{" "}
+          </div>
+        ),
       },
       ...Object.values(uniqueStations),
       {
         title: t("waitingTime"),
         dataIndex: "avg_time",
         key: "patient",
-        width: 100,
+        width: 70,
         align: "center",
         fixed: "right",
         render: (avg_time) => {
           const displayValue = isNaN(avg_time) ? 0 : avg_time;
           const style = {
             fontSize: "18px",
-            color: displayValue === 0 ? "red" : "inherit",
+            color: displayValue > 15 ? "red" : "inherit",
           };
           return <span style={style}>{displayValue} min</span>;
         },
@@ -441,8 +446,8 @@ export const Anfitrion = () => {
             >
               <Image
                 src={require("../img/fin.png")}
-                width={45}
-                height={35}
+                width={IconSizes.height}
+                height={IconSizes.height}
                 preview={false}
               />
             </Popconfirm>

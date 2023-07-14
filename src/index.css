@@ -2,7 +2,7 @@
 
 #components-layout-demo-custom-trigger .trigger {
   font-size: 18px;
-  line-height: 64px;
+  line-height: 50px;
   padding: 0 24px;
   cursor: pointer;
   transition: color 0.3s;
@@ -35,10 +35,12 @@
 
 .even-row {
   background-color: #f0f0f0; /* Color de fondo para filas pares */
+  height: 2px;
 }
 
 .odd-row {
   background-color: #bfbfbf; /* Color de fondo para filas impares */
+  height: 2px;
 }
 
 .center-cell {

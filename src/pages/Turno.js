@@ -5,6 +5,7 @@ import { useHideMenu } from "../hooks/useHideMenu";
 import { AlertInfo } from "../components/AlertInfo";
 import Footer from "./Footer";
 import { useTranslation } from "react-i18next";
+import IconSizes from "../helpers/iconSizes";
 
 export const Turno = () => {
   useHideMenu(true);
@@ -20,8 +21,8 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/not_planned.svg")}
-            width={30}
-            height={80}
+            width={IconSizes.width}
+            height={IconSizes.height}
             preview={false}
           />
         );
@@ -30,8 +31,8 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/in_process.svg")}
-            width={30}
-            height={80}
+            width={IconSizes.width}
+            height={IconSizes.height}
             preview={false}
           />
         );
@@ -40,8 +41,8 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/waiting.svg")}
-            width={30}
-            height={80}
+            width={IconSizes.width}
+            height={IconSizes.height}
             preview={false}
           />
         );
@@ -50,8 +51,8 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/pay.svg")}
-            width={30}
-            height={80}
+            width={IconSizes.width}
+            height={IconSizes.height}
             preview={false}
           />
         );
@@ -60,8 +61,8 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/complete.svg")}
-            width={30}
-            height={80}
+            width={IconSizes.width}
+            height={IconSizes.height}
             preview={false}
           />
         );
@@ -70,8 +71,8 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/1.svg")}
-            width={30}
-            height={80}
+            width={IconSizes.width}
+            height={IconSizes.height}
             preview={false}
           />
         );
@@ -80,8 +81,8 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/2.svg")}
-            width={30}
-            height={80}
+            width={IconSizes.width}
+            height={IconSizes.height}
             preview={false}
           />
         );
@@ -90,8 +91,8 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/3.svg")}
-            width={30}
-            height={80}
+            width={IconSizes.width}
+            height={IconSizes.height}
             preview={false}
           />
         );
@@ -100,8 +101,8 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/4.svg")}
-            width={30}
-            height={80}
+            width={IconSizes.width}
+            height={IconSizes.height}
             preview={false}
           />
         );
@@ -110,8 +111,8 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/5.svg")}
-            width={30}
-            height={80}
+            width={IconSizes.width}
+            height={IconSizes.height}
             preview={false}
           />
         );
@@ -120,8 +121,8 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/6.svg")}
-            width={30}
-            height={80}
+            width={IconSizes.width}
+            height={IconSizes.height}
             preview={false}
           />
         );
@@ -130,8 +131,8 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/7.svg")}
-            width={30}
-            height={80}
+            width={IconSizes.width}
+            height={IconSizes.height}
             preview={false}
           />
         );
@@ -140,8 +141,8 @@ export const Turno = () => {
         statusIcon = (
           <Image
             src={require("../img/fin.png")}
-            width={45}
-            height={35}
+            width={IconSizes.width}
+            height={IconSizes.height}
             preview={false}
           />
         );
@@ -291,6 +292,7 @@ export const Turno = () => {
         pagination={false}
         offsetScroll={3}
         rowClassName={getRowClassName}
+
       />
       {/* <Footer /> */}
     </>

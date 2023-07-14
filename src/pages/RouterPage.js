@@ -26,7 +26,6 @@ import Stats from "./Stats";
 import { Anfitrion } from "./Anfitrion";
 import { useTranslation } from "react-i18next";
 
-
 const { Sider, Content, Header } = Layout;
 const { Title } = Typography;
 
@@ -40,7 +39,8 @@ export const RouterPage = () => {
       key: "1",
       icon: <LoginOutlined />,
       label: <Link to="/ingresar-host">{t("hostLogin")}</Link>,
-    },   {
+    },
+    {
       key: "2",
       icon: <CoffeeOutlined />,
       label: <Link to="/anfitrion">{t("pfm")}</Link>,
@@ -66,8 +66,11 @@ export const RouterPage = () => {
       icon: <BarChartOutlined />,
       label: <Link to="/estadisticas">{t("statistics")}</Link>,
     },
+    {
+      key: "7",
+      label: t("version"),
+    },
   ];
-
 
   // Renders the visible screen
 
@@ -96,18 +99,18 @@ export const RouterPage = () => {
               <div className="header" />
               <Col xs={24} sm={24} md={24} lg={24}>
                 <a href="/ingresar-host">
-                <Image
-                  src={require("../img/full_logo.png")}
-                  style={{ margin: 0, flex: 1, justifyContent: "flex-start" }}
-                  preview={false}
-                  height={100}
-                />
+                  <Image
+                    src={require("../img/full_logo.png")}
+                    style={{ margin: 0, flex: 1, justifyContent: "flex-start" }}
+                    preview={false}
+                    height={100}
+                  />
                 </a>
               </Col>
             </Row>
             <Row justify="center">
               <Col xs={24} sm={24} md={24} lg={24}>
-                <Title level={5}>{t("headerTitle")}</Title>
+                <Title level={4}>{t("headerTitle")}</Title>
               </Col>
             </Row>
           </Header>
