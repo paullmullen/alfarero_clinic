@@ -198,7 +198,7 @@ export const Turno = () => {
           const displayValue = isNaN(avg_time) ? 0 : avg_time;
           const style = {
             fontSize: "18px",
-            color: displayValue === 0 ? "red" : "inherit",
+            color: displayValue => 15  ? "red" : "inherit",
           };
           return <span style={style}>{displayValue} min</span>;
         },

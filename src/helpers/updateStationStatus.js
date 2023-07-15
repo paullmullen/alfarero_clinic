@@ -125,6 +125,7 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
 };
 
 export const handleDelete = async (hoveredRowKey) => {
+
   const docPatientRefFin = firestore.collection("patients").doc(hoveredRowKey);
 
   if (docPatientRefFin) {

@@ -98,7 +98,7 @@ export const RouterPage = () => {
             <Row>
               <div className="header" />
               <Col xs={24} sm={24} md={24} lg={24}>
-                <a href="/ingresar-host">
+                <a href="/registro">
                   <Image
                     src={require("../img/full_logo.png")}
                     style={{ margin: 0, flex: 1, justifyContent: "flex-start" }}
