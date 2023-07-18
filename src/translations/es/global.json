@@ -34,7 +34,7 @@
   "headerTitle": "Plan de Cuidado de Pacientes",
   "turnTable": "Sala de Espera",
   "hostLogin": "Login",
-  "desk": "Tu Rol",
+  "desk": "Tu Cola",
   "statistics": "Estadisticas",
   "logout": "Logout",
   "currentService": "Usted está ofreciendo el servicio: ",
@@ -61,5 +61,5 @@
   "selectAstation": "Seleccione una estacion",
   "patientsPerService": "Total de visitas por servicio, y tiempos promedio",
   "patients": "Pacientes",
-  "version": "1.0.1"
+  "version": "1.0.2"
 }

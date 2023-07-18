@@ -36,19 +36,45 @@ export const Registro = () => {
   const [patientPlanOfCare, setPatientPlanOfCare] = useState([]);
   const [t] = useTranslation("global");
 
+
+
   useHideMenu(false);
 
-  const generateVisits = (visits) => {
-    console.log("Visits", visits);
-    const planOfCare = visits.map((visit, key) => {
-      console.log(visit);
-      return {
-        order: key + 1,
-        station: visit,
-        status: "pending",
-      };
+  const statusList = ["waiting","2","3","4","5","6","7"];
+
+  const fillMissingStations = (stations, visits) => {
+    const result = [];
+    const visitsSet = new Set(visits);
+
+    let order = -1;
+
+    // eslint-disable-next-line no-unused-expressions
+    visits?.forEach((visit) => {
+      const station = stations.find((s) => s.value === visit);
+      if (station) {
+        result.push({
+          order: order++,
+          station: station.value,
+          status: statusList[order]
+        });
+      }
     });
-    setPatientPlanOfCare(planOfCare);
+
+    stations.forEach((station) => {
+      if (!visitsSet.has(station.value)) {
+        result.push({
+          order: order++,
+          station: station.value,
+          status: "pending",
+        });
+      }
+    });
+
+    return result;
+  };
+  const generateVisits = (visits) => {
+    const filledStations = fillMissingStations(stations, visits);
+    setPatientPlanOfCare(filledStations);
   };
 
   const handleReset = () => {
@@ -210,7 +236,11 @@ export const Registro = () => {
                       if (value === undefined || value === "") {
                         return Promise.resolve();
                       }
-                      if (/^(\+\d{1,3}[-  *])?\(?([0-9]{3,4})\)?[-.●  *]?([0-9]{3,4})[-.●  *]?([0-9]{3,4})?$/.test(value)) {
+                      if (
+                        /^(\+\d{1,3}[-  *])?\(?([0-9]{3,4})\)?[-.●  *]?([0-9]{3,4})[-.●  *]?([0-9]{3,4})?$/.test(
+                          value
+                        )
+                      ) {
                         return Promise.resolve();
                       }
                       return Promise.reject(

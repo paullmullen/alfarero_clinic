@@ -61,5 +61,5 @@
   "selectAstation": "Select a station",
   "patientsPerService": "Total visits per service and average times",
   "patients": "Patients",
-  "version": "1.0.1"
+  "version": "1.0.2"
 }

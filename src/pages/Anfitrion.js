@@ -123,7 +123,9 @@ export const Anfitrion = () => {
               onMouseEnter={() => {
                 setStation(station);
               }}
+
             />
+
           </Popover>
         );
         break;
