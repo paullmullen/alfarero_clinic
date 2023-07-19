@@ -104,6 +104,7 @@ export const RouterPage = () => {
                     style={{ margin: 0, flex: 1, justifyContent: "flex-start" }}
                     preview={false}
                     height={100}
+                    width={185}
                   />
                 </a>
               </Col>

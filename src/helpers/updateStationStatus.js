@@ -146,3 +146,15 @@ export const handleDelete = async (hoveredRowKey) => {
     console.log("No such document!");
   }
 };
+
+
+export const cleanCompletedPatients = async () => {
+  const toBeDeleted = firestore.collection("patients").where("complete", "==", true);
+  toBeDeleted.get().then (function(querySnapshot) {
+    querySnapshot.forEach(function(doc) {
+      doc.ref.delete();
+    })
+  });
+
+  }
+

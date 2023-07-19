@@ -61,5 +61,9 @@
   "selectAstation": "Seleccione una estacion",
   "patientsPerService": "Total de visitas por servicio, y tiempos promedio",
   "patients": "Pacientes",
-  "version": "1.0.2"
+  "visitTypes": "Tipo de Visita",
+  "selectType": "Seleccione Clase de Visita",
+  "lab_results": "Resultados del Laboratorio",
+  "emergency": "Urgencias",
+  "version": "1.0.3"
 }

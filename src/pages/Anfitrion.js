@@ -13,6 +13,7 @@ import { firestore } from "./../helpers/firebaseConfig";
 import {
   handleStatusChange,
   handleDelete,
+  cleanCompletedPatients,
 } from "./../helpers/updateStationStatus";
 import { useHistory } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
@@ -445,6 +446,7 @@ export const Anfitrion = () => {
             <Popconfirm
               title="Está seguro que quiere eliminar el paciente de la cola?"
               onConfirm={() => handleDelete(hoveredRowKey)}
+              // onConfirm={() => cleanCompletedPatients()}
             >
               <Image
                 src={require("../img/fin.png")}
@@ -469,7 +471,6 @@ export const Anfitrion = () => {
         item.avg_time !== 0
           ? Math.floor((Date.now() / 1000 - item.avg_time) / 60)
           : 0;
-
       return {
         pt_no: item.pt_no,
         patient_name: item.patient_name + "|" + item.reason_for_visit,

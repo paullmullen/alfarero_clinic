@@ -61,5 +61,9 @@
   "selectAstation": "Select a station",
   "patientsPerService": "Total visits per service and average times",
   "patients": "Patients",
-  "version": "1.0.2"
+  "visitTypes": "Type of Visit",
+  "selectType": "Select Type of Visit",
+  "lab_results": "Lab Results",
+  "emergency": "Emergency",
+  "version": "1.0.3"
 }
