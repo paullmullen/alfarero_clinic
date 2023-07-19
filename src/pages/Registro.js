@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Form,
   Input,
@@ -34,6 +34,7 @@ export const Registro = () => {
   const { showAlert } = useAlert();
   const [form] = Form.useForm();
   const [patientPlanOfCare, setPatientPlanOfCare] = useState([]);
+  const [recipes, setRecipes] = useState([]);
   const [t] = useTranslation("global");
 
 
@@ -72,20 +73,80 @@ export const Registro = () => {
 
     return result;
   };
+
+  // const recipeOptions = (recipes) =>{
+  //   const result = [];
+  //   recipes.forEach((recipe) => {
+  //     result.push({
+  //       name: t(recipe.value),
+  //       value: recipe.value
+  //     })
+  //   });
+  //   return result;
+  // }
+
+
   const generateVisits = (visits) => {
     const filledStations = fillMissingStations(stations, visits);
     setPatientPlanOfCare(filledStations);
   };
+
+  
+  const stationOptions = stations.map((station) => ({
+    label: t(station.value),
+    value: station.value,
+  }));
+
 
   const handleReset = () => {
     form.setFieldsValue({ stations: [] });
     form.resetFields();
   };
 
-  const stationOptions = stations.map((station) => ({
-    label: t(station.value),
-    value: station.value,
-  }));
+
+
+
+
+
+  useEffect(() => {
+    let isMounted = true;
+    let unsubscribe;
+
+
+    const fetchData = async () => {
+      try {
+        const visitTypeRef = firestore.collection("visit_types").orderBy("order");
+        const visitTypeSnapshot = await visitTypeRef.get();
+        const visitRecipes = visitTypeSnapshot.docs.map((doc) => {
+          return doc.data();
+        });
+        let recipes = [];
+        visitRecipes.forEach((item) => {
+           recipes.push({
+            value: item.name,
+            label: t(item.name)
+           })
+        })
+        //---- sets up the options for the form ----
+        setRecipes(recipes);
+
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchData(); 
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+      isMounted = false;
+    };
+  }, []);
+
+
+
 
   const updateStatsCollection = async (station) => {
     const currentDate = moment();
@@ -131,6 +192,10 @@ export const Registro = () => {
   const handleChange = (selectedOption) => {
     generateVisits(selectedOption);
   };
+
+  const updateStations = (recipes) => {
+    generateVisits(["nur"]);
+  }
 
   const onFinish = async (patient) => {
     // const isDuplicate = await checkDuplicateRecord(
@@ -265,6 +330,24 @@ export const Registro = () => {
               </Form.Item>
             </Col>
           </Row>
+              <Row gutter={24}>
+            <Col xs={24} sm={24}>
+              <Form.Item
+                label={t("visitTypes")}
+                name="tipo"
+              >
+                <Select
+                  mode="single"
+                  showArrow
+                  style={{
+                    width: "100%",
+                  }}
+                  options={recipes}
+                   onChange={updateStations}
+                />
+              </Form.Item>
+            </Col>
+          </Row>          
           <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
@@ -283,7 +366,7 @@ export const Registro = () => {
                   style={{
                     width: "100%",
                   }}
-                  options={stationOptions.slice(0)}
+                  options={stationOptions}
                   onChange={handleChange}
                 />
               </Form.Item>
