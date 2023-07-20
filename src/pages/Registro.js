@@ -35,13 +35,12 @@ export const Registro = () => {
   const [form] = Form.useForm();
   const [patientPlanOfCare, setPatientPlanOfCare] = useState([]);
   const [recipes, setRecipes] = useState([]);
+  const [selectedRecipeStations, setRecipeStations] = useState([]);
   const [t] = useTranslation("global");
-
-
 
   useHideMenu(false);
 
-  const statusList = ["waiting","2","3","4","5","6","7"];
+  const statusList = ["waiting", "2", "3", "4", "5", "6", "7", "7", "7", "7"];
 
   const fillMissingStations = (stations, visits) => {
     const result = [];
@@ -56,7 +55,7 @@ export const Registro = () => {
         result.push({
           order: order++,
           station: station.value,
-          status: statusList[order]
+          status: statusList[order],
         });
       }
     });
@@ -74,68 +73,53 @@ export const Registro = () => {
     return result;
   };
 
-  // const recipeOptions = (recipes) =>{
-  //   const result = [];
-  //   recipes.forEach((recipe) => {
-  //     result.push({
-  //       name: t(recipe.value),
-  //       value: recipe.value
-  //     })
-  //   });
-  //   return result;
-  // }
-
 
   const generateVisits = (visits) => {
+    console.log("visits: ",visits);
     const filledStations = fillMissingStations(stations, visits);
+    console.log("filled stations: ", filledStations);
     setPatientPlanOfCare(filledStations);
   };
 
-  
   const stationOptions = stations.map((station) => ({
     label: t(station.value),
     value: station.value,
   }));
-
 
   const handleReset = () => {
     form.setFieldsValue({ stations: [] });
     form.resetFields();
   };
 
-
-
-
-
-
   useEffect(() => {
     let isMounted = true;
     let unsubscribe;
 
-
     const fetchData = async () => {
       try {
-        const visitTypeRef = firestore.collection("visit_types").orderBy("order");
+        const visitTypeRef = firestore
+          .collection("visit_types")
+          .orderBy("order");
         const visitTypeSnapshot = await visitTypeRef.get();
         const visitRecipes = visitTypeSnapshot.docs.map((doc) => {
           return doc.data();
         });
         let recipes = [];
         visitRecipes.forEach((item) => {
-           recipes.push({
+          recipes.push({
             value: item.name,
-            label: t(item.name)
-           })
-        })
+            label: t(item.name),
+            stations: item.plan_of_care,
+          });
+        });
         //---- sets up the options for the form ----
         setRecipes(recipes);
-
       } catch (error) {
         console.log(error);
       }
     };
 
-    fetchData(); 
+    fetchData();
 
     return () => {
       if (unsubscribe) {
@@ -144,9 +128,6 @@ export const Registro = () => {
       isMounted = false;
     };
   }, []);
-
-
-
 
   const updateStatsCollection = async (station) => {
     const currentDate = moment();
@@ -193,9 +174,20 @@ export const Registro = () => {
     generateVisits(selectedOption);
   };
 
-  const updateStations = (recipes) => {
-    generateVisits(["nur"]);
-  }
+  const updateStations = (changedValues) => {
+    let recipeOptions = [];
+    if (Object.keys(changedValues)[0] == "tipo") {
+      recipes[0].stations.forEach((item) => {
+        recipeOptions.push({value: item, label: t(item)});
+      });
+      form.setFieldsValue({ estaciones: recipeOptions});
+      let updateArray = [];
+      recipeOptions.forEach((e) => {
+        updateArray.push(e.value);
+      })
+      generateVisits(updateArray);
+    }
+  };
 
   const onFinish = async (patient) => {
     // const isDuplicate = await checkDuplicateRecord(
@@ -207,6 +199,7 @@ export const Registro = () => {
     //   showAlert("Advertencia!", t("patientAlreadyExists"), "warning");
     //   return;
     // }
+console.log (patient);
     const formattedPatient = {
       complete: false,
       last_update: new Date(),
@@ -220,6 +213,7 @@ export const Registro = () => {
       stop_time: new Date(),
       wait_time: 0,
     };
+    console.log(formattedPatient);
 
     const patientRef = await firestore
       .collection("patients")
@@ -245,6 +239,7 @@ export const Registro = () => {
 
   // Renders the visible screen
 
+
   return (
     <Row gutter={24} style={{ display: "contents" }}>
       <Col xs={24} sm={24}>
@@ -258,6 +253,7 @@ export const Registro = () => {
           initialValues={{ remember: true }}
           onFinish={onFinish}
           onFinishFailed={onFinishFailed}
+          onValuesChange={updateStations}
         >
           <Row gutter={24}>
             <Col xs={24} sm={24}>
@@ -303,13 +299,13 @@ export const Registro = () => {
                       }
                       if (
                         /^(\+\d{1,3}[-  *])?\(?([0-9]{3,4})\)?[-.●  *]?([0-9]{3,4})[-.●  *]?([0-9]{3,4})?$/.test(
-                          value
+                          value,
                         )
                       ) {
                         return Promise.resolve();
                       }
                       return Promise.reject(
-                        new Error(t("enterValidPhoneNumber"))
+                        new Error(t("enterValidPhoneNumber")),
                       );
                     },
                   },
@@ -330,12 +326,9 @@ export const Registro = () => {
               </Form.Item>
             </Col>
           </Row>
-              <Row gutter={24}>
+          <Row gutter={24}>
             <Col xs={24} sm={24}>
-              <Form.Item
-                label={t("visitTypes")}
-                name="tipo"
-              >
+              <Form.Item label={t("visitTypes")} name="tipo">
                 <Select
                   mode="single"
                   showArrow
@@ -343,11 +336,11 @@ export const Registro = () => {
                     width: "100%",
                   }}
                   options={recipes}
-                   onChange={updateStations}
+                  onChange={updateStations}
                 />
               </Form.Item>
             </Col>
-          </Row>          
+          </Row>
           <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
