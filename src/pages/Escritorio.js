@@ -39,7 +39,6 @@ export const Escritorio = () => {
   // Connects info to render on the app with firebase in real time (comunication react-firebase)
 
   useEffect(() => {
-    console.log(usuario.servicio);
     let isMounted = true;
     const fetchData = async () => {
       const collectionRef = firestore.collection("patients");
@@ -50,16 +49,16 @@ export const Escritorio = () => {
         const filteredData = initialData.filter(
           (doc) =>
             doc.complete !== true &&
-            doc.plan_of_care.some((item) => item.station === usuario.servicio)
+            doc.plan_of_care.some((item) => item.station === usuario.servicio),
         );
         const statusObj = filteredData.reduce((obj, doc) => {
           obj[doc.pt_no] = doc.complete;
           return obj;
         }, {});
-        console.log(statusObj);  
+        console.log(statusObj);
         setPatientStatus(statusObj);
         filteredData.sort(
-          (a, b) => a.start_time.toMillis() - b.start_time.toMillis()
+          (a, b) => a.start_time.toMillis() - b.start_time.toMillis(),
         );
         console.log(filteredData);
         setDocuments(filteredData);
@@ -70,19 +69,19 @@ export const Escritorio = () => {
       const unsubscribe = collectionRef.onSnapshot((snapshot) => {
         const updatedData = snapshot.docs.map((doc) => doc.data());
         if (isMounted) {
-          const filteredData = updatedData.filter(
-            (doc) => {            
-              doc.complete !== true &&
-              doc.plan_of_care.some((item) => item.station === usuario.servicio)
-            }
-          );
+          const filteredData = updatedData.filter((doc) => {
+            doc.complete !== true &&
+              doc.plan_of_care.some(
+                (item) => item.station === usuario.servicio,
+              );
+          });
           const statusObj = filteredData.reduce((obj, doc) => {
             obj[doc.pt_no] = doc.complete;
             return obj;
           }, {});
           setPatientStatus(statusObj);
           filteredData.sort(
-            (a, b) => a.start_time.toMillis() - b.start_time.toMillis()
+            (a, b) => a.start_time.toMillis() - b.start_time.toMillis(),
           );
           setDocuments(filteredData);
           setFilteredDocuments(filteredData);
@@ -264,12 +263,12 @@ export const Escritorio = () => {
         } else if (value !== "waiting" && item.status === "waiting") {
           updatedItem.wait_end = Math.floor(Date.now() / 1000);
           updatedItem.waiting_time = Math.abs(
-            updatedItem.wait_end - updatedItem.wait_start
+            updatedItem.wait_end - updatedItem.wait_start,
           );
         } else if (value !== "in_process" && item.status === "in_process") {
           updatedItem.procedure_end = Math.floor(Date.now() / 1000);
           updatedItem.procedure_time = Math.abs(
-            updatedItem.procedure_end - updatedItem.procedure_start
+            updatedItem.procedure_end - updatedItem.procedure_start,
           );
         }
 
@@ -289,7 +288,7 @@ export const Escritorio = () => {
     if (doc.exists) {
       const statsData = doc.data();
       const updatedItem = updatedPlanOfCare.find(
-        (item) => item.station === currentStation
+        (item) => item.station === currentStation,
       );
 
       if (value === "waiting" && updatedItem.wait_start) {
@@ -317,11 +316,11 @@ export const Escritorio = () => {
 
       if (number_of_patients) {
         const validWaitingTimeData = waiting_time_data.filter(
-          (time) => !isNaN(time)
+          (time) => !isNaN(time),
         );
         const waitingAverage = Math.floor(
           validWaitingTimeData.reduce((acc, time) => acc + time, 0) /
-            number_of_patients
+            number_of_patients,
         );
         await statsDocRef.update({
           avg_waiting_time: waitingAverage,
@@ -330,11 +329,11 @@ export const Escritorio = () => {
 
       if (procedure_time_data && number_of_patients) {
         const validProcedureTimeData = procedure_time_data.filter(
-          (time) => !isNaN(time)
+          (time) => !isNaN(time),
         );
         const procedureAverage = Math.floor(
           validProcedureTimeData.reduce((acc, time) => acc + time, 0) /
-            number_of_patients
+            number_of_patients,
         );
         await statsDocRef.update({
           avg_procedure_time: procedureAverage,
@@ -437,7 +436,7 @@ export const Escritorio = () => {
           {documents.length > 0 ? (
             <Table
               rowKey={"pt_no"}
-              dataSource={filteredDocuments}
+              dataSource={documents}
               pagination={false}
               columns={columns}
               rowClassName={getRowClassName}
