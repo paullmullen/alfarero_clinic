@@ -38,7 +38,7 @@ export const Escritorio = () => {
 
   // Connects info to render on the app with firebase in real time (comunication react-firebase)
 
-  useEffect(() => {
+  useEffect(() => { 
     let isMounted = true;
     const fetchData = async () => {
       const collectionRef = firestore.collection("patients");
@@ -67,25 +67,25 @@ export const Escritorio = () => {
       }
 
       const unsubscribe = collectionRef.onSnapshot((snapshot) => {
-        const updatedData = snapshot.docs.map((doc) => doc.data());
-        if (isMounted) {
-          const filteredData = updatedData.filter((doc) => {
-            doc.complete !== true &&
-              doc.plan_of_care.some(
-                (item) => item.station === usuario.servicio,
-              );
-          });
-          const statusObj = filteredData.reduce((obj, doc) => {
-            obj[doc.pt_no] = doc.complete;
-            return obj;
-          }, {});
-          setPatientStatus(statusObj);
-          filteredData.sort(
-            (a, b) => a.start_time.toMillis() - b.start_time.toMillis(),
-          );
-          setDocuments(filteredData);
-          setFilteredDocuments(filteredData);
-        }
+        // const updatedData = snapshot.docs.map((doc) => doc.data());
+        // if (isMounted) {
+        //   const filteredData = updatedData.filter((doc) => {
+        //     doc.complete !== true &&
+        //       doc.plan_of_care.some(
+        //         (item) => item.station === usuario.servicio,
+        //       );
+        //   });
+        //   const statusObj = filteredData.reduce((obj, doc) => {
+        //     obj[doc.pt_no] = doc.complete;
+        //     return obj;
+        //   }, {});
+        //   setPatientStatus(statusObj);
+        //   filteredData.sort(
+        //     (a, b) => a.start_time.toMillis() - b.start_time.toMillis(),
+        //   );
+        //   setDocuments(filteredData);
+        //   setFilteredDocuments(filteredData);
+        // }
       });
 
       return () => {
