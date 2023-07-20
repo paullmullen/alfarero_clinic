@@ -24,7 +24,7 @@
   "updateStatus": "Actualizar estatus",
   "patientRegistration": "Registro de Paciente",
   "enterFields": "Ingrese los siguientes datos",
-  "stations": "Estaciones",
+  "stations": "Servicios",
   "register": "Nuevo Paciente",
   "greeting": "¡Bienvenido!",
   "login": "Ingresar",
@@ -34,7 +34,7 @@
   "headerTitle": "Plan de Cuidado de Pacientes",
   "turnTable": "Sala de Espera",
   "hostLogin": "Login",
-  "desk": "Tu Cola",
+  "desk": "Próximos Pacientes",
   "statistics": "Estadisticas",
   "logout": "Logout",
   "currentService": "Usted está ofreciendo el servicio: ",
@@ -65,5 +65,5 @@
   "selectType": "Seleccione Clase de Visita",
   "lab_results": "Resultados del Laboratorio",
   "emergency": "Urgencias",
-  "version": "1.0.4"
+  "version": "1.0.5"
 }

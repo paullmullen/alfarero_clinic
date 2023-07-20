@@ -34,7 +34,7 @@
   "headerTitle": "Patient Care Plan",
   "turnTable": "Work roster",
   "hostLogin": "Host login",
-  "desk": "Desk",
+  "desk": "Patient List",
   "statistics": "Statistics",
   "logout": "Logout",
   "currentService": "You are offering the service: ",
@@ -65,5 +65,5 @@
   "selectType": "Select Type of Visit",
   "lab_results": "Lab Results",
   "emergency": "Emergency",
-  "version": "1.0.4"
+  "version": "1.0.5"
 }
