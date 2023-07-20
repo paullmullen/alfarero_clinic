@@ -39,6 +39,7 @@ export const Escritorio = () => {
   // Connects info to render on the app with firebase in real time (comunication react-firebase)
 
   useEffect(() => {
+    console.log(usuario.servicio);
     let isMounted = true;
     const fetchData = async () => {
       const collectionRef = firestore.collection("patients");
@@ -55,12 +56,15 @@ export const Escritorio = () => {
           obj[doc.pt_no] = doc.complete;
           return obj;
         }, {});
+        console.log(statusObj);  
         setPatientStatus(statusObj);
         filteredData.sort(
           (a, b) => a.start_time.toMillis() - b.start_time.toMillis()
         );
+        console.log(filteredData);
         setDocuments(filteredData);
         setFilteredDocuments(filteredData);
+        console.log(documents);
       }
 
       const unsubscribe = collectionRef.onSnapshot((snapshot) => {

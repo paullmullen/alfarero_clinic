@@ -36,6 +36,7 @@ export const Registro = () => {
   const [patientPlanOfCare, setPatientPlanOfCare] = useState([]);
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipeStations, setRecipeStations] = useState([]);
+  const [disabledButton, setDisabledButton] = useState(false);
   const [t] = useTranslation("global");
 
   useHideMenu(false);
@@ -75,9 +76,7 @@ export const Registro = () => {
 
 
   const generateVisits = (visits) => {
-    console.log("visits: ",visits);
     const filledStations = fillMissingStations(stations, visits);
-    console.log("filled stations: ", filledStations);
     setPatientPlanOfCare(filledStations);
   };
 
@@ -89,6 +88,7 @@ export const Registro = () => {
   const handleReset = () => {
     form.setFieldsValue({ stations: [] });
     form.resetFields();
+    setDisabledButton(false);
   };
 
   useEffect(() => {
@@ -199,7 +199,8 @@ export const Registro = () => {
     //   showAlert("Advertencia!", t("patientAlreadyExists"), "warning");
     //   return;
     // }
-console.log (patient);
+
+    setDisabledButton(true);
     const formattedPatient = {
       complete: false,
       last_update: new Date(),
@@ -213,7 +214,6 @@ console.log (patient);
       stop_time: new Date(),
       wait_time: 0,
     };
-    console.log(formattedPatient);
 
     const patientRef = await firestore
       .collection("patients")
@@ -368,7 +368,7 @@ console.log (patient);
           <Row style={{ display: "contents" }} gutter={24}>
             <Col xs={14} sm={24}>
               <Form.Item {...tailLayout}>
-                <Button type="primary" htmlType="submit" shape="round">
+                <Button type="primary" htmlType="submit" shape="round" name="register" disabled={disabledButton}>
                   <SaveFilled />
                   {t("register")}
                 </Button>
