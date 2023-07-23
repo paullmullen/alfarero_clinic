@@ -41,13 +41,13 @@ export const Registro = () => {
 
   useHideMenu(false);
 
-  const statusList = ["waiting", "2", "3", "4", "5", "6", "7", "7", "7", "7"];
+  const statusList = ["waiting", "2", "3", "4", "5", "6", "7", "7", "7", "7","7","7","7","7","7","7","7"];
 
   const fillMissingStations = (stations, visits) => {
     const result = [];
     const visitsSet = new Set(visits);
 
-    let order = -1;
+    let order = 0;
 
     // eslint-disable-next-line no-unused-expressions
     visits?.forEach((visit) => {
@@ -177,7 +177,13 @@ export const Registro = () => {
   const updateStations = (changedValues) => {
     let recipeOptions = [];
     if (Object.keys(changedValues)[0] == "tipo") {
-      recipes[0].stations.forEach((item) => {
+      let whichRecipe= null;
+      recipes.forEach((element, index) => {
+        if (element.value == changedValues.tipo) {
+          whichRecipe = index;
+        }
+      })
+      recipes[whichRecipe].stations.forEach((item) => {
         recipeOptions.push({value: item, label: t(item)});
       });
       form.setFieldsValue({ estaciones: recipeOptions});
@@ -214,6 +220,8 @@ export const Registro = () => {
       stop_time: new Date(),
       wait_time: 0,
     };
+    console.log(formattedPatient);
+
 
     const patientRef = await firestore
       .collection("patients")

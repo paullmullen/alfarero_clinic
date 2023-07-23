@@ -1,5 +1,5 @@
 const IconSizes = {
-    width: 70,
+    width: 60,
     height: 30,
   };
   

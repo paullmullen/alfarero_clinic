@@ -297,7 +297,7 @@ export const Anfitrion = () => {
         height={IconSizes.height}
         preview={false}
         onClick={() =>
-          handleStatusChange("not_planned", hoveredRowKey, station)
+          handleStatusChange("pending", hoveredRowKey, station)
         }
       />
 
@@ -426,15 +426,16 @@ export const Anfitrion = () => {
         width: 70,
         align: "center",
         fixed: "right",
-        render: (avg_time) => {
+        render: (avg_time ) => {
           const displayValue = isNaN(avg_time) ? 0 : avg_time;
           const style = {
             fontSize: "18px",
             color: displayValue > 15 ? "red" : "inherit",
           };
-          return <span style={style}>{displayValue} min</span>;
+          return <span style={style}>{avg_time.split("|")[0]} min <hr></hr><h5>{avg_time.split("|")[1]} min</h5></span>;
         },
       },
+
       {
         title: t("action"),
         dataIndex: "pt_no",
@@ -445,7 +446,7 @@ export const Anfitrion = () => {
           dataSource.length >= 1 ? (
             <Popconfirm
               title="Está seguro que quiere eliminar el paciente de la cola?"
-              onConfirm={() => handleDelete(hoveredRowKey)}
+              //onConfirm={() => handleDelete(hoveredRowKey)}
               // onConfirm={() => cleanCompletedPatients()}
             >
               <Image
@@ -471,11 +472,11 @@ export const Anfitrion = () => {
         item.avg_time !== 0
           ? Math.floor((Date.now() / 1000 - item.avg_time) / 60)
           : 0;
-      return {
+        return {
         pt_no: item.pt_no,
         patient_name: item.patient_name + "|" + item.reason_for_visit,
         reason_for_visit: item.reason_for_visit,
-        avg_time: avg_time,
+        avg_time: avg_time.toString()+"|"+(Math.round((new Date() - item.start_time.toDate())/24/60/60)).toString(),
         ...stations,
       };
     });

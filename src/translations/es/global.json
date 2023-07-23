@@ -11,6 +11,7 @@
   "pt": "Fis",
   "ped": "Ped",
   "nut": "Nut",
+  "psi": "Psi",
   "obs": "Obs",
   "pha": "Far",
   "lab": "Lab",
@@ -63,7 +64,14 @@
   "patients": "Pacientes",
   "visitTypes": "Tipo de Visita",
   "selectType": "Seleccione Clase de Visita",
-  "lab_results": "Resultados del Laboratorio",
+  "lab_results": "Solo Laboratorio",
   "emergency": "Urgencias",
-  "version": "1.0.5"
+  "physio": "Fisioterapia",
+  "consulta": "Consulta Adultos",
+  "consped": "Consulta Pediátrica",
+  "nutrition": "Nutrición",
+  "nursing": "Enfermería",
+  "psych": "Psicología",
+  "total_time": "Total",
+  "version": "1.0.9"
 }

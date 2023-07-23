@@ -5,6 +5,7 @@ const StationEnum = {
   pt: "Terapia Física",
   ped: "Pediatría",
   nut: "Nutrición",
+  psy: "Psycología",
   obs: "Obstetricia",
   pha: "Farmacia",
   lab: "Laboratorio",

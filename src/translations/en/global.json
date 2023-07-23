@@ -11,6 +11,7 @@
   "pt": "Physical Therapy",
   "ped": "Pediatrics",
   "nut": "Nutrition",
+  "psi": "Psychology",
   "obs": "Obstetrics",
   "pha": "Pharmacy",
   "lab": "Laboratory",
@@ -63,7 +64,14 @@
   "patients": "Patients",
   "visitTypes": "Type of Visit",
   "selectType": "Select Type of Visit",
-  "lab_results": "Lab Results",
+  "lab_results": "Lab Only",
   "emergency": "Emergency",
-  "version": "1.0.5"
+  "physio": "Physical Therapy",
+  "consulta": "Adult Clinic",
+  "consped": "Pediatrics",
+  "nutrition": "Nutrition",
+  "nursing": "Nursing",
+  "psych": "Psychología",
+  "total_time": "Total",
+  "version": "1.0.9"
 }

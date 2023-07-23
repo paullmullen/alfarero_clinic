@@ -157,6 +157,7 @@ export const Turno = () => {
   // Makes render the table that changes in real time (patients and their status)
   const generateTableData = (extractedPlanOfCare) => {
     const uniqueStations = {};
+    console.log(extractedPlanOfCare);
     extractedPlanOfCare.sort((a, b) => {
       const startTimeA = new Date(a.start_time.toMillis());
       const startTimeB = new Date(b.start_time.toMillis());
@@ -171,7 +172,7 @@ export const Turno = () => {
             key: plan.station,
             title: t(plan.station),
             render: (status) => renderStatusIcon(status),
-            width: 100,
+            width: 60,
             align: "center",
           };
         }
@@ -187,30 +188,28 @@ export const Turno = () => {
         fixed: "left",
       },
       ...Object.values(uniqueStations),
-      {
-        title: t("waitingTime"),
-        dataIndex: "avg_time",
-        key: "patient",
-        width: 100,
-        align: "center",
-        fixed: "right",
-        render: (avg_time) => {
-          const displayValue = isNaN(avg_time) ? 0 : avg_time;
-          const style = {
-            fontSize: "18px",
-            color: displayValue => 15  ? "red" : "inherit",
-          };
-          return <span style={style}>{displayValue} min</span>;
-        },
-      },
+      // {
+      //   title: t("waitingTime"),
+      //   dataIndex: "avg_time",
+      //   key: "patient",
+      //   width: 100,
+      //   align: "center",
+      //   fixed: "right",
+      //   render: (avg_time) => {
+      //     const displayValue = isNaN(avg_time) ? 0 : avg_time;
+      //     const style = {
+      //       fontSize: "18px",
+      //       color: displayValue => 15  ? "red" : "inherit",
+      //     };
+      //     return <span style={style}>{displayValue} min</span>;
+      //   },
+      // },
     ];
-
     const dataSource = extractedPlanOfCare.map((item) => {
       const stations = {};
       item.plan_of_care.forEach((plan) => {
         stations[plan.station] = plan.status;
       });
-
       const avg_time =
         item.avg_time !== 0
           ? Math.floor((Date.now() / 1000 - item.avg_time) / 60)

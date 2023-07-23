@@ -67,6 +67,7 @@ export const Escritorio = () => {
       }
 
       const unsubscribe = collectionRef.onSnapshot((snapshot) => {
+        // commented this out because it was closing the queue of waiting patients
         // const updatedData = snapshot.docs.map((doc) => doc.data());
         // if (isMounted) {
         //   const filteredData = updatedData.filter((doc) => {
