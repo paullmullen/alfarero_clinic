@@ -73,5 +73,9 @@
   "nursing": "Nursing",
   "psych": "Psychología",
   "total_time": "Total",
-  "version": "1.0.9"
+  "selectExamType": "Select Exam Type",
+  "reason_for_visit": "Reason for Visit",
+  "start_time": "Arrival Time",
+  "todaysComplete": "Today's Completed Patients",
+  "version": "1.0.11"
 }

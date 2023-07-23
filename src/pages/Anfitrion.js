@@ -8,7 +8,6 @@ import {
   Button,
   Popconfirm,
 } from "antd";
-import { CloseCircleOutlined } from "@ant-design/icons";
 import { firestore } from "./../helpers/firebaseConfig";
 import {
   handleStatusChange,
@@ -18,11 +17,9 @@ import {
 import { useHistory } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { AlertInfo } from "../components/AlertInfo";
-import { Link } from "react-router-dom";
 import Footer from "./Footer";
 import { useTranslation } from "react-i18next";
 import IconSizes from "../helpers/iconSizes";
-import Icon from "@ant-design/icons/lib/components/Icon";
 
 export const Anfitrion = () => {
   useHideMenu(true);
@@ -35,6 +32,7 @@ export const Anfitrion = () => {
 
   const handleMouseEnter = (record) => {
     setHoveredRowKey(record.pt_no);
+    console.log(record.pt_no);
   };
 
   const handleMouseLeave = () => {
@@ -446,7 +444,7 @@ export const Anfitrion = () => {
           dataSource.length >= 1 ? (
             <Popconfirm
               title="Está seguro que quiere eliminar el paciente de la cola?"
-              //onConfirm={() => handleDelete(hoveredRowKey)}
+              onConfirm={() => handleDelete(hoveredRowKey)}
               // onConfirm={() => cleanCompletedPatients()}
             >
               <Image

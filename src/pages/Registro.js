@@ -5,7 +5,6 @@ import {
   Button,
   Typography,
   Divider,
-  InputNumber,
   Select,
   Col,
   Row,
@@ -14,7 +13,7 @@ import { SaveFilled } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { useAlert } from "../hooks/alert";
 import { firestore } from "./../helpers/firebaseConfig";
-import { checkDuplicateRecord } from "../helpers/checkDuplicateRecord";
+// import { checkDuplicateRecord } from "../helpers/checkDuplicateRecord";
 import { stations } from "../helpers/stations";
 import moment from "moment";
 import { useTranslation } from "react-i18next";
@@ -35,19 +34,37 @@ export const Registro = () => {
   const [form] = Form.useForm();
   const [patientPlanOfCare, setPatientPlanOfCare] = useState([]);
   const [recipes, setRecipes] = useState([]);
-  const [selectedRecipeStations, setRecipeStations] = useState([]);
+  // const [selectedRecipeStations, setRecipeStations] = useState([]);
   const [disabledButton, setDisabledButton] = useState(false);
   const [t] = useTranslation("global");
 
   useHideMenu(false);
 
-  const statusList = ["waiting", "2", "3", "4", "5", "6", "7", "7", "7", "7","7","7","7","7","7","7","7"];
+  const statusList = [
+    "waiting",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "7",
+    "7",
+    "7",
+    "7",
+    "7",
+    "7",
+    "7",
+    "7",
+    "7",
+    "7",
+  ];
 
   const fillMissingStations = (stations, visits) => {
     const result = [];
     const visitsSet = new Set(visits);
 
-    let order = 0;
+    let order = -1;
 
     // eslint-disable-next-line no-unused-expressions
     visits?.forEach((visit) => {
@@ -74,16 +91,15 @@ export const Registro = () => {
     return result;
   };
 
-
   const generateVisits = (visits) => {
     const filledStations = fillMissingStations(stations, visits);
     setPatientPlanOfCare(filledStations);
   };
 
-  const stationOptions = stations.map((station) => ({
-    label: t(station.value),
-    value: station.value,
-  }));
+  // const stationOptions = stations.map((station) => ({
+  //   label: t(station.value),
+  //   value: station.value,
+  // }));
 
   const handleReset = () => {
     form.setFieldsValue({ stations: [] });
@@ -176,21 +192,21 @@ export const Registro = () => {
 
   const updateStations = (changedValues) => {
     let recipeOptions = [];
-    if (Object.keys(changedValues)[0] == "tipo") {
-      let whichRecipe= null;
+    if (Object.keys(changedValues)[0] === "tipo") {
+      let whichRecipe = null;
       recipes.forEach((element, index) => {
-        if (element.value == changedValues.tipo) {
+        if (element.value === changedValues.tipo) {
           whichRecipe = index;
         }
-      })
-      recipes[whichRecipe].stations.forEach((item) => {
-        recipeOptions.push({value: item, label: t(item)});
       });
-      form.setFieldsValue({ estaciones: recipeOptions});
+      recipes[whichRecipe].stations.forEach((item) => {
+        recipeOptions.push({ value: item, label: t(item) });
+      });
+      form.setFieldsValue({ estaciones: recipeOptions });
       let updateArray = [];
       recipeOptions.forEach((e) => {
         updateArray.push(e.value);
-      })
+      });
       generateVisits(updateArray);
     }
   };
@@ -222,7 +238,6 @@ export const Registro = () => {
     };
     console.log(formattedPatient);
 
-
     const patientRef = await firestore
       .collection("patients")
       .add(formattedPatient);
@@ -246,7 +261,6 @@ export const Registro = () => {
   };
 
   // Renders the visible screen
-
 
   return (
     <Row gutter={24} style={{ display: "contents" }}>
@@ -274,7 +288,7 @@ export const Registro = () => {
               </Form.Item>
             </Col>
           </Row>
-          <Row gutter={24}>
+          {/* <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
                 label={t("age")}
@@ -322,7 +336,7 @@ export const Registro = () => {
                 <Input type="tel" />
               </Form.Item>
             </Col>
-          </Row>
+          </Row> */}
           <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
@@ -336,7 +350,16 @@ export const Registro = () => {
           </Row>
           <Row gutter={24}>
             <Col xs={24} sm={24}>
-              <Form.Item label={t("visitTypes")} name="tipo">
+              <Form.Item
+                label={t("visitTypes")}
+                name="tipo"
+                rules={[
+                  {
+                    required: true,
+                    message: t("selectExamType"),
+                  },
+                ]}
+              >
                 <Select
                   mode="single"
                   showArrow
@@ -349,7 +372,7 @@ export const Registro = () => {
               </Form.Item>
             </Col>
           </Row>
-          <Row gutter={24}>
+          {/* <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
                 label={t("stations")}
@@ -372,11 +395,17 @@ export const Registro = () => {
                 />
               </Form.Item>
             </Col>
-          </Row>
+          </Row> */}
           <Row style={{ display: "contents" }} gutter={24}>
             <Col xs={14} sm={24}>
               <Form.Item {...tailLayout}>
-                <Button type="primary" htmlType="submit" shape="round" name="register" disabled={disabledButton}>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  shape="round"
+                  name="register"
+                  disabled={disabledButton}
+                >
                   <SaveFilled />
                   {t("register")}
                 </Button>

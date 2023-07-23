@@ -73,5 +73,9 @@
   "nursing": "Enfermería",
   "psych": "Psicología",
   "total_time": "Total",
-  "version": "1.0.9"
+  "selectExamType": "Seleccione Tipo de Examen",
+  "reason_for_visit": "Motivo de Visita",
+  "start_time": "Hora de Llegada",
+  "todaysComplete": "Pacientes Completadas Hoy"
+,  "version": "1.0.11"
 }

@@ -3,7 +3,6 @@ import { Table, Image } from "antd";
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { AlertInfo } from "../components/AlertInfo";
-import Footer from "./Footer";
 import { useTranslation } from "react-i18next";
 import IconSizes from "../helpers/iconSizes";
 
@@ -157,7 +156,6 @@ export const Turno = () => {
   // Makes render the table that changes in real time (patients and their status)
   const generateTableData = (extractedPlanOfCare) => {
     const uniqueStations = {};
-    console.log(extractedPlanOfCare);
     extractedPlanOfCare.sort((a, b) => {
       const startTimeA = new Date(a.start_time.toMillis());
       const startTimeB = new Date(b.start_time.toMillis());
