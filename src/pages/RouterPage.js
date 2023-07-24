@@ -21,6 +21,7 @@ import { Turno } from "./Turno";
 import { Escritorio } from "./Escritorio";
 import { UiContext } from "../context/UiContext";
 import { IngresarHost } from "./IngresarHost";
+import { Survey } from "./Survey";
 import Stats from "./Stats";
 
 import { Anfitrion } from "./Anfitrion";
@@ -131,6 +132,7 @@ export const RouterPage = () => {
                 <Route path="/escritorio" component={Escritorio} />
                 <Route path="/anfitrion" component={Anfitrion} />
                 <Route path="/estadisticas" component={Stats} />
+                <Route path="/survey" component={Survey} />
                 <Redirect to="/ingresar-host" />
               </Switch>
             </AlertProvider>

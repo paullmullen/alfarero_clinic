@@ -6,8 +6,10 @@ export const stations = [
   { value: "ped", label: "Pediatria", order: 5 },
   { value: "nut", label: "Nutricion", order: 6 },
   { value: "psi", label: "Psicología", order: 7 },
-  { value: "obs", label: "Obstetricia", order: 8 },
+  { value: "obs", label: "Observation", order: 8 },
   { value: "pha", label: "Farmacia", order: 9 },    
   { value: "lab", label: "Laboratorio", order: 10 },
-  { value: "pra", label: "Oración", order: 11 },
+  { value: "og", label: "Obstetria/Ginecología", order: 11},
+  { value: "den", label: "Ondontología", order: 12 },
+  { value: "pra", label: "Oración", order: 13 },
 ];

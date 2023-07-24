@@ -22,7 +22,7 @@ const { Title, Text } = Typography;
 
 const layout = {
   labelCol: { span: 8 },
-  wrapperCol: { span: 14 },
+
 };
 
 const tailLayout = {
@@ -397,7 +397,7 @@ export const Registro = () => {
             </Col>
           </Row> */}
           <Row style={{ display: "contents" }} gutter={24}>
-            <Col xs={14} sm={24}>
+            <Col xs={24} sm={24}>
               <Form.Item {...tailLayout}>
                 <Button
                   type="primary"
