@@ -236,7 +236,7 @@ const Stats = () => {
       </div>
       <Divider></Divider>
       <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-        {t("todaysComplete")}
+        {t("todaysComplete")} ({patients.length})
       </h2>
       <Table
         rowKey={"pt_no"}

@@ -103,11 +103,11 @@ export const Survey = () => {
                 <Form.Item label={t("satisfaction")} name="satisfaction">
                   <Radio.Group>
                     <Space direction="horizontal">
-                      <Radio value={1}><AngryIcon height="50px" width="50px" fill="red" /></Radio>
-                      <Radio value={2}><SadIcon height="50px" width="50px"  color = "orange"/></Radio>
-                      <Radio value={3}><IndifferentIcon height="50px" width="50px"  color="blue"/></Radio>
-                      <Radio value={4}><HappyIcon height="50px" width="50px"  color="green"/></Radio>
-                      <Radio value={5}><ThrilledIcon height="50px" width="50px"  color="green"/></Radio>
+                      <Radio value={1}><AngryIcon height="50px" width="50px"> </AngryIcon></Radio>
+                      <Radio value={2}><SadIcon height="50px" width="50px"></SadIcon></Radio>
+                      <Radio value={3}><IndifferentIcon height="50px" width="50px" /></Radio>
+                      <Radio value={4}><HappyIcon height="50px" width="50px"/></Radio>
+                      <Radio value={5}><ThrilledIcon height="50px" width="50px" /></Radio>
                     </Space>
                   </Radio.Group>
                 </Form.Item>

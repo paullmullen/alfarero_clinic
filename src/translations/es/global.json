@@ -16,7 +16,7 @@
   "pha": "Far",
   "lab": "Lab",
   "pra": "Ora",
-  "og": "O/G",
+  "og": "Ob-Gin",
   "den": "Den",
   "dentistry": "Dentista",
   "pfm": "Anfitrión",
@@ -98,5 +98,5 @@
   "other": "Otro",
   "yes": "Sí",
   "no": "No",
-  "version": "1.0.12"
+  "version": "1.0.13"
 }

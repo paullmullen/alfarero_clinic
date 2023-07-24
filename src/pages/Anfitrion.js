@@ -413,6 +413,7 @@ export const Anfitrion = () => {
           <div>
             <b> {name.split("|")[0]} </b>
             <br></br> {name.split("|")[1]}{" "}
+            <br></br>{name.split("|")[2]}{" "}
           </div>
         ),
       },
@@ -443,7 +444,7 @@ export const Anfitrion = () => {
         render: () =>
           dataSource.length >= 1 ? (
             <Popconfirm
-              title="Está seguro que quiere eliminar el paciente de la cola?"
+              title={hoveredRowKey}
               onConfirm={() => handleDelete(hoveredRowKey)}
               // onConfirm={() => cleanCompletedPatients()}
             >
@@ -472,7 +473,7 @@ export const Anfitrion = () => {
           : 0;
         return {
         pt_no: item.pt_no,
-        patient_name: item.patient_name + "|" + item.reason_for_visit,
+        patient_name: item.patient_name + "|" + item.reason_for_visit + "|" + ((item.tel===null) ? " " : item.tel),
         reason_for_visit: item.reason_for_visit,
         avg_time: avg_time.toString()+"|"+(Math.round((new Date() - item.start_time.toDate())/24/60/60)).toString(),
         ...stations,

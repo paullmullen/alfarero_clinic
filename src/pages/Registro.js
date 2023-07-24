@@ -288,9 +288,9 @@ export const Registro = () => {
               </Form.Item>
             </Col>
           </Row>
-          {/* <Row gutter={24}>
+          <Row gutter={24}>
             <Col xs={24} sm={24}>
-              <Form.Item
+              {/* <Form.Item
                 label={t("age")}
                 name="edad"
                 rules={[
@@ -308,7 +308,7 @@ export const Registro = () => {
                 ]}
               >
                 <InputNumber min={1} max={99} />
-              </Form.Item>
+              </Form.Item> */}
 
               <Form.Item
                 label={t("tel")}
@@ -336,7 +336,7 @@ export const Registro = () => {
                 <Input type="tel" />
               </Form.Item>
             </Col>
-          </Row> */}
+          </Row>
           <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
