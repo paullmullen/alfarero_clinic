@@ -98,5 +98,6 @@
   "other": "Otro",
   "yes": "Sí",
   "no": "No",
-  "version": "1.0.13"
+  "done": "Fin",
+  "version": "1.0.15"
 }

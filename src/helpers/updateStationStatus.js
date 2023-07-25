@@ -1,5 +1,5 @@
 import { firestore } from "./../helpers/firebaseConfig";
-
+import { useHistory } from 'react-router-dom';
 export const handleStatusChange = async (value, hoveredRowKey, station) => {
   const docPatientRef = firestore.collection("patients").doc(hoveredRowKey);
 
@@ -124,9 +124,10 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
   }
 };
 
-export const handleDelete = async (hoveredRowKey) => {
+export const handleDelete = async (hoveredRowKey, history) => {
 
   const docPatientRefFin = firestore.collection("patients").doc(hoveredRowKey);
+
 
   if (docPatientRefFin) {
     try {
@@ -145,6 +146,7 @@ export const handleDelete = async (hoveredRowKey) => {
   } else {
     console.log("No such document!");
   }
+  history.push("/survey");
 };
 
 
