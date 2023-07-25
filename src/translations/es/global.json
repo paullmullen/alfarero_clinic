@@ -89,7 +89,7 @@
   "firstVisit": "¿Fue esta su primera visita a esta clínica?",
   "suggestions": "¿Tiene sugerencias para mejorar?",
   "satisfaction": "¿Qué tan satisfecho estuvo con el servicio de hoy?",
-  "fromAFriend": "Boca en Boca",
+  "fromAFriend": "Alguién me dijo",
   "express": "Chequeos Express",
   "cda": "Casa del Alfarero",
   "redes": "Redes Sociales",
@@ -99,5 +99,12 @@
   "yes": "Sí",
   "no": "No",
   "done": "Fin",
+  "todaysSurveys": "Encuestas de Hoy",
+  "areYouSure": "¿Estás seguro que quieres finalizar esta paciente?",
+  "source": "Fuente",
+  "sat": "Satisfacción",
+  "first": "Primera Visita",
+  "suggestion": "Sugerencias",
+  "word_of_mouth": "Boca en Boca",
   "version": "1.0.15"
 }

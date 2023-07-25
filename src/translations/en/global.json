@@ -99,5 +99,12 @@
   "yes": "Yes",
   "no": "No",
   "done": "Done",
+  "todaysSurveys": "Today's Surveys",
+  "areYouSure": "Are you sure you're done with this patient?",
+  "source": "Source",
+  "sat": "Satisfaction",
+  "first": "First Visit",
+  "suggestion": "Suggestion",
+  "word_of_mouth": "Word of Mouth",
   "version": "1.0.15"
 }

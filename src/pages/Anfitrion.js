@@ -444,7 +444,7 @@ export const Anfitrion = () => {
         render: () =>
           dataSource.length >= 1 ? (
             <Popconfirm
-              title={hoveredRowKey}
+              title={t("areYouSure")}
               onConfirm={() => handleDelete(hoveredRowKey, history)}
               // onConfirm={() => cleanCompletedPatients()}
             >

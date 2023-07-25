@@ -14,6 +14,11 @@ import {
 } from "recharts";
 import { useTranslation } from "react-i18next";
 import { Divider, Table } from "antd";
+import { ReactComponent as AngryIcon } from "../img/angry.svg";
+import { ReactComponent as SadIcon } from "../img/sad.svg";
+import { ReactComponent as IndifferentIcon } from "../img/indifferent.svg";
+import { ReactComponent as HappyIcon } from "../img/happy.svg";
+import { ReactComponent as ThrilledIcon } from "../img/thrilled.svg";
 import Column from "antd/lib/table/Column";
 
 // Stats functionality
@@ -45,6 +50,55 @@ const fetchStatsData = async () => {
   return statsData;
 };
 
+const satIcon = (value) => {
+  switch (value) {
+    case 1:
+      return <AngryIcon  height="30px" width="30px"/>;
+    case 2:
+      return <SadIcon  height="30px" width="30px"/>;
+    case 3:
+      return <IndifferentIcon  height="30px" width="30px"/>;
+    case 4:
+      return <HappyIcon  height="30px" width="30px"/>;
+    case 5:
+      return <ThrilledIcon  height="30px" width="30px"/>;
+    default:
+      return "";
+  }
+};
+
+const fetchSurveyData = async () => {
+  const surveyData = [];
+  const surveyCollection = collection(firestore, "surveys");
+  const surveySnapshot = await getDocs(surveyCollection);
+  const midnightToday = new Date().setHours(0, 0, 0, 0);
+
+  surveySnapshot.forEach((doc) => {
+    const { date, first, satisfaction, suggestion, source } = doc.data();
+
+    const dataEntry = {
+      date,
+      first,
+      satisfaction,
+      suggestion,
+      source,
+    };
+
+    surveyData.push(dataEntry);
+
+    if (surveyData.date >= midnightToday) {
+      surveyData.push({
+        first: dataEntry.first,
+        source: dataEntry.source,
+        suggestion: dataEntry.suggestion,
+        satisfaction: satisfaction,
+      });
+    }
+  });
+
+  return surveyData;
+};
+
 // Patients functionality
 
 const fetchPatientsData = async () => {
@@ -52,7 +106,6 @@ const fetchPatientsData = async () => {
   const patientsCollection = collection(firestore, "patients");
   const patientsSnapshot = await getDocs(patientsCollection);
   const midnightToday = new Date().setHours(0, 0, 0, 0);
-
 
   patientsSnapshot.forEach((doc) => {
     const { pt_no, patient_name, start_time, reason_for_visit, plan_of_care } =
@@ -70,7 +123,7 @@ const fetchPatientsData = async () => {
         patientPoc.push(poc.station);
       }
     });
-    const pocString = patientPoc.join(', ');
+    const pocString = patientPoc.join(", ");
 
     if (dataEntry.start_time.toDate() >= midnightToday) {
       patientsData.push({
@@ -95,6 +148,7 @@ const fetchPatientsData = async () => {
 const Stats = () => {
   const [statsData, setStatsData] = useState([]);
   const [patients, setPatients] = useState([]);
+  const [surveys, setSurveys] = useState([]);
   const [t] = useTranslation("global");
 
   useEffect(() => {
@@ -110,6 +164,13 @@ const Stats = () => {
     };
 
     patientsData();
+
+    const surveyData = async () => {
+      const data = await fetchSurveyData();
+      setSurveys(data);
+    };
+
+    surveyData();
 
     const fetchData = async () => {
       const data = await fetchStatsData();
@@ -172,6 +233,45 @@ const Stats = () => {
       render: (name) => <div>{name}</div>,
     },
   ];
+
+  const surveyColumns = [
+    {
+      title: t("source"),
+      dataIndex: "source",
+      key: "source",
+      width: 50,
+      fixed: "left",
+      render: (name) => <div>{t(name)}</div>,
+    },
+    {
+      title: t("sat"),
+      dataIndex: "satisfaction",
+      key: "satisFaction",
+      width: 50,
+      fixed: "left",
+      render: (name) => (
+        <div>
+          {satIcon(name)}
+        </div>
+      ),
+    },
+    {
+      title: t("first"),
+      dataIndex: "first",
+      key: "first",
+      width: 25,
+      fixed: "left",
+      render: (name) => <div>{name == "1" ? t("yes") : t("no")}</div>,
+    },
+    {
+      title: t("suggestion"),
+      dataIndex: "suggestion",
+      key: "suggestion",
+      width: 125,
+      fixed: "left",
+      render: (name) => <div>{name}</div>,
+    },
+  ];
   const barColors = getBarColors();
 
   // Renders the visible screen
@@ -190,7 +290,7 @@ const Stats = () => {
       <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
         {t("patientsPerService")}
       </h2>
-      <div style={{ display: "flex", width: "100%", height: "80%" }}>
+      {/* <div style={{ display: "flex", width: "100%", height: "80%" }}>
         <ResponsiveContainer width="50%" height="100%">
           <BarChart data={statsData}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -233,7 +333,7 @@ const Stats = () => {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </div>
+      </div> */}
       <Divider></Divider>
       <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
         {t("todaysComplete")} ({patients.length})
@@ -242,6 +342,19 @@ const Stats = () => {
         rowKey={"pt_no"}
         columns={patientsColumns}
         dataSource={patients.some((d) => d === undefined) ? [] : patients}
+        // scroll={{ x: 1500, y: 1500 }}
+        sticky
+        pagination={false}
+        offsetScroll={3}
+      />
+      <Divider></Divider>
+      <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+        {t("todaysSurveys")} ({surveys.length})
+      </h2>
+      <Table
+        rowKey={"pt_no"}
+        columns={surveyColumns}
+        dataSource={surveys.some((d) => d === undefined) ? [] : surveys}
         // scroll={{ x: 1500, y: 1500 }}
         sticky
         pagination={false}
