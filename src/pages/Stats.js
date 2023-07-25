@@ -73,9 +73,8 @@ const fetchSurveyData = async () => {
   const surveySnapshot = await getDocs(surveyCollection);
   const midnightToday = new Date().setHours(0, 0, 0, 0);
 
-  surveySnapshot.forEach((doc) => {
+  const surveyEntries = surveySnapshot.docs.map((doc, counter) => {
     const { date, first, satisfaction, suggestion, source } = doc.data();
-
     const dataEntry = {
       date,
       first,
@@ -83,21 +82,26 @@ const fetchSurveyData = async () => {
       suggestion,
       source,
     };
-
-    surveyData.push(dataEntry);
-
-    if (surveyData.date >= midnightToday) {
-      surveyData.push({
+    if (dataEntry.date.toDate().getTime() >= midnightToday) {
+      return {
+        inx: counter,
         first: dataEntry.first,
         source: dataEntry.source,
         suggestion: dataEntry.suggestion,
         satisfaction: satisfaction,
-      });
+      };
+    } else {
+      return null; // Return null for entries that don't meet the condition
     }
   });
 
+  // Filter out the null entries and only keep the valid ones
+  surveyData.push(...surveyEntries.filter((entry) => entry !== null));
+
+
   return surveyData;
 };
+  
 
 // Patients functionality
 
@@ -246,7 +250,7 @@ const Stats = () => {
     {
       title: t("sat"),
       dataIndex: "satisfaction",
-      key: "satisFaction",
+      key: "satisfaction",
       width: 50,
       fixed: "left",
       render: (name) => (
@@ -290,7 +294,7 @@ const Stats = () => {
       <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
         {t("patientsPerService")}
       </h2>
-      {/* <div style={{ display: "flex", width: "100%", height: "80%" }}>
+       <div style={{ display: "flex", width: "100%", height: "80%" }}>
         <ResponsiveContainer width="50%" height="100%">
           <BarChart data={statsData}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -333,7 +337,7 @@ const Stats = () => {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </div> */}
+      </div> 
       <Divider></Divider>
       <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
         {t("todaysComplete")} ({patients.length})
@@ -349,10 +353,10 @@ const Stats = () => {
       />
       <Divider></Divider>
       <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-        {t("todaysSurveys")} ({surveys.length})
+        {t("todaysSurveys")} ({surveys   .length})
       </h2>
       <Table
-        rowKey={"pt_no"}
+        rowKey={"inx"}
         columns={surveyColumns}
         dataSource={surveys.some((d) => d === undefined) ? [] : surveys}
         // scroll={{ x: 1500, y: 1500 }}
