@@ -10,7 +10,7 @@ const AlertProvider = ({ children }) => {
     setAlert({ message, description, type });
     setTimeout(() => {
       setAlert(false);
-    }, 3000);
+    }, 500);
   };
   const hideAlert = () => {
     setAlert(null);
