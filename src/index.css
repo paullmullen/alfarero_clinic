@@ -66,5 +66,13 @@ h5 {
   background: #f0f0f0;
 }
 
+/* YourComponent.css */
+
+.kiosk-mode-container {
+  overflow: auto; /* Hide any content that overflows the container */
+  height: 100vh; /* Set the container height to fill the entire viewport */
+  overflow-y: scroll; /* Enable vertical scrolling */
+  scroll-behavior: smooth; /* Add smooth scrolling behavior */
+}
 
 

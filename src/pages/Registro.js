@@ -236,7 +236,6 @@ export const Registro = () => {
       stop_time: new Date(),
       wait_time: 0,
     };
-    console.log(formattedPatient);
 
     const patientRef = await firestore
       .collection("patients")

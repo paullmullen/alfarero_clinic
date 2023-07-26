@@ -42,11 +42,11 @@ export const AlertInfo = () => {
                 <Space>
                   <Image
                     preview={false}
-                    src={require("../img/pay.svg")}
+                    src={require("../img/eye.svg")}
                     width={20}
                     height={80}
                   />
-                  <Title level={5}>{t('payedService')}</Title>
+                  <Title level={5}>{t('obser')}</Title>
                 </Space>
                 <Divider />
                 <Space>

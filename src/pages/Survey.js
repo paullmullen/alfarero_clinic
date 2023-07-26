@@ -73,7 +73,6 @@ export const Survey = () => {
   };
 
   const onFinish = async (values) => {
-    console.log(surveyResult);
     try {
       await firestore.collection("surveys").add({first: surveyResult.first,
                                                  source: surveyResult.source,

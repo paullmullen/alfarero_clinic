@@ -6,7 +6,6 @@ export const stations = [
   { value: "ped", label: "Pediatria", order: 5 },
   { value: "nut", label: "Nutricion", order: 6 },
   { value: "psi", label: "Psicología", order: 7 },
-  { value: "obs", label: "Observation", order: 8 },
   { value: "pha", label: "Farmacia", order: 9 },    
   { value: "lab", label: "Laboratorio", order: 10 },
   { value: "og", label: "Obstetria/Ginecología", order: 11},

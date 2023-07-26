@@ -32,7 +32,6 @@ export const Anfitrion = () => {
 
   const handleMouseEnter = (record) => {
     setHoveredRowKey(record.pt_no);
-    console.log(record.pt_no);
   };
 
   const handleMouseLeave = () => {
@@ -122,9 +121,7 @@ export const Anfitrion = () => {
               onMouseEnter={() => {
                 setStation(station);
               }}
-
             />
-
           </Popover>
         );
         break;
@@ -143,11 +140,26 @@ export const Anfitrion = () => {
           </Popover>
         );
         break;
-      case "pay":
+      // case "pay":
+      //   statusIcon = (
+      //     <Popover content={content} title={t("modifyStatus")} trigger="hover">
+      //       <Image
+      //         src={require("../img/pay.svg")}
+      //         width={IconSizes.height}
+      //         height={IconSizes.height}
+      //         preview={false}
+      //         onMouseEnter={() => {
+      //           setStation(station);
+      //         }}
+      //       />
+      //     </Popover>
+      //   );
+      //   break;
+      case "obs":
         statusIcon = (
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
-              src={require("../img/pay.svg")}
+              src={require("../img/eye.svg")}
               width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
@@ -294,9 +306,7 @@ export const Anfitrion = () => {
         width={IconSizes.width}
         height={IconSizes.height}
         preview={false}
-        onClick={() =>
-          handleStatusChange("pending", hoveredRowKey, station)
-        }
+        onClick={() => handleStatusChange("pending", hoveredRowKey, station)}
       />
 
       <Image
@@ -316,12 +326,20 @@ export const Anfitrion = () => {
       />
 
       <Image
+        src={require("../img/eye.svg")}
+        width={IconSizes.width}
+        height={IconSizes.height}
+        preview={false}
+        onClick={() => handleStatusChange("obs", hoveredRowKey, station)}
+      />
+
+      {/* <Image
         src={require("../img/pay.svg")}
         width={IconSizes.width}
         height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("pay", hoveredRowKey, station)}
-      />
+      /> */}
 
       <Image
         src={require("../img/complete.svg")}
@@ -412,8 +430,8 @@ export const Anfitrion = () => {
         render: (name) => (
           <div>
             <b> {name.split("|")[0]} </b>
-            <br></br> {name.split("|")[1]}{" "}
-            <br></br>{name.split("|")[2]}{" "}
+            <br></br> {name.split("|")[1]} <br></br>
+            {name.split("|")[2]}{" "}
           </div>
         ),
       },
@@ -425,13 +443,18 @@ export const Anfitrion = () => {
         width: 70,
         align: "center",
         fixed: "right",
-        render: (avg_time ) => {
+        render: (avg_time) => {
           const displayValue = isNaN(avg_time) ? 0 : avg_time;
           const style = {
             fontSize: "18px",
             color: displayValue > 15 ? "red" : "inherit",
           };
-          return <span style={style}>{avg_time.split("|")[0]} min <hr></hr><h5>{avg_time.split("|")[1]} min</h5></span>;
+          return (
+            <span style={style}>
+              {avg_time.split("|")[0]} min <hr></hr>
+              <h5>{avg_time.split("|")[1]} min</h5>
+            </span>
+          );
         },
       },
 
@@ -471,11 +494,21 @@ export const Anfitrion = () => {
         item.avg_time !== 0 && !isNaN(item.avg_time)
           ? Math.floor((Date.now() / 1000 - item.avg_time) / 60)
           : 0;
-        return {
+      return {
         pt_no: item.pt_no,
-        patient_name: item.patient_name + "|" + item.reason_for_visit + "|" + ((item.tel===null) ? " " : item.tel),
+        patient_name:
+          item.patient_name +
+          "|" +
+          item.reason_for_visit +
+          "|" +
+          (item.tel === null ? " " : item.tel),
         reason_for_visit: item.reason_for_visit,
-        avg_time: avg_time.toString()+"|"+(Math.round((new Date() - item.start_time.toDate())/24/60/60)).toString(),
+        avg_time:
+          avg_time.toString() +
+          "|" +
+          Math.round(
+            (new Date() - item.start_time.toDate()) / 24 / 60 / 60,
+          ).toString(),
         ...stations,
       };
     });

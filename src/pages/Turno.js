@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Table, Image } from "antd";
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
@@ -10,6 +10,8 @@ export const Turno = () => {
   useHideMenu(true);
   const [data, setData] = useState([]);
   const [t] = useTranslation("global");
+  const tableRef = useRef(null);
+
 
   // Shows editable icons in the patients table
 
@@ -226,9 +228,29 @@ export const Turno = () => {
 
   const { columns, dataSource } = generateTableData(data);
 
+  const startAutoScroll = () => {
+    if (tableRef.current) {
+      const scrollSpeed = 50; // Adjust the scroll speed (smaller value means faster scroll)
+      const scrollDelay = 3000; // Adjust the delay between scrolls (in milliseconds)
+      const scrollAmount = 1; // Adjust the amount to scroll per interval
+
+      setInterval(() => {
+        tableRef.current.scrollTop += scrollAmount;
+        const maxScrollTop = tableRef.current.scrollHeight - tableRef.current.clientHeight;
+        if (tableRef.current.scrollTop >= maxScrollTop) {
+          tableRef.current.scrollTop = 0;
+        }
+      }, scrollSpeed);
+    }
+    console.log(tableRef.current.scrollTop);
+  };
+
+
   useEffect(() => {
     let isMounted = true;
     let unsubscribe;
+    startAutoScroll();
+
 
     const fetchData = async () => {
       try {
@@ -278,7 +300,7 @@ export const Turno = () => {
   // Renders the visible screen
 
   return (
-    <>
+    <div ref={tableRef} className="table-container">
       <AlertInfo />
       <Table
         rowKey={"pt_no"}
@@ -289,9 +311,8 @@ export const Turno = () => {
         pagination={false}
         offsetScroll={3}
         rowClassName={getRowClassName}
-
       />
       {/* <Footer /> */}
-    </>
+    </div>
   );
 };

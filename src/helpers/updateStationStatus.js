@@ -20,12 +20,19 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
               updatedItem.wait_start = Math.floor(Date.now() / 1000);
             } else if (value === "in_process" && item.status !== "in_process") {
               updatedItem.procedure_start = Math.floor(Date.now() / 1000);
+            } else if (value === "obs" && item.status !== "obs") {
+              updatedItem.procedure_start = Math.floor(Date.now() / 1000);
             } else if (value !== "waiting" && item.status === "waiting") {
               updatedItem.wait_end = Math.floor(Date.now() / 1000);
               updatedItem.waiting_time = Math.abs(
                 updatedItem.wait_end - updatedItem.wait_start
               );
             } else if (value !== "in_process" && item.status === "in_process") {
+              updatedItem.procedure_end = Math.floor(Date.now() / 1000);
+              updatedItem.procedure_time = Math.abs(
+                updatedItem.procedure_end - updatedItem.procedure_start
+              );
+            } else if (value !== "obs" && item.status === "obs") {
               updatedItem.procedure_end = Math.floor(Date.now() / 1000);
               updatedItem.procedure_time = Math.abs(
                 updatedItem.procedure_end - updatedItem.procedure_start
