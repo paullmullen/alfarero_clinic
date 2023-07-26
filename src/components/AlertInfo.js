@@ -10,7 +10,7 @@ export const AlertInfo = () => {
   return (
     <>
       <Alert
-        message= {t('infoPatient')}
+        // message= {t('infoPatient')}
         description={
           <Row justify="center">
             <Col xs={24} sm={12} md={8} lg={24} style={{ textAlign: "center" }}>
@@ -63,7 +63,7 @@ export const AlertInfo = () => {
           </Row>
         }
         type="info"
-        showIcon
+        // showIcon
       />
 
       <Divider />
