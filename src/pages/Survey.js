@@ -97,9 +97,6 @@ export const Survey = () => {
 
   useHideMenu(true);
 
-  useEffect(() => {
-    console.log("Updated surveyResult:", surveyResult);
-  }, [surveyResult]);
 
   return (
     <div>

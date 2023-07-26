@@ -46,22 +46,21 @@ const fetchStatsData = async () => {
 
     statsData.push(dataEntry);
   });
-
   return statsData;
 };
 
 const satIcon = (value) => {
   switch (value) {
     case 1:
-      return <AngryIcon  height="30px" width="30px"/>;
+      return <AngryIcon height="30px" width="30px" fill="none" />;
     case 2:
-      return <SadIcon  height="30px" width="30px"/>;
+      return <SadIcon height="30px" width="30px" fill="none" />;
     case 3:
-      return <IndifferentIcon  height="30px" width="30px"/>;
+      return <IndifferentIcon height="30px" width="30px" vfill="none" />;
     case 4:
-      return <HappyIcon  height="30px" width="30px"/>;
+      return <HappyIcon height="30px" width="30px" fill="none" />;
     case 5:
-      return <ThrilledIcon  height="30px" width="30px"/>;
+      return <ThrilledIcon height="30px" width="30px" fill="none" />;
     default:
       return "";
   }
@@ -98,10 +97,8 @@ const fetchSurveyData = async () => {
   // Filter out the null entries and only keep the valid ones
   surveyData.push(...surveyEntries.filter((entry) => entry !== null));
 
-
   return surveyData;
 };
-  
 
 // Patients functionality
 
@@ -203,6 +200,9 @@ const Stats = () => {
 
     return barColors;
   };
+
+  const barColors = getBarColors();
+
   const patientsColumns = [
     {
       title: t("patient"),
@@ -253,11 +253,7 @@ const Stats = () => {
       key: "satisfaction",
       width: 50,
       fixed: "left",
-      render: (name) => (
-        <div>
-          {satIcon(name)}
-        </div>
-      ),
+      render: (name) => <div>{satIcon(name)}</div>,
     },
     {
       title: t("first"),
@@ -276,7 +272,6 @@ const Stats = () => {
       render: (name) => <div>{name}</div>,
     },
   ];
-  const barColors = getBarColors();
 
   // Renders the visible screen
 
@@ -294,7 +289,8 @@ const Stats = () => {
       <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
         {t("patientsPerService")}
       </h2>
-       <div style={{ display: "flex", width: "100%", height: "80%" }}>
+
+      <div style={{ display: "flex", width: "100%", height: "80%" }}>
         <ResponsiveContainer width="50%" height="100%">
           <BarChart data={statsData}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -337,7 +333,7 @@ const Stats = () => {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </div> 
+      </div>
       <Divider></Divider>
       <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
         {t("todaysComplete")} ({patients.length})
@@ -346,20 +342,20 @@ const Stats = () => {
         rowKey={"pt_no"}
         columns={patientsColumns}
         dataSource={patients.some((d) => d === undefined) ? [] : patients}
-        // scroll={{ x: 1500, y: 1500 }}
+        scroll={{ x: 1500, y: 1500 }}
         sticky
         pagination={false}
         offsetScroll={3}
       />
       <Divider></Divider>
       <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-        {t("todaysSurveys")} ({surveys   .length})
+        {t("todaysSurveys")} ({surveys.length})
       </h2>
       <Table
         rowKey={"inx"}
         columns={surveyColumns}
         dataSource={surveys.some((d) => d === undefined) ? [] : surveys}
-        // scroll={{ x: 1500, y: 1500 }}
+        scroll={{ x: 1500, y: 1500 }}
         sticky
         pagination={false}
         offsetScroll={3}
