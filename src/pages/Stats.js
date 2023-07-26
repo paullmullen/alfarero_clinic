@@ -44,8 +44,11 @@ const fetchStatsData = async () => {
       fill: "#8884d8", // Opcional: Asigna colores personalizados a cada barra
     };
 
-    statsData.push(dataEntry);
+    if (station_type !== "reg") {
+      statsData.push(dataEntry);
+     }
   });
+  console.log(statsData);
   return statsData;
 };
 

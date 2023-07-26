@@ -149,7 +149,8 @@ export const Registro = () => {
     const currentDate = moment();
     const currentMonth = currentDate.month() + 1; // Obtener el número del mes actual
     const currentYear = currentDate.year();
-    const currentMonthYear = `${currentMonth}/${currentYear}`;
+    const currentDay = currentDate.day();
+    const currentMonthDayYear = `${currentMonth}/${currentDay}/${currentYear}`;
     const statsRef = firestore.collection("stats").doc(station);
 
     // Obtener el documento de estadísticas de la estación actual
@@ -159,20 +160,20 @@ export const Registro = () => {
       // El documento de estadísticas ya existe
       const statsData = statsDoc.data();
 
-      if (statsData.date !== currentMonthYear) {
+      if (statsData.date !== currentMonthDayYear) {
         // La fecha es diferente, crear un nuevo documento en la misma colección
         const newStatsRef = firestore.collection("stats").doc();
         const newStatsData = {
           station_type: statsData.station_type,
           number_of_patients: 1,
-          date: currentMonthYear,
+          date: currentMonthDayYear,
         };
         await newStatsRef.set(newStatsData);
       } else {
-        // La fecha es la misma, actualizar el número de pacientes del mes actual
-        const currentMonthPatients = statsData.number_of_patients || 0;
+        // La fecha es la misma, actualizar el número de pacientes del dia actual
+        const currentDayPatients = statsData.number_of_patients || 0;
         await statsRef.update({
-          number_of_patients: currentMonthPatients + 1,
+          number_of_patients: currentDayPatients + 1,
         });
       }
     } else {
@@ -180,7 +181,7 @@ export const Registro = () => {
       const statsData = {
         station_type: station,
         number_of_patients: 1,
-        date: currentMonthYear,
+        date: currentMonthDayYear ,
       };
       await statsRef.set(statsData);
     }
@@ -248,7 +249,10 @@ export const Registro = () => {
     // Actualizar el número de pacientes del mes actual en la colección "stats"
     const selectedStations = patientPlanOfCare.map((visit) => visit.station);
     selectedStations.forEach((station) => {
+      // only count scheduled stations... pending is not a planned station.
+      if (station.status!== "pending"){
       updateStatsCollection(station);
+      }
     });
 
     showAlert("Success", t("patientWasCreated"), "success");
