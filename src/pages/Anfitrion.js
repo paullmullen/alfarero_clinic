@@ -468,7 +468,7 @@ export const Anfitrion = () => {
       });
 
       const avg_time =
-        item.avg_time !== 0
+        item.avg_time !== 0 && !isNaN(item.avg_time)
           ? Math.floor((Date.now() / 1000 - item.avg_time) / 60)
           : 0;
         return {
