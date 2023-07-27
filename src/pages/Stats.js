@@ -19,11 +19,24 @@ import { ReactComponent as SadIcon } from "../img/sad.svg";
 import { ReactComponent as IndifferentIcon } from "../img/indifferent.svg";
 import { ReactComponent as HappyIcon } from "../img/happy.svg";
 import { ReactComponent as ThrilledIcon } from "../img/thrilled.svg";
-import Column from "antd/lib/table/Column";
+import firebase from "firebase/compat/app";
+import "firebase/compat/firestore";
+import { stations} from "../helpers/stations";
 
 // Stats functionality
 
+
+const midnightToday = new Date().setHours(0, 0, 0, 0);
+
+const defaultSort = (a, b) => {
+  console.log(a, b);
+  if (a < b) return -1;
+  if (b < a) return 1;
+  return 0;
+};
+
 const fetchStatsData = async () => {
+
   const statsData = [];
   const statsCollection = collection(firestore, "stats");
   const statsSnapshot = await getDocs(statsCollection);
@@ -46,9 +59,8 @@ const fetchStatsData = async () => {
 
     if (station_type !== "reg") {
       statsData.push(dataEntry);
-     }
+    }
   });
-  console.log(statsData);
   return statsData;
 };
 
@@ -109,7 +121,6 @@ const fetchPatientsData = async () => {
   const patientsData = [];
   const patientsCollection = collection(firestore, "patients");
   const patientsSnapshot = await getDocs(patientsCollection);
-  const midnightToday = new Date().setHours(0, 0, 0, 0);
 
   patientsSnapshot.forEach((doc) => {
     const { pt_no, patient_name, start_time, reason_for_visit, plan_of_care } =
@@ -149,6 +160,44 @@ const fetchPatientsData = async () => {
   return patientsData;
 };
 
+const howManyToday = async (stationName) => {
+  try {
+    const midnightToday = new Date();
+    midnightToday.setHours(0, 0, 0, 0);
+
+    const midnightTodayTimestamp =
+      firebase.firestore.Timestamp.fromDate(midnightToday);
+
+    const temp = firestore
+      .collection("patients")
+      .where("start_time", ">=", midnightTodayTimestamp);
+
+    const tempSnapshot = await temp.get();
+    tempSnapshot.docs.forEach((d) => {
+      const patientData = d.data();
+
+    });
+
+    const query = firestore
+      .collection("patients")
+      .where("start_time", ">=", midnightTodayTimestamp);
+
+    const querySnapshot = await query.get();
+
+    let count = 0;
+    querySnapshot.forEach((doc) => {
+      const patient = doc.data();
+      patient.plan_of_care.forEach((s) => {
+        count += ((s.station === stationName) && (s.status !== "pending")) ? 1 : 0;
+      });
+    });
+
+    return count;
+  } catch (e) {
+    console.error("Error fetching patient count:", e);
+  }
+};
+
 const Stats = () => {
   const [statsData, setStatsData] = useState([]);
   const [patients, setPatients] = useState([]);
@@ -156,6 +205,7 @@ const Stats = () => {
   const [t] = useTranslation("global");
 
   useEffect(() => {
+
     const patientsData = async () => {
       const data = await fetchPatientsData();
       const patients = data.map((s) => {
@@ -177,14 +227,22 @@ const Stats = () => {
     surveyData();
 
     const fetchData = async () => {
-      const data = await fetchStatsData();
-      const stats = data.map((s) => {
-        return {
-          ...s,
-          station_type: t(s.station_type),
-        };
-      });
-      setStatsData(stats);
+      try {
+        let stats = [];
+    
+        // Create an array of Promises for each station
+        const promises = stations.map(async (s) => {
+          const count = await howManyToday(s.value);
+          return { station: s.value, count };
+        });
+    
+        // Wait for all promises to resolve using Promise.all()
+        stats = await Promise.all(promises);
+    
+        setStatsData(stats);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
     };
 
     fetchData();
@@ -213,6 +271,10 @@ const Stats = () => {
       key: "patient",
       width: 50,
       fixed: "left",
+      sorter: {
+        compare: (a, b) => defaultSort(a, b),
+        multiple: 1,
+      },
       render: (name) => <div>{name}</div>,
     },
     {
@@ -229,6 +291,11 @@ const Stats = () => {
       key: "start_time",
       width: 50,
       fixed: "left",
+      defaultSortOrder: "ascend",
+      sorter: {
+        compare: (a, b) => a.start_time - b.start_time,
+        multiple: 1,
+      },
       render: (name) => <div>{name}</div>,
     },
     {
@@ -297,15 +364,14 @@ const Stats = () => {
         <ResponsiveContainer width="50%" height="100%">
           <BarChart data={statsData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="station_type" />
+            <XAxis dataKey="station" />
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="Pacientes">
+            <Bar dataKey="count">
               {statsData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={barColors[entry.station_type]}
                 />
               ))}
             </Bar>

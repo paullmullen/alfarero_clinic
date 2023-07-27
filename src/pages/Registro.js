@@ -22,7 +22,6 @@ const { Title, Text } = Typography;
 
 const layout = {
   labelCol: { span: 8 },
-
 };
 
 const tailLayout = {
@@ -37,6 +36,7 @@ export const Registro = () => {
   // const [selectedRecipeStations, setRecipeStations] = useState([]);
   const [disabledButton, setDisabledButton] = useState(false);
   const [t] = useTranslation("global");
+  
 
   useHideMenu(false);
 
@@ -111,7 +111,9 @@ export const Registro = () => {
     let isMounted = true;
     let unsubscribe;
 
+
     const fetchData = async () => {
+
       try {
         const visitTypeRef = firestore
           .collection("visit_types")
@@ -149,28 +151,28 @@ export const Registro = () => {
     const currentDate = moment();
     const currentMonth = currentDate.month() + 1; // Obtener el número del mes actual
     const currentYear = currentDate.year();
-    const currentDay = currentDate.day();
+    const currentDay = currentDate.toDate().getDate();
     const currentMonthDayYear = `${currentMonth}/${currentDay}/${currentYear}`;
     const statsRef = firestore.collection("stats").doc(station);
 
     // Obtener el documento de estadísticas de la estación actual
-    const statsDoc = await statsRef.get();
-
+    let statsDoc = await statsRef.get();
     if (statsDoc.exists) {
       // El documento de estadísticas ya existe
       const statsData = statsDoc.data();
-
       if (statsData.date !== currentMonthDayYear) {
-        // La fecha es diferente, crear un nuevo documento en la misma colección
-        const newStatsRef = firestore.collection("stats").doc();
-        const newStatsData = {
-          station_type: statsData.station_type,
-          number_of_patients: 1,
+        // La fecha es diferente, reset the stats
+        await statsRef.update({
+          number_of_patients: 0,  
+          avg_waiting_time: 0,
           date: currentMonthDayYear,
-        };
-        await newStatsRef.set(newStatsData);
-      } else {
-        // La fecha es la misma, actualizar el número de pacientes del dia actual
+          procedure_time_data: [],
+          waiting_time_data: [],
+        });
+        statsDoc = await statsRef.get();
+      }
+      // La fecha es la misma, actualizar el número de pacientes del dia actual
+      if (station === statsDoc.data().station_type) {
         const currentDayPatients = statsData.number_of_patients || 0;
         await statsRef.update({
           number_of_patients: currentDayPatients + 1,
@@ -181,7 +183,7 @@ export const Registro = () => {
       const statsData = {
         station_type: station,
         number_of_patients: 1,
-        date: currentMonthDayYear ,
+        date: currentMonthDayYear,
       };
       await statsRef.set(statsData);
     }
@@ -247,11 +249,16 @@ export const Registro = () => {
     await patientRef.update(updatedPatient);
 
     // Actualizar el número de pacientes del mes actual en la colección "stats"
-    const selectedStations = patientPlanOfCare.map((visit) => visit.station);
+    const selectedStations = patientPlanOfCare.map((visit) => {
+      return {
+        station: visit.station,
+        status: visit.status,
+      };
+    });
     selectedStations.forEach((station) => {
       // only count scheduled stations... pending is not a planned station.
-      if (station.status!== "pending"){
-      updateStatsCollection(station);
+      if (station.status !== "pending") {
+        updateStatsCollection(station.station);
       }
     });
 
