@@ -1,6 +1,11 @@
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHistory } from 'react-router-dom';
+
+
+
 export const handleStatusChange = async (value, hoveredRowKey, station) => {
+  
+  
   const docPatientRef = firestore.collection("patients").doc(hoveredRowKey);
 
   if (docPatientRef) {
@@ -17,32 +22,45 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
             };
 
             if (value === "waiting" && item.status !== "waiting") {
+              console.log(hoveredRowKey, station, "changed to waiting");
               updatedItem.wait_start = Math.floor(Date.now() / 1000);
+
             } else if (value === "in_process" && item.status !== "in_process") {
+              console.log(hoveredRowKey, station, "changed to in process");
               updatedItem.procedure_start = Math.floor(Date.now() / 1000);
+
             } else if (value === "obs" && item.status !== "obs") {
+              console.log(hoveredRowKey, station, "changed to observation");
               updatedItem.procedure_start = Math.floor(Date.now() / 1000);
-            } else if (value !== "waiting" && item.status === "waiting") {
+
+            } 
+            
+            if (value !== "waiting" && item.status === "waiting") {
+              console.log(hoveredRowKey, station, "waiting stopped");
               updatedItem.wait_end = Math.floor(Date.now() / 1000);
               updatedItem.waiting_time = Math.abs(
                 updatedItem.wait_end - updatedItem.wait_start
               );
+
             } else if (value !== "in_process" && item.status === "in_process") {
+              console.log(hoveredRowKey, station, "inprocess stopped");
               updatedItem.procedure_end = Math.floor(Date.now() / 1000);
               updatedItem.procedure_time = Math.abs(
                 updatedItem.procedure_end - updatedItem.procedure_start
               );
+              
             } else if (value !== "obs" && item.status === "obs") {
+              console.log(hoveredRowKey, station, "observation stopped");
               updatedItem.procedure_end = Math.floor(Date.now() / 1000);
               updatedItem.procedure_time = Math.abs(
                 updatedItem.procedure_end - updatedItem.procedure_start
               );
             }
-
-            return updatedItem;
+            console.log(updatedItem);
+            return updatedItem;  //return of the map
           }
-
-          return item;
+          console.log(updatedPlanOfCare,item);
+          return item;   //return of the handleStatusChange
         });
 
         await docPatientRef.update({
@@ -164,6 +182,18 @@ export const cleanCompletedPatients = async () => {
       doc.ref.delete();
     })
   });
+}
 
+  export const cleanEmptySurveys = async () => {
+    const toBeDeleted = firestore.collection("surveys")
+    .where("satisfaction", "==", "")
+    .where("suggestion", "==", "")
+    .where("source", "==", "")
+    .where("first", "==", "");
+    toBeDeleted.get().then (function(querySnapshot) {
+      querySnapshot.forEach(function(doc) {
+        doc.ref.delete();
+      })
+    });
+    console.log("cleaned surveys")
   }
-

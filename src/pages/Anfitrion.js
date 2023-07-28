@@ -13,6 +13,7 @@ import {
   handleStatusChange,
   handleDelete,
   cleanCompletedPatients,
+  cleanEmptySurveys
 } from "./../helpers/updateStationStatus";
 import { useHistory } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
@@ -470,6 +471,8 @@ export const Anfitrion = () => {
               title={t("areYouSure")}
               onConfirm={() => handleDelete(hoveredRowKey, history)}
               // onConfirm={() => cleanCompletedPatients()}
+              // onConfirm={() => cleanEmptySurveys()}
+
             >
               <Image
                 src={require("../img/fin.png")}

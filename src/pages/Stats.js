@@ -238,6 +238,8 @@ const Stats = () => {
     
         // Wait for all promises to resolve using Promise.all()
         stats = await Promise.all(promises);
+        stats = stats.filter(f =>
+          f.station !== "reg");
     
         setStatsData(stats);
       } catch (error) {
@@ -372,6 +374,7 @@ const Stats = () => {
               {statsData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
+                  fill={barColors[index]}
                 />
               ))}
             </Bar>

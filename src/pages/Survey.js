@@ -28,8 +28,6 @@ import { ReactComponent as ThrilledIcon } from "../img/thrilled.svg";
 const { TextArea } = Input;
 const { Header, Footer, Sider, Content } = Layout;
 
-
-
 export const Survey = () => {
   const history = useHistory();
   const [t] = useTranslation("global");
@@ -41,7 +39,7 @@ export const Survey = () => {
   });
 
   const handleChangeSource = (values) => {
-    const newValue = typeof values === 'object' ? values.target.value : values;
+    const newValue = typeof values === "object" ? values.target.value : values;
     setSurveyResult((prevSurveyResult) => ({
       ...prevSurveyResult,
       source: newValue,
@@ -49,7 +47,7 @@ export const Survey = () => {
   };
 
   const handleChangeFirstVisit = (values) => {
-    const newValue = typeof values === 'object' ? values.target.value : values;
+    const newValue = typeof values === "object" ? values.target.value : values;
     setSurveyResult((prevSurveyResult) => ({
       ...prevSurveyResult,
       first: newValue,
@@ -57,7 +55,7 @@ export const Survey = () => {
   };
 
   const handleChangeSuggestions = (values) => {
-    const newValue = typeof values === 'object' ? values.target.value : values;
+    const newValue = typeof values === "object" ? values.target.value : values;
     setSurveyResult((prevSurveyResult) => ({
       ...prevSurveyResult,
       suggestion: newValue,
@@ -65,7 +63,7 @@ export const Survey = () => {
   };
 
   const handleChangeSatisfaction = (values) => {
-    const newValue = typeof values === 'object' ? values.target.value : values;
+    const newValue = typeof values === "object" ? values.target.value : values;
     setSurveyResult((prevSurveyResult) => ({
       ...prevSurveyResult,
       satisfaction: newValue,
@@ -74,28 +72,40 @@ export const Survey = () => {
 
   const onFinish = async (values) => {
     try {
-      await firestore.collection("surveys").add({first: surveyResult.first,
-                                                 source: surveyResult.source,
-                                                 suggestion: surveyResult.suggestion,
-                                                 satisfaction: surveyResult.satisfaction,
-                                                 date: new Date() });
-      // Redirect to "/Registro" after successful Firestore write
-      history.push("/Registro");
+      if (
+        surveyResult.first !== "" ||
+        surveyResult.source !== "" ||
+        surveyResult.suggestion !== "" ||
+        surveyResult.satisfaction !== ""
+      ) {
+        await firestore
+          .collection("surveys")
+          .add({
+            first: surveyResult.first,
+            source: surveyResult.source,
+            suggestion: surveyResult.suggestion,
+            satisfaction: surveyResult.satisfaction,
+            date: new Date(),
+          });
+        // Redirect to "/Registro" after successful Firestore write
+        history.push("/Registro");
+      } else {
+        history.push("/Registro");
+      }
     } catch (error) {
       console.error("Error saving to Firestore:", error);
     }
   };
-  
+
   const onFinishFailed = (errorInfo) => {
     console.log("Failed:", errorInfo);
   };
-  
+
   const layout = {
     labelCol: { span: 8 },
   };
 
   useHideMenu(true);
-
 
   return (
     <div>
@@ -185,16 +195,14 @@ export const Survey = () => {
             <Row>
               <Col xs={24} sm={24} offset={6}>
                 <Space wrap>
-
-                    <Button
-                      type="primary"
-                      htmlType="submit"
-                      shape="round"
-                      name="register"
-                    >
-                      {t("done")}
-                    </Button>
-
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    shape="round"
+                    name="register"
+                  >
+                    {t("done")}
+                  </Button>
                 </Space>
               </Col>
             </Row>
