@@ -107,5 +107,6 @@
   "suggestion": "Sugerencias",
   "word_of_mouth": "Boca en Boca",
   "obser": "Observación",
-  "version": "1.0.21"
+  "type_of_visit": "Tipo de Visita",
+  "version": "1.0.25"
 }

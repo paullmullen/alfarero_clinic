@@ -95,7 +95,7 @@ export const Escritorio = () => {
       };
     };
     fetchData();
-  }, [usuario.servicio]);
+  }, [usuario.servicio, documents, t]);
 
   const salir = () => {
     localStorage.clear();

@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { Table, Image } from "antd";
+import React, { useState } from "react";
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { AlertInfo } from "../components/AlertInfo";
@@ -87,10 +86,10 @@ export const Survey = () => {
             satisfaction: surveyResult.satisfaction,
             date: new Date(),
           });
-        // Redirect to "/Registro" after successful Firestore write
-        history.push("/Registro");
+        // Redirect to "/Anfitrion" after successful Firestore write
+        history.push("/Anfitrion");
       } else {
-        history.push("/Registro");
+        history.push("/Anfitrion");
       }
     } catch (error) {
       console.error("Error saving to Firestore:", error);

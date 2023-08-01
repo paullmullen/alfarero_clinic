@@ -33,10 +33,12 @@ export const Anfitrion = () => {
 
   const handleMouseEnter = (record) => {
     setHoveredRowKey(record.pt_no);
+    console.log("Enter: ", record);
   };
 
   const handleMouseLeave = () => {
     setHoveredRowKey("");
+    console.log("Exit: ");
   };
 
   const salir = () => {
@@ -431,8 +433,9 @@ export const Anfitrion = () => {
         render: (name) => (
           <div>
             <b> {name.split("|")[0]} </b>
-            <br></br> {name.split("|")[1]} <br></br>
-            {name.split("|")[2]}{" "}
+            <br /> {name.split("|")[1]} <br/>
+            <i>{name.split("|")[2]}{" "}</i><br />
+            {name.split("|")[3]}{" "}
           </div>
         ),
       },
@@ -503,9 +506,8 @@ export const Anfitrion = () => {
           item.patient_name +
           "|" +
           item.reason_for_visit +
-          "|" +
-          (item.tel === null ? " " : item.tel),
-        reason_for_visit: item.reason_for_visit,
+          "|" + t(item.type_of_visit) +
+          (item.tel === null ? " " : item.tel) ,
         avg_time:
           avg_time.toString() +
           "|" +

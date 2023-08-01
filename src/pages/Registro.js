@@ -145,7 +145,7 @@ export const Registro = () => {
       }
       isMounted = false;
     };
-  }, []);
+  }, [t]);
 
   const updateStatsCollection = async (station) => {
     const currentDate = moment();
@@ -238,6 +238,7 @@ export const Registro = () => {
       start_time: new Date(),
       stop_time: new Date(),
       wait_time: 0,
+      type_of_visit: patient.tipo,
     };
 
     const patientRef = await firestore
