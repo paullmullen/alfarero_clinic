@@ -250,6 +250,7 @@ const Stats = () => {
         alignItems: "center",
       }}
     >
+      <h2>Patients per Service and Customer Satisfaction</h2>
       <div style={{ display: "flex", width: "100%", height: "100%" }}>
         <ResponsiveContainer width="50%" height="100%">
           <BarChart data={statsData} label="hello">
