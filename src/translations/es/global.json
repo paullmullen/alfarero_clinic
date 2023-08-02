@@ -108,5 +108,6 @@
   "word_of_mouth": "Boca en Boca",
   "obser": "Observación",
   "type_of_visit": "Tipo de Visita",
-  "version": "1.0.25"
+  "satscores": "Notas de Satisfacción",
+  "version": "1.0.27"
 }

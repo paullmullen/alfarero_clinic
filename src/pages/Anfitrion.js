@@ -33,12 +33,10 @@ export const Anfitrion = () => {
 
   const handleMouseEnter = (record) => {
     setHoveredRowKey(record.pt_no);
-    console.log("Enter: ", record);
   };
 
   const handleMouseLeave = () => {
     setHoveredRowKey("");
-    console.log("Exit: ");
   };
 
   const salir = () => {

@@ -27,6 +27,10 @@ import { defaultSort } from "../helpers/defaultSort";
 
 
 
+
+
+
+
 const howManyToday = async (stationName) => {
   try {
     const midnightToday = new Date();
@@ -65,10 +69,30 @@ const Stats = () => {
   const [surveys, setSurveys] = useState([]);
   const [satScore, setSatScore] = useState([]);
 
+    // State to keep track of sorting
+    const [sortInfo, setSortInfo] = useState({});
+
+    // Handle table sorting changes
+    const handleTableChange = (pagination, filters, sorter) => {
+      setSortInfo(sorter);
+    };
+
   const [t] = useTranslation("global");
+
+
+
+  const renderLegendStations = (props) => {
+    switch (props) {
+      case 1:    return (<h2>{t("patientsPerService")}</h2>);
+      case 2:    return (<h2>{t("satscores")}</h2>);
+      default: return "";
+    }
+  }
+
 
   const surveyData = async () => {
     const data = await fetchSurveyData();
+    setSurveys(data);
     const satScore = await surveySummary(data);
     setSatScore(satScore);
   };
@@ -154,13 +178,10 @@ const Stats = () => {
     {
       title: t("patient"),
       dataIndex: "patient_name",
-      key: "patient",
+      key: "patient_name",
       width: 50,
       fixed: "left",
-      sorter: {
-        compare: (a, b) => defaultSort(a, b),
-        multiple: 1,
-      },
+      sorter: (a, b) => a.patient_name.localeCompare(b.patient_name),
       render: (name) => <div>{name}</div>,
     },
     {
@@ -177,6 +198,7 @@ const Stats = () => {
       key: "type",
       width: 50,
       fixed: "left",
+      sorter: (a, b) => a.type_of_visit.localeCompare(b.type_of_visit),
       render: (name) => <div>{t(name)}</div>,
     },
     {
@@ -186,10 +208,7 @@ const Stats = () => {
       width: 50,
       fixed: "left",
       defaultSortOrder: "ascend",
-      sorter: {
-        compare: (a, b) => a.start_time - b.start_time,
-        multiple: 1,
-      },
+      sorter: (a, b) => a.start_time.localeCompare(b.start_time),
       render: (name) => <div>{name}</div>,
     },
     {
@@ -250,7 +269,7 @@ const Stats = () => {
         alignItems: "center",
       }}
     >
-      <h2>Patients per Service and Customer Satisfaction</h2>
+
       <div style={{ display: "flex", width: "100%", height: "100%" }}>
         <ResponsiveContainer width="50%" height="100%">
           <BarChart data={statsData} label="hello">
@@ -258,6 +277,8 @@ const Stats = () => {
             <XAxis dataKey="station" />
             <YAxis />
             <Tooltip />
+            <Legend content= {renderLegendStations(1)}/>
+
             <Bar dataKey="count">
               {statsData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={barColors[index]} />
@@ -272,7 +293,9 @@ const Stats = () => {
               <XAxis dataKey="level" />
               <YAxis dataKey="count" />
               <Tooltip />
-              <Legend />
+              <Legend content= {renderLegendStations(2)}/>
+
+
               <Bar dataKey="count">
                 {surveys.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={barColors[entry.level]} />
@@ -298,6 +321,9 @@ const Stats = () => {
         sticky
         pagination={false}
         offsetScroll={3}
+        onChange={handleTableChange} // Attach the handleTableChange function
+        {...sortInfo} // Spread the sortInfo to apply sorting
+
       />
       <Divider></Divider>
       <h2 style={{ textAlign: "center", marginBottom: "10px" }}>

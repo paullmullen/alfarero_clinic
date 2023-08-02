@@ -108,5 +108,6 @@
   "word_of_mouth": "Word of Mouth",
   "obser": "Observation",
   "type_of_visit": "Tipo de Visita",
-  "version": "1.0.25"
+  "satscores": "Satisfaction Scores",
+  "version": "1.0.27"
 }
