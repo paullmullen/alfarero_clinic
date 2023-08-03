@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
 import { firestore } from "./../helpers/firebaseConfig";
 import {
   BarChart,
@@ -14,21 +13,15 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useTranslation } from "react-i18next";
-import { Divider, Table, Typography } from "antd";
+import { Divider, Table, Row, Col } from "antd";
 
 import firebase from "firebase/compat/app";
 import "firebase/compat/firestore";
 import { stations } from "../helpers/stations";
 import { fetchSurveyData } from "../helpers/fetchSurveyData";
 import { fetchPatientsData } from "../helpers/fetchPatientsData";
-import { midnightToday } from "../helpers/midnightToday";
 import { satIcon } from "../helpers/satIcon";
-import { defaultSort } from "../helpers/defaultSort";
-
-
-
-
-
+import ExcelExport from '../helpers/Export';
 
 
 const howManyToday = async (stationName) => {
@@ -69,26 +62,26 @@ const Stats = () => {
   const [surveys, setSurveys] = useState([]);
   const [satScore, setSatScore] = useState([]);
 
-    // State to keep track of sorting
-    const [sortInfo, setSortInfo] = useState({});
+  // State to keep track of sorting
+  const [sortInfo, setSortInfo] = useState({});
 
-    // Handle table sorting changes
-    const handleTableChange = (pagination, filters, sorter) => {
-      setSortInfo(sorter);
-    };
+  // Handle table sorting changes
+  const handleTableChange = (pagination, filters, sorter) => {
+    setSortInfo(sorter);
+  };
 
   const [t] = useTranslation("global");
 
-
-
   const renderLegendStations = (props) => {
     switch (props) {
-      case 1:    return (<h2>{t("patientsPerService")}</h2>);
-      case 2:    return (<h2>{t("satscores")}</h2>);
-      default: return "";
+      case 1:
+        return <h2>{t("patientsPerService")}</h2>;
+      case 2:
+        return <h2>{t("satscores")}</h2>;
+      default:
+        return "";
     }
-  }
-
+  };
 
   const surveyData = async () => {
     const data = await fetchSurveyData();
@@ -259,86 +252,85 @@ const Stats = () => {
   // Renders the visible screen
 
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-
-      <div style={{ display: "flex", width: "100%", height: "100%" }}>
-        <ResponsiveContainer width="50%" height="100%">
-          <BarChart data={statsData} label="hello">
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="station" />
-            <YAxis />
-            <Tooltip />
-            <Legend content= {renderLegendStations(1)}/>
-
-            <Bar dataKey="count">
-              {statsData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={barColors[index]} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-        <ResponsiveContainer width="50%" height="100%">
-          {satScore.length > 0 ? (
-            <BarChart data={satScore}>
+    <div className="stats-container">
+      <div className="charts-container">
+        <div style={{ display: "flex", width: "100%", height: "100%" }}>
+          <ResponsiveContainer width="50%" height="100%">
+            <BarChart data={statsData} label="hello">
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="level" />
-              <YAxis dataKey="count" />
+              <XAxis dataKey="station" />
+              <YAxis />
               <Tooltip />
-              <Legend content= {renderLegendStations(2)}/>
-
+              <Legend content={renderLegendStations(1)} />
 
               <Bar dataKey="count">
-                {surveys.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={barColors[entry.level]} />
+                {statsData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={barColors[index]} />
                 ))}
               </Bar>
             </BarChart>
-          ) : (
-            <div>Loading...</div>
-          )}
-        </ResponsiveContainer>
-      </div>
-      <div style={{ display: "flex", width: "100%", height: "100%" }}>
-        </div>
-      <Divider></Divider>
-      <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-        {t("todaysComplete")} ({patients.length})
-      </h2>
-      <Table
-        rowKey={"pt_no"}
-        columns={patientsColumns}
-        dataSource={patients.some((d) => d === undefined) ? [] : patients}
-        scroll={{ x: 1500, y: 1500 }}
-        sticky
-        pagination={false}
-        offsetScroll={3}
-        onChange={handleTableChange} // Attach the handleTableChange function
-        {...sortInfo} // Spread the sortInfo to apply sorting
+          </ResponsiveContainer>
+          <ResponsiveContainer width="50%" height="100%">
+            {satScore.length > 0 ? (
+              <BarChart data={satScore}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="level" />
+                <YAxis dataKey="count" />
+                <Tooltip />
+                <Legend content={renderLegendStations(2)} />
 
-      />
-      <Divider></Divider>
-      <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-        {t("todaysSurveys")} ({surveys.length})
-      </h2>
-      <Table
-        rowKey={"inx"}
-        columns={surveyColumns}
-        dataSource={surveys.some((d) => d === undefined) ? [] : surveys}
-        scroll={{ x: 1500, y: 1500 }}
-        sticky
-        pagination={false}
-        offsetScroll={3}
-      />
-    </div>
+                <Bar dataKey="count">
+                  {surveys.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={barColors[entry.level]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            ) : (
+              <div>Loading...</div>
+            )}
+          </ResponsiveContainer>
+        </div>
+        </div>
+        <div style={{ display: "flex", width: "100%", height: "100%" }}></div>
+        <Divider></Divider>
+        <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+          {t("todaysComplete")} ({patients.length})
+        </h2>
+        <Table
+          rowKey={"pt_no"}
+          columns={patientsColumns}
+          dataSource={patients.some((d) => d === undefined) ? [] : patients}
+          scroll={{ x: 1500, y: 1500 }}
+          sticky
+          pagination={false}
+          offsetScroll={3}
+          onChange={handleTableChange} // Attach the handleTableChange function
+          {...sortInfo} // Spread the sortInfo to apply sorting
+        />
+        <Divider></Divider>
+        <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+          {t("todaysSurveys")} ({surveys.length})
+        </h2>
+        <Table
+          rowKey={"inx"}
+          columns={surveyColumns}
+          dataSource={surveys.some((d) => d === undefined) ? [] : surveys}
+          scroll={{ x: 1500, y: 1500 }}
+          sticky
+          pagination={false}
+          offsetScroll={3}
+        />
+        <Divider />
+        <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+          {t("DOWNLOAD")} 
+        </h2>
+        <Row>
+          <Col>
+          <ExcelExport data={patients} reportName="TODAYSPATIENTS"/></Col>
+          <Col>&nbsp;</Col>
+          <Col><ExcelExport data={surveys} reportName="todaysSurveys" /></Col></Row>
+      </div>
+
   );
 };
 

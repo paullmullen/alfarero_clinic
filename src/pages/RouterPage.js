@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Layout, Menu, Typography, Image, Row, Col } from "antd";
 import {
   UserOutlined,
@@ -35,6 +35,24 @@ const { Title } = Typography;
 export const RouterPage = () => {
   const { ocultarMenu } = useContext(UiContext);
   const [t] = useTranslation("global");
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 15000);
+
+    // Cleanup the interval on component unmount
+    return () => clearInterval(interval);
+  }, []);
+
+  const formattedTime = currentTime.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+
   const menuItems = [
     {
       key: "1",
@@ -110,6 +128,11 @@ export const RouterPage = () => {
                 </a>
               </Col>
             </Row>
+            <Row justify="center">
+              <Col xs={24} sm={24} md={24} lg={24}>
+                <Title level={4}>{formattedTime}</Title>
+              </Col>
+            </Row>            
             <Row justify="center">
               <Col xs={24} sm={24} md={24} lg={24}>
                 <Title level={4}>{t("headerTitle")}</Title>

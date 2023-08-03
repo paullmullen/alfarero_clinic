@@ -4,8 +4,8 @@ import "./index.css";
 import { I18nextProvider } from "react-i18next";
 import i18next from "i18next";
 import { AlfareroApp } from "./AlfareroApp";
-import global_es from "./translations/es/global.json";
-import global_en from "./translations/en/global.json";
+import global_es from "./i18n/es.json";
+import global_en from "./i18n/en.json";
 
 i18next.init({
   Intersection: { escapeValue: false },
