@@ -193,6 +193,13 @@ const Stats = () => {
       fixed: "left",
       sorter: (a, b) => a.type_of_visit.localeCompare(b.type_of_visit),
       render: (name) => <div>{t(name)}</div>,
+    },    {
+      title: t("TOTALWAIT"),
+      dataIndex: "total_wait",
+      key: "type",
+      width: 25,
+      fixed: "left",
+      render: (name) => <div>{t(name)} min</div>,
     },
     {
       title: t("start_time"),

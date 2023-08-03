@@ -28,10 +28,12 @@ const fetchPatientsData = async () => {
         plan_of_care,
       };
       let patientPoc = [];
+      let totalWait = 0;
       dataEntry.plan_of_care.forEach((poc) => {
         if (poc.status === "complete") {
           patientPoc.push(poc.station);
         }
+        if (poc.waiting_time) {totalWait += poc.waiting_time}
       });
       const pocString = patientPoc.join(", ");
   
@@ -50,6 +52,7 @@ const fetchPatientsData = async () => {
           reason_for_visit: dataEntry.reason_for_visit,
           type_of_visit: dataEntry.type_of_visit,
           plan_of_care: pocString,
+          total_wait: Math.round(totalWait/60,0)
         });
       }
     });
