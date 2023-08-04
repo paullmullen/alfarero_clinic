@@ -504,8 +504,8 @@ export const Anfitrion = () => {
           item.patient_name +
           "|" +
           item.reason_for_visit +
-          "|" + t(item.type_of_visit) +
-          (item.tel === null ? " " : item.tel) ,
+          "|" + t(item.type_of_visit) + "|" +
+          (item.tel === null ? " " : "T: " + item.tel) ,
         avg_time:
           avg_time.toString() +
           "|" +

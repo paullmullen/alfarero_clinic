@@ -1,18 +1,18 @@
 import { firestore } from "./../helpers/firebaseConfig";
 
-
-
 export const handleStatusChange = async (value, hoveredRowKey, station) => {
-  
-  
-  const docPatientRef = firestore.collection("patients").doc(hoveredRowKey);
+  try {
+    await firestore.runTransaction(async (transaction) => {
+      const docPatientRef = firestore.collection("patients").doc(hoveredRowKey);
+      const docStatsRef = firestore.collection("stats").doc(station);
 
-  if (docPatientRef) {
-    try {
-      const doc = await docPatientRef.get();
+      const [docPatient, docStats] = await Promise.all([
+        transaction.get(docPatientRef),
+        transaction.get(docStatsRef),
+      ]);
 
-      if (doc.exists) {
-        const data = doc.data();
+      if (docPatient.exists) {
+        const data = docPatient.data();
         const updatedPlanOfCare = data.plan_of_care?.map((item) => {
           if (item.station === station) {
             const updatedItem = {
@@ -22,57 +22,46 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
 
             if (value === "waiting" && item.status !== "waiting") {
               updatedItem.wait_start = Math.floor(Date.now() / 1000);
-
             } else if (value === "in_process" && item.status !== "in_process") {
               updatedItem.procedure_start = Math.floor(Date.now() / 1000);
-
             } else if (value === "obs" && item.status !== "obs") {
               updatedItem.procedure_start = Math.floor(Date.now() / 1000);
+            }
 
-            } 
-            
             if (value !== "waiting" && item.status === "waiting") {
               updatedItem.wait_end = Math.floor(Date.now() / 1000);
               updatedItem.waiting_time = Math.abs(
                 updatedItem.wait_end - updatedItem.wait_start
               );
-
             } else if (value !== "in_process" && item.status === "in_process") {
               updatedItem.procedure_end = Math.floor(Date.now() / 1000);
               updatedItem.procedure_time = Math.abs(
                 updatedItem.procedure_end - updatedItem.procedure_start
               );
-              
             } else if (value !== "obs" && item.status === "obs") {
               updatedItem.procedure_end = Math.floor(Date.now() / 1000);
               updatedItem.procedure_time = Math.abs(
                 updatedItem.procedure_end - updatedItem.procedure_start
               );
             }
-            return updatedItem;  //return of the map
+            return updatedItem;
           }
-          return item;   //return of the handleStatusChange
+          return item;
         });
 
-        await docPatientRef.update({
+        transaction.update(docPatientRef, {
           plan_of_care: updatedPlanOfCare,
         });
 
-        const statsDocRef = firestore.collection("stats").doc(station);
-        const statsDoc = await statsDocRef.get();
-
-        if (statsDoc.exists) {
-          const statsData = statsDoc.data();
+        if (docStats.exists) {
+          const statsData = docStats.data();
           const updatedItem = updatedPlanOfCare.find(
             (item) => item.station === station
           );
 
-          if (
-            value === "waiting" &&
-            updatedItem.wait_start
-          ) {
+          if (value === "waiting" && updatedItem.wait_start) {
             const waitDifference = Math.abs(updatedItem.waiting_time);
-            await statsDocRef.update({
+            transaction.update(docStatsRef, {
               waiting_time_data: [
                 ...(statsData.waiting_time_data || []),
                 waitDifference,
@@ -80,12 +69,9 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
             });
           }
 
-          if (
-            value === "in_process" &&
-            updatedItem.procedure_start
-          ) {
+          if (value === "in_process" && updatedItem.procedure_start) {
             const inProcessDifference = Math.abs(updatedItem.procedure_time);
-            await statsDocRef.update({
+            transaction.update(docStatsRef, {
               procedure_time_data: [
                 ...(statsData.procedure_time_data || []),
                 inProcessDifference,
@@ -104,7 +90,7 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
               validWaitingTimeData.reduce((acc, time) => acc + time, 0) /
                 number_of_patients
             );
-            await statsDocRef.update({
+            transaction.update(docStatsRef, {
               avg_waiting_time: waitingAverage,
             });
           }
@@ -117,74 +103,76 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
               validProcedureTimeData.reduce((acc, time) => acc + time, 0) /
                 number_of_patients
             );
-            await statsDocRef.update({
+            transaction.update(docStatsRef, {
               avg_procedure_time: procedureAverage,
             });
 
-            if (value === "in_process" || value === "waiting" ) {
-              await firestore
-                .collection("patients")
-                .doc(hoveredRowKey)
-                .update({
-                  avg_time: Math.floor(Date.now() / 1000)
-                });
+            if (value === "in_process" || value === "waiting") {
+              transaction.update(docPatientRef, {
+                avg_time: Math.floor(Date.now() / 1000),
+              });
             }
           }
         }
       } else {
         console.log("No such document!");
       }
-    } catch (error) {
-      console.log("Error getting document:", error);
-    }
+    });
+  } catch (error) {
+    console.log("Error updating status:", error);
   }
 };
 
 export const handleDelete = async (hoveredRowKey, history) => {
-
   const docPatientRefFin = firestore.collection("patients").doc(hoveredRowKey);
-
 
   if (docPatientRefFin) {
     try {
       const doc = await docPatientRefFin.get();
 
-      if (doc.exists) {
-        await docPatientRefFin.update({
-          complete: true,
-        });
-      } else {
-        console.log("No such document!");
-      }
+      await firestore.runTransaction(async (transaction) => {
+        const doc = await transaction.get(docPatientRefFin);
+
+        if (doc.exists) {
+          await docPatientRefFin.update({
+            complete: true,
+          });
+        } else {
+          console.log("HANDLE_DELETE: No such document.");
+        }
+      });
     } catch (error) {
-      console.log("Error getting document:", error);
+      console.log("HANDLE_DELETE: Error getting document:", error);
     }
   } else {
-    console.log("No such document!");
+    console.log("HANDLE_DELETE: No such document.");
   }
+
   history.push("/survey");
 };
 
-
 export const cleanCompletedPatients = async () => {
-  const toBeDeleted = firestore.collection("patients").where("complete", "==", true);
-  toBeDeleted.get().then (function(querySnapshot) {
-    querySnapshot.forEach(function(doc) {
+  const toBeDeleted = firestore
+    .collection("patients")
+    .where("complete", "==", true);
+  toBeDeleted.get().then(function (querySnapshot) {
+    querySnapshot.forEach(function (doc) {
       doc.ref.delete();
-    })
+    });
   });
-}
+};
 
-  export const cleanEmptySurveys = async () => {
-    const toBeDeleted = firestore.collection("surveys")
+export const cleanEmptySurveys = async () => {
+  const toBeDeleted = firestore
+    .collection("surveys")
     .where("satisfaction", "==", "")
     .where("suggestion", "==", "")
     .where("source", "==", "")
     .where("first", "==", "");
-    toBeDeleted.get().then (function(querySnapshot) {
-      querySnapshot.forEach(function(doc) {
-        doc.ref.delete();
-      })
+  toBeDeleted.get().then(function (querySnapshot) {
+    querySnapshot.forEach(function (doc) {
+      doc.ref.delete();
     });
-    console.log("cleaned surveys")
-  }
+  });
+  console.log("cleaned surveys");
+};

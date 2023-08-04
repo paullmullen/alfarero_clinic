@@ -8,6 +8,8 @@ import {
   Select,
   Col,
   Row,
+  Radio,
+  Grid,
 } from "antd";
 import { SaveFilled } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
@@ -36,7 +38,6 @@ export const Registro = () => {
   // const [selectedRecipeStations, setRecipeStations] = useState([]);
   const [disabledButton, setDisabledButton] = useState(false);
   const [t] = useTranslation("global");
-  
 
   useHideMenu(false);
 
@@ -111,9 +112,7 @@ export const Registro = () => {
     let isMounted = true;
     let unsubscribe;
 
-
     const fetchData = async () => {
-
       try {
         const visitTypeRef = firestore
           .collection("visit_types")
@@ -163,7 +162,7 @@ export const Registro = () => {
       if (statsData.date !== currentMonthDayYear) {
         // La fecha es diferente, reset the stats
         await statsRef.update({
-          number_of_patients: 0,  
+          number_of_patients: 0,
           avg_waiting_time: 0,
           date: currentMonthDayYear,
           procedure_time_data: [],
@@ -332,13 +331,13 @@ export const Registro = () => {
                       }
                       if (
                         /^(\+\d{1,3}[-  *])?\(?([0-9]{3,4})\)?[-.●  *]?([0-9]{3,4})[-.●  *]?([0-9]{3,4})?$/.test(
-                          value,
+                          value
                         )
                       ) {
                         return Promise.resolve();
                       }
                       return Promise.reject(
-                        new Error(t("enterValidPhoneNumber")),
+                        new Error(t("enterValidPhoneNumber"))
                       );
                     },
                   },
@@ -359,7 +358,7 @@ export const Registro = () => {
               </Form.Item>
             </Col>
           </Row>
-          <Row gutter={24}>
+          {/* <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
                 label={t("visitTypes")}
@@ -382,7 +381,35 @@ export const Registro = () => {
                 />
               </Form.Item>
             </Col>
+          </Row> */}
+
+          <Row gutter={24}>
+            <Col xs={24} sm={24}>
+              <Form.Item
+                label={t("visitTypes")}
+                name="tipo"
+                rules={[
+                  {
+                    required: true,
+                    message: t("selectExamType"),
+                  },
+                ]}
+              >
+                <Radio.Group
+            onChange={updateStations}
+            size = "large"  optionType="button"
+            style={{ display: 'flex', flexWrap: 'wrap' }}
+          >
+            {recipes.map(recipe => (
+              <Radio key={recipe.value} value={recipe.value} style={{ flex: `0 0 ${33}%` }}>
+                {recipe.label}
+              </Radio>
+            ))}
+          </Radio.Group>
+              </Form.Item>
+            </Col>
           </Row>
+
           {/* <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
