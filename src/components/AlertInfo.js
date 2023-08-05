@@ -1,11 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import { Image, Alert, Divider, Typography, Space, Row, Col } from "antd";
 import { useTranslation } from "react-i18next";
 const { Title } = Typography;
 
 export const AlertInfo = () => {
-  const [alignment, setAlignment] = useState("start");
-  const [direction, setDirection] = useState("horizontal");
   const [t] = useTranslation("global")
   return (
     <>
@@ -15,8 +13,6 @@ export const AlertInfo = () => {
           <Row justify="center">
             <Col xs={24} sm={12} md={8} lg={24} style={{ textAlign: "center" }}>
               <Space
-                direction={direction}
-                align={alignment === "start" ? "start" : "center"}
                 wrap
               >
                 <Space>

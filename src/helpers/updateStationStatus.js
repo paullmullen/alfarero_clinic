@@ -128,7 +128,6 @@ export const handleDelete = async (hoveredRowKey, history) => {
 
   if (docPatientRefFin) {
     try {
-      const doc = await docPatientRefFin.get();
 
       await firestore.runTransaction(async (transaction) => {
         const doc = await transaction.get(docPatientRefFin);
@@ -156,7 +155,6 @@ export const handleReadmitClick = async (patientID) => {
 
   if (docPatientRefFin) {
     try {
-      const doc = await docPatientRefFin.get();
 
       await firestore.runTransaction(async (transaction) => {
         const doc = await transaction.get(docPatientRefFin);

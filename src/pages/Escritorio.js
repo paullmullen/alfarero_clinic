@@ -25,12 +25,10 @@ const { Option } = Select;
 export const Escritorio = () => {
   const [documents, setDocuments] = useState([]);
   const [usuario] = useState(getUsuarioStorage());
-  const [filteredDocuments, setFilteredDocuments] = useState([]);
   const history = useHistory();
 
   const [visible, setVisible] = useState(true);
-  const [patientStatus, setPatientStatus] = useState({});
-  const [t, i18n] = useTranslation("global");
+  const [t] = useTranslation("global");
 
   const handleClose = () => {
     setVisible(false);
@@ -41,61 +39,37 @@ export const Escritorio = () => {
   useEffect(() => { 
     let isMounted = true;
     const fetchData = async () => {
-      const collectionRef = firestore.collection("patients");
-      const snapshot = await collectionRef.orderBy("start_time", "asc").get();
-      const initialData = snapshot.docs.map((doc) => doc.data());
-
-      if (isMounted) {
-        const filteredData = initialData.filter(
-          (doc) =>
-            doc.complete !== true &&
-            doc.plan_of_care.some((item) => item.station === usuario.servicio),
-        );
-        const statusObj = filteredData.reduce((obj, doc) => {
-          obj[doc.pt_no] = doc.complete;
-          return obj;
-        }, {});
-        console.log(statusObj);
-        setPatientStatus(statusObj);
-        filteredData.sort(
-          (a, b) => a.start_time.toMillis() - b.start_time.toMillis(),
-        );
-        console.log(filteredData);
-        setDocuments(filteredData);
-        setFilteredDocuments(filteredData);
-        console.log(documents);
+      try {
+        const collectionRef = firestore.collection("patients");
+        const snapshot = await collectionRef.orderBy("start_time", "asc").get();
+        const initialData = snapshot.docs.map((doc) => doc.data());
+  
+        if (isMounted) {
+          const filteredData = initialData.filter(
+            (doc) =>
+              doc.complete !== true &&
+              doc.plan_of_care.some((item) => item.station === usuario.servicio),
+          );
+          
+          filteredData.sort(
+            (a, b) => a.start_time.toMillis() - b.start_time.toMillis(),
+          );
+    
+          setDocuments(filteredData);
+        }
+      } catch (error) {
+        // Handle any potential errors
+        console.error("Error fetching data:", error);
       }
-
-      const unsubscribe = collectionRef.onSnapshot((snapshot) => {
-        // commented this out because it was closing the queue of waiting patients
-        // const updatedData = snapshot.docs.map((doc) => doc.data());
-        // if (isMounted) {
-        //   const filteredData = updatedData.filter((doc) => {
-        //     doc.complete !== true &&
-        //       doc.plan_of_care.some(
-        //         (item) => item.station === usuario.servicio,
-        //       );
-        //   });
-        //   const statusObj = filteredData.reduce((obj, doc) => {
-        //     obj[doc.pt_no] = doc.complete;
-        //     return obj;
-        //   }, {});
-        //   setPatientStatus(statusObj);
-        //   filteredData.sort(
-        //     (a, b) => a.start_time.toMillis() - b.start_time.toMillis(),
-        //   );
-        //   setDocuments(filteredData);
-        //   setFilteredDocuments(filteredData);
-        // }
-      });
-
-      return () => {
-        unsubscribe();
-        isMounted = false;
-      };
     };
+  
     fetchData();
-  }, [usuario.servicio, documents, t]);
+  
+    return () => {
+      isMounted = false; // Set the mounted flag to false to prevent state updates after unmounting
+    };
+  }, [usuario.servicio, t]);
+  
 
   const salir = () => {
     localStorage.clear();

@@ -9,7 +9,6 @@ import {
   Tooltip,
   Legend,
   Cell,
-  Text,
   ResponsiveContainer,
 } from "recharts";
 import { useTranslation } from "react-i18next";
@@ -24,12 +23,6 @@ import { satIcon } from "../helpers/satIcon";
 import ExcelExport from "../helpers/Export";
 import IconSizes from "../helpers/iconSizes";
 import { handleReadmitClick } from "../helpers/updateStationStatus";
-import { useAlert } from "../hooks/alert";
-import { AlertInfo } from "../components/AlertInfo";
-
-
-
-
 
 const howManyToday = async (stationName) => {
   try {
@@ -38,10 +31,6 @@ const howManyToday = async (stationName) => {
 
     const midnightTodayTimestamp =
       firebase.firestore.Timestamp.fromDate(midnightToday);
-
-    const temp = firestore
-      .collection("patients")
-      .where("start_time", ">=", midnightTodayTimestamp);
 
     const query = firestore
       .collection("patients")
@@ -68,8 +57,7 @@ const Stats = () => {
   const [patients, setPatients] = useState([]);
   const [surveys, setSurveys] = useState([]);
   const [satScore, setSatScore] = useState([]);
-  const [columnChanger, setColumnChanger] = useState(false);   //toggling column changer triggers useEffect.  Can update columnChanger when the reenter button is clicked.
-  
+  const [columnChanger, setColumnChanger] = useState(false); //toggling column changer triggers useEffect.  Can update columnChanger when the reenter button is clicked.
 
   // State to keep track of sorting
   const [sortInfo, setSortInfo] = useState({});
@@ -87,12 +75,14 @@ const Stats = () => {
         return (
           <div style={{ textAlign: "center" }}>
             <h2>{t("patientsPerService")}</h2>;
-            </div>);
+          </div>
+        );
       case 2:
         return (
           <div style={{ textAlign: "center" }}>
             <h2>{t("satscores")}</h2>;
-            </div>);
+          </div>
+        );
       default:
         return null; // Return null instead of an empty string
     }
@@ -177,6 +167,7 @@ const Stats = () => {
       await stationsData();
       await surveyData();
     };
+
     doStuffInOrder();
   }, [t, columnChanger]);
 
@@ -236,33 +227,34 @@ const Stats = () => {
       render: (name) => <div>{name !== "" ? name : t("NO_SERVICE")}</div>,
     },
     {
-    title: t("READMIT"),
-    dataIndex: "pt_no",
-    key: "estado",
-    width: 25,
-    fixed: "right",
-    render: (ptNo) => {
-      const patient = patients.find((item) => item.pt_no === ptNo);
-      let isDisabled = patient ? !patient.complete : false;
-      return ( 
-        <Button
-          type="text"
-          hidden = {isDisabled}
-          onClick={() => { handleReadmitClick(ptNo);
-            setColumnChanger(!columnChanger);  //should trigger useEffect to re-render the button.
-                          ;}} // Replace with your onClick handler
-          style={{ padding: 0 }}
-        >
-          <Image
-            src={require("../img/enter.png")}
-            width={IconSizes.height}
-            height={IconSizes.height}
-            preview={false}
-          />
-        </Button>
-      );
+      title: t("READMIT"),
+      dataIndex: "pt_no",
+      key: "estado",
+      width: 25,
+      fixed: "right",
+      render: (ptNo) => {
+        const patient = patients.find((item) => item.pt_no === ptNo);
+        let isDisabled = patient ? !patient.complete : false;
+        return (
+          <Button
+            type="text"
+            hidden={isDisabled}
+            onClick={() => {
+              handleReadmitClick(ptNo);
+              setColumnChanger(!columnChanger); //should trigger useEffect to re-render the button.
+            }} // Replace with your onClick handler
+            style={{ padding: 0 }}
+          >
+            <Image
+              src={require("../img/enter.png")}
+              width={IconSizes.height}
+              height={IconSizes.height}
+              preview={false}
+            />
+          </Button>
+        );
+      },
     },
-  },
   ];
 
   const surveyColumns = [
@@ -288,7 +280,7 @@ const Stats = () => {
       key: "first",
       width: 25,
       fixed: "left",
-      render: (name) => <div>{name == "1" ? t("yes") : t("no")}</div>,
+      render: (name) => <div>{name === "1" ? t("yes") : t("no")}</div>,
     },
     {
       title: t("suggestion"),
@@ -304,91 +296,91 @@ const Stats = () => {
 
   return (
     <div>
-            <AlertInfo />
-
-
-    <div className="stats-container">
-      <div className="charts-container">
-        <div style={{ display: "flex", width: "100%", height: "100%" }}>
-          <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-            <BarChart data={statsData} label="hello">
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="station" />
-              <YAxis />
-              <Tooltip />
-              <Legend content={() => renderLegendStations(1)} />
-
-              <Bar dataKey="count">
-                {statsData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={barColors[index]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-          <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-            {satScore.length > 0 ? (
-              <BarChart data={satScore}>
+      <div className="stats-container">
+        <div className="charts-container">
+          <div style={{ display: "flex", width: "100%", height: "100%" }}>
+            <ResponsiveContainer width="50%" height="100%" minHeight="300px">
+              <BarChart data={statsData} label="hello">
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="level" />
-                <YAxis dataKey="count" />
+                <XAxis dataKey="station" />
+                <YAxis />
                 <Tooltip />
-                <Legend content={() => renderLegendStations(2)} />
+                <Legend content={() => renderLegendStations(1)} />
 
                 <Bar dataKey="count">
-                  {surveys.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={barColors[entry.level]} />
+                  {statsData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={barColors[index]} />
                   ))}
                 </Bar>
               </BarChart>
-            ) : (
-              <div>Loading...</div>
-            )}
-          </ResponsiveContainer>
+            </ResponsiveContainer>
+            <ResponsiveContainer width="50%" height="100%" minHeight="300px">
+              {satScore.length > 0 ? (
+                <BarChart data={satScore}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="level" />
+                  <YAxis dataKey="count" />
+                  <Tooltip />
+                  <Legend content={() => renderLegendStations(2)} />
+
+                  <Bar dataKey="count">
+                    {surveys.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={barColors[entry.level]}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              ) : (
+                <div>Loading...</div>
+              )}
+            </ResponsiveContainer>
+          </div>
         </div>
+        <div style={{ display: "flex", width: "100%", height: "100%" }}></div>
+        <Divider></Divider>
+        <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+          {t("todaysComplete")} ({patients.length})
+        </h2>
+        <Table
+          rowKey={"pt_no"}
+          columns={patientsColumns}
+          dataSource={patients.some((d) => d === undefined) ? [] : patients}
+          scroll={{ x: 1500, y: 1500 }}
+          sticky
+          pagination={false}
+          offsetScroll={3}
+          onChange={handleTableChange} // Attach the handleTableChange function
+          {...sortInfo} // Spread the sortInfo to apply sorting
+        />
+        <Divider></Divider>
+        <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+          {t("todaysSurveys")} ({surveys.length})
+        </h2>
+        <Table
+          rowKey={"inx"}
+          columns={surveyColumns}
+          dataSource={surveys.some((d) => d === undefined) ? [] : surveys}
+          scroll={{ x: 1500, y: 1500 }}
+          sticky
+          pagination={false}
+          offsetScroll={3}
+        />
+        <Divider />
+        <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+          {t("DOWNLOAD")}
+        </h2>
+        <Row>
+          <Col>
+            <ExcelExport data={patients} reportName="TODAYSPATIENTS" />
+          </Col>
+          <Col>&nbsp;</Col>
+          <Col>
+            <ExcelExport data={surveys} reportName="todaysSurveys" />
+          </Col>
+        </Row>
       </div>
-      <div style={{ display: "flex", width: "100%", height: "100%" }}></div>
-      <Divider></Divider>
-      <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-        {t("todaysComplete")} ({patients.length})
-      </h2>
-      <Table
-        rowKey={"pt_no"}
-        columns={patientsColumns}
-        dataSource={patients.some((d) => d === undefined) ? [] : patients}
-        scroll={{ x: 1500, y: 1500 }}
-        sticky
-        pagination={false}
-        offsetScroll={3}
-        onChange={handleTableChange} // Attach the handleTableChange function
-        {...sortInfo} // Spread the sortInfo to apply sorting
-      />
-      <Divider></Divider>
-      <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-        {t("todaysSurveys")} ({surveys.length})
-      </h2>
-      <Table
-        rowKey={"inx"}
-        columns={surveyColumns}
-        dataSource={surveys.some((d) => d === undefined) ? [] : surveys}
-        scroll={{ x: 1500, y: 1500 }}
-        sticky
-        pagination={false}
-        offsetScroll={3}
-      />
-      <Divider />
-      <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-        {t("DOWNLOAD")}
-      </h2>
-      <Row>
-        <Col>
-          <ExcelExport data={patients} reportName="TODAYSPATIENTS" />
-        </Col>
-        <Col>&nbsp;</Col>
-        <Col>
-          <ExcelExport data={surveys} reportName="todaysSurveys" />
-        </Col>
-      </Row>
-    </div>
     </div>
   );
 };

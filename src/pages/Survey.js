@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
-import { AlertInfo } from "../components/AlertInfo";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import {
   Button,
-  Checkbox,
   Form,
   Input,
   Select,
@@ -15,9 +13,7 @@ import {
   Space,
   Row,
   Col,
-  Layout,
-} from "antd";
-import { Link } from "react-router-dom";
+  } from "antd";
 import { ReactComponent as AngryIcon } from "../img/angry.svg";
 import { ReactComponent as SadIcon } from "../img/sad.svg";
 import { ReactComponent as IndifferentIcon } from "../img/indifferent.svg";
@@ -25,7 +21,6 @@ import { ReactComponent as HappyIcon } from "../img/happy.svg";
 import { ReactComponent as ThrilledIcon } from "../img/thrilled.svg";
 
 const { TextArea } = Input;
-const { Header, Footer, Sider, Content } = Layout;
 
 export const Survey = () => {
   const history = useHistory();
@@ -100,9 +95,6 @@ export const Survey = () => {
     console.log("Failed:", errorInfo);
   };
 
-  const layout = {
-    labelCol: { span: 8 },
-  };
 
   useHideMenu(true);
 
