@@ -210,7 +210,7 @@ const getArrivalTimeData = (patients) => {
       key: "reason",
       width: 50,
       fixed: "left",
-      render: (name) => <div>{name}</div>,
+      render: (reason) => <div>{reason}</div>,
     },
     {
       title: t("type_of_visit"),
@@ -219,7 +219,7 @@ const getArrivalTimeData = (patients) => {
       width: 30,
       fixed: "left",
       sorter: (a, b) => a.type_of_visit.localeCompare(b.type_of_visit),
-      render: (name) => <div>{t(name)}</div>,
+      render: (type) => <div>{t(type)}</div>,
     },
     {
       title: t("TOTALWAIT"),
@@ -227,7 +227,7 @@ const getArrivalTimeData = (patients) => {
       key: "type",
       width: 25,
       fixed: "left",
-      render: (name) => <div>{t(name)} min</div>,
+      render: (total) => <div>{t(total)} min</div>,
     },
     {
       title: t("start_time"),
@@ -237,7 +237,7 @@ const getArrivalTimeData = (patients) => {
       fixed: "left",
       defaultSortOrder: "ascend",
       sorter: (a, b) => a.start_time.localeCompare(b.start_time),
-      render: (name) => <div>{name}</div>,
+      render: (time) => <div>{time}</div>,
     },
     {
       title: t("services"),
@@ -245,7 +245,7 @@ const getArrivalTimeData = (patients) => {
       key: "poc",
       width: 50,
       fixed: "left",
-      render: (name) => <div>{name !== "" ? name : t("NO_SERVICE")}</div>,
+      render: (services, patient) => <div>{(services === "") && (patient.complete==true) ? t("NO_SERVICE") : services}</div>,
     },
     {
       title: t("READMIT"),
