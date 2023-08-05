@@ -18,6 +18,7 @@ const fetchPatientsData = async () => {
         reason_for_visit,
         type_of_visit,
         plan_of_care,
+        complete,
       } = doc.data();
       const dataEntry = {
         pt_no,
@@ -26,6 +27,7 @@ const fetchPatientsData = async () => {
         reason_for_visit,
         type_of_visit,
         plan_of_care,
+        complete
       };
       let patientPoc = [];
       let totalWait = 0;
@@ -52,7 +54,8 @@ const fetchPatientsData = async () => {
           reason_for_visit: dataEntry.reason_for_visit,
           type_of_visit: dataEntry.type_of_visit,
           plan_of_care: pocString,
-          total_wait: Math.round(totalWait/60,0)
+          total_wait: Math.round(totalWait/60,0),
+          complete: dataEntry.complete,
         });
       }
     });

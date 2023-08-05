@@ -1,6 +1,8 @@
 {
   "DOWNLOAD": "Download to Excel",
   "LAB_SAMPLE": "Lab: Sample",
+  "NO_SERVICE": "Left without service.",
+  "READMIT": "Re-admit",
   "TODAYSPATIENTS": "Today's Patients",
   "TOTALWAIT": "Total Wait",
   "action": "Action",

@@ -1,6 +1,8 @@
 {
   "DOWNLOAD": "Descargar para Excel",
   "LAB_SAMPLE": "Lab: Muestra",
+  "NO_SERVICE": "Salio sin servicio.",
+  "READMIT": "Readmisión",
   "TODAYSPATIENTS": "Pacients de Hoy",
   "TOTALWAIT": "Espera Total",
   "action": "Acción",

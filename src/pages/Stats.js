@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useTranslation } from "react-i18next";
-import { Divider, Table, Row, Col } from "antd";
+import { Divider, Table, Row, Col, Image, Button } from "antd";
 
 import firebase from "firebase/compat/app";
 import "firebase/compat/firestore";
@@ -21,7 +21,14 @@ import { stations } from "../helpers/stations";
 import { fetchSurveyData } from "../helpers/fetchSurveyData";
 import { fetchPatientsData } from "../helpers/fetchPatientsData";
 import { satIcon } from "../helpers/satIcon";
-import ExcelExport from '../helpers/Export';
+import ExcelExport from "../helpers/Export";
+import IconSizes from "../helpers/iconSizes";
+import { handleReadmitClick } from "../helpers/updateStationStatus";
+import { useAlert } from "../hooks/alert";
+import { AlertInfo } from "../components/AlertInfo";
+
+
+
 
 
 const howManyToday = async (stationName) => {
@@ -61,6 +68,8 @@ const Stats = () => {
   const [patients, setPatients] = useState([]);
   const [surveys, setSurveys] = useState([]);
   const [satScore, setSatScore] = useState([]);
+  const [columnChanger, setColumnChanger] = useState(false);   //toggling column changer triggers useEffect.  Can update columnChanger when the reenter button is clicked.
+  
 
   // State to keep track of sorting
   const [sortInfo, setSortInfo] = useState({});
@@ -163,7 +172,7 @@ const Stats = () => {
       await surveyData();
     };
     doStuffInOrder();
-  }, [t]);
+  }, [t, columnChanger]);
 
   const barColors = getBarColors();
 
@@ -189,11 +198,12 @@ const Stats = () => {
       title: t("type_of_visit"),
       dataIndex: "type_of_visit",
       key: "type",
-      width: 50,
+      width: 30,
       fixed: "left",
       sorter: (a, b) => a.type_of_visit.localeCompare(b.type_of_visit),
       render: (name) => <div>{t(name)}</div>,
-    },    {
+    },
+    {
       title: t("TOTALWAIT"),
       dataIndex: "total_wait",
       key: "type",
@@ -205,7 +215,7 @@ const Stats = () => {
       title: t("start_time"),
       dataIndex: "start_time",
       key: "start_time",
-      width: 50,
+      width: 25,
       fixed: "left",
       defaultSortOrder: "ascend",
       sorter: (a, b) => a.start_time.localeCompare(b.start_time),
@@ -215,10 +225,38 @@ const Stats = () => {
       title: t("services"),
       dataIndex: "plan_of_care",
       key: "poc",
-      width: 175,
+      width: 50,
       fixed: "left",
-      render: (name) => <div>{name}</div>,
+      render: (name) => <div>{name !== "" ? name : t("NO_SERVICE")}</div>,
     },
+    {
+    title: t("READMIT"),
+    dataIndex: "pt_no",
+    key: "estado",
+    width: 25,
+    fixed: "right",
+    render: (ptNo) => {
+      const patient = patients.find((item) => item.pt_no === ptNo);
+      let isDisabled = patient ? !patient.complete : false;
+      return ( 
+        <Button
+          type="text"
+          hidden = {isDisabled}
+          onClick={() => { handleReadmitClick(ptNo);
+            setColumnChanger(!columnChanger);  //should trigger useEffect to re-render the button.
+                          ;}} // Replace with your onClick handler
+          style={{ padding: 0 }}
+        >
+          <Image
+            src={require("../img/enter.png")}
+            width={IconSizes.height}
+            height={IconSizes.height}
+            preview={false}
+          />
+        </Button>
+      );
+    },
+  },
   ];
 
   const surveyColumns = [
@@ -259,10 +297,14 @@ const Stats = () => {
   // Renders the visible screen
 
   return (
+    <div>
+            <AlertInfo />
+
+
     <div className="stats-container">
       <div className="charts-container">
         <div style={{ display: "flex", width: "100%", height: "100%" }}>
-          <ResponsiveContainer width="50%" height="100%">
+          <ResponsiveContainer width="50%" height="100%" minHeight="300px">
             <BarChart data={statsData} label="hello">
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="station" />
@@ -277,7 +319,7 @@ const Stats = () => {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-          <ResponsiveContainer width="50%" height="100%">
+          <ResponsiveContainer width="50%" height="100%" minHeight="300px">
             {satScore.length > 0 ? (
               <BarChart data={satScore}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -297,47 +339,51 @@ const Stats = () => {
             )}
           </ResponsiveContainer>
         </div>
-        </div>
-        <div style={{ display: "flex", width: "100%", height: "100%" }}></div>
-        <Divider></Divider>
-        <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-          {t("todaysComplete")} ({patients.length})
-        </h2>
-        <Table
-          rowKey={"pt_no"}
-          columns={patientsColumns}
-          dataSource={patients.some((d) => d === undefined) ? [] : patients}
-          scroll={{ x: 1500, y: 1500 }}
-          sticky
-          pagination={false}
-          offsetScroll={3}
-          onChange={handleTableChange} // Attach the handleTableChange function
-          {...sortInfo} // Spread the sortInfo to apply sorting
-        />
-        <Divider></Divider>
-        <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-          {t("todaysSurveys")} ({surveys.length})
-        </h2>
-        <Table
-          rowKey={"inx"}
-          columns={surveyColumns}
-          dataSource={surveys.some((d) => d === undefined) ? [] : surveys}
-          scroll={{ x: 1500, y: 1500 }}
-          sticky
-          pagination={false}
-          offsetScroll={3}
-        />
-        <Divider />
-        <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-          {t("DOWNLOAD")} 
-        </h2>
-        <Row>
-          <Col>
-          <ExcelExport data={patients} reportName="TODAYSPATIENTS"/></Col>
-          <Col>&nbsp;</Col>
-          <Col><ExcelExport data={surveys} reportName="todaysSurveys" /></Col></Row>
       </div>
-
+      <div style={{ display: "flex", width: "100%", height: "100%" }}></div>
+      <Divider></Divider>
+      <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+        {t("todaysComplete")} ({patients.length})
+      </h2>
+      <Table
+        rowKey={"pt_no"}
+        columns={patientsColumns}
+        dataSource={patients.some((d) => d === undefined) ? [] : patients}
+        scroll={{ x: 1500, y: 1500 }}
+        sticky
+        pagination={false}
+        offsetScroll={3}
+        onChange={handleTableChange} // Attach the handleTableChange function
+        {...sortInfo} // Spread the sortInfo to apply sorting
+      />
+      <Divider></Divider>
+      <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+        {t("todaysSurveys")} ({surveys.length})
+      </h2>
+      <Table
+        rowKey={"inx"}
+        columns={surveyColumns}
+        dataSource={surveys.some((d) => d === undefined) ? [] : surveys}
+        scroll={{ x: 1500, y: 1500 }}
+        sticky
+        pagination={false}
+        offsetScroll={3}
+      />
+      <Divider />
+      <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+        {t("DOWNLOAD")}
+      </h2>
+      <Row>
+        <Col>
+          <ExcelExport data={patients} reportName="TODAYSPATIENTS" />
+        </Col>
+        <Col>&nbsp;</Col>
+        <Col>
+          <ExcelExport data={surveys} reportName="todaysSurveys" />
+        </Col>
+      </Row>
+    </div>
+    </div>
   );
 };
 

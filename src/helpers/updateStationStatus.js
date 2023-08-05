@@ -151,6 +151,33 @@ export const handleDelete = async (hoveredRowKey, history) => {
   history.push("/survey");
 };
 
+export const handleReadmitClick = async (patientID) => {
+  const docPatientRefFin = firestore.collection("patients").doc(patientID);
+
+  if (docPatientRefFin) {
+    try {
+      const doc = await docPatientRefFin.get();
+
+      await firestore.runTransaction(async (transaction) => {
+        const doc = await transaction.get(docPatientRefFin);
+
+        if (doc.exists) {
+          await docPatientRefFin.update({
+            complete: false,
+          });
+        } else {
+          console.log("HANDLE_READMIT: No such document.");
+        }
+      });
+    } catch (error) {
+      console.log("HANDLE_READMIT: Error getting document:", error);
+    }
+  } else {
+    console.log("HANDLE_READMIT: No such document.");
+  }
+};
+
+
 export const cleanCompletedPatients = async () => {
   const toBeDeleted = firestore
     .collection("patients")
