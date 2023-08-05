@@ -77,16 +77,22 @@ const Stats = () => {
             <h2>{t("patientsPerService")}</h2>;
           </div>
         );
-      case 2:
-        return (
-          <div style={{ textAlign: "center" }}>
-            <h2>{t("satscores")}</h2>;
-          </div>
-        );
+        case 2:
+          return (
+            <div style={{ textAlign: "center" }}>
+              <h2>{t("satscores")}</h2>;
+            </div>
+          );      case 3:
+          return (
+            <div style={{ textAlign: "center" }}>
+              <h2>{t("ARRIVAL_TIME")}</h2>;
+            </div>
+          );
       default:
         return null; // Return null instead of an empty string
     }
   };
+
 
   const surveyData = async () => {
     const data = await fetchSurveyData();
@@ -126,6 +132,20 @@ const Stats = () => {
     });
     setPatients(patients);
   };
+
+const getArrivalTimeData = (patients) => {
+  let hoursArray = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+  patients.forEach(patient => {
+    hoursArray[parseInt(patient.start_time.substring(0,2))]++;
+      });
+      const data = hoursArray.map((count, index) => ({
+        hour: index,
+        count: count,
+      }));
+      return data;
+      
+}
+
 
   const stationsData = async () => {
     try {
@@ -172,6 +192,7 @@ const Stats = () => {
   }, [t, columnChanger]);
 
   const barColors = getBarColors();
+  const arrivalTimeChartData = getArrivalTimeData(patients);
 
   const patientsColumns = [
     {
@@ -336,6 +357,17 @@ const Stats = () => {
                 <div>Loading...</div>
               )}
             </ResponsiveContainer>
+            <ResponsiveContainer width="50%" height="100%" minHeight="300px">
+        <BarChart data={arrivalTimeChartData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="hour" />
+          <YAxis />
+          <Tooltip />
+          <Legend content={() => renderLegendStations(3)} />
+
+          <Bar dataKey="count" fill="#8884d8" />
+        </BarChart>
+      </ResponsiveContainer>
           </div>
         </div>
         <div style={{ display: "flex", width: "100%", height: "100%" }}></div>
