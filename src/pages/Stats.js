@@ -84,11 +84,17 @@ const Stats = () => {
   const renderLegendStations = (props) => {
     switch (props) {
       case 1:
-        return <h2>{t("patientsPerService")}</h2>;
+        return (
+          <div style={{ textAlign: "center" }}>
+            <h2>{t("patientsPerService")}</h2>;
+            </div>);
       case 2:
-        return <h2>{t("satscores")}</h2>;
+        return (
+          <div style={{ textAlign: "center" }}>
+            <h2>{t("satscores")}</h2>;
+            </div>);
       default:
-        return "";
+        return null; // Return null instead of an empty string
     }
   };
 
@@ -310,7 +316,7 @@ const Stats = () => {
               <XAxis dataKey="station" />
               <YAxis />
               <Tooltip />
-              <Legend content={renderLegendStations(1)} />
+              <Legend content={() => renderLegendStations(1)} />
 
               <Bar dataKey="count">
                 {statsData.map((entry, index) => (
@@ -326,7 +332,7 @@ const Stats = () => {
                 <XAxis dataKey="level" />
                 <YAxis dataKey="count" />
                 <Tooltip />
-                <Legend content={renderLegendStations(2)} />
+                <Legend content={() => renderLegendStations(2)} />
 
                 <Bar dataKey="count">
                   {surveys.map((entry, index) => (

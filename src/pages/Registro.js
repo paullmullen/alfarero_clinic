@@ -144,6 +144,8 @@ export const Registro = () => {
       }
       isMounted = false;
     };
+
+
   }, [t]);
 
   const updateStatsCollection = async (station) => {
