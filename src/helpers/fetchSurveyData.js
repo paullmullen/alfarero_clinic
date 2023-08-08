@@ -1,10 +1,10 @@
 import { firestore } from "./../helpers/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 
-const fetchSurveyData = async () => {
+const fetchSurveyData = async (dateRange) => {
   const surveyData = [];
   const surveyCollection = collection(firestore, "surveys");
-  const surveySnapshot = await getDocs(surveyCollection);
+  const surveySnapshot = await getDocs(surveyCollection)
   const midnightToday = new Date().setHours(0, 0, 0, 0);
 
   const surveyEntries = surveySnapshot.docs.map((doc, counter) => {
@@ -17,7 +17,7 @@ const fetchSurveyData = async () => {
       source,
     };
 
-    if (dataEntry.date.toMillis() >= midnightToday) {
+    if ((dataEntry.date.toMillis() >= dateRange[0]) && (dataEntry.date.toMillis() <= dateRange[1])) {
       return {
         inx: counter,
         first: dataEntry.first,
@@ -30,7 +30,7 @@ const fetchSurveyData = async () => {
     }
   });
   // Filter out the null entries and only keep the valid ones
-  surveyData.push(...surveyEntries.filter((entry) => entry !== null));
+  surveyData.push(...surveyEntries.filter((entry) => (entry !== null) ));
 
   return surveyData;
 };

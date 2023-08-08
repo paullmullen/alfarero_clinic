@@ -5,7 +5,7 @@ import { midnightToday } from "./midnightToday";
 
 
 
-const fetchPatientsData = async () => {
+const fetchPatientsData = async (dateRange) => {
     const patientsData = [];
     const patientsCollection = collection(firestore, "patients");
     const patientsSnapshot = await getDocs(patientsCollection);
@@ -39,7 +39,7 @@ const fetchPatientsData = async () => {
       });
       const pocString = patientPoc.join(", ");
   
-      if (dataEntry.start_time.toDate() >= midnightToday) {
+      if ((dataEntry.start_time.toMillis() >= dateRange[0]) && (dataEntry.start_time.toMillis() <= dateRange[1])) {
         patientsData.push({
           pt_no: dataEntry.pt_no,
           patient_name: dataEntry.patient_name,

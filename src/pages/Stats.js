@@ -11,8 +11,18 @@ import {
   Cell,
   ResponsiveContainer,
 } from "recharts";
-import { useTranslation } from "react-i18next";
-import { Divider, Table, Row, Col, Image, Button } from "antd";
+import { useTranslation, withTranslation } from "react-i18next";
+import {
+  Divider,
+  Table,
+  Row,
+  Col,
+  Image,
+  Button,
+  Form,
+  DatePicker,
+  ConfigProvider,
+} from "antd";
 
 import firebase from "firebase/compat/app";
 import "firebase/compat/firestore";
@@ -23,33 +33,15 @@ import { satIcon } from "../helpers/satIcon";
 import ExcelExport from "../helpers/Export";
 import IconSizes from "../helpers/iconSizes";
 import { handleReadmitClick } from "../helpers/updateStationStatus";
+import moment from "moment";
+import es_ES from "antd/es/date-picker/locale/es_ES";
+import en_US from "antd/es/date-picker/locale/en_US";
+import { midnightToday } from "../helpers/midnightToday";
 
-const howManyToday = async (stationName) => {
-  try {
-    const midnightToday = new Date();
-    midnightToday.setHours(0, 0, 0, 0);
-
-    const midnightTodayTimestamp =
-      firebase.firestore.Timestamp.fromDate(midnightToday);
-
-    const query = firestore
-      .collection("patients")
-      .where("start_time", ">=", midnightTodayTimestamp);
-
-    const querySnapshot = await query.get();
-
-    let count = 0;
-    querySnapshot.forEach((doc) => {
-      const patient = doc.data();
-      patient.plan_of_care.forEach((s) => {
-        count += s.station === stationName && s.status !== "pending" ? 1 : 0;
-      });
-    });
-
-    return count;
-  } catch (e) {
-    console.error("Error fetching patient count:", e);
-  }
+const { RangePicker } = DatePicker;
+const datePickerLocales = {
+  en: en_US, // Use the locale object for English
+  es: es_ES, // Use the locale object for Spanish
 };
 
 const Stats = () => {
@@ -58,6 +50,10 @@ const Stats = () => {
   const [surveys, setSurveys] = useState([]);
   const [satScore, setSatScore] = useState([]);
   const [columnChanger, setColumnChanger] = useState(false); //toggling column changer triggers useEffect.  Can update columnChanger when the reenter button is clicked.
+  const [dateRange, setDateRange] = useState([
+    new Date().setHours(0, 0, 0, 0),
+    new Date().setHours(23, 59, 59, 999),
+  ]);
 
   // State to keep track of sorting
   const [sortInfo, setSortInfo] = useState({});
@@ -67,7 +63,30 @@ const Stats = () => {
     setSortInfo(sorter);
   };
 
-  const [t] = useTranslation("global");
+  const [t, i18n] = useTranslation("global");
+
+  const howManyToday = async (stationName) => {
+    try {
+      const query = firestore
+        .collection("patients")
+        .where("start_time", ">=", new Date(dateRange[0]))
+        .where("start_time", "<=", new Date(dateRange[1]));
+
+      const querySnapshot = await query.get();
+
+      let count = 0;
+      querySnapshot.forEach((doc) => {
+        const patient = doc.data();
+        patient.plan_of_care.forEach((s) => {
+          count += s.station === stationName && s.status !== "pending" ? 1 : 0;
+        });
+      });
+
+      return count;
+    } catch (e) {
+      console.error("Error fetching patient count:", e);
+    }
+  };
 
   const renderLegendStations = (props) => {
     switch (props) {
@@ -77,25 +96,47 @@ const Stats = () => {
             <h2>{t("patientsPerService")}</h2>;
           </div>
         );
-        case 2:
-          return (
-            <div style={{ textAlign: "center" }}>
-              <h2>{t("satscores")}</h2>;
-            </div>
-          );      case 3:
-          return (
-            <div style={{ textAlign: "center" }}>
-              <h2>{t("ARRIVAL_TIME")}</h2>;
-            </div>
-          );
+      case 2:
+        return (
+          <div style={{ textAlign: "center" }}>
+            <h2>{t("satscores")}</h2>;
+          </div>
+        );
+      case 3:
+        return (
+          <div style={{ textAlign: "center" }}>
+            <h2>{t("ARRIVAL_TIME")}</h2>;
+          </div>
+        );
       default:
         return null; // Return null instead of an empty string
     }
   };
 
+  const [form] = Form.useForm();
+  // Set default start date and end date to the current date
+  const defaultStartDate = moment().startOf("day");
+  const defaultEndDate = moment().endOf("day");
+
+  const onDateChange = (values) => {
+    if (values) {
+      setDateRange([
+        values[0]._d.setHours(0, 0, 0, 0),
+        values[1]._d.setHours(23, 59, 59, 999),
+      ]);
+    } else {
+      const midnightToday = new Date();
+      const tonightToday = new Date();
+
+      midnightToday.setHours(0, 0, 0, 0);
+      tonightToday.setHours(23, 59, 59, 999);
+
+      setDateRange([new Date(midnightToday), new Date(tonightToday)]);
+    }
+  };
 
   const surveyData = async () => {
-    const data = await fetchSurveyData();
+    const data = await fetchSurveyData(dateRange);
     setSurveys(data);
     const satScore = await surveySummary(data);
     setSatScore(satScore);
@@ -123,7 +164,7 @@ const Stats = () => {
   };
 
   const patientsData = async () => {
-    const data = await fetchPatientsData();
+    const data = await fetchPatientsData(dateRange);
     const patients = data.map((s) => {
       return {
         ...s,
@@ -133,19 +174,19 @@ const Stats = () => {
     setPatients(patients);
   };
 
-const getArrivalTimeData = (patients) => {
-  let hoursArray = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-  patients.forEach(patient => {
-    hoursArray[parseInt(patient.start_time.substring(0,2))]++;
-      });
-      const data = hoursArray.map((count, index) => ({
-        hour: index,
-        count: count,
-      }));
-      return data;
-      
-}
-
+  const getArrivalTimeData = (patients) => {
+    let hoursArray = [
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    patients.forEach((patient) => {
+      hoursArray[parseInt(patient.start_time.substring(0, 2))]++;
+    });
+    const data = hoursArray.map((count, index) => ({
+      hour: index,
+      count: count,
+    }));
+    return data;
+  };
 
   const stationsData = async () => {
     try {
@@ -189,7 +230,7 @@ const getArrivalTimeData = (patients) => {
     };
 
     doStuffInOrder();
-  }, [t, columnChanger]);
+  }, [t, columnChanger, dateRange]);
 
   const barColors = getBarColors();
   const arrivalTimeChartData = getArrivalTimeData(patients);
@@ -245,7 +286,13 @@ const getArrivalTimeData = (patients) => {
       key: "poc",
       width: 50,
       fixed: "left",
-      render: (services, patient) => <div>{(services === "") && (patient.complete==true) ? t("NO_SERVICE") : services}</div>,
+      render: (services, patient) => (
+        <div>
+          {services === "" && patient.complete == true
+            ? t("NO_SERVICE")
+            : services}
+        </div>
+      ),
     },
     {
       title: t("READMIT"),
@@ -317,6 +364,30 @@ const getArrivalTimeData = (patients) => {
 
   return (
     <div>
+      <Form form={form} layout="vertical">
+        <Form.Item
+          name="dateRange"
+          label={t("DATE_RANGE")}
+          rules={[
+            {
+              required: false,
+              message: "Please select a date range",
+            },
+          ]}
+        >
+          <RangePicker
+            format="DD-MMM-YYYY"
+            placeholder={[t("START_DATE"), t("END_DATE")]}
+            locale={
+              i18n.language === "es"
+                ? datePickerLocales.es
+                : datePickerLocales.en
+            }
+            onChange={onDateChange}
+          />
+        </Form.Item>
+      </Form>
+      <Divider></Divider>
       <div className="stats-container">
         <div className="charts-container">
           <div style={{ display: "flex", width: "100%", height: "100%" }}>
@@ -358,20 +429,32 @@ const getArrivalTimeData = (patients) => {
               )}
             </ResponsiveContainer>
             <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-        <BarChart data={arrivalTimeChartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="hour" />
-          <YAxis />
-          <Tooltip />
-          <Legend content={() => renderLegendStations(3)} />
+              <BarChart data={arrivalTimeChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="hour" />
+                <YAxis />
+                <Tooltip />
+                <Legend content={() => renderLegendStations(3)} />
 
-          <Bar dataKey="count" fill="#8884d8" />
-        </BarChart>
-      </ResponsiveContainer>
+                <Bar dataKey="count" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
         <div style={{ display: "flex", width: "100%", height: "100%" }}></div>
-        <Divider></Divider>
+        <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+          {t("DOWNLOAD")}
+        </h2>
+        <Row>
+          <Col>
+            <ExcelExport data={patients} reportName="TODAYSPATIENTS" />
+          </Col>
+          <Col>&nbsp;</Col>
+          <Col>
+            <ExcelExport data={surveys} reportName="todaysSurveys" />
+          </Col>
+        </Row>
+        <Divider />
         <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
           {t("todaysComplete")} ({patients.length})
         </h2>
@@ -381,7 +464,7 @@ const getArrivalTimeData = (patients) => {
           dataSource={patients.some((d) => d === undefined) ? [] : patients}
           scroll={{ x: 1500, y: 1500 }}
           sticky
-          pagination={false}
+          pagination={true}
           offsetScroll={3}
           onChange={handleTableChange} // Attach the handleTableChange function
           {...sortInfo} // Spread the sortInfo to apply sorting
@@ -396,22 +479,10 @@ const getArrivalTimeData = (patients) => {
           dataSource={surveys.some((d) => d === undefined) ? [] : surveys}
           scroll={{ x: 1500, y: 1500 }}
           sticky
-          pagination={false}
+          pagination={true}
           offsetScroll={3}
         />
-        <Divider />
-        <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-          {t("DOWNLOAD")}
-        </h2>
-        <Row>
-          <Col>
-            <ExcelExport data={patients} reportName="TODAYSPATIENTS" />
-          </Col>
-          <Col>&nbsp;</Col>
-          <Col>
-            <ExcelExport data={surveys} reportName="todaysSurveys" />
-          </Col>
-        </Row>
+
       </div>
     </div>
   );

@@ -12,64 +12,89 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
       ]);
 
       if (docPatient.exists) {
+        console.log(1);
         const data = docPatient.data();
         const updatedPlanOfCare = data.plan_of_care?.map((item) => {
           if (item.station === station) {
+            console.log(2);
             const updatedItem = {
               ...item,
               status: value,
             };
 
             if (value === "waiting" && item.status !== "waiting") {
+              console.log(3);
               updatedItem.wait_start = Math.floor(Date.now() / 1000);
             } else if (value === "in_process" && item.status !== "in_process") {
+              console.log(4);
               updatedItem.procedure_start = Math.floor(Date.now() / 1000);
             } else if (value === "obs" && item.status !== "obs") {
+              console.log(5);
               updatedItem.procedure_start = Math.floor(Date.now() / 1000);
             }
 
             if (value !== "waiting" && item.status === "waiting") {
+              console.log(6);
               updatedItem.wait_end = Math.floor(Date.now() / 1000);
               updatedItem.waiting_time = Math.abs(
                 updatedItem.wait_end - updatedItem.wait_start
               );
             } else if (value !== "in_process" && item.status === "in_process") {
+              console.log(7);
               updatedItem.procedure_end = Math.floor(Date.now() / 1000);
               updatedItem.procedure_time = Math.abs(
                 updatedItem.procedure_end - updatedItem.procedure_start
               );
             } else if (value !== "obs" && item.status === "obs") {
+              console.log(8);
               updatedItem.procedure_end = Math.floor(Date.now() / 1000);
               updatedItem.procedure_time = Math.abs(
                 updatedItem.procedure_end - updatedItem.procedure_start
               );
             }
+            console.log(updatedItem);
             return updatedItem;
           }
           return item;
         });
+
+        console.log(updatedPlanOfCare);
 
         transaction.update(docPatientRef, {
           plan_of_care: updatedPlanOfCare,
         });
 
         if (docStats.exists) {
+          console.log(9);
+
           const statsData = docStats.data();
           const updatedItem = updatedPlanOfCare.find(
             (item) => item.station === station
           );
 
           if (value === "waiting" && updatedItem.wait_start) {
+            console.log(10);
+
             const waitDifference = Math.abs(updatedItem.waiting_time);
-            transaction.update(docStatsRef, {
-              waiting_time_data: [
-                ...(statsData.waiting_time_data || []),
-                waitDifference,
-              ].filter((time) => !isNaN(time)),
-            });
+            console.log("statsData.waiting_time_data:", statsData.waiting_time_data);
+            console.log("waitDifference:", waitDifference);
+          
+            try {
+              transaction.update(docStatsRef, {
+                waiting_time_data: [
+                  ...(statsData.waiting_time_data || []),
+                  waitDifference,
+                ].filter((time) => !isNaN(time)),
+              });
+              console.log("successful");
+            } catch (error) {
+              console.log(error);
+            }
           }
 
           if (value === "in_process" && updatedItem.procedure_start) {
+            console.log(11);
+
             const inProcessDifference = Math.abs(updatedItem.procedure_time);
             transaction.update(docStatsRef, {
               procedure_time_data: [
@@ -83,6 +108,8 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
             statsData;
 
           if (waiting_time_data && number_of_patients) {
+            console.log(12);
+
             const validWaitingTimeData = waiting_time_data.filter(
               (time) => !isNaN(time)
             );
@@ -96,6 +123,8 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
           }
 
           if (number_of_patients) {
+            console.log(13);
+
             const validProcedureTimeData = procedure_time_data.filter(
               (time) => !isNaN(time)
             );
@@ -108,6 +137,8 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
             });
 
             if (value === "in_process" || value === "waiting") {
+              console.log(14);
+
               transaction.update(docPatientRef, {
                 avg_time: Math.floor(Date.now() / 1000),
               });
@@ -128,7 +159,6 @@ export const handleDelete = async (hoveredRowKey, history) => {
 
   if (docPatientRefFin) {
     try {
-
       await firestore.runTransaction(async (transaction) => {
         const doc = await transaction.get(docPatientRefFin);
 
@@ -155,7 +185,6 @@ export const handleReadmitClick = async (patientID) => {
 
   if (docPatientRefFin) {
     try {
-
       await firestore.runTransaction(async (transaction) => {
         const doc = await transaction.get(docPatientRefFin);
 
@@ -174,7 +203,6 @@ export const handleReadmitClick = async (patientID) => {
     console.log("HANDLE_READMIT: No such document.");
   }
 };
-
 
 export const cleanCompletedPatients = async () => {
   const toBeDeleted = firestore
