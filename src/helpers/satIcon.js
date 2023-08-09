@@ -13,7 +13,7 @@ const satIcon = (value) => {
       case 2:
         return <SadIcon height="30px" width="30px" fill="none" />;
       case 3:
-        return <IndifferentIcon height="30px" width="30px" vfill="none" />;
+        return <IndifferentIcon height="30px" width="30px" fill="none" />;
       case 4:
         return <HappyIcon height="30px" width="30px" fill="none" />;
       case 5:

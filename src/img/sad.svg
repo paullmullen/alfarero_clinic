@@ -1,14 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 27.7.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 71.4 68.9" style="enable-background:new 0 0 71.4 68.9;" xml:space="preserve">
-<style type="text/css">
-	.st0{fill:#F7941D;stroke:#F7941D;stroke-width:3;stroke-miterlimit:10;}
-	.st1{fill:#F7941D;stroke:#F7941D;stroke-width:3;stroke-miterlimit:10;}
-	.st2{fill:#F7941D;stroke:#F7941D;stroke-width:3;stroke-miterlimit:10;}
-</style>
-<circle class="st0" cx="36" cy="33.4" r="31.4" style="stroke: #F7941D; "/>
-<circle class="st1" cx="23" cy="27.4" r="5.1" style="stroke: #F7941D; fill: #F7941D; "/>
-<circle class="st1" cx="50.3" cy="27.4" r="5.1" style="stroke: #F7941D; fill: #F7941D; "/>
-<path class="st2" d="M24.9,53.2v0.7c0.1-6.2,5.3-11.3,11.5-11.3c6.3,0,11.5,5.2,11.5,11.5"  style="stroke: #F7941D;"/>
+
+<svg  x="0px" y="0px"
+	 viewBox="0 0 71.4 68.9" >
+
+<circle cx="36" cy="33.4" r="31.4" stroke="#F7941D" fill="none" strokeWidth="3"/>
+<circle cx="23" cy="27.4" r="5.1"  stroke="#F7941D" fill="none" strokeWidth="3"/>
+<circle cx="50.3" cy="27.4" r="5.1"  stroke="#F7941D" fill="none" strokeWidth="3"/>
+<path  d="M24.9,53.2v0.7c0.1-6.2,5.3-11.3,11.5-11.3c6.3,0,11.5,5.2,11.5,11.5"   stroke="#F7941D" fill="none" strokeWidth="3"/>
 </svg>

@@ -6,6 +6,7 @@ import { AlertInfo } from "../components/AlertInfo";
 import { useTranslation } from "react-i18next";
 import IconSizes from "../helpers/iconSizes";
 
+
 export const Turno = () => {
   useHideMenu(true);
   const [data, setData] = useState([]);
@@ -228,28 +229,38 @@ export const Turno = () => {
 
   const { columns, dataSource } = generateTableData(data);
 
-  const startAutoScroll = () => {
-    if (tableRef.current) {
-      const scrollSpeed = 50; // Adjust the scroll speed (smaller value means faster scroll)
-      const scrollDelay = 3000; // Adjust the delay between scrolls (in milliseconds)
-      const scrollAmount = 1; // Adjust the amount to scroll per interval
+  const autoScroll = () => {
 
-      setInterval(() => {
-        tableRef.current.scrollTop += scrollAmount;
-        const maxScrollTop = tableRef.current.scrollHeight - tableRef.current.clientHeight;
-        if (tableRef.current.scrollTop >= maxScrollTop) {
-          tableRef.current.scrollTop = 0;
-        }
-      }, scrollSpeed);
-    }
-    console.log(tableRef.current.scrollTop);
+    document.querySelector('div.ant-table-body').scrollTop = 20 * 100;
+
+
+    // if (tableRef.current) {
+    //   const scrollSpeed = 600; // Adjust the scroll speed (smaller value means faster scroll)
+    //   const scrollAmount = 10; // Adjust the amount to scroll per interval
+
+    //   const scrollInterval = setInterval(() => {
+    //     tableRef.current.scrollTop += scrollAmount;
+    //     const maxScrollTop =
+    //       tableRef.current.scrollHeight - tableRef.current.clientHeight;
+    //     if (tableRef.current.scrollTop >= maxScrollTop) {
+    //       tableRef.current.scrollTop = 0;
+    //     }
+    //   }, scrollSpeed);
+
+    //   console.log(tableRef);
+
+    //   return () => clearInterval(scrollInterval); // Clean up the interval when the component unmounts
+    // }
+    console.log(tableRef.current);
   };
+
 
 
   useEffect(() => {
     let isMounted = true;
     let unsubscribe;
-    startAutoScroll();
+    console.log(1);
+    autoScroll();
 
 
     const fetchData = async () => {
@@ -285,6 +296,7 @@ export const Turno = () => {
 
     fetchData();
 
+
     return () => {
       if (unsubscribe) {
         unsubscribe();
@@ -296,6 +308,8 @@ export const Turno = () => {
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";
   };
+
+
 
   // Renders the visible screen
 
@@ -311,6 +325,8 @@ export const Turno = () => {
         pagination={false}
         offsetScroll={3}
         rowClassName={getRowClassName}
+        style={{ overflowY: "auto" }} // Set maxHeight and overflowY
+
       />
       {/* <Footer /> */}
     </div>

@@ -1,9 +1,6 @@
 import { firestore } from "./../helpers/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 
-import { midnightToday } from "./midnightToday";
-
-
 
 const fetchPatientsData = async (dateRange) => {
     const patientsData = [];
@@ -43,6 +40,7 @@ const fetchPatientsData = async (dateRange) => {
         patientsData.push({
           pt_no: dataEntry.pt_no,
           patient_name: dataEntry.patient_name,
+          date: (dataEntry.start_time.toDate().getMonth()+1).toString()+"/"+dataEntry.start_time.toDate().getDate().toString()+"/"+dataEntry.start_time.toDate().getFullYear().toString(),
           start_time:
             dataEntry.start_time.toDate().getHours().toString().padStart(2, "0") +
             ":" +

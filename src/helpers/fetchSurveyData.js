@@ -5,7 +5,6 @@ const fetchSurveyData = async (dateRange) => {
   const surveyData = [];
   const surveyCollection = collection(firestore, "surveys");
   const surveySnapshot = await getDocs(surveyCollection)
-  const midnightToday = new Date().setHours(0, 0, 0, 0);
 
   const surveyEntries = surveySnapshot.docs.map((doc, counter) => {
     const { date, first, satisfaction, suggestion, source } = doc.data();
