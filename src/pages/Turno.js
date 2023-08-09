@@ -6,12 +6,14 @@ import { AlertInfo } from "../components/AlertInfo";
 import { useTranslation } from "react-i18next";
 import IconSizes from "../helpers/iconSizes";
 
-
 export const Turno = () => {
   useHideMenu(true);
   const [data, setData] = useState([]);
   const [t] = useTranslation("global");
+  const [scrollPosition, setScrollPosition] = useState(0);
+
   const tableRef = useRef(null);
+
 
 
   // Shows editable icons in the patients table
@@ -229,39 +231,30 @@ export const Turno = () => {
 
   const { columns, dataSource } = generateTableData(data);
 
+
   const autoScroll = () => {
 
-    document.querySelector('div.ant-table-body').scrollTop = 20 * 100;
+    const scrollAmount = 20; // pixels
+    const scrollSpeed = 1000; // milliseconds
+    const scrollMax = 15000; // total size
+    let scrollPosition = 0
 
+    const scrollInterval = setInterval(() => {
 
-    // if (tableRef.current) {
-    //   const scrollSpeed = 600; // Adjust the scroll speed (smaller value means faster scroll)
-    //   const scrollAmount = 10; // Adjust the amount to scroll per interval
-
-    //   const scrollInterval = setInterval(() => {
-    //     tableRef.current.scrollTop += scrollAmount;
-    //     const maxScrollTop =
-    //       tableRef.current.scrollHeight - tableRef.current.clientHeight;
-    //     if (tableRef.current.scrollTop >= maxScrollTop) {
-    //       tableRef.current.scrollTop = 0;
-    //     }
-    //   }, scrollSpeed);
-
-    //   console.log(tableRef);
-
-    //   return () => clearInterval(scrollInterval); // Clean up the interval when the component unmounts
-    // }
-    console.log(tableRef.current);
+     scrollPosition = scrollPosition>scrollMax ? 0 : scrollPosition+scrollAmount;
+  
+      const scrollContainer = document.querySelector("div.ant-table-body");
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollPosition;
+      }
+    }, scrollSpeed);
+  
+    return () => clearInterval(scrollInterval); // Clean up the interval when the component unmounts
   };
-
-
 
   useEffect(() => {
     let isMounted = true;
     let unsubscribe;
-    console.log(1);
-    autoScroll();
-
 
     const fetchData = async () => {
       try {
@@ -287,6 +280,7 @@ export const Turno = () => {
               (item) => item.complete !== true
             );
             setData(filteredUpdatedData);
+            autoScroll();
           }
         });
       } catch (error) {
@@ -296,12 +290,12 @@ export const Turno = () => {
 
     fetchData();
 
-
     return () => {
       if (unsubscribe) {
         unsubscribe();
       }
       isMounted = false;
+      clearInterval(autoScroll()); // Clear the interval when the component unmounts
     };
   }, []);
 
@@ -309,10 +303,7 @@ export const Turno = () => {
     return index % 2 === 0 ? "even-row" : "odd-row";
   };
 
-
-
   // Renders the visible screen
-
   return (
     <div ref={tableRef} className="table-container">
       <AlertInfo />
@@ -320,13 +311,10 @@ export const Turno = () => {
         rowKey={"pt_no"}
         columns={columns}
         dataSource={data.some((d) => d === undefined) ? [] : dataSource}
-        // scroll={{ x: 1500, y: 1500 }}
+        scroll={{ x: 1500, y: 1500 }}
         sticky
         pagination={false}
-        offsetScroll={3}
         rowClassName={getRowClassName}
-        style={{ overflowY: "auto" }} // Set maxHeight and overflowY
-
       />
       {/* <Footer /> */}
     </div>
