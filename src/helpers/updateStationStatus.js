@@ -204,17 +204,6 @@ export const handleReadmitClick = async (patientID) => {
   }
 };
 
-export const cleanCompletedPatients = async () => {
-  const toBeDeleted = firestore
-    .collection("patients")
-    .where("complete", "==", true);
-  toBeDeleted.get().then(function (querySnapshot) {
-    querySnapshot.forEach(function (doc) {
-      doc.ref.delete();
-    });
-  });
-};
-
 export const cleanPaulTests = async () => {
   console.log("Cleaning Paul Tests");
   const toBeDeleted = firestore
@@ -227,17 +216,4 @@ export const cleanPaulTests = async () => {
   });
 };
 
-export const cleanEmptySurveys = async () => {
-  const toBeDeleted = firestore
-    .collection("surveys")
-    .where("satisfaction", "==", "")
-    .where("suggestion", "==", "")
-    .where("source", "==", "")
-    .where("first", "==", "");
-  toBeDeleted.get().then(function (querySnapshot) {
-    querySnapshot.forEach(function (doc) {
-      doc.ref.delete();
-    });
-  });
-  console.log("cleaned surveys");
-};
+

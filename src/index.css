@@ -60,12 +60,12 @@ h5 {
 .ant-popover-title {
   text-align: center;
   text-transform: uppercase;
+
 }
 
-.ant-popover-inner-content {
-  background: #f0f0f0;
+.noheader-popover .ant-popover-title {
+  display: none;
 }
-
 
 .radio-group-container {
   display: flex;
@@ -97,6 +97,7 @@ h5 {
   outline: none;
   border: none;
 }
+
 
 .ant-radio-button-wrapper-checked {
   background-color: #1890ff; /* Replace with your desired color */

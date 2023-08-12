@@ -1,5 +1,14 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Layout, Menu, Typography, Image, Row, Col, Button } from "antd";
+import {
+  Layout,
+  Menu,
+  Typography,
+  Image,
+  Row,
+  Col,
+  Button,
+  Popover,
+} from "antd";
 import {
   UserOutlined,
   ClockCircleOutlined,
@@ -23,6 +32,7 @@ import { UiContext } from "../context/UiContext";
 import { IngresarHost } from "./IngresarHost";
 import { Survey } from "./Survey";
 import Stats from "./Stats";
+import { cleanPaulTests } from "../helpers/updateStationStatus";
 
 import { Anfitrion } from "./Anfitrion";
 import { useTranslation } from "react-i18next";
@@ -37,22 +47,33 @@ export const RouterPage = () => {
   const [t] = useTranslation("global");
   const [currentTime, setCurrentTime] = useState(new Date());
   const [tapCount, setTapCount] = useState(0);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   // count number of taps... 5 taps opens the admin features for database cleanup.
   const handleHeaderTitleTap = () => {
     setTapCount(tapCount + 1);
 
     if (tapCount + 1 === 5) {
-      // Logic to open admin features modal
-      // For example, you can set a state to show a modal
-      // showModal(true);
-      console.log("Opening admin features modal");
+      setPopoverOpen(true);
     }
 
     setTimeout(() => {
       setTapCount(0); // Reset tap count after a timeout
     }, 1000); // You can adjust the timeout duration as needed
   };
+
+  const popoverContent = (
+    <div>
+      <Button
+        onClick={() => {
+          cleanPaulTests();
+          setPopoverOpen(false);
+        }}
+      >
+        Erase Paul Tests
+      </Button>
+    </div>
+  );
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -151,10 +172,22 @@ export const RouterPage = () => {
             <Row justify="center">
               <Col xs={24} sm={24} md={24} lg={24}>
                 <div onClick={handleHeaderTitleTap}>
-                  <Button onClick={handleHeaderTitleTap} className="no-border-button">
+                  <Button
+                    onClick={handleHeaderTitleTap}
+                    className="no-border-button"
+                  >
                     <Title level={4}>{t("headerTitle")}</Title>
                   </Button>
                 </div>
+                <Popover
+                  content={popoverContent}
+                  display="none"
+                  overlayClassName="noheader-popover"
+                  open={popoverOpen}
+                  onOpenChange={(open) => setPopoverOpen(open)
+                  }
+                >
+                </Popover>
               </Col>
             </Row>
           </Header>
