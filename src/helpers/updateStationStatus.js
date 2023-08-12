@@ -215,6 +215,18 @@ export const cleanCompletedPatients = async () => {
   });
 };
 
+export const cleanPaulTests = async () => {
+  console.log("Cleaning Paul Tests");
+  const toBeDeleted = firestore
+    .collection("patients")
+    .where("patient_name", "==", "Paul");
+  toBeDeleted.get().then(function (querySnapshot) {
+    querySnapshot.forEach(function (doc) {
+      doc.ref.delete();
+    });
+  });
+};
+
 export const cleanEmptySurveys = async () => {
   const toBeDeleted = firestore
     .collection("surveys")

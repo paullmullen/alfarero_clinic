@@ -13,7 +13,8 @@ import {
   handleStatusChange,
   handleDelete,
   cleanCompletedPatients,
-  cleanEmptySurveys
+  cleanEmptySurveys,
+  cleanPaulTests
 } from "./../helpers/updateStationStatus";
 import { useHistory } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
@@ -333,15 +334,6 @@ export const Anfitrion = () => {
         preview={false}
         onClick={() => handleStatusChange("obs", hoveredRowKey, station)}
       />
-
-      {/* <Image
-        src={require("../img/pay.svg")}
-        width={IconSizes.width}
-        height={IconSizes.height}
-        preview={false}
-        onClick={() => handleStatusChange("pay", hoveredRowKey, station)}
-      /> */}
-
       <Image
         src={require("../img/complete.svg")}
         width={IconSizes.width}
@@ -470,9 +462,10 @@ export const Anfitrion = () => {
           dataSource.length >= 1 ? (
             <Popconfirm
               title={t("areYouSure")}
-              onConfirm={() => handleDelete(hoveredRowKey, history)}
+               onConfirm={() => handleDelete(hoveredRowKey, history)}
               // onConfirm={() => cleanCompletedPatients()}
               // onConfirm={() => cleanEmptySurveys()}
+              //onConfirm={() => cleanPaulTests()}
 
             >
               <Image

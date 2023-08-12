@@ -500,7 +500,7 @@ const Stats = () => {
       fixed: "left",
       render: (services, patient) => (
         <div>
-          {services === "" && patient.complete == true
+          {services === "" && patient.complete === true
             ? t("NO_SERVICE")
             : services}
         </div>

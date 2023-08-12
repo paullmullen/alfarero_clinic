@@ -10,7 +10,6 @@ export const Turno = () => {
   useHideMenu(true);
   const [data, setData] = useState([]);
   const [t] = useTranslation("global");
-  const [scrollPosition, setScrollPosition] = useState(0);
 
   const tableRef = useRef(null);
 

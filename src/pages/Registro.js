@@ -61,6 +61,8 @@ export const Registro = () => {
     "7",
   ];
 
+
+  // Make all unused stations equal to pending.  This ensures that the pending stations exists so that they could be changed by the host.
   const fillMissingStations = (stations, visits) => {
     const result = [];
     const visitsSet = new Set(visits);
@@ -97,11 +99,8 @@ export const Registro = () => {
     setPatientPlanOfCare(filledStations);
   };
 
-  // const stationOptions = stations.map((station) => ({
-  //   label: t(station.value),
-  //   value: station.value,
-  // }));
 
+// Reset the form after successful entry to make room for the next new patient.
   const handleReset = () => {
     form.setFieldsValue({ stations: [] });
     form.resetFields();
@@ -148,6 +147,8 @@ export const Registro = () => {
 
   }, [t]);
 
+
+  //Called by OnFinish and by the onValuesChange elmement of the form.
   const updateStatsCollection = async (station) => {
     const currentDate = moment();
     const currentMonth = currentDate.month() + 1; // Obtener el número del mes actual
@@ -161,19 +162,23 @@ export const Registro = () => {
     if (statsDoc.exists) {
       // El documento de estadísticas ya existe
       const statsData = statsDoc.data();
+      console.log(statsData, currentMonthDayYear);
       if (statsData.date !== currentMonthDayYear) {
         // La fecha es diferente, reset the stats
+        try {
         await statsRef.update({
-          number_of_patients: 0,
           avg_waiting_time: 0,
           date: currentMonthDayYear,
           procedure_time_data: [],
           waiting_time_data: [],
+          number_of_patients: 0,
         });
         statsDoc = await statsRef.get();
-      }
+      } catch (e) { console.log (e)}
+    } 
       // La fecha es la misma, actualizar el número de pacientes del dia actual
-      if (station === statsDoc.data().station_type) {
+      else if (station === statsDoc.data().station_type) {
+        console.log("same date");
         const currentDayPatients = statsData.number_of_patients || 0;
         await statsRef.update({
           number_of_patients: currentDayPatients + 1,
@@ -197,6 +202,7 @@ export const Registro = () => {
   const updateStations = (changedValues) => {
     let recipeOptions = [];
     if (Object.keys(changedValues)[0] === "tipo") {
+      // only do this update if the type of visit value in the form changed, otherwise, nothing to do.
       let whichRecipe = null;
       recipes.forEach((element, index) => {
         if (element.value === changedValues.tipo) {
@@ -216,15 +222,6 @@ export const Registro = () => {
   };
 
   const onFinish = async (patient) => {
-    // const isDuplicate = await checkDuplicateRecord(
-    //   "patients",
-    //   "patient_name",
-    //   patient.paciente
-    // );
-    // if (isDuplicate) {
-    //   showAlert("Advertencia!", t("patientAlreadyExists"), "warning");
-    //   return;
-    // }
 
     setDisabledButton(true);
     const formattedPatient = {
@@ -302,26 +299,6 @@ export const Registro = () => {
           </Row>
           <Row gutter={24}>
             <Col xs={24} sm={24}>
-              {/* <Form.Item
-                label={t("age")}
-                name="edad"
-                rules={[
-                  {
-                    validator: (_, value) => {
-                      if (value === undefined || value === "") {
-                        return Promise.resolve();
-                      }
-                      if (value >= 1 && value <= 99) {
-                        return Promise.resolve();
-                      }
-                      return Promise.reject(new Error(t("enterValidAge")));
-                    },
-                  },
-                ]}
-              >
-                <InputNumber min={1} max={99} />
-              </Form.Item> */}
-
               <Form.Item
                 label={t("tel")}
                 name="tel"
@@ -360,30 +337,6 @@ export const Registro = () => {
               </Form.Item>
             </Col>
           </Row>
-          {/* <Row gutter={24}>
-            <Col xs={24} sm={24}>
-              <Form.Item
-                label={t("visitTypes")}
-                name="tipo"
-                rules={[
-                  {
-                    required: true,
-                    message: t("selectExamType"),
-                  },
-                ]}
-              >
-                <Select
-                  mode="single"
-                  showArrow
-                  style={{
-                    width: "100%",
-                  }}
-                  options={recipes}
-                  onChange={updateStations}
-                />
-              </Form.Item>
-            </Col>
-          </Row> */}
 
           <Row gutter={24}>
             <Col xs={24} sm={24}>
