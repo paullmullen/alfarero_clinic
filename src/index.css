@@ -93,6 +93,11 @@ h5 {
   min-height: 300px;
 }
 
+.no-border-button {
+  outline: none;
+  border: none;
+}
+
 .ant-radio-button-wrapper-checked {
   background-color: #1890ff; /* Replace with your desired color */
   border-color: #1890ff; /* Replace with your desired color */

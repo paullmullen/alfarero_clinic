@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Layout, Menu, Typography, Image, Row, Col } from "antd";
+import { Layout, Menu, Typography, Image, Row, Col, Button } from "antd";
 import {
   UserOutlined,
   ClockCircleOutlined,
@@ -36,7 +36,23 @@ export const RouterPage = () => {
   const { ocultarMenu } = useContext(UiContext);
   const [t] = useTranslation("global");
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [tapCount, setTapCount] = useState(0);
 
+  // count number of taps... 5 taps opens the admin features for database cleanup.
+  const handleHeaderTitleTap = () => {
+    setTapCount(tapCount + 1);
+
+    if (tapCount + 1 === 5) {
+      // Logic to open admin features modal
+      // For example, you can set a state to show a modal
+      // showModal(true);
+      console.log("Opening admin features modal");
+    }
+
+    setTimeout(() => {
+      setTapCount(0); // Reset tap count after a timeout
+    }, 1000); // You can adjust the timeout duration as needed
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -51,7 +67,6 @@ export const RouterPage = () => {
     hour: "2-digit",
     minute: "2-digit",
   });
-
 
   const menuItems = [
     {
@@ -132,10 +147,14 @@ export const RouterPage = () => {
               <Col xs={24} sm={24} md={24} lg={24}>
                 <Title level={4}>{formattedTime}</Title>
               </Col>
-            </Row>            
+            </Row>
             <Row justify="center">
               <Col xs={24} sm={24} md={24} lg={24}>
-                <Title level={4}>{t("headerTitle")}</Title>
+                <div onClick={handleHeaderTitleTap}>
+                  <Button onClick={handleHeaderTitleTap} className="no-border-button">
+                    <Title level={4}>{t("headerTitle")}</Title>
+                  </Button>
+                </div>
               </Col>
             </Row>
           </Header>
