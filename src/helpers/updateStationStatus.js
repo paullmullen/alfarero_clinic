@@ -11,105 +11,92 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
         transaction.get(docStatsRef),
       ]);
 
+      let endOfWait = false;
+      let endOfProcess = false;
+
+      //start by updating the patient waiting statistics
       if (docPatient.exists) {
-        console.log(1);
         const data = docPatient.data();
         const updatedPlanOfCare = data.plan_of_care?.map((item) => {
           if (item.station === station) {
-            console.log(2);
             const updatedItem = {
               ...item,
               status: value,
             };
 
             if (value === "waiting" && item.status !== "waiting") {
-              console.log(3);
+              // was not waiting, but now is waiting.   Set start-waiting time.
               updatedItem.wait_start = Math.floor(Date.now() / 1000);
             } else if (value === "in_process" && item.status !== "in_process") {
-              console.log(4);
-              updatedItem.procedure_start = Math.floor(Date.now() / 1000);
-            } else if (value === "obs" && item.status !== "obs") {
-              console.log(5);
+              // was not in process but now is in process. Set start-in process time.
               updatedItem.procedure_start = Math.floor(Date.now() / 1000);
             }
 
             if (value !== "waiting" && item.status === "waiting") {
-              console.log(6);
+              // is not waiting, but was waiting.  Set end-waiting time and total waiting time.
               updatedItem.wait_end = Math.floor(Date.now() / 1000);
               updatedItem.waiting_time = Math.abs(
                 updatedItem.wait_end - updatedItem.wait_start
               );
+              endOfWait = true;
             } else if (value !== "in_process" && item.status === "in_process") {
-              console.log(7);
+              //is not in process but was in process.  Set end-in process time and total in process time.
               updatedItem.procedure_end = Math.floor(Date.now() / 1000);
               updatedItem.procedure_time = Math.abs(
                 updatedItem.procedure_end - updatedItem.procedure_start
               );
-            } else if (value !== "obs" && item.status === "obs") {
-              console.log(8);
-              updatedItem.procedure_end = Math.floor(Date.now() / 1000);
-              updatedItem.procedure_time = Math.abs(
-                updatedItem.procedure_end - updatedItem.procedure_start
-              );
+              endOfProcess = true;
             }
-            console.log(updatedItem);
             return updatedItem;
           }
           return item;
         });
 
-        console.log(updatedPlanOfCare);
-
         transaction.update(docPatientRef, {
           plan_of_care: updatedPlanOfCare,
         });
 
+        // patient records are updated, now update the stats data
         if (docStats.exists) {
-          console.log(9);
-
           const statsData = docStats.data();
           const updatedItem = updatedPlanOfCare.find(
             (item) => item.station === station
           );
 
-          if (value === "waiting" && updatedItem.wait_start) {
-            console.log(10);
-
+          if (endOfWait) {
+            // we have an existing wait start_time and we've just changed wait
             const waitDifference = Math.abs(updatedItem.waiting_time);
-            console.log("statsData.waiting_time_data:", statsData.waiting_time_data);
-            console.log("waitDifference:", waitDifference);
-          
+
             try {
               transaction.update(docStatsRef, {
                 waiting_time_data: [
                   ...(statsData.waiting_time_data || []),
                   waitDifference,
-                ].filter((time) => !isNaN(time)),
+                ], //.filter((time) => !isNaN(time)),
               });
-              console.log("successful");
             } catch (error) {
               console.log(error);
             }
           }
 
-          if (value === "in_process" && updatedItem.procedure_start) {
-            console.log(11);
+          if (endOfProcess) {
+            // we have an existing  in_process time and we just changed in_process
 
             const inProcessDifference = Math.abs(updatedItem.procedure_time);
             transaction.update(docStatsRef, {
               procedure_time_data: [
                 ...(statsData.procedure_time_data || []),
                 inProcessDifference,
-              ].filter((time) => !isNaN(time)),
+              ], //.filter((time) => !isNaN(time)),
             });
           }
 
+
+          //stats arrays are updated, now calculate statistics
           const { waiting_time_data, procedure_time_data, number_of_patients } =
             statsData;
 
           if (waiting_time_data && number_of_patients) {
-            console.log(12);
-
             const validWaitingTimeData = waiting_time_data.filter(
               (time) => !isNaN(time)
             );
@@ -123,8 +110,6 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
           }
 
           if (number_of_patients) {
-            console.log(13);
-
             const validProcedureTimeData = procedure_time_data.filter(
               (time) => !isNaN(time)
             );
@@ -137,8 +122,6 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
             });
 
             if (value === "in_process" || value === "waiting") {
-              console.log(14);
-
               transaction.update(docPatientRef, {
                 avg_time: Math.floor(Date.now() / 1000),
               });
@@ -215,5 +198,3 @@ export const cleanPaulTests = async () => {
     });
   });
 };
-
-

@@ -98,6 +98,10 @@ h5 {
   border: none;
 }
 
+.wait_times {
+  font-size: small;
+}
+
 
 .ant-radio-button-wrapper-checked {
   background-color: #1890ff; /* Replace with your desired color */

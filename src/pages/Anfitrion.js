@@ -12,20 +12,17 @@ import { firestore } from "./../helpers/firebaseConfig";
 import {
   handleStatusChange,
   handleDelete,
-  cleanCompletedPatients,
-  cleanEmptySurveys,
-  cleanPaulTests
 } from "./../helpers/updateStationStatus";
 import { useHistory } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { AlertInfo } from "../components/AlertInfo";
-import Footer from "./Footer";
 import { useTranslation } from "react-i18next";
 import IconSizes from "../helpers/iconSizes";
 
 export const Anfitrion = () => {
   useHideMenu(true);
   const [data, setData] = useState([]);
+  const [statsData, setStatsData] = useState([]);
   const [station, setStation] = useState("");
   const [hoveredRowKey, setHoveredRowKey] = useState(null);
   const [t] = useTranslation("global");
@@ -50,21 +47,28 @@ export const Anfitrion = () => {
   useEffect(() => {
     let isMounted = true;
     let unsubscribe;
+    let unsubscribeStats;
 
     const fetchData = async () => {
       try {
         const collectionRef = firestore.collection("patients");
+        const statsRef = firestore.collection("stats");
         const initialSnapshot = await collectionRef.orderBy("start_time").get();
+        const statsSnapshot = await statsRef.get();
         const initialData = initialSnapshot.docs.map((doc) => {
+          return doc.data();
+        });
+        const initialStats = statsSnapshot.docs.map((doc) => {
           return doc.data();
         });
 
         const filteredData = initialData.filter(
-          (item) => item.complete !== true,
+          (item) => item.complete !== true
         );
 
         if (isMounted) {
           setData(filteredData);
+          setStatsData(initialStats);
         }
 
         unsubscribe = collectionRef.onSnapshot((snapshot) => {
@@ -72,10 +76,15 @@ export const Anfitrion = () => {
 
           if (isMounted) {
             const filteredUpdatedData = updatedData.filter(
-              (item) => item.complete !== true,
+              (item) => item.complete !== true
             );
             setData(filteredUpdatedData);
           }
+        });
+
+        unsubscribeStats = statsRef.onSnapshot((snapshot) => {
+          const updatedData = snapshot.docs.map((doc) => doc.data());
+          setStatsData(updatedData);
         });
       } catch (error) {
         console.log(error);
@@ -88,6 +97,10 @@ export const Anfitrion = () => {
       if (unsubscribe) {
         unsubscribe();
       }
+      if (unsubscribeStats) {
+        unsubscribeStats();
+      }
+
       isMounted = false;
     };
   }, []);
@@ -390,21 +403,37 @@ export const Anfitrion = () => {
   // Makes render the table that changes in real time (patients and their status)
   const generateTableData = (extractedPlanOfCare) => {
     const uniqueStations = {};
-
     // eslint-disable-next-line no-unused-expressions
     extractedPlanOfCare?.sort((a, b) => {
       const startTimeA = new Date(a?.start_time?.toMillis());
       const startTimeB = new Date(b?.start_time?.toMillis());
       return startTimeA - startTimeB;
     });
+
     // eslint-disable-next-line no-unused-expressions
     extractedPlanOfCare?.forEach((item) => {
       return item.plan_of_care?.forEach((plan) => {
+        const stationName = plan.station;
+        const avg_time = statsData.find(
+          (element) => element.station_type === stationName
+        );
+
         if (!uniqueStations[plan.station] && item.fin !== true) {
+          const waitText = avg_time ? Math.round(avg_time.avg_waiting_time / 60) : "";
+          const procText = avg_time
+            ? Math.round(avg_time.avg_procedure_time / 60)
+            : "";
           uniqueStations[plan.station] = {
             dataIndex: plan.station,
             key: plan.station,
-            title: t(plan.station),
+            title: (
+              <div>
+                                {t(plan.station)}
+                <div className="wait_times">{waitText}m</div>
+                {/* <div className="wait_times">P: {procText}m</div> */}
+
+              </div>
+            ),
             render: (status) => renderStatusIcon(status, plan.station),
             width: IconSizes.width,
             align: "center",
@@ -423,8 +452,9 @@ export const Anfitrion = () => {
         render: (name) => (
           <div>
             <b> {name.split("|")[0]} </b>
-            <br /> {name.split("|")[1]} <br/>
-            <i>{name.split("|")[2]}{" "}</i><br />
+            <br /> {name.split("|")[1]} <br />
+            <i>{name.split("|")[2]} </i>
+            <br />
             {name.split("|")[3]}{" "}
           </div>
         ),
@@ -462,11 +492,7 @@ export const Anfitrion = () => {
           dataSource.length >= 1 ? (
             <Popconfirm
               title={t("areYouSure")}
-               onConfirm={() => handleDelete(hoveredRowKey, history)}
-              // onConfirm={() => cleanCompletedPatients()}
-              // onConfirm={() => cleanEmptySurveys()}
-              //onConfirm={() => cleanPaulTests()}
-
+              onConfirm={() => handleDelete(hoveredRowKey, history)}
             >
               <Image
                 src={require("../img/fin.png")}
@@ -497,13 +523,15 @@ export const Anfitrion = () => {
           item.patient_name +
           "|" +
           item.reason_for_visit +
-          "|" + t(item.type_of_visit) + "|" +
-          (item.tel === null ? " " : "T: " + item.tel) ,
+          "|" +
+          t(item.type_of_visit) +
+          "|" +
+          (item.tel === null ? " " : "T: " + item.tel),
         avg_time:
           avg_time.toString() +
           "|" +
           Math.round(
-            (new Date() - item.start_time.toDate()) / 24 / 60 / 60,
+            (new Date() - item.start_time.toDate()) / 24 / 60 / 60
           ).toString(),
         ...stations,
       };
@@ -549,7 +577,6 @@ export const Anfitrion = () => {
           {t("logout")} */}
         </Button>
       </Divider>
-      <Footer />
     </>
   );
 };

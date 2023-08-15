@@ -29,9 +29,7 @@ import { fetchSurveyData } from "../helpers/fetchSurveyData";
 import { fetchPatientsData } from "../helpers/fetchPatientsData";
 import { satIcon } from "../helpers/satIcon";
 import ExcelExport from "../helpers/Export";
-import IconSizes from "../helpers/iconSizes";
 import { handleReadmitClick } from "../helpers/updateStationStatus";
-import moment from "moment";
 import es_ES from "antd/es/date-picker/locale/es_ES";
 import en_US from "antd/es/date-picker/locale/en_US";
 
@@ -112,8 +110,7 @@ const Stats = () => {
 
   const [form] = Form.useForm();
   // Set default start date and end date to the current date
-  const defaultStartDate = moment().startOf("day");
-  const defaultEndDate = moment().endOf("day");
+
 
   const onDateChange = (values) => {
     if (values) {
@@ -431,6 +428,7 @@ const Stats = () => {
             />
           </svg>
         );
+        default: return null;
     }
   };
 
@@ -457,19 +455,19 @@ const Stats = () => {
       sorter: (a, b) => a.patient_name.localeCompare(b.patient_name),
       render: (name) => <div>{name}</div>,
     },
-    {
-      title: t("reason_for_visit"),
-      dataIndex: "reason_for_visit",
-      key: "reason",
-      width: 50,
-      fixed: "left",
-      render: (reason) => <div>{reason}</div>,
-    },
+    // {
+    //   title: t("reason_for_visit"),
+    //   dataIndex: "reason_for_visit",
+    //   key: "reason",
+    //   width: 120,
+    //   fixed: "left",
+    //   render: (reason) => <div>{reason}</div>,
+    // },
     {
       title: t("type_of_visit"),
       dataIndex: "type_of_visit",
       key: "type",
-      width: 30,
+      width: 50,
       fixed: "left",
       sorter: (a, b) => a.type_of_visit.localeCompare(b.type_of_visit),
       render: (type) => <div>{t(type)}</div>,
@@ -478,7 +476,7 @@ const Stats = () => {
       title: t("TOTALWAIT"),
       dataIndex: "total_wait",
       key: "type",
-      width: 25,
+      width: 50,
       fixed: "left",
       render: (total) => <div>{t(total)} min</div>,
     },
@@ -486,7 +484,7 @@ const Stats = () => {
       title: t("start_time"),
       dataIndex: "start_time",
       key: "start_time",
-      width: 25,
+      width: 50,
       fixed: "left",
       defaultSortOrder: "ascend",
       sorter: (a, b) => a.start_time.localeCompare(b.start_time),
@@ -496,8 +494,10 @@ const Stats = () => {
       title: t("services"),
       dataIndex: "plan_of_care",
       key: "poc",
-      width: 50,
+      // Adjust the width for the services column as needed.
+      width: 250,
       fixed: "left",
+      wordWrap: true,
       render: (services, patient) => (
         <div>
           {services === "" && patient.complete === true
@@ -510,7 +510,7 @@ const Stats = () => {
       title: t("READMIT"),
       dataIndex: "pt_no",
       key: "estado",
-      width: 25,
+      width: 20,
       fixed: "right",
       render: (ptNo) => {
         const patient = patients.find((item) => item.pt_no === ptNo);
@@ -521,14 +521,14 @@ const Stats = () => {
             hidden={isDisabled}
             onClick={() => {
               handleReadmitClick(ptNo);
-              setColumnChanger(!columnChanger); //should trigger useEffect to re-render the button.
-            }} // Replace with your onClick handler
+              setColumnChanger(!columnChanger);
+            }}
             style={{ padding: 0 }}
           >
             <Image
               src={require("../img/enter.png")}
-              width={IconSizes.height}
-              height={IconSizes.height}
+              width={20}
+              height={20}
               preview={false}
             />
           </Button>
@@ -536,6 +536,7 @@ const Stats = () => {
       },
     },
   ];
+  
 
   const surveyColumns = [
     {

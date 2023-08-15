@@ -162,18 +162,22 @@ export const Registro = () => {
     if (statsDoc.exists) {
       // El documento de estadísticas ya existe
       const statsData = statsDoc.data();
-      console.log(statsData, currentMonthDayYear);
       if (statsData.date !== currentMonthDayYear) {
-        // La fecha es diferente, reset the stats
+        // La fecha es diferente, reset the stats for all stations
         try {
-        await statsRef.update({
-          avg_waiting_time: 0,
-          date: currentMonthDayYear,
-          procedure_time_data: [],
-          waiting_time_data: [],
-          number_of_patients: 0,
+          firestore.collection("stats").get().then(function(querySnapshot) {
+            querySnapshot.forEach(function(doc) {
+                doc.ref.update({
+                    date: currentMonthDayYear,
+                    number_of_patients: 0,
+                    procedure_time_data: [],
+                    wait_time_data: [],
+                    avg_procedure_time: 0,
+                    avg_waiting_time: 0
+                });
+            });
         });
-        statsDoc = await statsRef.get();
+
       } catch (e) { console.log (e)}
     } 
       // La fecha es la misma, actualizar el número de pacientes del dia actual
