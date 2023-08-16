@@ -10,6 +10,7 @@ import {
   Legend,
   Cell,
   ResponsiveContainer,
+  Label,
 } from "recharts";
 import { useTranslation } from "react-i18next";
 import {
@@ -27,6 +28,7 @@ import "firebase/compat/firestore";
 import { stations } from "../helpers/stations";
 import { fetchSurveyData } from "../helpers/fetchSurveyData";
 import { fetchPatientsData } from "../helpers/fetchPatientsData";
+import { fetchWaitingTimeData } from "../helpers/fetchWaitingTimeData";
 import { satIcon } from "../helpers/satIcon";
 import ExcelExport from "../helpers/Export";
 import { handleReadmitClick } from "../helpers/updateStationStatus";
@@ -41,6 +43,8 @@ const datePickerLocales = {
 
 const Stats = () => {
   const [statsData, setStatsData] = useState([]);
+  const [waitingData, setWaitingData] = useState([]);
+  const [arrivalTimeData, setArrivalTimeData] = useState([]);
   const [patients, setPatients] = useState([]);
   const [surveys, setSurveys] = useState([]);
   const [satScore, setSatScore] = useState([]);
@@ -103,6 +107,12 @@ const Stats = () => {
             <h2>{t("ARRIVAL_TIME")}</h2>;
           </div>
         );
+        case 4:
+          return (
+            <div style={{ textAlign: "center" }}>
+              <h2>{t("WAITING_TIME")}</h2>;
+            </div>
+          );
       default:
         return null; // Return null instead of an empty string
     }
@@ -110,7 +120,6 @@ const Stats = () => {
 
   const [form] = Form.useForm();
   // Set default start date and end date to the current date
-
 
   const onDateChange = (values) => {
     if (values) {
@@ -134,6 +143,11 @@ const Stats = () => {
     setSurveys(data);
     const satScore = await surveySummary(data);
     setSatScore(satScore);
+  };
+
+  const getWaitingData = async () => {
+    const data = await fetchWaitingTimeData(dateRange);
+    setWaitingData(data);
   };
 
   const surveySummary = async (surveys) => {
@@ -165,10 +179,12 @@ const Stats = () => {
         station_type: t(s.station_type),
       };
     });
+    console.log(patients);
     setPatients(patients);
   };
 
   const getArrivalTimeData = (patients) => {
+    console.log(patients);
     let hoursArray = [
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     ];
@@ -179,6 +195,7 @@ const Stats = () => {
       hour: index,
       count: count,
     }));
+    setArrivalTimeData(data);
     return data;
   };
 
@@ -428,7 +445,8 @@ const Stats = () => {
             />
           </svg>
         );
-        default: return null;
+      default:
+        return null;
     }
   };
 
@@ -437,13 +455,17 @@ const Stats = () => {
       await patientsData();
       await stationsData();
       await surveyData();
+      await getWaitingData();
+      const atd = getArrivalTimeData(patients);
+      console.log(atd)
     };
-
     doStuffInOrder();
   }, [t, columnChanger, dateRange]);
 
   const barColors = getBarColors();
-  const arrivalTimeChartData = getArrivalTimeData(patients);
+  const arrivalTimeChartData = arrivalTimeData;
+  console.log(arrivalTimeData);
+  const waitTimeChartData = waitingData;
 
   const patientsColumns = [
     {
@@ -536,7 +558,6 @@ const Stats = () => {
       },
     },
   ];
-  
 
   const surveyColumns = [
     {
@@ -641,18 +662,35 @@ const Stats = () => {
                 <div>Loading...</div>
               )}
             </ResponsiveContainer>
-            <ResponsiveContainer width="50%" height="100%" minHeight="300px">
+
+          </div>
+        </div>
+        <div className="charts-container">
+        <ResponsiveContainer width="50%" height="100%" minHeight="300px">
               <BarChart data={arrivalTimeChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="hour" />
-                <YAxis />
+                <YAxis >
+                  <Label value={t("NUM_PTS")} angle="-90" />
+                  </YAxis>
                 <Tooltip />
                 <Legend content={() => renderLegendStations(3)} />
 
                 <Bar dataKey="count" fill="#8884d8" />
               </BarChart>
-            </ResponsiveContainer>
-          </div>
+            </ResponsiveContainer>  
+        <ResponsiveContainer width="50%" height="100%" minHeight="300px">
+          <BarChart data={waitTimeChartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="station_type" />
+            <YAxis>
+              <Label value ={t("MINUTES")} angle="-90" /></YAxis>
+            <Tooltip />
+            <Legend content={() => renderLegendStations(4)} />
+            <Bar dataKey = "avg_waiting_time" fill = "#2255CC" />
+            <Bar dataKey = "avg_procedure_time" fill= "#22CC55" />
+          </BarChart>
+        </ResponsiveContainer>
         </div>
         <div style={{ display: "flex", width: "100%", height: "100%" }}></div>
         <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
