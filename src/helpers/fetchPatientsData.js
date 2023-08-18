@@ -2,6 +2,7 @@ import { firestore } from "./../helpers/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
 
 
+
 const fetchPatientsData = async (dateRange) => {
     const patientsData = [];
     const patientsCollection = collection(firestore, "patients");

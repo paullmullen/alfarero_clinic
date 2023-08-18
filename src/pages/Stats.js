@@ -57,6 +57,8 @@ const Stats = () => {
   // State to keep track of sorting
   const [sortInfo, setSortInfo] = useState({});
 
+
+  
   // Handle table sorting changes
   const handleTableChange = (pagination, filters, sorter) => {
     setSortInfo(sorter);
@@ -173,31 +175,30 @@ const Stats = () => {
 
   const patientsData = async () => {
     const data = await fetchPatientsData(dateRange);
-    const patients = data.map((s) => {
+    const patientsData = data.map((s) => {
       return {
         ...s,
         station_type: t(s.station_type),
       };
     });
-    console.log(patients);
-    setPatients(patients);
+
+
+      let hoursArray = [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      ];
+      patientsData.forEach((patient) => {
+        hoursArray[parseInt(patient.start_time.substring(0, 2))]++;
+      });
+      const arrivalData = hoursArray.map((count, index) => ({
+        hour: index,
+        count: count,
+      }));
+    
+    setPatients(patientsData);
+    setArrivalTimeData(arrivalData);
   };
 
-  const getArrivalTimeData = (patients) => {
-    console.log(patients);
-    let hoursArray = [
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    ];
-    patients.forEach((patient) => {
-      hoursArray[parseInt(patient.start_time.substring(0, 2))]++;
-    });
-    const data = hoursArray.map((count, index) => ({
-      hour: index,
-      count: count,
-    }));
-    setArrivalTimeData(data);
-    return data;
-  };
+
 
   const stationsData = async () => {
     try {
@@ -456,15 +457,13 @@ const Stats = () => {
       await stationsData();
       await surveyData();
       await getWaitingData();
-      const atd = getArrivalTimeData(patients);
-      console.log(atd)
+
     };
     doStuffInOrder();
   }, [t, columnChanger, dateRange]);
 
   const barColors = getBarColors();
   const arrivalTimeChartData = arrivalTimeData;
-  console.log(arrivalTimeData);
   const waitTimeChartData = waitingData;
 
   const patientsColumns = [
@@ -667,7 +666,7 @@ const Stats = () => {
         </div>
         <div className="charts-container">
         <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-              <BarChart data={arrivalTimeChartData}>
+              <BarChart data={arrivalTimeData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="hour" />
                 <YAxis >
@@ -687,8 +686,8 @@ const Stats = () => {
               <Label value ={t("MINUTES")} angle="-90" /></YAxis>
             <Tooltip />
             <Legend content={() => renderLegendStations(4)} />
-            <Bar dataKey = "avg_waiting_time" fill = "#2255CC" />
-            <Bar dataKey = "avg_procedure_time" fill= "#22CC55" />
+            <Bar dataKey = "avg_waiting_time" fill = "#22CC55" />
+            <Bar dataKey = "avg_procedure_time" fill= "#2255CC" />
           </BarChart>
         </ResponsiveContainer>
         </div>
