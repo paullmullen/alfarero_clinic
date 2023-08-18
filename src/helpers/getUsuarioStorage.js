@@ -2,7 +2,7 @@
 
 export const getUsuarioStorage = () => {
     return {
-        agente: localStorage.getItem('agente'),
-        escritorio: localStorage.getItem('escritorio'),
+        host: localStorage.getItem('host'),
+        servicio: localStorage.getItem('servicio'),
     }
 }

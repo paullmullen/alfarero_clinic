@@ -8,10 +8,20 @@
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "antd": "^4.7.0",
+    "chokidar": "^3.5.3",
+    "file-saver": "^2.0.5",
+    "firebase": "^9.23.0",
+    "i18next": "^23.2.3",
+    "moment": "^2.29.4",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
+    "react-i18next": "^13.0.1",
+    "react-qr-reader": "^3.0.0-beta-1",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "3.4.3"
+    "react-scripts": "3.4.3",
+    "reactfire": "^4.2.2",
+    "recharts": "^2.6.2",
+    "xlsx": "^0.18.5"
   },
   "scripts": {
     "start": "react-scripts start",

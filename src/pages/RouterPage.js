@@ -1,85 +1,219 @@
-import React, { useContext } from 'react';
-
-import { Layout, Menu } from 'antd';
+import React, { useContext, useEffect, useState } from "react";
+import {
+  Layout,
+  Menu,
+  Typography,
+  Image,
+  Row,
+  Col,
+  Button,
+  Popover,
+} from "antd";
 import {
   UserOutlined,
-  FileTextFilled,
-  UploadOutlined,
-} from '@ant-design/icons';
-
+  ClockCircleOutlined,
+  LoginOutlined,
+  IdcardOutlined,
+  BarChartOutlined,
+  CoffeeOutlined,
+} from "@ant-design/icons";
 import {
   BrowserRouter as Router,
   Switch,
   Route,
   Link,
-  Redirect
-} from 'react-router-dom';
+  Redirect,
+} from "react-router-dom";
+import { AlertProvider } from "../hooks/alert";
+import { Registro } from "./Registro";
+import { Turno } from "./Turno";
+import { Escritorio } from "./Escritorio";
+import { UiContext } from "../context/UiContext";
+import { IngresarHost } from "./IngresarHost";
+import { Survey } from "./Survey";
+import Stats from "./Stats";
+import { cleanPaulTests } from "../helpers/updateStationStatus";
 
-import { Registro } from './Registro';
-import { Turno } from './Turno';
-import { CrearTurno } from './CrearTurno';
-import { Escritorio } from './Escritorio';
-import { UiContext } from '../context/UiContext';
+import { Anfitrion } from "./Anfitrion";
+import { useTranslation } from "react-i18next";
 
+const { Sider, Content, Header } = Layout;
+const { Title } = Typography;
 
-const { Header, Content } = Layout;
-
+// Info in the side bar
 
 export const RouterPage = () => {
+  const { ocultarMenu } = useContext(UiContext);
+  const [t] = useTranslation("global");
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [tapCount, setTapCount] = useState(0);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
-    const { ocultarMenu } = useContext( UiContext )
-    
+  // count number of taps... 5 taps opens the admin features for database cleanup.
+  const handleHeaderTitleTap = () => {
+    setTapCount(tapCount + 1);
 
-    return (
+    if (tapCount + 1 === 5) {
+      setPopoverOpen(true);
+    }
+
+    setTimeout(() => {
+      setTapCount(0); // Reset tap count after a timeout
+    }, 1000); // You can adjust the timeout duration as needed
+  };
+
+  const popoverContent = (
+    <div>
+      <Button
+        onClick={() => {
+          cleanPaulTests();
+          setPopoverOpen(false);
+        }}
+      >
+        Erase Paul Tests
+      </Button>
+    </div>
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 15000);
+
+    // Cleanup the interval on component unmount
+    return () => clearInterval(interval);
+  }, []);
+
+  const formattedTime = currentTime.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const menuItems = [
+    {
+      key: "1",
+      icon: <LoginOutlined />,
+      label: <Link to="/ingresar-host">{t("hostLogin")}</Link>,
+    },
+    {
+      key: "2",
+      icon: <CoffeeOutlined />,
+      label: <Link to="/anfitrion">{t("pfm")}</Link>,
+    },
+
+    {
+      key: "3",
+      icon: <UserOutlined />,
+      label: <Link to="/registro">{t("register")}</Link>,
+    },
+    {
+      key: "4",
+      icon: <ClockCircleOutlined />,
+      label: <Link to="/turnos">{t("turnTable")}</Link>,
+    },
+    {
+      key: "5",
+      icon: <IdcardOutlined />,
+      label: <Link to="/escritorio">{t("desk")}</Link>,
+    },
+    {
+      key: "6",
+      icon: <BarChartOutlined />,
+      label: <Link to="/estadisticas">{t("statistics")}</Link>,
+    },
+    {
+      key: "7",
+      label: t("version"),
+    },
+  ];
+
+  // Renders the visible screen
+
+  return (
+    <Layout style={{ minHeight: "100vh", minWidth: "100%" }}>
       <Router>
-        <Layout>
+        <Sider collapsedWidth="0" breakpoint="lg" hidden={ocultarMenu}>
+          <Menu
+            theme="dark"
+            mode="inline"
+            defaultSelectedKeys={["1"]}
+            items={menuItems}
+          />
+        </Sider>
+        <Layout className="site-layout">
           <Header
-            className="header"
             style={{
-              position: "sticky",
-              top: 0,
-              zIndex: 1,
-              width: "100%",
               display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              backgroundColor: "#fff",
               alignItems: "center",
             }}
           >
-            <h1 className="header-title">Plan de Cuidado de Pacientes</h1>
-            <div className="demo-logo" />
+            <Row>
+              <div className="header" />
+              <Col xs={24} sm={24} md={24} lg={24}>
+                <a href="/registro">
+                  <Image
+                    src={require("../img/full_logo.png")}
+                    style={{ margin: 0, flex: 1, justifyContent: "flex-start" }}
+                    preview={false}
+                    height={100}
+                    width={185}
+                  />
+                </a>
+              </Col>
+            </Row>
+            <Row justify="center">
+              <Col xs={24} sm={24} md={24} lg={24}>
+                <Title level={4}>{formattedTime}</Title>
+              </Col>
+            </Row>
+            <Row justify="center">
+              <Col xs={24} sm={24} md={24} lg={24}>
+                <div onClick={handleHeaderTitleTap}>
+                  <Button
+                    onClick={handleHeaderTitleTap}
+                    className="no-border-button"
+                  >
+                    <Title level={4}>{t("headerTitle")}</Title>
+                  </Button>
+                </div>
+                <Popover
+                  content={popoverContent}
+                  display="none"
+                  overlayClassName="noheader-popover"
+                  open={popoverOpen}
+                  onOpenChange={(open) => setPopoverOpen(open)
+                  }
+                >
+                </Popover>
+              </Col>
+            </Row>
           </Header>
-          <Layout className="site-layout">
-          <Menu theme="ligth" mode="vertical-right" defaultSelectedKeys={["1"]}>
-              <Menu.Item key="1" icon={<UserOutlined />}>
-                <Link to="/registro">Registro</Link>
-              </Menu.Item>
-              <Menu.Item key="2" icon={<FileTextFilled />}>
-                <Link to="/turno">Turno del paciente</Link>
-              </Menu.Item>
-              <Menu.Item key="3" icon={<UploadOutlined />}>
-                <Link to="/crear">Crear turno</Link>
-              </Menu.Item>
-            </Menu>
-            <Content
-              className="site-layout-background"
-              style={{
-                height: "100vh",
-                margin: "24px 16px",
-                padding: 24,
-                minHeight: 280,
-              }}
-            >
+          <Content
+            className="site-layout-background"
+            style={{
+              margin: "24px 16px",
+              padding: 24,
+              minHeight: 280,
+            }}
+          >
+            <AlertProvider>
               <Switch>
+                <Route path="/ingresar-host" component={IngresarHost} />
                 <Route path="/registro" component={Registro} />
-                <Route path="/turno" component={Turno} />
-                <Route path="/crear" component={CrearTurno} />
-
+                <Route path="/turnos" component={Turno} />
                 <Route path="/escritorio" component={Escritorio} />
-
-                <Redirect to="/ingresar" />
+                <Route path="/anfitrion" component={Anfitrion} />
+                <Route path="/estadisticas" component={Stats} />
+                <Route path="/survey" component={Survey} />
+                <Redirect to="/ingresar-host" />
               </Switch>
-            </Content>
-          </Layout>
+            </AlertProvider>
+          </Content>
         </Layout>
       </Router>
-    );
-}
+    </Layout>
+  );
+};
