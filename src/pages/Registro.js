@@ -5,11 +5,9 @@ import {
   Button,
   Typography,
   Divider,
-
   Col,
   Row,
   Radio,
-
 } from "antd";
 import { SaveFilled } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
@@ -19,6 +17,7 @@ import { firestore } from "./../helpers/firebaseConfig";
 import { stations } from "../helpers/stations";
 import moment from "moment";
 import { useTranslation } from "react-i18next";
+import { QrReader } from "react-qr-reader";
 
 const { Title, Text } = Typography;
 
@@ -38,6 +37,44 @@ export const Registro = () => {
   // const [selectedRecipeStations, setRecipeStations] = useState([]);
   const [disabledButton, setDisabledButton] = useState(false);
   const [t] = useTranslation("global");
+
+  const [scannerVisible, setScannerVisible] = useState(false); // Define scannerVisible for Registro component
+  const [qrCodeData, setQrCodeData] = useState(null); // Define qrCodeData for Registro component
+
+  const handleToggleScanner = () => {
+    setScannerVisible(!scannerVisible);
+  };
+
+  const onResult = (data) => {
+    if (data) {
+      console.log(data);
+      handleToggleScanner();
+    }
+  };
+
+  const handleScan = (data) => {
+    if (data) {
+      setQrCodeData(data);
+    }
+  };
+
+  const handleError = (error) => {
+    console.error(error);
+  };
+
+  const QRCodeScanner = () => {
+    return (
+      <div>
+        {scannerVisible && (
+          <QrReader
+            onError={handleError}
+            onScan={handleScan}
+            onResult={onResult}
+          />
+        )}
+      </div>
+    );
+  };
 
   useHideMenu(false);
 
@@ -60,7 +97,6 @@ export const Registro = () => {
     "7",
     "7",
   ];
-
 
   // Make all unused stations equal to pending.  This ensures that the pending stations exists so that they could be changed by the host.
   const fillMissingStations = (stations, visits) => {
@@ -99,8 +135,7 @@ export const Registro = () => {
     setPatientPlanOfCare(filledStations);
   };
 
-
-// Reset the form after successful entry to make room for the next new patient.
+  // Reset the form after successful entry to make room for the next new patient.
   const handleReset = () => {
     form.setFieldsValue({ stations: [] });
     form.resetFields();
@@ -143,10 +178,7 @@ export const Registro = () => {
       }
       isMounted = false;
     };
-
-
   }, [t]);
-
 
   //Called by OnFinish and by the onValuesChange elmement of the form.
   const updateStatsCollection = async (station) => {
@@ -165,21 +197,25 @@ export const Registro = () => {
       if (statsData.date !== currentMonthDayYear) {
         // La fecha es diferente, reset the stats for all stations
         try {
-          firestore.collection("stats").get().then(function(querySnapshot) {
-            querySnapshot.forEach(function(doc) {
+          firestore
+            .collection("stats")
+            .get()
+            .then(function (querySnapshot) {
+              querySnapshot.forEach(function (doc) {
                 doc.ref.update({
-                    date: currentMonthDayYear,
-                    number_of_patients: 0,
-                    procedure_time_data: [],
-                    wait_time_data: [],
-                    avg_procedure_time: 0,
-                    avg_waiting_time: 0
+                  date: currentMonthDayYear,
+                  number_of_patients: 0,
+                  procedure_time_data: [],
+                  wait_time_data: [],
+                  avg_procedure_time: 0,
+                  avg_waiting_time: 0,
                 });
+              });
             });
-        });
-
-      } catch (e) { console.log (e)}
-    } 
+        } catch (e) {
+          console.log(e);
+        }
+      }
       // La fecha es la misma, actualizar el número de pacientes del dia actual
       else if (station === statsDoc.data().station_type) {
         console.log("same date");
@@ -226,7 +262,6 @@ export const Registro = () => {
   };
 
   const onFinish = async (patient) => {
-
     setDisabledButton(true);
     const formattedPatient = {
       complete: false,
@@ -279,7 +314,6 @@ export const Registro = () => {
     <Row gutter={24} style={{ display: "contents" }}>
       <Col xs={24} sm={24}>
         <Title level={2}>{t("patientRegistration")}</Title>
-        <Text>{t("enterFields")}</Text>
         <Divider />
         <Form
           {...layout}
@@ -291,85 +325,109 @@ export const Registro = () => {
           onValuesChange={updateStations}
         >
           <Row gutter={24}>
-            <Col xs={24} sm={24}>
-              <Form.Item
-                label={t("patientName")}
-                name="paciente"
-                rules={[{ required: true, message: t("enterName") }]}
-              >
-                <Input />
-              </Form.Item>
+            <Col xs={4} sm={4}>
+              <Button onClick={handleToggleScanner} shape="round">
+                Scan QR Code
+              </Button>
+            </Col>
+            <Col xs={8} sm={8}>
+              {scannerVisible && (
+                <QRCodeScanner
+                  scannerVisible={scannerVisible}
+                  setScannerVisible={setScannerVisible}
+                  qrCodeData={qrCodeData}
+                  setQrCodeData={setQrCodeData}
+                />
+              )}
             </Col>
           </Row>
           <Row gutter={24}>
             <Col xs={24} sm={24}>
-              <Form.Item
-                label={t("tel")}
-                name="tel"
-                rules={[
-                  {
-                    validator: (_, value) => {
-                      if (value === undefined || value === "") {
-                        return Promise.resolve();
-                      }
-                      if (
-                        /^(\+\d{1,3}[-  *])?\(?([0-9]{3,4})\)?[-.●  *]?([0-9]{3,4})[-.●  *]?([0-9]{3,4})?$/.test(
-                          value
-                        )
-                      ) {
-                        return Promise.resolve();
-                      }
-                      return Promise.reject(
-                        new Error(t("enterValidPhoneNumber"))
-                      );
-                    },
-                  },
-                ]}
-              >
-                <Input type="tel" />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={24}>
-            <Col xs={24} sm={24}>
-              <Form.Item
-                label={t("reasonForVisit")}
-                name="motivo"
-                rules={[{ required: true, message: t("reasonForVisit") }]}
-              >
-                <Input />
-              </Form.Item>
-            </Col>
-          </Row>
+              <Row>
+                <Col xs={24} sm={24}>
+                  <Form.Item
+                    label={t("patientName")}
+                    name="paciente"
+                    rules={[{ required: true, message: t("enterName") }]}
+                  >
+                    <Input />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row style={{ display: "contents" }} gutter={24}>
+                <Col xs={24} sm={24}>
+                  <Form.Item
+                    label={t("tel")}
+                    name="tel"
+                    rules={[
+                      {
+                        validator: (_, value) => {
+                          if (value === undefined || value === "") {
+                            return Promise.resolve();
+                          }
+                          if (
+                            /^(\+\d{1,3}[-  *])?\(?([0-9]{3,4})\)?[-.●  *]?([0-9]{3,4})[-.●  *]?([0-9]{3,4})?$/.test(
+                              value
+                            )
+                          ) {
+                            return Promise.resolve();
+                          }
+                          return Promise.reject(
+                            new Error(t("enterValidPhoneNumber"))
+                          );
+                        },
+                      },
+                    ]}
+                  >
+                    <Input type="tel" />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row>
+                <Col xs={24} sm={24}>
+                  <Form.Item
+                    label={t("reasonForVisit")}
+                    name="motivo"
+                    rules={[{ required: true, message: t("reasonForVisit") }]}
+                  >
+                    <Input />
+                  </Form.Item>
+                </Col>
+              </Row>
 
-          <Row gutter={24}>
-            <Col xs={24} sm={24}>
-              <Form.Item
-                label={t("visitTypes")}
-                name="tipo"
-                rules={[
-                  {
-                    required: true,
-                    message: t("selectExamType"),
-                  },
-                ]}
-              >
-                <Radio.Group
-            onChange={updateStations}
-            size = "large"  optionType="button"
-            style={{ display: 'flex', flexWrap: 'wrap' }}
-          >
-            {recipes.map(recipe => (
-              <Radio key={recipe.value} value={recipe.value} style={{ flex: `0 0 ${33}%` }}>
-                {recipe.label}
-              </Radio>
-            ))}
-          </Radio.Group>
-              </Form.Item>
-            </Col>
-          </Row>
+              <Row gutter={24}>
+                <Col xs={24} sm={24}>
+                  <Form.Item
+                    label={t("visitTypes")}
+                    name="tipo"
+                    rules={[
+                      {
+                        required: true,
+                        message: t("selectExamType"),
+                      },
+                    ]}
+                  >
+                    <Radio.Group
+                      onChange={updateStations}
+                      size="large"
+                      optionType="button"
+                      style={{ display: "flex", flexWrap: "wrap" }}
+                    >
+                      {recipes.map((recipe) => (
+                        <Radio
+                          key={recipe.value}
+                          value={recipe.value}
+                          style={{ flex: `0 0 ${33}%` }}
+                        >
+                          {recipe.label}
+                        </Radio>
+                      ))}
+                    </Radio.Group>
+                  </Form.Item>
+                </Col>
+              </Row>
 
-          {/* <Row gutter={24}>
+              {/* <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
                 label={t("stations")}
@@ -393,20 +451,22 @@ export const Registro = () => {
               </Form.Item>
             </Col>
           </Row> */}
-          <Row style={{ display: "contents" }} gutter={24}>
-            <Col xs={24} sm={24}>
-              <Form.Item {...tailLayout}>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  shape="round"
-                  name="register"
-                  disabled={disabledButton}
-                >
-                  <SaveFilled />
-                  {t("register")}
-                </Button>
-              </Form.Item>
+              <Row>
+                <Col xs={24} sm={24}>
+                  <Form.Item {...tailLayout}>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      shape="round"
+                      name="register"
+                      disabled={disabledButton}
+                    >
+                      <SaveFilled />
+                      {t("register")}
+                    </Button>
+                  </Form.Item>
+                </Col>
+              </Row>
             </Col>
           </Row>
         </Form>

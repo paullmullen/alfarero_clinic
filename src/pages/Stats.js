@@ -463,7 +463,6 @@ const Stats = () => {
   }, [t, columnChanger, dateRange]);
 
   const barColors = getBarColors();
-  const arrivalTimeChartData = arrivalTimeData;
   const waitTimeChartData = waitingData;
 
   const patientsColumns = [
