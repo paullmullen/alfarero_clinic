@@ -18,6 +18,7 @@ import { stations } from "../helpers/stations";
 import moment from "moment";
 import { useTranslation } from "react-i18next";
 import { QrReader } from "react-qr-reader";
+import  CryptoJS  from "crypto-js";
 
 const { Title, Text } = Typography;
 
@@ -47,8 +48,21 @@ export const Registro = () => {
 
   const onResult = (data) => {
     if (data) {
-      console.log(data);
       handleToggleScanner();
+      const decrypt = decryptData(data.text);
+      const temp = JSON.parse(decrypt);
+
+      if (temp.n) {
+        form.setFieldsValue({
+          paciente: temp.n
+        });
+      }
+      if (temp.t) {
+        form.setFieldsValue ({
+          tel: temp.t
+        })
+      }
+
     }
   };
 
@@ -218,7 +232,6 @@ export const Registro = () => {
       }
       // La fecha es la misma, actualizar el número de pacientes del dia actual
       else if (station === statsDoc.data().station_type) {
-        console.log("same date");
         const currentDayPatients = statsData.number_of_patients || 0;
         await statsRef.update({
           number_of_patients: currentDayPatients + 1,
@@ -261,6 +274,23 @@ export const Registro = () => {
     }
   };
 
+  const secretPass = "XkhZG4fW2t2W";
+
+  const encryptData = (text) => {
+    const data = CryptoJS.AES.encrypt(
+      JSON.stringify(text),
+      secretPass
+    ).toString();
+
+    return data;
+  };
+
+  const decryptData = (text) => {
+    const bytes = CryptoJS.AES.decrypt(text, secretPass);
+    const data = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+    return data;
+  };
+
   const onFinish = async (patient) => {
     setDisabledButton(true);
     const formattedPatient = {
@@ -299,6 +329,19 @@ export const Registro = () => {
         updateStatsCollection(station.station);
       }
     });
+
+    console.log("patient: ", patient.paciente);
+    const fooJson = {
+      "n": "Paul Mullen",
+      "t": "Lawrence",
+
+  }
+   ; 
+   const fooString = JSON.stringify(fooJson);
+   
+   const foo = encryptData(fooString);
+    console.log("encrypted: ", foo);
+    console.log("decrypted: ", decryptData(foo, secretPass));
 
     showAlert("Success", t("patientWasCreated"), "success");
     handleReset();
