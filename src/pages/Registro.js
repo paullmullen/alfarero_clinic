@@ -42,6 +42,13 @@ export const Registro = () => {
   const [scannerVisible, setScannerVisible] = useState(false); // Define scannerVisible for Registro component
   const [qrCodeData, setQrCodeData] = useState(null); // Define qrCodeData for Registro component
 
+  const getVideoDevices = async () => {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    console.log(devices);
+    return devices.filter(device => device.kind === 'videoinput');
+  };
+  
+  
   const handleToggleScanner = () => {
     setScannerVisible(!scannerVisible);
   };
@@ -84,6 +91,8 @@ export const Registro = () => {
             onError={handleError}
             onScan={handleScan}
             onResult={onResult}
+            key= {"environment"}
+            constraints = {{facingMode: 'environment'}}
           />
         )}
       </div>
@@ -157,6 +166,9 @@ export const Registro = () => {
   };
 
   useEffect(() => {
+
+    console.log(getVideoDevices());
+
     let isMounted = true;
     let unsubscribe;
 
@@ -370,7 +382,7 @@ export const Registro = () => {
           <Row gutter={24}>
             <Col xs={4} sm={4}>
               <Button onClick={handleToggleScanner} shape="round">
-                Scan QR Code
+                {t("SCAN")}
               </Button>
             </Col>
             <Col xs={8} sm={8}>

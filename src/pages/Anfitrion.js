@@ -408,7 +408,7 @@ export const Anfitrion = () => {
       const startTimeA = new Date(a?.start_time?.toMillis());
       const startTimeB = new Date(b?.start_time?.toMillis());
       return startTimeA - startTimeB;
-    });
+    }); 
 
     // eslint-disable-next-line no-unused-expressions
     extractedPlanOfCare?.forEach((item) => {
