@@ -1,10 +1,22 @@
-import React, { useState, useEffect } from "react";
-import { Form, Input, Row, Col, Space, Radio, Button, Divider, Image } from "antd";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Form,
+  Input,
+  Row,
+  Col,
+  Space,
+  Radio,
+  Button,
+  Divider,
+  Image,
+} from "antd";
 import { useTranslation } from "react-i18next";
 import CryptoJS, { enc } from "crypto-js";
 import QRCode from "qrcode.react";
 import { firestore } from "./../helpers/firebaseConfig"; // Import your Firestore configuration
 import "../print.css"; // Import the print stylesheet
+import ReactToPrint from "react-to-print";
+import { CardPrint } from "../helpers/CardPrint";
 
 export const Member = () => {
   const [form] = Form.useForm();
@@ -20,6 +32,8 @@ export const Member = () => {
 
   const secretPass = "XkhZG4fW2t2W";
 
+  const cardPrintRef = useRef();
+
   const encryptData = (text) => {
     const data = CryptoJS.AES.encrypt(
       JSON.stringify(text),
@@ -28,46 +42,6 @@ export const Member = () => {
     return data;
   };
 
-  const handlePrint = () => {
-    // Create a new window for printing
-    const printWindow = window.open("", "_blank");
-
-    // Write the content of the print card to the new window
-    printWindow.document.write(
-    <Row gutter={24}>
-    <Col xs={12} sm={12}>
-      <div>
-        <QRCode value={qrCodeData || ";"} />
-      </div>
-    </Col>
-    <Col xs={12} sm={12}>
-
-      <div align="center" width="100%">
-        <h2>{patientName}</h2>
-        <h1 style={{ backgroundColor: membershipColor, color: membershipFontColor }}>
-          {t(membershipText)}
-        </h1>
-        <Image
-              src={require("../img/full_logo.png")}
-              style={{ margin: 0, flex: 0, justifyContent: "flex-start" }}
-              preview={false}
-              height={75}
-              width={139}
-            />
-      </div>
-    </Col>
-  </Row>
-    );
-
-    // Close the document after writing
-    printWindow.document.close();
-
-    // Print the content in the new window
-    printWindow.print();
-
-    // Close the new window after printing is done
-    printWindow.close();
-  };
 
   const fetchMembershipTypes = async () => {
     try {
@@ -157,42 +131,54 @@ export const Member = () => {
         </Row>
         <Divider />
         <div style={{ border: "1px solid #000", padding: "10px" }}>
-
-        <Row gutter={24}>
-          <Col xs={12} sm={12}>
-            <div style={{verticalAlign: "center"}}>
-              <QRCode value={qrCodeData || ";"} />
-            </div>
-          </Col>
-          <Col xs={12} sm={12}>
-
-            <div align="center" width="100%">
-              <h2>{patientName}</h2>
-              <h1 style={{ backgroundColor: membershipColor, color: membershipFontColor }}>
-                {t(membershipText)}
-              </h1>
-              <Image
-                    src={require("../img/full_logo.png")}
-                    style={{ margin: 0, flex: 0, justifyContent: "flex-start" }}
-                    preview={false}
-                    height={75}
-                    width={139}
-                  />
-            </div>
-          </Col>
-        </Row>
+          <Row gutter={24}>
+            <Col xs={12} sm={12}>
+              <div style={{ verticalAlign: "center" }}>
+                <QRCode value={qrCodeData || ";"} />
+              </div>
+            </Col>
+            <Col xs={12} sm={12}>
+              <div align="center" width="100%">
+                <h2>{patientName}</h2>
+                <h1
+                  style={{
+                    backgroundColor: membershipColor,
+                    color: membershipFontColor,
+                  }}
+                >
+                  {t(membershipText)}
+                </h1>
+                <Image
+                  src={require("../img/full_logo.png")}
+                  style={{ margin: 0, flex: 0, justifyContent: "flex-start" }}
+                  preview={false}
+                  height={75}
+                  width={139}
+                />
+              </div>
+            </Col>
+          </Row>
         </div>
         <Divider />
-        <Row>
+        {/* <Row>
           <Col>
-            <Button type="primary" onClick={handlePrint} shape="round">
-              {t("PRINTMEMBERSHIPCARD")}
-            </Button>
+            <ReactToPrint
+              trigger={() => <Button type="primary">Print</Button>}
+              content={() => cardPrintRef.current}
+            />
+            <CardPrint
+              ref={cardPrintRef}
+              qrCodeData={qrCodeData}
+              patientName={patientName}
+              membershipText={membershipText}
+              membershipColor={membershipColor}
+              membershipFontColor={membershipFontColor}
+              imageUrl={"./../img/full_logo.png"}
+            />
           </Col>
-        </Row>
+        </Row>*/}
       </Col>
-    </Row>
+    </Row> 
   );
 };
 
-export default Member;

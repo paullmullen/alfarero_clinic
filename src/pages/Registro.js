@@ -232,7 +232,7 @@ export const Registro = () => {
                   date: currentMonthDayYear,
                   number_of_patients: 0,
                   procedure_time_data: [],
-                  wait_time_data: [],
+                  waiting_time_data: [],
                   avg_procedure_time: 0,
                   avg_waiting_time: 0,
                 });

@@ -105,7 +105,7 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
                 number_of_patients
             );
             transaction.update(docStatsRef, {
-              avg_waiting_time: waitingAverage,
+              avg_waiting_time: waitingAverage
             });
           }
 
