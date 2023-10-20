@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import {
   Button,
   Form,
@@ -13,7 +13,7 @@ import {
   Space,
   Row,
   Col,
-  } from "antd";
+} from "antd";
 import { ReactComponent as AngryIcon } from "../img/angry.svg";
 import { ReactComponent as SadIcon } from "../img/sad.svg";
 import { ReactComponent as IndifferentIcon } from "../img/indifferent.svg";
@@ -64,6 +64,8 @@ export const Survey = () => {
     }));
   };
 
+  const location = useLocation();
+
   const onFinish = async (values) => {
     try {
       if (
@@ -72,15 +74,13 @@ export const Survey = () => {
         surveyResult.suggestion !== "" ||
         surveyResult.satisfaction !== ""
       ) {
-        await firestore
-          .collection("surveys")
-          .add({
-            first: surveyResult.first,
-            source: surveyResult.source,
-            suggestion: surveyResult.suggestion,
-            satisfaction: surveyResult.satisfaction,
-            date: new Date(),
-          });
+        await firestore.collection("surveys").add({
+          first: surveyResult.first,
+          source: surveyResult.source,
+          suggestion: surveyResult.suggestion,
+          satisfaction: surveyResult.satisfaction,
+          date: new Date(),
+        });
         // Redirect to "/Anfitrion" after successful Firestore write
         history.push("/Anfitrion");
       } else {
@@ -94,7 +94,6 @@ export const Survey = () => {
   const onFinishFailed = (errorInfo) => {
     console.log("Failed:", errorInfo);
   };
-
 
   useHideMenu(true);
 
@@ -157,7 +156,9 @@ export const Survey = () => {
             </Row>
             <Row>
               <Col xs={24} sm={24}>
-                <Form.Item label={t("satisfaction")} name="satisfaction">
+                {t("satisfaction")} <br></br>
+                <br></br>
+                <Form.Item label={t("sat_gen")} name="sat_gen">
                   <Radio.Group onChange={handleChangeSatisfaction}>
                     <Space direction="horizontal">
                       <Radio value={1}>
@@ -181,7 +182,66 @@ export const Survey = () => {
                   </Radio.Group>
                 </Form.Item>
               </Col>
+              <Divider />
             </Row>
+            <Row>
+              <Col xs={24} sm={24}>
+                <Form.Item label={t("sat_anfi")} name="sat_anfi">
+                  <Radio.Group onChange={handleChangeSatisfaction}>
+                    <Space direction="horizontal">
+                      <Radio value={1}>
+                        <AngryIcon height="50px" width="50px">
+                          {" "}
+                        </AngryIcon>
+                      </Radio>
+                      <Radio value={2}>
+                        <SadIcon height="50px" width="50px"></SadIcon>
+                      </Radio>
+                      <Radio value={3}>
+                        <IndifferentIcon height="50px" width="50px" />
+                      </Radio>
+                      <Radio value={4}>
+                        <HappyIcon height="50px" width="50px" />
+                      </Radio>
+                      <Radio value={5}>
+                        <ThrilledIcon height="50px" width="50px" />
+                      </Radio>
+                    </Space>
+                  </Radio.Group>
+                </Form.Item>
+              </Col>
+              <Divider />
+            </Row>
+            {location.state.map((item) => (
+              <Row key={item}>
+                <Col xs={24} sm={24}>
+                  <Form.Item label={t("sat_"+item)} name={t("sat_"+item)}>
+                    <Radio.Group onChange={handleChangeSatisfaction}>
+                      <Space direction="horizontal">
+                        <Radio value={1}>
+                          <AngryIcon height="50px" width="50px">
+                            {" "}
+                          </AngryIcon>
+                        </Radio>
+                        <Radio value={2}>
+                          <SadIcon height="50px" width="50px"></SadIcon>
+                        </Radio>
+                        <Radio value={3}>
+                          <IndifferentIcon height="50px" width="50px" />
+                        </Radio>
+                        <Radio value={4}>
+                          <HappyIcon height="50px" width="50px" />
+                        </Radio>
+                        <Radio value={5}>
+                          <ThrilledIcon height="50px" width="50px" />
+                        </Radio>
+                      </Space>
+                    </Radio.Group>
+                  </Form.Item>
+                </Col>
+              </Row>
+            ))}
+
             <Divider />
             <Row>
               <Col xs={24} sm={24} offset={6}>
