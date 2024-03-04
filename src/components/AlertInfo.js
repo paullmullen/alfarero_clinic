@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import waiting from "../img/waiting.svg";
 import in_process from "../img/in_process.svg";
 import complete from "../img/complete.svg";
-import eye from "../img/eye.png";
+import eye from "../img/eye.svg";
 const { Title } = Typography;
 
 export const AlertInfo = () => {

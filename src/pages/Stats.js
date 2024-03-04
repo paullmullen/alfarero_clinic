@@ -479,6 +479,24 @@ const Stats = () => {
       sorter: (a, b) => a.patient_name.localeCompare(b.patient_name),
       render: (name) => <div>{name}</div>,
     },
+    {
+      title: t("age"),
+      dataIndex: "age_group",
+      key: "age_group",
+      width: 50,
+      fixed: "left",
+      sorter: (a, b) => a.age_group.localeCompare(b.age_group),
+      render: (name) => <div>{name}</div>,
+    },
+    {
+      title: t("gender"),
+      dataIndex: "gender",
+      key: "gender",
+      width: 50,
+      fixed: "left",
+      sorter: (a, b) => a.gender.localeCompare(b.gender),
+      render: (name) => <div>{name}</div>,
+    },
     // {
     //   title: t("reason_for_visit"),
     //   dataIndex: "reason_for_visit",
@@ -534,7 +552,7 @@ const Stats = () => {
       title: t("READMIT"),
       dataIndex: "pt_no",
       key: "estado",
-      width: 20,
+      width: 10,
       fixed: "right",
       render: (ptNo) => {
         const patient = patients.find((item) => item.pt_no === ptNo);
@@ -731,7 +749,7 @@ const Stats = () => {
           rowKey={"pt_no"}
           columns={patientsColumns}
           dataSource={patients.some((d) => d === undefined) ? [] : patients}
-          scroll={{ x: 1500, y: 1500 }}
+          scroll={{ x: 410, y: 1500 }}
           sticky
           pagination={true}
           offsetScroll={3}
@@ -746,7 +764,7 @@ const Stats = () => {
           rowKey={"inx"}
           columns={surveyColumns}
           dataSource={surveys.some((d) => d === undefined) ? [] : surveys}
-          scroll={{ x: 400, y: 1500 }}
+          scroll={{ x: 580, y: 1500 }}
           sticky
           pagination={true}
           offsetScroll={3}

@@ -29,7 +29,7 @@ import in_process from "../img/in_process.svg";
 import not_planned from "../img/not_planned.svg";
 import complete from "../img/complete.svg";
 import fin from "../img/fin.png";
-import eye from "../img/eye.png";
+import eye from "../img/eye.svg";
 
 
 export const Anfitrion = () => {

@@ -18,7 +18,7 @@ const fetchPatientsData = async (dateRange) => {
         plan_of_care,
         complete,
         gender,
-        age
+        age_group,
       } = doc.data();
       const dataEntry = {
         pt_no,
@@ -29,7 +29,7 @@ const fetchPatientsData = async (dateRange) => {
         plan_of_care,
         complete,
         gender,
-        age
+        age_group,
       };
       let patientPoc = [];
       let totalWait = 0;
@@ -59,6 +59,8 @@ const fetchPatientsData = async (dateRange) => {
           plan_of_care: pocString,
           total_wait: Math.round(totalWait/60,0),
           complete: dataEntry.complete,
+          gender: dataEntry.gender,
+          age_group: dataEntry.age_group,
         });
       }
     });
