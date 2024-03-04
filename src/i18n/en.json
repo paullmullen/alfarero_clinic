@@ -31,6 +31,11 @@
   "attending": "Attending",
   "beingAttended": "Patient being attended",
   "cda": "Casa del Alfarero",
+  "child": "Child",
+  "adult": "Adult",
+  "gender": "Gender",
+  "male": "Male",
+  "female": "Female",
   "consped": "Pediatrics",
   "consulta": "Adult Clinic",
   "currentService": "You are offering the service: ",
@@ -94,6 +99,8 @@
   "pfm": "Host",
   "pha": "Pharmacy",
   "physio": "Physical Therapy",
+  "prayer": "We pray for the needs of our patients every day.  Do you have a special request?",
+  "prayer_request": "Prayer Request",
   "pra": "Prayer",
   "procedureTime": "Procedure time",
   "psi": "Psychology",
@@ -139,7 +146,7 @@
   "turnTable": "Work roster",
   "type_of_visit": "Tipo de Visita",
   "updateStatus": "Update Status",
-  "version": "1.1.2",
+  "version": "1.1.4",
   "visitCompleted": "Service completed",
   "visitPayed": "Paying",
   "visitTypes": "Type of Visit",
@@ -147,5 +154,7 @@
   "waitingStatus": "Waiting to be attended",
   "waitingTime": "Waiting time",
   "word_of_mouth": "Word of Mouth",
-  "yes": "Yes"
+  "yes": "Yes",
+  "masculine": "Masculine",
+  "feminine": "Feminine"
 }

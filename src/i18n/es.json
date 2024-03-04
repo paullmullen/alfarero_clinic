@@ -31,6 +31,11 @@
   "attending": "Atendiendo",
   "beingAttended": "Atendiendo",
   "cda": "Casa del Alfarero",
+  "child": "Niño",
+  "adult": "Adulto",
+  "gender": "Genero",
+  "male": "Masculino",
+  "female": "Femenina",
   "consped": "Consulta Pediátrica",
   "consulta": "Consulta Adultos",
   "currentService": "Usted está ofreciendo el servicio: ",
@@ -95,6 +100,8 @@
   "pha": "Far",
   "physio": "Fisioterapia",
   "pra": "Ora",
+  "prayer": "Cada día oramos para las necesidades de nuestros pacientes.  ¿Tiene usted un pedido especial?",
+  "prayer_request": "Pedido para Oración",
   "procedureTime": "Proceso",
   "psi": "Psi",
   "psych": "Psicología",
@@ -139,7 +146,7 @@
   "turnTable": "Sala de Espera",
   "type_of_visit": "Tipo de Visita",
   "updateStatus": "Actualizar estatus",
-  "version": "1.1.2",
+  "version": "1.1.4",
   "visitCompleted": "Servicio completado",
   "visitPayed": "Pagando",
   "visitTypes": "Tipo de Visita",
@@ -147,5 +154,8 @@
   "waitingStatus": "En espera para atender",
   "waitingTime": "Espera",
   "word_of_mouth": "Boca en Boca",
-  "yes": "Sí"
+  "yes": "Sí",
+  "masculine": "Masculino",
+  "feminine": "Femenina"
+
 }

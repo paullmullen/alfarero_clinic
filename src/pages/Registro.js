@@ -18,9 +18,9 @@ import { stations } from "../helpers/stations";
 import moment from "moment";
 import { useTranslation } from "react-i18next";
 import { QrReader } from "react-qr-reader";
-import  CryptoJS  from "crypto-js";
+import CryptoJS from "crypto-js";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 const layout = {
   labelCol: { span: 8 },
@@ -45,10 +45,9 @@ export const Registro = () => {
   const getVideoDevices = async () => {
     const devices = await navigator.mediaDevices.enumerateDevices();
     console.log(devices);
-    return devices.filter(device => device.kind === 'videoinput');
+    return devices.filter((device) => device.kind === "videoinput");
   };
-  
-  
+
   const handleToggleScanner = () => {
     setScannerVisible(!scannerVisible);
   };
@@ -61,15 +60,14 @@ export const Registro = () => {
 
       if (temp.n) {
         form.setFieldsValue({
-          paciente: temp.n
+          paciente: temp.n,
         });
       }
       if (temp.t) {
-        form.setFieldsValue ({
-          tel: temp.t
-        })
+        form.setFieldsValue({
+          tel: temp.t,
+        });
       }
-
     }
   };
 
@@ -91,8 +89,8 @@ export const Registro = () => {
             onError={handleError}
             onScan={handleScan}
             onResult={onResult}
-            key= {"environment"}
-            constraints = {{facingMode: 'environment'}}
+            key={"environment"}
+            constraints={{ facingMode: "environment" }}
           />
         )}
       </div>
@@ -166,10 +164,9 @@ export const Registro = () => {
   };
 
   useEffect(() => {
-
     console.log(getVideoDevices());
 
-    let isMounted = true;
+
     let unsubscribe;
 
     const fetchData = async () => {
@@ -202,7 +199,6 @@ export const Registro = () => {
       if (unsubscribe) {
         unsubscribe();
       }
-      isMounted = false;
     };
   }, [t]);
 
@@ -260,9 +256,9 @@ export const Registro = () => {
     }
   };
 
-  const handleChange = (selectedOption) => {
-    generateVisits(selectedOption);
-  };
+  // const handleChange = (selectedOption) => {
+  //   generateVisits(selectedOption);
+  // };
 
   const updateStations = (changedValues) => {
     let recipeOptions = [];
@@ -318,8 +314,10 @@ export const Registro = () => {
       stop_time: new Date(),
       wait_time: 0,
       type_of_visit: patient.tipo,
+      gender: patient.gender,
+      age_group: patient.age_group !== undefined ? patient.age_group : null
     };
-
+    console.log(formattedPatient);
     const patientRef = await firestore
       .collection("patients")
       .add(formattedPatient);
@@ -344,14 +342,12 @@ export const Registro = () => {
 
     console.log("patient: ", patient.paciente);
     const fooJson = {
-      "n": "Paul Mullen",
-      "t": "Lawrence",
+      n: "Paul Mullen",
+      t: "Lawrence",
+    };
+    const fooString = JSON.stringify(fooJson);
 
-  }
-   ; 
-   const fooString = JSON.stringify(fooJson);
-   
-   const foo = encryptData(fooString);
+    const foo = encryptData(fooString);
     console.log("encrypted: ", foo);
     console.log("decrypted: ", decryptData(foo, secretPass));
 
@@ -396,19 +392,85 @@ export const Registro = () => {
               )}
             </Col>
           </Row>
-          <Row gutter={24}>
+          <Row> 
             <Col xs={24} sm={24}>
+
               <Row>
                 <Col xs={24} sm={24}>
                   <Form.Item
-                    label={t("patientName")}
+                    label={t("name")}
                     name="paciente"
-                    rules={[{ required: true, message: t("enterName") }]}
+                    rules={[{ required: true, message: t("name") }]}
                   >
                     <Input />
                   </Form.Item>
                 </Col>
               </Row>
+
+              <Row >
+              <Col xs={8} sm={8}>  
+                </Col>
+                <Col xs={7} sm={7}>
+                  <Form.Item
+                    label={t("age")}
+                    name="age_group"
+                    rules={[
+                      {
+                        required: true,
+                        message: t("selectPatientAge"),
+                      },
+                    ]}
+                  >
+                    <Radio.Group
+                      size="large"
+                      optionType="button"
+                      style={{ display: "flex", flexWrap: "wrap" }}
+                    >
+                      <Radio
+                        key="child"
+                        value = "child"
+                        style={{ flex: `0 0 ${12}%` }}
+                      >{t("child")}</Radio>
+                      <Radio
+                        key="adult"
+                        value="adult"
+                        style={{ flex: `0 0 ${12}%` }}
+                      >{t("adult")}</Radio>
+                    </Radio.Group>
+                  </Form.Item>
+                </Col>
+                <Col xs={8} sm={8}>
+                  <Form.Item
+                    label={t("gender")}
+                    name="gender"
+                    rules={[
+                      {
+                        required: true,
+                        message: t("selectPatientAge"),
+                      },
+                    ]}
+                  >
+                    <Radio.Group
+                      size="large"
+                      optionType="button"
+                      style={{ display: "flex", flexWrap: "wrap" }}
+                    >
+                      <Radio
+                        key="masculine"
+                        value = "masculine"
+                        style={{ flex: `0 0 ${12}%` }}
+                      >{t("male")}</Radio>
+                      <Radio
+                        key="feminine"
+                        value="feminine"
+                        style={{ flex: `0 0 ${12}%` }}
+                      >{t("female")}
+                      </Radio>
+                    </Radio.Group>
+                  </Form.Item>
+                </Col>
+              </Row>
+
               <Row style={{ display: "contents" }} gutter={24}>
                 <Col xs={24} sm={24}>
                   <Form.Item

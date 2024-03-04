@@ -21,7 +21,7 @@
     "react-i18next": "^13.0.1",
     "react-qr-reader": "^3.0.0-beta-1",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "3.4.3",
+    "react-scripts": "^5.0.1",
     "react-to-print": "^2.14.13",
     "reactfire": "^4.2.2",
     "recharts": "^2.6.2",
@@ -47,5 +47,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "eslint-config-prettier": "^9.1.0"
   }
 }

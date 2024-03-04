@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import React, { useState, useEffect, useRef } from "react";
 import {
   Form,
@@ -17,6 +19,7 @@ import { firestore } from "./../helpers/firebaseConfig"; // Import your Firestor
 import "../print.css"; // Import the print stylesheet
 import ReactToPrint from "react-to-print";
 import { CardPrint } from "../helpers/CardPrint";
+import full_logo from "../img/full_logo.png"
 
 export const Member = () => {
   const [form] = Form.useForm();
@@ -138,7 +141,7 @@ export const Member = () => {
               </div>
             </Col>
             <Col xs={12} sm={12}>
-              <div align="center" width="100%">
+              <div  width="100%">
                 <h2>{patientName}</h2>
                 <h1
                   style={{
@@ -149,7 +152,7 @@ export const Member = () => {
                   {t(membershipText)}
                 </h1>
                 <Image
-                  src={require("../img/full_logo.png")}
+                  src={full_logo}
                   style={{ margin: 0, flex: 0, justifyContent: "flex-start" }}
                   preview={false}
                   height={75}

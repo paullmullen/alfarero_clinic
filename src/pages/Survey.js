@@ -7,7 +7,6 @@ import {
   Button,
   Form,
   Input,
-  Select,
   Divider,
   Radio,
   Space,
@@ -32,6 +31,7 @@ export const Survey = () => {
     satisfaction: "",
   });
 
+  // eslint-disable-next-line no-unused-vars
   const handleChangeSource = (values) => {
     const newValue = typeof values === "object" ? values.target.value : values;
     setSurveyResult((prevSurveyResult) => ({
@@ -40,6 +40,7 @@ export const Survey = () => {
     }));
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleChangeFirstVisit = (values) => {
     const newValue = typeof values === "object" ? values.target.value : values;
     setSurveyResult((prevSurveyResult) => ({
@@ -48,11 +49,20 @@ export const Survey = () => {
     }));
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleChangeSuggestions = (values) => {
     const newValue = typeof values === "object" ? values.target.value : values;
     setSurveyResult((prevSurveyResult) => ({
       ...prevSurveyResult,
       suggestion: newValue,
+    }));
+  };
+
+  const handleChangePrayer = (values) => {
+    const newValue = typeof values === "object" ? values.target.value : values;
+    setSurveyResult((prevSurveyResult) => ({
+      ...prevSurveyResult,
+      prayer_request: newValue,
     }));
   };
 
@@ -66,19 +76,27 @@ export const Survey = () => {
 
   const location = useLocation();
 
+  // eslint-disable-next-line no-unused-vars
   const onFinish = async (values) => {
+    console.log(location);
+
+
     try {
       if (
-        surveyResult.first !== "" ||
-        surveyResult.source !== "" ||
-        surveyResult.suggestion !== "" ||
-        surveyResult.satisfaction !== ""
+        // surveyResult.first !== "" ||
+        // surveyResult.source !== "" ||
+        // surveyResult.suggestion !== "" ||
+        surveyResult.satisfaction !== "" ||
+        surveyResult.prayer_request !== ""
       ) {
         await firestore.collection("surveys").add({
-          first: surveyResult.first,
-          source: surveyResult.source,
-          suggestion: surveyResult.suggestion,
+          // first: surveyResult.first,
+          // source: surveyResult.source,
+          // suggestion: surveyResult.suggestion,
           satisfaction: surveyResult.satisfaction,
+          prayer_request: surveyResult.prayer_request,
+          gender: location.state.gender,
+          age_group: location.state.age_group,
           date: new Date(),
         });
         // Redirect to "/Anfitrion" after successful Firestore write
@@ -114,7 +132,7 @@ export const Survey = () => {
             labelCol={{ flex: "310px" }}
             labelWrap
           >
-            <Row>
+            {/* <Row>
               <Col xs={24} sm={24}>
                 <Form.Item label={t("howDidYouLearn")} name="username">
                   <Select
@@ -153,12 +171,18 @@ export const Survey = () => {
                   <TextArea rows={4} onChange={handleChangeSuggestions} />
                 </Form.Item>
               </Col>
+            </Row> */}
+            <Row>
+            <Col xs={24} sm={24}>
+            <Form.Item label={t("prayer")} name="prayer_request">
+                  <TextArea rows={4} onChange={handleChangePrayer} />
+                </Form.Item>
+              </Col>
+              <Divider />
             </Row>
             <Row>
               <Col xs={24} sm={24}>
-                {t("satisfaction")} <br></br>
-                <br></br>
-                <Form.Item label={t("sat_gen")} name="sat_gen">
+                <Form.Item label={t("satisfaction")} name="sat_gen">
                   <Radio.Group onChange={handleChangeSatisfaction}>
                     <Space direction="horizontal">
                       <Radio value={1}>
@@ -184,7 +208,7 @@ export const Survey = () => {
               </Col>
               <Divider />
             </Row>
-            <Row>
+            {/* <Row>
               <Col xs={24} sm={24}>
                 <Form.Item label={t("sat_anfi")} name="sat_anfi">
                   <Radio.Group onChange={handleChangeSatisfaction}>
@@ -239,10 +263,8 @@ export const Survey = () => {
                     </Radio.Group>
                   </Form.Item>
                 </Col>
-              </Row>
-            ))}
+              </Row> */}
 
-            <Divider />
             <Row>
               <Col xs={24} sm={24} offset={6}>
                 <Space wrap>

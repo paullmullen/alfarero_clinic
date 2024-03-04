@@ -7,13 +7,16 @@ const fetchSurveyData = async (dateRange) => {
   const surveySnapshot = await getDocs(surveyCollection)
 
   const surveyEntries = surveySnapshot.docs.map((doc, counter) => {
-    const { date, first, satisfaction, suggestion, source } = doc.data();
+    const { date, first, satisfaction, suggestion, source, prayer_request, age_group, gender } = doc.data();
     const dataEntry = {
       date,
       first,
       satisfaction,
       suggestion,
       source,
+      prayer_request,
+      age_group,
+      gender
     };
 
     if ((dataEntry.date.toMillis() >= dateRange[0]) && (dataEntry.date.toMillis() <= dateRange[1])) {
@@ -23,6 +26,9 @@ const fetchSurveyData = async (dateRange) => {
         source: dataEntry.source,
         suggestion: dataEntry.suggestion,
         satisfaction: satisfaction,
+        prayer_request: dataEntry.prayer_request,
+        age_group: age_group,
+        gender: gender
       };
     } else {
       return null; // Return null for entries that are not for today

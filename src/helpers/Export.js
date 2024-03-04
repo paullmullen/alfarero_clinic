@@ -1,3 +1,6 @@
+/* eslint-disable react/prop-types */
+
+
 import React from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';

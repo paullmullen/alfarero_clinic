@@ -1,3 +1,7 @@
+/* eslint-disable react/prop-types */
+/* eslint-disable react/display-name */
+/* eslint-disable no-unused-vars */
+
 import React from "react";
 import QRCode from "qrcode.react";
 export const CardPrint = React.forwardRef(
@@ -18,7 +22,7 @@ export const CardPrint = React.forwardRef(
         <div>
           <QRCode value={qrCodeData || ";"} />
         </div>
-        <div align="center">
+        <div>
           <h2>{patientName}</h2>
           <h1
             style={{

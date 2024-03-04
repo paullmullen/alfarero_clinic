@@ -145,17 +145,17 @@ export const handleDelete = async (hoveredRowKey, history) => {
       await firestore.runTransaction(async (transaction) => {
         const doc = await transaction.get(docPatientRefFin);
         const patData = doc.data();
-        const poc = patData.plan_of_care;
+        // const poc = patData.plan_of_care;
 
         if (doc.exists) {
           await docPatientRefFin.update({
             complete: true,
           });
           //now pass the proper stations to the survey page
-          console.log(poc);
-          result = poc
-            .filter((item) => item.status !== 'pending')
-            .map((item) => item.station);
+          // result = poc
+          //   .filter((item) => item.status !== 'pending')
+          //   .map((item) => item.station);
+          result = {age_group: patData.age_group, gender: patData.gender};
         } else {
           console.log("HANDLE_DELETE: No such document.");
         }

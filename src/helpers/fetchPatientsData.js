@@ -17,6 +17,8 @@ const fetchPatientsData = async (dateRange) => {
         type_of_visit,
         plan_of_care,
         complete,
+        gender,
+        age
       } = doc.data();
       const dataEntry = {
         pt_no,
@@ -25,7 +27,9 @@ const fetchPatientsData = async (dateRange) => {
         reason_for_visit,
         type_of_visit,
         plan_of_care,
-        complete
+        complete,
+        gender,
+        age
       };
       let patientPoc = [];
       let totalWait = 0;
