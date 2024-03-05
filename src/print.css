@@ -1,0 +1,19 @@
+/* print.css */
+
+@media print {
+    body {
+      display: none; /* Hide the entire body when printing */
+    }
+  
+    .print-card {
+      display: block; /* Show the print card when printing */
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      padding: 20px;
+      border: 1px solid #ccc;
+    }
+  
+    /* Additional print styles for the card, such as colors, fonts, etc. */
+  }
+  

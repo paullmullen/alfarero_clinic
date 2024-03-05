@@ -18,6 +18,19 @@ import { useHideMenu } from "../hooks/useHideMenu";
 import { AlertInfo } from "../components/AlertInfo";
 import { useTranslation } from "react-i18next";
 import IconSizes from "../helpers/iconSizes";
+import two from "../img/2.svg";
+import three from "../img/3.svg";
+import four from "../img/4.svg";
+import five from "../img/5.svg";
+import six from "../img/6.svg";
+import seven from "../img/7.svg";
+import waiting from "../img/waiting.svg";
+import in_process from "../img/in_process.svg";
+import not_planned from "../img/not_planned.svg";
+import complete from "../img/complete.svg";
+import fin from "../img/fin.png";
+import eye from "../img/eye.svg";
+
 
 export const Anfitrion = () => {
   useHideMenu(true);
@@ -114,7 +127,7 @@ export const Anfitrion = () => {
         statusIcon = (
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
-              src={require("../img/not_planned.svg")}
+              src={not_planned}
               width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
@@ -129,7 +142,7 @@ export const Anfitrion = () => {
         statusIcon = (
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
-              src={require("../img/in_process.svg")}
+              src={in_process}
               width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
@@ -144,7 +157,7 @@ export const Anfitrion = () => {
         statusIcon = (
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
-              src={require("../img/waiting.svg")}
+              src={waiting}
               width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
@@ -174,7 +187,7 @@ export const Anfitrion = () => {
         statusIcon = (
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
-              src={require("../img/eye.svg")}
+              src={eye}
               width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
@@ -189,7 +202,7 @@ export const Anfitrion = () => {
         statusIcon = (
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
-              src={require("../img/complete.svg")}
+              src={complete}
               width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
@@ -204,7 +217,7 @@ export const Anfitrion = () => {
         statusIcon = (
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
-              src={require("../img/2.svg")}
+              src={two}
               width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
@@ -219,7 +232,7 @@ export const Anfitrion = () => {
         statusIcon = (
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
-              src={require("../img/3.svg")}
+              src={three}
               width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
@@ -234,7 +247,7 @@ export const Anfitrion = () => {
         statusIcon = (
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
-              src={require("../img/4.svg")}
+              src={four}
               width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
@@ -249,7 +262,7 @@ export const Anfitrion = () => {
         statusIcon = (
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
-              src={require("../img/5.svg")}
+              src={five}
               width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
@@ -264,7 +277,7 @@ export const Anfitrion = () => {
         statusIcon = (
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
-              src={require("../img/6.svg")}
+              src={six}
               width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
@@ -279,7 +292,7 @@ export const Anfitrion = () => {
         statusIcon = (
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
-              src={require("../img/7.svg")}
+              src={seven}
               width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
@@ -294,7 +307,7 @@ export const Anfitrion = () => {
         statusIcon = (
           <Popover content={content} title={t("modifyStatus")} trigger="hover">
             <Image
-              src={require("../img/fin.png")}
+              src={fin}
               width={IconSizes.height}
               height={IconSizes.height}
               preview={false}
@@ -317,7 +330,7 @@ export const Anfitrion = () => {
   const content = (
     <Space wrap>
       <Image
-        src={require("../img/not_planned.svg")}
+        src={not_planned}
         width={IconSizes.width}
         height={IconSizes.height}
         preview={false}
@@ -325,7 +338,7 @@ export const Anfitrion = () => {
       />
 
       <Image
-        src={require("../img/in_process.svg")}
+        src={in_process}
         width={IconSizes.width}
         height={IconSizes.height}
         preview={false}
@@ -333,7 +346,7 @@ export const Anfitrion = () => {
       />
 
       <Image
-        src={require("../img/waiting.svg")}
+        src={waiting}
         width={IconSizes.width}
         height={IconSizes.height}
         preview={false}
@@ -341,14 +354,14 @@ export const Anfitrion = () => {
       />
 
       <Image
-        src={require("../img/eye.svg")}
-        width={IconSizes.width}
+        src={eye}
+        // width={IconSizes.width}
         height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("obs", hoveredRowKey, station)}
       />
       <Image
-        src={require("../img/complete.svg")}
+        src={complete}
         width={IconSizes.width}
         height={IconSizes.height}
         preview={false}
@@ -356,42 +369,42 @@ export const Anfitrion = () => {
       />
 
       <Image
-        src={require("../img/2.svg")}
+        src={two}
         width={IconSizes.width}
         height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("2", hoveredRowKey, station)}
       />
       <Image
-        src={require("../img/3.svg")}
+        src={three}
         width={IconSizes.width}
         height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("3", hoveredRowKey, station)}
       />
       <Image
-        src={require("../img/4.svg")}
+        src={four}
         width={IconSizes.width}
         height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("4", hoveredRowKey, station)}
       />
       <Image
-        src={require("../img/5.svg")}
+        src={five}
         width={IconSizes.width}
         height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("5", hoveredRowKey, station)}
       />
       <Image
-        src={require("../img/6.svg")}
+        src={six}
         width={IconSizes.width}
         height={IconSizes.height}
         preview={false}
         onClick={() => handleStatusChange("6", hoveredRowKey, station)}
       />
       <Image
-        src={require("../img/7.svg")}
+        src={seven}
         width={IconSizes.width}
         height={IconSizes.height}
         preview={false}
@@ -408,7 +421,7 @@ export const Anfitrion = () => {
       const startTimeA = new Date(a?.start_time?.toMillis());
       const startTimeB = new Date(b?.start_time?.toMillis());
       return startTimeA - startTimeB;
-    });
+    }); 
 
     // eslint-disable-next-line no-unused-expressions
     extractedPlanOfCare?.forEach((item) => {
@@ -420,9 +433,7 @@ export const Anfitrion = () => {
 
         if (!uniqueStations[plan.station] && item.fin !== true) {
           const waitText = avg_time ? Math.round(avg_time.avg_waiting_time / 60) : "";
-          const procText = avg_time
-            ? Math.round(avg_time.avg_procedure_time / 60)
-            : "";
+
           uniqueStations[plan.station] = {
             dataIndex: plan.station,
             key: plan.station,
@@ -495,7 +506,7 @@ export const Anfitrion = () => {
               onConfirm={() => handleDelete(hoveredRowKey, history)}
             >
               <Image
-                src={require("../img/fin.png")}
+                src={fin}
                 width={IconSizes.height}
                 height={IconSizes.height}
                 preview={false}
@@ -505,7 +516,7 @@ export const Anfitrion = () => {
       },
     ];
 
-    const dataSource = extractedPlanOfCare?.map((item, index) => {
+    const dataSource = extractedPlanOfCare?.map((item) => {
       const stations = {};
 
       // eslint-disable-next-line no-unused-expressions

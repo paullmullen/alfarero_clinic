@@ -34,6 +34,7 @@ import ExcelExport from "../helpers/Export";
 import { handleReadmitClick } from "../helpers/updateStationStatus";
 import es_ES from "antd/es/date-picker/locale/es_ES";
 import en_US from "antd/es/date-picker/locale/en_US";
+import enter from "../img/enter.png";
 
 const { RangePicker } = DatePicker;
 const datePickerLocales = {
@@ -235,7 +236,9 @@ const Stats = () => {
   };
 
   const CustomTick = (props) => {
+    // eslint-disable-next-line react/prop-types
     const { x, y, payload } = props;
+        // eslint-disable-next-line react/prop-types
     switch (payload.value) {
       case "1":
         return (
@@ -462,8 +465,8 @@ const Stats = () => {
     doStuffInOrder();
   }, [t, columnChanger, dateRange]);
 
+  
   const barColors = getBarColors();
-  const arrivalTimeChartData = arrivalTimeData;
   const waitTimeChartData = waitingData;
 
   const patientsColumns = [
@@ -474,6 +477,24 @@ const Stats = () => {
       width: 50,
       fixed: "left",
       sorter: (a, b) => a.patient_name.localeCompare(b.patient_name),
+      render: (name) => <div>{name}</div>,
+    },
+    {
+      title: t("age"),
+      dataIndex: "age_group",
+      key: "age_group",
+      width: 50,
+      fixed: "left",
+      sorter: (a, b) => a.age_group.localeCompare(b.age_group),
+      render: (name) => <div>{name}</div>,
+    },
+    {
+      title: t("gender"),
+      dataIndex: "gender",
+      key: "gender",
+      width: 50,
+      fixed: "left",
+      sorter: (a, b) => a.gender.localeCompare(b.gender),
       render: (name) => <div>{name}</div>,
     },
     // {
@@ -531,7 +552,7 @@ const Stats = () => {
       title: t("READMIT"),
       dataIndex: "pt_no",
       key: "estado",
-      width: 20,
+      width: 10,
       fixed: "right",
       render: (ptNo) => {
         const patient = patients.find((item) => item.pt_no === ptNo);
@@ -547,7 +568,7 @@ const Stats = () => {
             style={{ padding: 0 }}
           >
             <Image
-              src={require("../img/enter.png")}
+              src={enter}
               width={20}
               height={20}
               preview={false}
@@ -559,14 +580,14 @@ const Stats = () => {
   ];
 
   const surveyColumns = [
-    {
-      title: t("source"),
-      dataIndex: "source",
-      key: "source",
-      width: 50,
-      fixed: "left",
-      render: (name) => <div>{t(name)}</div>,
-    },
+    // {
+    //   title: t("source"),
+    //   dataIndex: "source",
+    //   key: "source",
+    //   width: 50,
+    //   fixed: "left",
+    //   render: (name) => <div>{t(name)}</div>,
+    // },
     {
       title: t("sat"),
       dataIndex: "satisfaction",
@@ -575,22 +596,38 @@ const Stats = () => {
       fixed: "left",
       render: (name) => <div>{satIcon(name)}</div>,
     },
+    // {
+    //   title: t("first"),
+    //   dataIndex: "first",
+    //   key: "first",
+    //   width: 25,
+    //   fixed: "left",
+    //   render: (name) => <div>{name === "1" ? t("yes") : t("no")}</div>,
+    // },
     {
-      title: t("first"),
-      dataIndex: "first",
-      key: "first",
-      width: 25,
-      fixed: "left",
-      render: (name) => <div>{name === "1" ? t("yes") : t("no")}</div>,
-    },
-    {
-      title: t("suggestion"),
-      dataIndex: "suggestion",
-      key: "suggestion",
-      width: 125,
+      title: t("prayer_request"),
+      dataIndex: "prayer_request",
+      key: "prayer_request",
+      width: 250,
       fixed: "left",
       render: (name) => <div>{name}</div>,
     },
+    {
+      title: t("gender"),
+      dataIndex: "gender",
+      key: "gender",
+      width: 50,
+      fixed: "left",
+      render: (name) => <div>{t(name)}</div>,
+    },    
+    {
+      title: t("age"),
+      dataIndex: "age_group",
+      key: "age_group",
+      width: 50,
+      fixed: "left",
+      render: (name) => <div>{t(name)}</div>,
+    }
   ];
 
   // Renders the visible screen
@@ -712,7 +749,7 @@ const Stats = () => {
           rowKey={"pt_no"}
           columns={patientsColumns}
           dataSource={patients.some((d) => d === undefined) ? [] : patients}
-          scroll={{ x: 1500, y: 1500 }}
+          scroll={{ x: 410, y: 1500 }}
           sticky
           pagination={true}
           offsetScroll={3}
@@ -727,7 +764,7 @@ const Stats = () => {
           rowKey={"inx"}
           columns={surveyColumns}
           dataSource={surveys.some((d) => d === undefined) ? [] : surveys}
-          scroll={{ x: 1500, y: 1500 }}
+          scroll={{ x: 580, y: 1500 }}
           sticky
           pagination={true}
           offsetScroll={3}

@@ -2,7 +2,7 @@ import React, { createContext, useState } from 'react'
 
 export const UiContext = createContext();
 
-
+//eslint-disable-next-line react/prop-types
 export const UiProvider = ({ children }) => {
 
     const [ ocultarMenu, setOcultarMenu ] = useState(false);

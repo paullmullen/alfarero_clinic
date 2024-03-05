@@ -91,7 +91,6 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
             });
           }
 
-
           //stats arrays are updated, now calculate statistics
           const { waiting_time_data, procedure_time_data, number_of_patients } =
             statsData;
@@ -139,16 +138,24 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
 
 export const handleDelete = async (hoveredRowKey, history) => {
   const docPatientRefFin = firestore.collection("patients").doc(hoveredRowKey);
-
+  let result = [];
   if (docPatientRefFin) {
+
     try {
       await firestore.runTransaction(async (transaction) => {
         const doc = await transaction.get(docPatientRefFin);
+        const patData = doc.data();
+        // const poc = patData.plan_of_care;
 
         if (doc.exists) {
           await docPatientRefFin.update({
             complete: true,
           });
+          //now pass the proper stations to the survey page
+          // result = poc
+          //   .filter((item) => item.status !== 'pending')
+          //   .map((item) => item.station);
+          result = {age_group: patData.age_group, gender: patData.gender};
         } else {
           console.log("HANDLE_DELETE: No such document.");
         }
@@ -160,7 +167,7 @@ export const handleDelete = async (hoveredRowKey, history) => {
     console.log("HANDLE_DELETE: No such document.");
   }
 
-  history.push("/survey");
+  history.push({ pathname: "/survey", state: result });
 };
 
 export const handleReadmitClick = async (patientID) => {

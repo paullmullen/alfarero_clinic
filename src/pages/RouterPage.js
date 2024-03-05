@@ -16,6 +16,7 @@ import {
   IdcardOutlined,
   BarChartOutlined,
   CoffeeOutlined,
+  OrderedListOutlined,
 } from "@ant-design/icons";
 import {
   BrowserRouter as Router,
@@ -28,6 +29,7 @@ import { AlertProvider } from "../hooks/alert";
 import { Registro } from "./Registro";
 import { Turno } from "./Turno";
 import { Escritorio } from "./Escritorio";
+import { Member } from "./Member";
 import { UiContext } from "../context/UiContext";
 import { IngresarHost } from "./IngresarHost";
 import { Survey } from "./Survey";
@@ -113,16 +115,21 @@ export const RouterPage = () => {
     },
     {
       key: "5",
-      icon: <IdcardOutlined />,
+      icon: <OrderedListOutlined />,
       label: <Link to="/escritorio">{t("desk")}</Link>,
     },
     {
       key: "6",
+      icon: <IdcardOutlined />,
+      label: <Link to="/member">{t("MEMBERSHIP")}</Link>,
+    },
+    {
+      key: "7",
       icon: <BarChartOutlined />,
       label: <Link to="/estadisticas">{t("statistics")}</Link>,
     },
     {
-      key: "7",
+      key: "8",
       label: t("version"),
     },
   ];
@@ -184,10 +191,8 @@ export const RouterPage = () => {
                   display="none"
                   overlayClassName="noheader-popover"
                   open={popoverOpen}
-                  onOpenChange={(open) => setPopoverOpen(open)
-                  }
-                >
-                </Popover>
+                  onOpenChange={(open) => setPopoverOpen(open)}
+                ></Popover>
               </Col>
             </Row>
           </Header>
@@ -208,6 +213,7 @@ export const RouterPage = () => {
                 <Route path="/anfitrion" component={Anfitrion} />
                 <Route path="/estadisticas" component={Stats} />
                 <Route path="/survey" component={Survey} />
+                <Route path="/member" component={Member} />
                 <Redirect to="/ingresar-host" />
               </Switch>
             </AlertProvider>
