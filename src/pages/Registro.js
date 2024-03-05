@@ -317,7 +317,6 @@ export const Registro = () => {
       gender: patient.gender,
       age_group: patient.age_group !== undefined ? patient.age_group : null
     };
-    console.log(formattedPatient);
     const patientRef = await firestore
       .collection("patients")
       .add(formattedPatient);

@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import {
   Table,
+  Form,
+  Row, Col,
+  Input,
   Image,
   Space,
   Popover,
@@ -30,7 +33,7 @@ import not_planned from "../img/not_planned.svg";
 import complete from "../img/complete.svg";
 import fin from "../img/fin.png";
 import eye from "../img/eye.svg";
-
+import edit from "../img/edit.svg";
 
 export const Anfitrion = () => {
   useHideMenu(true);
@@ -55,6 +58,21 @@ export const Anfitrion = () => {
     history.replace("/ingresar-host");
   };
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set time to the beginning of the day
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1); // Set time to the beginning of the next day
+  
+  const refreshDoc = async (docRef, newData) => {
+    try {
+      await docRef.update(newData);
+      console.log(`Document with ID ${docRef.id} updated successfully.`);
+    } catch (error) {
+      console.error(`Error updating document with ID ${docRef.id}:`, error);
+    }
+  };
+
+
   // Connects info to render on the app with firebase in real time (comunication react-firebase)
 
   useEffect(() => {
@@ -66,11 +84,27 @@ export const Anfitrion = () => {
       try {
         const collectionRef = firestore.collection("patients");
         const statsRef = firestore.collection("stats");
-        const initialSnapshot = await collectionRef.orderBy("start_time").get();
+        const initialSnapshot = await collectionRef.orderBy("start_time")
+           .where("start_time", ">=", today)
+           .where("start_time", "<", tomorrow)
+           .get();
         const statsSnapshot = await statsRef.get();
+
         const initialData = initialSnapshot.docs.map((doc) => {
-          return doc.data();
+          const data = doc.data();
+          if (!data.pt_no) {
+            // If pt_no is blank, replace it with the documentID
+            data.pt_no = doc.id;
+        
+            // Get a reference to the document in Firestore
+            const docRef = collectionRef.doc(doc.id);
+        
+            // Call the refreshDoc() function to update the document
+            refreshDoc(docRef, data);
+          }
+          return data;
         });
+
         const initialStats = statsSnapshot.docs.map((doc) => {
           return doc.data();
         });
@@ -125,7 +159,11 @@ export const Anfitrion = () => {
     switch (status) {
       case "pending":
         statusIcon = (
-          <Popover content={content} title={t("modifyStatus")} trigger="hover">
+          <Popover
+            content={editStatusContent}
+            title={t("modifyStatus")}
+            trigger="hover"
+          >
             <Image
               src={not_planned}
               width={IconSizes.height}
@@ -140,7 +178,11 @@ export const Anfitrion = () => {
         break;
       case "in_process":
         statusIcon = (
-          <Popover content={content} title={t("modifyStatus")} trigger="hover">
+          <Popover
+            content={editStatusContent}
+            title={t("modifyStatus")}
+            trigger="hover"
+          >
             <Image
               src={in_process}
               width={IconSizes.height}
@@ -155,7 +197,11 @@ export const Anfitrion = () => {
         break;
       case "waiting":
         statusIcon = (
-          <Popover content={content} title={t("modifyStatus")} trigger="hover">
+          <Popover
+            content={editStatusContent}
+            title={t("modifyStatus")}
+            trigger="hover"
+          >
             <Image
               src={waiting}
               width={IconSizes.height}
@@ -170,7 +216,7 @@ export const Anfitrion = () => {
         break;
       // case "pay":
       //   statusIcon = (
-      //     <Popover content={content} title={t("modifyStatus")} trigger="hover">
+      //     <Popover content={editStatusContent} title={t("modifyStatus")} trigger="hover">
       //       <Image
       //         src={require("../img/pay.svg")}
       //         width={IconSizes.height}
@@ -185,7 +231,11 @@ export const Anfitrion = () => {
       //   break;
       case "obs":
         statusIcon = (
-          <Popover content={content} title={t("modifyStatus")} trigger="hover">
+          <Popover
+            content={editStatusContent}
+            title={t("modifyStatus")}
+            trigger="hover"
+          >
             <Image
               src={eye}
               width={IconSizes.height}
@@ -200,7 +250,11 @@ export const Anfitrion = () => {
         break;
       case "complete":
         statusIcon = (
-          <Popover content={content} title={t("modifyStatus")} trigger="hover">
+          <Popover
+            content={editStatusContent}
+            title={t("modifyStatus")}
+            trigger="hover"
+          >
             <Image
               src={complete}
               width={IconSizes.height}
@@ -215,7 +269,11 @@ export const Anfitrion = () => {
         break;
       case "2":
         statusIcon = (
-          <Popover content={content} title={t("modifyStatus")} trigger="hover">
+          <Popover
+            content={editStatusContent}
+            title={t("modifyStatus")}
+            trigger="hover"
+          >
             <Image
               src={two}
               width={IconSizes.height}
@@ -230,7 +288,11 @@ export const Anfitrion = () => {
         break;
       case "3":
         statusIcon = (
-          <Popover content={content} title={t("modifyStatus")} trigger="hover">
+          <Popover
+            content={editStatusContent}
+            title={t("modifyStatus")}
+            trigger="hover"
+          >
             <Image
               src={three}
               width={IconSizes.height}
@@ -245,7 +307,11 @@ export const Anfitrion = () => {
         break;
       case "4":
         statusIcon = (
-          <Popover content={content} title={t("modifyStatus")} trigger="hover">
+          <Popover
+            content={editStatusContent}
+            title={t("modifyStatus")}
+            trigger="hover"
+          >
             <Image
               src={four}
               width={IconSizes.height}
@@ -260,7 +326,11 @@ export const Anfitrion = () => {
         break;
       case "5":
         statusIcon = (
-          <Popover content={content} title={t("modifyStatus")} trigger="hover">
+          <Popover
+            content={editStatusContent}
+            title={t("modifyStatus")}
+            trigger="hover"
+          >
             <Image
               src={five}
               width={IconSizes.height}
@@ -275,7 +345,11 @@ export const Anfitrion = () => {
         break;
       case "6":
         statusIcon = (
-          <Popover content={content} title={t("modifyStatus")} trigger="hover">
+          <Popover
+            content={editStatusContent}
+            title={t("modifyStatus")}
+            trigger="hover"
+          >
             <Image
               src={six}
               width={IconSizes.height}
@@ -290,7 +364,11 @@ export const Anfitrion = () => {
         break;
       case "7":
         statusIcon = (
-          <Popover content={content} title={t("modifyStatus")} trigger="hover">
+          <Popover
+            content={editStatusContent}
+            title={t("modifyStatus")}
+            trigger="hover"
+          >
             <Image
               src={seven}
               width={IconSizes.height}
@@ -305,7 +383,11 @@ export const Anfitrion = () => {
         break;
       case "fin":
         statusIcon = (
-          <Popover content={content} title={t("modifyStatus")} trigger="hover">
+          <Popover
+            content={editStatusContent}
+            title={t("modifyStatus")}
+            trigger="hover"
+          >
             <Image
               src={fin}
               width={IconSizes.height}
@@ -326,92 +408,166 @@ export const Anfitrion = () => {
   };
 
   // Editable content inside the popover (status)
+  const editPatientName = (
+    // You can include input fields here for editing patient data
+    <Form
+    name="editPatient"
+    initialValues={{ remember: true }}
+    // onFinish={onFinish}
+    // onFinishFailed={onFinishFailed}
+    // onValuesChange={updateStations}
+    layout="vertical" // Set the form layout to vertical for better alignment
+  >
+    <Row gutter={[16, 16]}> {/* Use Ant Design Row component with gutter for spacing */}
+      <Col span={24}> {/* Use Ant Design Col component to define column widths */}
+        <Form.Item
+          label={t("Name")}
+          name="paciente"
+          rules={[{ required: true, message: t("Please enter patient's name") }]}
+        >
+          <Input />
+        </Form.Item>
+      </Col>
+    </Row>
 
-  const content = (
-    <Space wrap>
-      <Image
-        src={not_planned}
-        width={IconSizes.width}
-        height={IconSizes.height}
-        preview={false}
-        onClick={() => handleStatusChange("pending", hoveredRowKey, station)}
-      />
+    <Row gutter={[16, 16]}>
+      <Col span={12}> {/* Split the form into two columns for better organization */}
+        <Form.Item
+          label={t("Tel")}
+          name="tel"
+          rules={[
+            {
+              validator: (_, value) => {
+                if (!value) {
+                  return Promise.resolve();
+                }
+                if (/^(\+\d{1,3}[- *])?\(?([0-9]{3,4})\)?[-.● *]?([0-9]{3,4})[-.● *]?([0-9]{3,4})?$/.test(value)) {
+                  return Promise.resolve();
+                }
+                return Promise.reject(new Error(t("Please enter a valid phone number")));
+              },
+            },
+          ]}
+        >
+          <Input type="tel" />
+        </Form.Item>
+      </Col>
+      </Row>
+      <Row>
+      <Col span={12}>
+        <Form.Item
+          label={t("Reason for Visit")}
+          name="motivo"
+          rules={[{ required: true, message: t("Please enter reason for visit") }]}
+        >
+          <Input />
+        </Form.Item>
+      </Col>
+    </Row>
 
-      <Image
-        src={in_process}
-        width={IconSizes.width}
-        height={IconSizes.height}
-        preview={false}
-        onClick={() => handleStatusChange("in_process", hoveredRowKey, station)}
-      />
+    <Form.Item>
+      <Button type="primary" htmlType="submit" shape="round" name="update">
+        {t("UPDATE")}
+      </Button>
+    </Form.Item>
+  </Form>
+);
+  
 
-      <Image
-        src={waiting}
-        width={IconSizes.width}
-        height={IconSizes.height}
-        preview={false}
-        onClick={() => handleStatusChange("waiting", hoveredRowKey, station)}
-      />
+  const iconScale = 1.5;
 
-      <Image
-        src={eye}
-        // width={IconSizes.width}
-        height={IconSizes.height}
-        preview={false}
-        onClick={() => handleStatusChange("obs", hoveredRowKey, station)}
-      />
-      <Image
-        src={complete}
-        width={IconSizes.width}
-        height={IconSizes.height}
-        preview={false}
-        onClick={() => handleStatusChange("complete", hoveredRowKey, station)}
-      />
+  const editPaientDetailsStyle = {
+    width: 400 // Set the width of the popover box
+  };
 
-      <Image
-        src={two}
-        width={IconSizes.width}
-        height={IconSizes.height}
-        preview={false}
-        onClick={() => handleStatusChange("2", hoveredRowKey, station)}
-      />
-      <Image
-        src={three}
-        width={IconSizes.width}
-        height={IconSizes.height}
-        preview={false}
-        onClick={() => handleStatusChange("3", hoveredRowKey, station)}
-      />
-      <Image
-        src={four}
-        width={IconSizes.width}
-        height={IconSizes.height}
-        preview={false}
-        onClick={() => handleStatusChange("4", hoveredRowKey, station)}
-      />
-      <Image
-        src={five}
-        width={IconSizes.width}
-        height={IconSizes.height}
-        preview={false}
-        onClick={() => handleStatusChange("5", hoveredRowKey, station)}
-      />
-      <Image
-        src={six}
-        width={IconSizes.width}
-        height={IconSizes.height}
-        preview={false}
-        onClick={() => handleStatusChange("6", hoveredRowKey, station)}
-      />
-      <Image
-        src={seven}
-        width={IconSizes.width}
-        height={IconSizes.height}
-        preview={false}
-        onClick={() => handleStatusChange("7", hoveredRowKey, station)}
-      />
-    </Space>
-  );
+  const editStatusContent = //statusPopoverContent is the icon popover
+    (
+      <Space wrap>
+        <Image
+          src={not_planned}
+          width={IconSizes.width * iconScale}
+          height={IconSizes.height * iconScale}
+          preview={false}
+          onClick={() => handleStatusChange("pending", hoveredRowKey, station)}
+        />
+
+        <Image
+          src={in_process}
+          width={IconSizes.width * iconScale}
+          height={IconSizes.height * iconScale}
+          preview={false}
+          onClick={() =>
+            handleStatusChange("in_process", hoveredRowKey, station)
+          }
+        />
+
+        <Image
+          src={waiting}
+          width={IconSizes.width * iconScale}
+          height={IconSizes.height * iconScale}
+          preview={false}
+          onClick={() => handleStatusChange("waiting", hoveredRowKey, station)}
+        />
+
+        <Image
+          src={eye}
+          // width={IconSizes.width}
+          height={IconSizes.height * iconScale}
+          preview={false}
+          onClick={() => handleStatusChange("obs", hoveredRowKey, station)}
+        />
+        <Image
+          src={complete}
+          width={IconSizes.width * iconScale}
+          height={IconSizes.height * iconScale}
+          preview={false}
+          onClick={() => handleStatusChange("complete", hoveredRowKey, station)}
+        />
+
+        <Image
+          src={two}
+          width={IconSizes.width * iconScale}
+          height={IconSizes.height * iconScale}
+          preview={false}
+          onClick={() => handleStatusChange("2", hoveredRowKey, station)}
+        />
+        <Image
+          src={three}
+          width={IconSizes.width * iconScale}
+          height={IconSizes.height * iconScale}
+          preview={false}
+          onClick={() => handleStatusChange("3", hoveredRowKey, station)}
+        />
+        <Image
+          src={four}
+          width={IconSizes.width * iconScale}
+          height={IconSizes.height * iconScale}
+          preview={false}
+          onClick={() => handleStatusChange("4", hoveredRowKey, station)}
+        />
+        <Image
+          src={five}
+          width={IconSizes.width * iconScale}
+          height={IconSizes.height * iconScale}
+          preview={false}
+          onClick={() => handleStatusChange("5", hoveredRowKey, station)}
+        />
+        <Image
+          src={six}
+          width={IconSizes.width * iconScale}
+          height={IconSizes.height * iconScale}
+          preview={false}
+          onClick={() => handleStatusChange("6", hoveredRowKey, station)}
+        />
+        <Image
+          src={seven}
+          width={IconSizes.width * iconScale}
+          height={IconSizes.height * iconScale}
+          preview={false}
+          onClick={() => handleStatusChange("7", hoveredRowKey, station)}
+        />
+      </Space>
+    );
 
   // Makes render the table that changes in real time (patients and their status)
   const generateTableData = (extractedPlanOfCare) => {
@@ -421,7 +577,7 @@ export const Anfitrion = () => {
       const startTimeA = new Date(a?.start_time?.toMillis());
       const startTimeB = new Date(b?.start_time?.toMillis());
       return startTimeA - startTimeB;
-    }); 
+    });
 
     // eslint-disable-next-line no-unused-expressions
     extractedPlanOfCare?.forEach((item) => {
@@ -432,17 +588,18 @@ export const Anfitrion = () => {
         );
 
         if (!uniqueStations[plan.station] && item.fin !== true) {
-          const waitText = avg_time ? Math.round(avg_time.avg_waiting_time / 60) : "";
+          const waitText = avg_time
+            ? Math.round(avg_time.avg_waiting_time / 60)
+            : "";
 
           uniqueStations[plan.station] = {
             dataIndex: plan.station,
             key: plan.station,
             title: (
               <div>
-                                {t(plan.station)}
+                {t(plan.station)}
                 <div className="wait_times">{waitText}m</div>
                 {/* <div className="wait_times">P: {procText}m</div> */}
-
               </div>
             ),
             render: (status) => renderStatusIcon(status, plan.station),
@@ -458,15 +615,36 @@ export const Anfitrion = () => {
         title: t("patient"),
         dataIndex: "patient_name",
         key: "patient",
-        width: 175,
+        width: 250,
         fixed: "left",
         render: (name) => (
           <div>
-            <b> {name.split("|")[0]} </b>
-            <br /> {name.split("|")[1]} <br />
-            <i>{name.split("|")[2]} </i>
-            <br />
-            {name.split("|")[3]}{" "}
+            <table>
+              <tr>
+                <td>
+                  <b> {name.split("|")[0]} </b>
+                  <br /> {name.split("|")[1]} <br />
+                  <i>{name.split("|")[2]} </i>
+                  <br />
+                  {name.split("|")[3]}{" "}
+                </td>
+                <td align="right">
+                  <Popover
+                    content={editPatientName}
+                    title={t("EDITPATIENTDATA")}
+                    trigger="click"
+                    overlayStyle={editPaientDetailsStyle}
+                  >
+                    <Image
+                      src={edit}
+                      width={IconSizes.height}
+                      height={IconSizes.height}
+                      preview={false}
+                    />
+                  </Popover>
+                </td>
+              </tr>
+            </table>
           </div>
         ),
       },

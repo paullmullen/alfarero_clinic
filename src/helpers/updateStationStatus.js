@@ -10,7 +10,6 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
         transaction.get(docPatientRef),
         transaction.get(docStatsRef),
       ]);
-
       let endOfWait = false;
       let endOfProcess = false;
 
