@@ -146,7 +146,7 @@
   "turnTable": "Work roster",
   "type_of_visit": "Tipo de Visita",
   "updateStatus": "Update Status",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "visitCompleted": "Service completed",
   "visitPayed": "Paying",
   "visitTypes": "Type of Visit",
@@ -159,6 +159,10 @@
   "feminine": "Feminine",
   "EDITPATIENTDATA": "Change Patient Data",
   "SAVE": "Save",
-  "UPDATE": "Update"
-
+  "UPDATE": "Update",
+  "ADULT_MASCULINE": "Adult Masculine",
+  "ADULT_FEMININE": "Adult Feminine",
+  "CHILD_MASCULINE": "Child Masculine",
+  "CHILD_FEMININE": "Child Feminine",
+  "DEMOGRAPHICS": "Demographics"
 }

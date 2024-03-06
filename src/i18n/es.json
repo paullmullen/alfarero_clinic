@@ -146,7 +146,7 @@
   "turnTable": "Sala de Espera",
   "type_of_visit": "Tipo de Visita",
   "updateStatus": "Actualizar estatus",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "visitCompleted": "Servicio completado",
   "visitPayed": "Pagando",
   "visitTypes": "Tipo de Visita",
@@ -159,6 +159,11 @@
   "feminine": "Femenina",
   "EDITPATIENTDATA": "Modificar Datos del Paciente",
   "SAVE": "Guardar",
-  "UPDATE": "Actualizar"
+  "UPDATE": "Actualizar",
+  "ADULT_MASCULINE": "Adulto Masculino",
+  "ADULT_FEMININE": "Adulto Feminina",
+  "CHILD_MASCULINE": "Niño Masculino",
+  "CHILD_FEMININE": "Niña Feminina",
+  "DEMOGRAPHICS": "Demographía"
 
 }
