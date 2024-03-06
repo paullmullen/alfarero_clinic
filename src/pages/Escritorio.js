@@ -18,6 +18,12 @@ import { Redirect, useHistory } from "react-router-dom";
 import { firestore } from "./../helpers/firebaseConfig";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import pay from "../img/pay.svg";
+import waiting from "../img/waiting.svg";
+import in_process from "../img/in_process.svg";
+import complete from "../img/complete.svg";
+import fin from "../img/fin.png";
+
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -88,7 +94,7 @@ export const Escritorio = () => {
       case "waiting":
         statusIcon = (
           <Image
-            src={require("../img/waiting.svg")}
+            src={waiting}
             width={15}
             height={10}
             preview={false}
@@ -98,7 +104,7 @@ export const Escritorio = () => {
       case "in_process":
         statusIcon = (
           <Image
-            src={require("../img/in_process.svg")}
+            src={in_process}
             width={15}
             height={10}
             preview={false}
@@ -108,7 +114,7 @@ export const Escritorio = () => {
       case "complete":
         statusIcon = (
           <Image
-            src={require("../img/complete.svg")}
+            src={complete}
             width={15}
             height={10}
             preview={false}
@@ -118,7 +124,7 @@ export const Escritorio = () => {
       case "fin":
         statusIcon = (
           <Image
-            src={require("../img/fin.png")}
+            src={fin}
             width={20}
             height={15}
             preview={false}
@@ -128,7 +134,7 @@ export const Escritorio = () => {
       case "pay":
         statusIcon = (
           <Image
-            src={require("../img/pay.svg")}
+            src={pay}
             width={15}
             height={10}
             preview={false}
@@ -349,7 +355,7 @@ export const Escritorio = () => {
             >
               <div>
                 <Image
-                  src={require("../img/waiting.svg")}
+                  src={waiting}
                   width={15}
                   height={10}
                 />
@@ -357,7 +363,7 @@ export const Escritorio = () => {
               </div>
               <div>
                 <Image
-                  src={require("../img/in_process.svg")}
+                  src={in_process}
                   width={15}
                   height={10}
                 />
@@ -365,7 +371,7 @@ export const Escritorio = () => {
               </div>
               <div>
                 <Image
-                  src={require("../img/complete.svg")}
+                  src={complete}
                   width={15}
                   height={10}
                 />

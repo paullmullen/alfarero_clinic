@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import {
   Table,
   Form,
-  Row, Col,
+  Row,
+  Col,
   Input,
   Image,
   Space,
@@ -11,6 +12,7 @@ import {
   Button,
   Popconfirm,
 } from "antd";
+
 import { firestore } from "./../helpers/firebaseConfig";
 import {
   handleStatusChange,
@@ -45,6 +47,7 @@ export const Anfitrion = () => {
 
   const history = useHistory();
 
+
   const handleMouseEnter = (record) => {
     setHoveredRowKey(record.pt_no);
   };
@@ -62,7 +65,7 @@ export const Anfitrion = () => {
   today.setHours(0, 0, 0, 0); // Set time to the beginning of the day
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1); // Set time to the beginning of the next day
-  
+
   const refreshDoc = async (docRef, newData) => {
     try {
       await docRef.update(newData);
@@ -71,7 +74,6 @@ export const Anfitrion = () => {
       console.error(`Error updating document with ID ${docRef.id}:`, error);
     }
   };
-
 
   // Connects info to render on the app with firebase in real time (comunication react-firebase)
 
@@ -84,10 +86,11 @@ export const Anfitrion = () => {
       try {
         const collectionRef = firestore.collection("patients");
         const statsRef = firestore.collection("stats");
-        const initialSnapshot = await collectionRef.orderBy("start_time")
-           .where("start_time", ">=", today)
-           .where("start_time", "<", tomorrow)
-           .get();
+        const initialSnapshot = await collectionRef
+          .orderBy("start_time")
+          .where("start_time", ">=", today)
+          .where("start_time", "<", tomorrow)
+          .get();
         const statsSnapshot = await statsRef.get();
 
         const initialData = initialSnapshot.docs.map((doc) => {
@@ -95,10 +98,10 @@ export const Anfitrion = () => {
           if (!data.pt_no) {
             // If pt_no is blank, replace it with the documentID
             data.pt_no = doc.id;
-        
+
             // Get a reference to the document in Firestore
             const docRef = collectionRef.doc(doc.id);
-        
+
             // Call the refreshDoc() function to update the document
             refreshDoc(docRef, data);
           }
@@ -214,21 +217,6 @@ export const Anfitrion = () => {
           </Popover>
         );
         break;
-      // case "pay":
-      //   statusIcon = (
-      //     <Popover content={editStatusContent} title={t("modifyStatus")} trigger="hover">
-      //       <Image
-      //         src={require("../img/pay.svg")}
-      //         width={IconSizes.height}
-      //         height={IconSizes.height}
-      //         preview={false}
-      //         onMouseEnter={() => {
-      //           setStation(station);
-      //         }}
-      //       />
-      //     </Popover>
-      //   );
-      //   break;
       case "obs":
         statusIcon = (
           <Popover
@@ -409,76 +397,83 @@ export const Anfitrion = () => {
 
   // Editable content inside the popover (status)
   const editPatientName = (
-    // You can include input fields here for editing patient data
     <Form
-    name="editPatient"
-    initialValues={{ remember: true }}
-    // onFinish={onFinish}
-    // onFinishFailed={onFinishFailed}
-    // onValuesChange={updateStations}
-    layout="vertical" // Set the form layout to vertical for better alignment
-  >
-    <Row gutter={[16, 16]}> {/* Use Ant Design Row component with gutter for spacing */}
-      <Col span={24}> {/* Use Ant Design Col component to define column widths */}
-        <Form.Item
-          label={t("Name")}
-          name="paciente"
-          rules={[{ required: true, message: t("Please enter patient's name") }]}
-        >
-          <Input />
-        </Form.Item>
-      </Col>
-    </Row>
-
-    <Row gutter={[16, 16]}>
-      <Col span={12}> {/* Split the form into two columns for better organization */}
-        <Form.Item
-          label={t("Tel")}
-          name="tel"
-          rules={[
-            {
-              validator: (_, value) => {
-                if (!value) {
-                  return Promise.resolve();
-                }
-                if (/^(\+\d{1,3}[- *])?\(?([0-9]{3,4})\)?[-.● *]?([0-9]{3,4})[-.● *]?([0-9]{3,4})?$/.test(value)) {
-                  return Promise.resolve();
-                }
-                return Promise.reject(new Error(t("Please enter a valid phone number")));
-              },
-            },
-          ]}
-        >
-          <Input type="tel" />
-        </Form.Item>
-      </Col>
+      name="editPatient"
+      initialValues={{ remember: true }}
+      // onFinish={onFinish}
+    >
+      <Row gutter={[16, 16]}> {/* Adjust gutter to add spacing between rows */}
+        <Col xs={24} sm={24}> {/* Adjust column span for different screen sizes */}
+          <Form.Item
+            label={t("name")}
+            name="paciente"
+            rules={[{ required: true, message: t("name") }]}
+          >
+            <Input />
+          </Form.Item>
+          
+        </Col>
       </Row>
       <Row>
-      <Col span={12}>
+        <Col>
         <Form.Item
-          label={t("Reason for Visit")}
-          name="motivo"
-          rules={[{ required: true, message: t("Please enter reason for visit") }]}
-        >
-          <Input />
-        </Form.Item>
-      </Col>
-    </Row>
+            label={t("tel")}
+            name="tel"
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (value === undefined || value === "") {
+                    return Promise.resolve();
+                  }
+                  if (
+                    /^(\+\d{1,3}[-  *])?\(?([0-9]{3,4})\)?[-.●  *]?([0-9]{3,4})[-.●  *]?([0-9]{3,4})?$/.test(
+                      value
+                    )
+                  ) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error(t("enterValidPhoneNumber")));
+                },
+              },
+            ]}
+          >
+            <Input type="tel" />
+          </Form.Item>
+          </Col>
+      </Row>
+      <Row gutter={[16, 16]}> {/* Adjust gutter to add spacing between rows */}
+        <Col xs={24} sm={24}>
+          <Form.Item
+            label={t("reasonForVisit")}
+            name="motivo"
+            rules={[{ required: true, message: t("reasonForVisit") }]}
+          >
+            <Input />
+          </Form.Item>
+        </Col>
+      </Row>
+      <Row gutter={[16, 16]}> {/* Adjust gutter to add spacing between rows */}
+        <Col xs={24} sm={24}>
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              shape="round"
+              name="save"
+            >
 
-    <Form.Item>
-      <Button type="primary" htmlType="submit" shape="round" name="update">
-        {t("UPDATE")}
-      </Button>
-    </Form.Item>
-  </Form>
-);
+              {t("SAVE")}
+            </Button>
+          </Form.Item>
+        </Col>
+      </Row>
+    </Form>
+  );
+  
+  
   
 
   const iconScale = 1.5;
-
-  const editPaientDetailsStyle = {
-    width: 400 // Set the width of the popover box
-  };
 
   const editStatusContent = //statusPopoverContent is the icon popover
     (
@@ -615,37 +610,33 @@ export const Anfitrion = () => {
         title: t("patient"),
         dataIndex: "patient_name",
         key: "patient",
-        width: 250,
         fixed: "left",
         render: (name) => (
-          <div>
-            <table>
-              <tr>
-                <td>
-                  <b> {name.split("|")[0]} </b>
-                  <br /> {name.split("|")[1]} <br />
-                  <i>{name.split("|")[2]} </i>
-                  <br />
-                  {name.split("|")[3]}{" "}
-                </td>
-                <td align="right">
-                  <Popover
-                    content={editPatientName}
-                    title={t("EDITPATIENTDATA")}
-                    trigger="click"
-                    overlayStyle={editPaientDetailsStyle}
-                  >
-                    <Image
-                      src={edit}
-                      width={IconSizes.height}
-                      height={IconSizes.height}
-                      preview={false}
-                    />
-                  </Popover>
-                </td>
-              </tr>
-            </table>
-          </div>
+          <table>
+            <tr>
+              <td>
+                <b> {name.split("|")[0]} </b>
+                <br /> {name.split("|")[1]} <br />
+                <i>{name.split("|")[2]} </i>
+                <br />
+                {name.split("|")[3]}{" "}
+              </td>
+              <td align="right">
+                <Popover
+                  content={editPatientName}
+                  title={t("EDITPATIENTDATA")}
+                  trigger="click"
+                >
+                  <Image
+                    src={edit}
+                    width={IconSizes.height}
+                    height={IconSizes.height}
+                    preview={false}
+                  />
+                </Popover>
+              </td>
+            </tr>
+          </table>
         ),
       },
       ...Object.values(uniqueStations),
