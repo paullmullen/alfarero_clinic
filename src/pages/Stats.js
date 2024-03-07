@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { firestore } from "./../helpers/firebaseConfig";
 import {
-  BarChart, 
+  BarChart,
   Bar,
-  XAxis,  YAxis,  
+  XAxis,
+  YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
@@ -23,12 +24,12 @@ import {
   DatePicker,
 } from "antd";
 
-
 import "firebase/compat/firestore";
 import { stations } from "../helpers/stations";
 import { fetchSurveyData } from "../helpers/fetchSurveyData";
 import { fetchPatientsData } from "../helpers/fetchPatientsData";
 import { fetchWaitingTimeData } from "../helpers/fetchWaitingTimeData";
+import { fetchLast60Days } from "../helpers/fetchLast60Days";
 import { satIcon } from "../helpers/satIcon";
 import ExcelExport from "../helpers/Export";
 import { handleReadmitClick } from "../helpers/updateStationStatus";
@@ -50,13 +51,13 @@ const Stats = () => {
   const [surveys, setSurveys] = useState([]);
   const [satScore, setSatScore] = useState([]);
   const [ageGender, setAgeGender] = useState([]);
+  const [last60Days, setLast60Days] = useState({});
   const [columnChanger, setColumnChanger] = useState(false); //toggling column changer triggers useEffect.  Can update columnChanger when the reenter button is clicked.
   const [dateRange, setDateRange] = useState([
     new Date().setHours(0, 0, 0, 0),
     new Date().setHours(23, 59, 59, 999),
   ]);
 
-  
   // State to keep track of sorting
   const [sortInfo, setSortInfo] = useState({});
 
@@ -66,6 +67,7 @@ const Stats = () => {
   };
 
   const [t, i18n] = useTranslation("global");
+
 
   const howManyToday = async (stationName) => {
     try {
@@ -101,11 +103,10 @@ const Stats = () => {
       });
       setAgeGender([
         { name: t("ADULT_FEMININE"), value: adultFeminine, fill: "#de7ad1" },
-        { name: t("ADULT_MASCULINE"), value: adultMasculine, fill: "#7a98de"  },
-        { name: t("CHILD_FEMININE"), value: childFeminine, fill: "#de7ad1"  },
-        { name: t("CHILD_MASCULINE"), value: childMasculine, fill: "#7a98de"  },
+        { name: t("ADULT_MASCULINE"), value: adultMasculine, fill: "#7a98de" },
+        { name: t("CHILD_FEMININE"), value: childFeminine, fill: "#de7ad1" },
+        { name: t("CHILD_MASCULINE"), value: childMasculine, fill: "#7a98de" },
       ]);
-      
 
       return count;
     } catch (e) {
@@ -139,10 +140,16 @@ const Stats = () => {
             <h2>{t("WAITING_TIME")}</h2>;
           </div>
         );
-        case 5:
+      case 5:
+        return (
+          <div style={{ textAlign: "center" }}>
+            <h2>{t("DEMOGRAPHICS")}</h2>;
+          </div>
+        );
+        case 6:
           return (
             <div style={{ textAlign: "center" }}>
-              <h2>{t("DEMOGRAPHICS")}</h2>;
+              <h2>{t("LAST60")}</h2>;
             </div>
           );
       default:
@@ -180,6 +187,11 @@ const Stats = () => {
   const getWaitingData = async () => {
     const data = await fetchWaitingTimeData(dateRange);
     setWaitingData(data);
+  };
+
+  const getLast60Days = async () => {
+    const data = await fetchLast60Days();
+    setLast60Days(data);
   };
 
   const surveySummary = async (surveys) => {
@@ -486,6 +498,7 @@ const Stats = () => {
       await stationsData();
       await surveyData();
       await getWaitingData();
+      await getLast60Days();
     };
     doStuffInOrder();
   }, [t, columnChanger, dateRange]);
@@ -751,20 +764,27 @@ const Stats = () => {
         </div>
 
         <div className="charts-container">
+          <ResponsiveContainer width="50%" height="100%" minHeight="300px">
+            <BarChart width={600} height={300} data={ageGender}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis dataKey="value" />
+              <Tooltip />
+              <Legend content={() => renderLegendStations(5)} />
+              <Bar dataKey="value" fill="fill" />
+            </BarChart>
+          </ResponsiveContainer>
 
-
-        <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-  <BarChart width={600} height={300} data={ageGender}>
-    <CartesianGrid strokeDasharray="3 3" />
-    <XAxis dataKey="name" />
-    <YAxis dataKey="value" />
-    <Tooltip />
-    <Legend content={() => renderLegendStations(5)} />
-    <Bar dataKey="value" fill="fill" />
-  </BarChart>
-</ResponsiveContainer>
-
-
+          <ResponsiveContainer width="50%" height="100%" minHeight="300px">
+            <BarChart width={600} height={300} data={last60Days}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis dataKey="count" />
+              <Tooltip />
+              <Legend content={() => renderLegendStations(6)} />
+              <Bar dataKey="value" />
+            </BarChart>
+          </ResponsiveContainer>
 
 
         </div>
