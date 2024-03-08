@@ -18,6 +18,7 @@ import {
   handleStatusChange,
   handleDelete,
 } from "./../helpers/updateStationStatus";
+import { updatePatientData } from "../helpers/updatePatientData";
 import { useHistory } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { AlertInfo } from "../components/AlertInfo";
@@ -43,6 +44,7 @@ export const Anfitrion = () => {
   const [statsData, setStatsData] = useState([]);
   const [station, setStation] = useState("");
   const [hoveredRowKey, setHoveredRowKey] = useState(null);
+
   const [t] = useTranslation("global");
 
   const history = useHistory();
@@ -74,6 +76,11 @@ export const Anfitrion = () => {
       console.error(`Error updating document with ID ${docRef.id}:`, error);
     }
   };
+
+  const onFinish = (values) => {
+    const { paciente, tel, motivo } = values; // Destructure form values
+    updatePatientData(paciente, tel, motivo, hoveredRowKey);
+  }
 
   // Connects info to render on the app with firebase in real time (comunication react-firebase)
 
@@ -140,6 +147,7 @@ export const Anfitrion = () => {
         console.log(error);
       }
     };
+    
 
     fetchData();
 
@@ -396,14 +404,14 @@ export const Anfitrion = () => {
   };
 
   // Editable content inside the popover (status)
-  const editPatientName = (
+  const editPatientData = (
     <Form
       name="editPatient"
       initialValues={{ remember: true }}
-      // onFinish={onFinish}
+      onFinish={onFinish} // Set onFinish callback
     >
-      <Row gutter={[16, 16]}> {/* Adjust gutter to add spacing between rows */}
-        <Col xs={24} sm={24}> {/* Adjust column span for different screen sizes */}
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={24}>
           <Form.Item
             label={t("name")}
             name="paciente"
@@ -411,12 +419,11 @@ export const Anfitrion = () => {
           >
             <Input />
           </Form.Item>
-          
         </Col>
       </Row>
-      <Row>
-        <Col>
-        <Form.Item
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={24}>
+          <Form.Item
             label={t("tel")}
             name="tel"
             rules={[
@@ -439,9 +446,9 @@ export const Anfitrion = () => {
           >
             <Input type="tel" />
           </Form.Item>
-          </Col>
+        </Col>
       </Row>
-      <Row gutter={[16, 16]}> {/* Adjust gutter to add spacing between rows */}
+      <Row gutter={[16, 16]}>
         <Col xs={24} sm={24}>
           <Form.Item
             label={t("reasonForVisit")}
@@ -452,7 +459,7 @@ export const Anfitrion = () => {
           </Form.Item>
         </Col>
       </Row>
-      <Row gutter={[16, 16]}> {/* Adjust gutter to add spacing between rows */}
+      <Row gutter={[16, 16]}>
         <Col xs={24} sm={24}>
           <Form.Item>
             <Button
@@ -461,7 +468,6 @@ export const Anfitrion = () => {
               shape="round"
               name="save"
             >
-
               {t("SAVE")}
             </Button>
           </Form.Item>
@@ -623,7 +629,7 @@ export const Anfitrion = () => {
               </td>
               <td align="right">
                 <Popover
-                  content={editPatientName}
+                  content={editPatientData}
                   title={t("EDITPATIENTDATA")}
                   trigger="click"
                 >

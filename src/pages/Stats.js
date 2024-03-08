@@ -5,6 +5,7 @@ import {
   Bar,
   XAxis,
   YAxis,
+  ReferenceLine,
   CartesianGrid,
   Tooltip,
   Legend,
@@ -67,7 +68,6 @@ const Stats = () => {
   };
 
   const [t, i18n] = useTranslation("global");
-
 
   const howManyToday = async (stationName) => {
     try {
@@ -146,12 +146,12 @@ const Stats = () => {
             <h2>{t("DEMOGRAPHICS")}</h2>;
           </div>
         );
-        case 6:
-          return (
-            <div style={{ textAlign: "center" }}>
-              <h2>{t("LAST60")}</h2>;
-            </div>
-          );
+      case 6:
+        return (
+          <div style={{ textAlign: "center" }}>
+            <h2>{t("LAST60")}</h2>;
+          </div>
+        );
       default:
         return null; // Return null instead of an empty string
     }
@@ -185,7 +185,7 @@ const Stats = () => {
   };
 
   const getWaitingData = async () => {
-    const data = await fetchWaitingTimeData(dateRange);
+    const data = await fetchWaitingTimeData();  //waiting time data is always just for today
     setWaitingData(data);
   };
 
@@ -765,7 +765,7 @@ const Stats = () => {
 
         <div className="charts-container">
           <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-            <BarChart width={600} height={300} data={ageGender}>
+            <BarChart data={ageGender}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis dataKey="value" />
@@ -776,17 +776,16 @@ const Stats = () => {
           </ResponsiveContainer>
 
           <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-            <BarChart width={600} height={300} data={last60Days}>
+            <BarChart data={last60Days}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis dataKey="count" />
               <Tooltip />
               <Legend content={() => renderLegendStations(6)} />
-              <Bar dataKey="value" />
+              <Bar dataKey="count" fill="#2255CC" />
+              <ReferenceLine y={70} stroke="red" label={t("GOAL")} />
             </BarChart>
           </ResponsiveContainer>
-
-
         </div>
 
         <div style={{ display: "flex", width: "100%", height: "100%" }}></div>

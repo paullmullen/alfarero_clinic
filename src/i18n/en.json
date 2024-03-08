@@ -165,5 +165,6 @@
   "CHILD_MASCULINE": "Child Masculine",
   "CHILD_FEMININE": "Child Feminine",
   "DEMOGRAPHICS": "Demographics",
-  "LAST60": "Last 60 Days Trend"
+  "LAST60": "Last 60 Days Trend",
+  "GOAL": "Goal"
 }
