@@ -2,9 +2,11 @@ import { firestore } from "./../helpers/firebaseConfig";
 import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 
 const updatePatientData = async (name, phone, reasonForVisit, hoveredRowKey) => {
+
+  console.log(name, phone, reasonForVisit, hoveredRowKey);
+
   try {
     const patientRef = collection(firestore, "patients");
-    console.log(hoveredRowKey);
     const q = query(patientRef, where("pt_no", "==", hoveredRowKey));
     const querySnapshot = await getDocs(q);
     

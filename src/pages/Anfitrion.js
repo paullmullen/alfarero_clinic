@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   Table,
-  Form,
-  Row,
-  Col,
-  Input,
   Image,
   Space,
   Popover,
@@ -18,7 +14,6 @@ import {
   handleStatusChange,
   handleDelete,
 } from "./../helpers/updateStationStatus";
-import { updatePatientData } from "../helpers/updatePatientData";
 import { useHistory } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { AlertInfo } from "../components/AlertInfo";
@@ -37,6 +32,7 @@ import complete from "../img/complete.svg";
 import fin from "../img/fin.png";
 import eye from "../img/eye.svg";
 import edit from "../img/edit.svg";
+import EditPatientData from "../components/EditPatientData.js";
 
 export const Anfitrion = () => {
   useHideMenu(true);
@@ -48,7 +44,6 @@ export const Anfitrion = () => {
   const [t] = useTranslation("global");
 
   const history = useHistory();
-
 
   const handleMouseEnter = (record) => {
     setHoveredRowKey(record.pt_no);
@@ -77,12 +72,6 @@ export const Anfitrion = () => {
     }
   };
 
-  const onFinish = (values) => {
-    const { paciente, tel, motivo } = values; // Destructure form values
-    updatePatientData(paciente, tel, motivo, hoveredRowKey);
-  }
-
-  // Connects info to render on the app with firebase in real time (comunication react-firebase)
 
   useEffect(() => {
     let isMounted = true;
@@ -147,7 +136,6 @@ export const Anfitrion = () => {
         console.log(error);
       }
     };
-    
 
     fetchData();
 
@@ -403,82 +391,6 @@ export const Anfitrion = () => {
     return statusIcon;
   };
 
-  // Editable content inside the popover (status)
-  const editPatientData = (
-    <Form
-      name="editPatient"
-      initialValues={{ remember: true }}
-      onFinish={onFinish} // Set onFinish callback
-    >
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={24}>
-          <Form.Item
-            label={t("name")}
-            name="paciente"
-            rules={[{ required: true, message: t("name") }]}
-          >
-            <Input />
-          </Form.Item>
-        </Col>
-      </Row>
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={24}>
-          <Form.Item
-            label={t("tel")}
-            name="tel"
-            rules={[
-              {
-                validator: (_, value) => {
-                  if (value === undefined || value === "") {
-                    return Promise.resolve();
-                  }
-                  if (
-                    /^(\+\d{1,3}[-  *])?\(?([0-9]{3,4})\)?[-.●  *]?([0-9]{3,4})[-.●  *]?([0-9]{3,4})?$/.test(
-                      value
-                    )
-                  ) {
-                    return Promise.resolve();
-                  }
-                  return Promise.reject(new Error(t("enterValidPhoneNumber")));
-                },
-              },
-            ]}
-          >
-            <Input type="tel" />
-          </Form.Item>
-        </Col>
-      </Row>
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={24}>
-          <Form.Item
-            label={t("reasonForVisit")}
-            name="motivo"
-            rules={[{ required: true, message: t("reasonForVisit") }]}
-          >
-            <Input />
-          </Form.Item>
-        </Col>
-      </Row>
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={24}>
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              shape="round"
-              name="save"
-            >
-              {t("SAVE")}
-            </Button>
-          </Form.Item>
-        </Col>
-      </Row>
-    </Form>
-  );
-  
-  
-  
-
   const iconScale = 1.5;
 
   const editStatusContent = //statusPopoverContent is the icon popover
@@ -629,7 +541,16 @@ export const Anfitrion = () => {
               </td>
               <td align="right">
                 <Popover
-                  content={editPatientData}
+                  content={
+                    <EditPatientData
+                      initialValues={{
+                        paciente: name.split("|")[0],
+                        tel: name.split("|")[3],
+                        motivo: name.split("|")[1],
+                        pt_no: hoveredRowKey
+                      }}
+                    />
+                  }
                   title={t("EDITPATIENTDATA")}
                   trigger="click"
                 >
