@@ -5,6 +5,7 @@ import {
   Bar,
   XAxis,
   YAxis,
+  ReferenceLine,
   CartesianGrid,
   Tooltip,
   Legend,
@@ -29,11 +30,13 @@ import { stations } from "../helpers/stations";
 import { fetchSurveyData } from "../helpers/fetchSurveyData";
 import { fetchPatientsData } from "../helpers/fetchPatientsData";
 import { fetchWaitingTimeData } from "../helpers/fetchWaitingTimeData";
+import { fetchLast60Days } from "../helpers/fetchLast60Days";
 import { satIcon } from "../helpers/satIcon";
 import ExcelExport from "../helpers/Export";
 import { handleReadmitClick } from "../helpers/updateStationStatus";
 import es_ES from "antd/es/date-picker/locale/es_ES";
 import en_US from "antd/es/date-picker/locale/en_US";
+import enter from "../img/enter.png";
 
 const { RangePicker } = DatePicker;
 const datePickerLocales = {
@@ -48,6 +51,8 @@ const Stats = () => {
   const [patients, setPatients] = useState([]);
   const [surveys, setSurveys] = useState([]);
   const [satScore, setSatScore] = useState([]);
+  const [ageGender, setAgeGender] = useState([]);
+  const [last60Days, setLast60Days] = useState({});
   const [columnChanger, setColumnChanger] = useState(false); //toggling column changer triggers useEffect.  Can update columnChanger when the reenter button is clicked.
   const [dateRange, setDateRange] = useState([
     new Date().setHours(0, 0, 0, 0),
@@ -57,8 +62,6 @@ const Stats = () => {
   // State to keep track of sorting
   const [sortInfo, setSortInfo] = useState({});
 
-
-  
   // Handle table sorting changes
   const handleTableChange = (pagination, filters, sorter) => {
     setSortInfo(sorter);
@@ -76,12 +79,34 @@ const Stats = () => {
       const querySnapshot = await query.get();
 
       let count = 0;
+      let adultMasculine = 0;
+      let adultFeminine = 0;
+      let childMasculine = 0;
+      let childFeminine = 0;
       querySnapshot.forEach((doc) => {
         const patient = doc.data();
         patient.plan_of_care.forEach((s) => {
           count += s.station === stationName && s.status !== "pending" ? 1 : 0;
         });
+        if (patient.gender == "masculine" && patient.age_group == "adult") {
+          adultMasculine++;
+        }
+        if (patient.gender == "feminine" && patient.age_group == "adult") {
+          adultFeminine++;
+        }
+        if (patient.gender == "masculine" && patient.age_group == "child") {
+          childMasculine++;
+        }
+        if (patient.gender == "feminine" && patient.age_group == "child") {
+          childFeminine++;
+        }
       });
+      setAgeGender([
+        { name: t("ADULT_FEMININE"), value: adultFeminine, fill: "#de7ad1" },
+        { name: t("ADULT_MASCULINE"), value: adultMasculine, fill: "#7a98de" },
+        { name: t("CHILD_FEMININE"), value: childFeminine, fill: "#de7ad1" },
+        { name: t("CHILD_MASCULINE"), value: childMasculine, fill: "#7a98de" },
+      ]);
 
       return count;
     } catch (e) {
@@ -109,12 +134,24 @@ const Stats = () => {
             <h2>{t("ARRIVAL_TIME")}</h2>;
           </div>
         );
-        case 4:
-          return (
-            <div style={{ textAlign: "center" }}>
-              <h2>{t("WAITING_TIME")}</h2>;
-            </div>
-          );
+      case 4:
+        return (
+          <div style={{ textAlign: "center" }}>
+            <h2>{t("WAITING_TIME")}</h2>;
+          </div>
+        );
+      case 5:
+        return (
+          <div style={{ textAlign: "center" }}>
+            <h2>{t("DEMOGRAPHICS")}</h2>;
+          </div>
+        );
+      case 6:
+        return (
+          <div style={{ textAlign: "center" }}>
+            <h2>{t("LAST60")}</h2>;
+          </div>
+        );
       default:
         return null; // Return null instead of an empty string
     }
@@ -148,8 +185,13 @@ const Stats = () => {
   };
 
   const getWaitingData = async () => {
-    const data = await fetchWaitingTimeData(dateRange);
+    const data = await fetchWaitingTimeData();  //waiting time data is always just for today
     setWaitingData(data);
+  };
+
+  const getLast60Days = async () => {
+    const data = await fetchLast60Days();
+    setLast60Days(data);
   };
 
   const surveySummary = async (surveys) => {
@@ -182,23 +224,20 @@ const Stats = () => {
       };
     });
 
+    let hoursArray = [
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ];
+    patientsData.forEach((patient) => {
+      hoursArray[parseInt(patient.start_time.substring(0, 2))]++;
+    });
+    const arrivalData = hoursArray.map((count, index) => ({
+      hour: index,
+      count: count,
+    }));
 
-      let hoursArray = [
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      ];
-      patientsData.forEach((patient) => {
-        hoursArray[parseInt(patient.start_time.substring(0, 2))]++;
-      });
-      const arrivalData = hoursArray.map((count, index) => ({
-        hour: index,
-        count: count,
-      }));
-    
     setPatients(patientsData);
     setArrivalTimeData(arrivalData);
   };
-
-
 
   const stationsData = async () => {
     try {
@@ -235,7 +274,9 @@ const Stats = () => {
   };
 
   const CustomTick = (props) => {
+    // eslint-disable-next-line react/prop-types
     const { x, y, payload } = props;
+    // eslint-disable-next-line react/prop-types
     switch (payload.value) {
       case "1":
         return (
@@ -457,13 +498,12 @@ const Stats = () => {
       await stationsData();
       await surveyData();
       await getWaitingData();
-
+      await getLast60Days();
     };
     doStuffInOrder();
   }, [t, columnChanger, dateRange]);
 
   const barColors = getBarColors();
-  const arrivalTimeChartData = arrivalTimeData;
   const waitTimeChartData = waitingData;
 
   const patientsColumns = [
@@ -474,6 +514,24 @@ const Stats = () => {
       width: 50,
       fixed: "left",
       sorter: (a, b) => a.patient_name.localeCompare(b.patient_name),
+      render: (name) => <div>{name}</div>,
+    },
+    {
+      title: t("age"),
+      dataIndex: "age_group",
+      key: "age_group",
+      width: 50,
+      fixed: "left",
+      sorter: (a, b) => a.age_group.localeCompare(b.age_group),
+      render: (name) => <div>{name}</div>,
+    },
+    {
+      title: t("gender"),
+      dataIndex: "gender",
+      key: "gender",
+      width: 50,
+      fixed: "left",
+      sorter: (a, b) => a.gender.localeCompare(b.gender),
       render: (name) => <div>{name}</div>,
     },
     // {
@@ -531,7 +589,7 @@ const Stats = () => {
       title: t("READMIT"),
       dataIndex: "pt_no",
       key: "estado",
-      width: 20,
+      width: 10,
       fixed: "right",
       render: (ptNo) => {
         const patient = patients.find((item) => item.pt_no === ptNo);
@@ -546,12 +604,7 @@ const Stats = () => {
             }}
             style={{ padding: 0 }}
           >
-            <Image
-              src={require("../img/enter.png")}
-              width={20}
-              height={20}
-              preview={false}
-            />
+            <Image src={enter} width={20} height={20} preview={false} />
           </Button>
         );
       },
@@ -559,14 +612,14 @@ const Stats = () => {
   ];
 
   const surveyColumns = [
-    {
-      title: t("source"),
-      dataIndex: "source",
-      key: "source",
-      width: 50,
-      fixed: "left",
-      render: (name) => <div>{t(name)}</div>,
-    },
+    // {
+    //   title: t("source"),
+    //   dataIndex: "source",
+    //   key: "source",
+    //   width: 50,
+    //   fixed: "left",
+    //   render: (name) => <div>{t(name)}</div>,
+    // },
     {
       title: t("sat"),
       dataIndex: "satisfaction",
@@ -575,21 +628,37 @@ const Stats = () => {
       fixed: "left",
       render: (name) => <div>{satIcon(name)}</div>,
     },
+    // {
+    //   title: t("first"),
+    //   dataIndex: "first",
+    //   key: "first",
+    //   width: 25,
+    //   fixed: "left",
+    //   render: (name) => <div>{name === "1" ? t("yes") : t("no")}</div>,
+    // },
     {
-      title: t("first"),
-      dataIndex: "first",
-      key: "first",
-      width: 25,
-      fixed: "left",
-      render: (name) => <div>{name === "1" ? t("yes") : t("no")}</div>,
-    },
-    {
-      title: t("suggestion"),
-      dataIndex: "suggestion",
-      key: "suggestion",
-      width: 125,
+      title: t("prayer_request"),
+      dataIndex: "prayer_request",
+      key: "prayer_request",
+      width: 250,
       fixed: "left",
       render: (name) => <div>{name}</div>,
+    },
+    {
+      title: t("gender"),
+      dataIndex: "gender",
+      key: "gender",
+      width: 50,
+      fixed: "left",
+      render: (name) => <div>{t(name)}</div>,
+    },
+    {
+      title: t("age"),
+      dataIndex: "age_group",
+      key: "age_group",
+      width: 50,
+      fixed: "left",
+      render: (name) => <div>{t(name)}</div>,
     },
   ];
 
@@ -625,7 +694,7 @@ const Stats = () => {
         <div className="charts-container">
           <div style={{ display: "flex", width: "100%", height: "100%" }}>
             <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-              <BarChart data={statsData} label="hello">
+              <BarChart data={statsData} label="station">
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="station" />
                 <YAxis />
@@ -661,36 +730,64 @@ const Stats = () => {
                 <div>Loading...</div>
               )}
             </ResponsiveContainer>
-
           </div>
         </div>
-        <div className="charts-container">
-        <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-              <BarChart data={arrivalTimeData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" />
-                <YAxis >
-                  <Label value={t("NUM_PTS")} angle="-90" />
-                  </YAxis>
-                <Tooltip />
-                <Legend content={() => renderLegendStations(3)} />
 
-                <Bar dataKey="count" fill="#8884d8" />
-              </BarChart>
-            </ResponsiveContainer>  
-        <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-          <BarChart data={waitTimeChartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="station_type" />
-            <YAxis>
-              <Label value ={t("MINUTES")} angle="-90" /></YAxis>
-            <Tooltip />
-            <Legend content={() => renderLegendStations(4)} />
-            <Bar dataKey = "avg_waiting_time" fill = "#22CC55" />
-            <Bar dataKey = "avg_procedure_time" fill= "#2255CC" />
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="charts-container">
+          <ResponsiveContainer width="50%" height="100%" minHeight="300px">
+            <BarChart data={arrivalTimeData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="hour" />
+              <YAxis>
+                <Label value={t("NUM_PTS")} angle="-90" />
+              </YAxis>
+              <Tooltip />
+              <Legend content={() => renderLegendStations(3)} />
+
+              <Bar dataKey="count" fill="#8884d8" />
+            </BarChart>
+          </ResponsiveContainer>
+
+          <ResponsiveContainer width="50%" height="100%" minHeight="300px">
+            <BarChart data={waitTimeChartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="station_type" />
+              <YAxis>
+                <Label value={t("MINUTES")} angle="-90" />
+              </YAxis>
+              <Tooltip />
+              <Legend content={() => renderLegendStations(4)} />
+              <Bar dataKey="avg_waiting_time" fill="#22CC55" />
+              <Bar dataKey="avg_procedure_time" fill="#2255CC" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
+
+        <div className="charts-container">
+          <ResponsiveContainer width="50%" height="100%" minHeight="300px">
+            <BarChart data={ageGender}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis dataKey="value" />
+              <Tooltip />
+              <Legend content={() => renderLegendStations(5)} />
+              <Bar dataKey="value" fill="fill" />
+            </BarChart>
+          </ResponsiveContainer>
+
+          <ResponsiveContainer width="50%" height="100%" minHeight="300px">
+            <BarChart data={last60Days}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis dataKey="count" />
+              <Tooltip />
+              <Legend content={() => renderLegendStations(6)} />
+              <Bar dataKey="count" fill="#2255CC" />
+              <ReferenceLine y={70} stroke="red" label={t("GOAL")} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
         <div style={{ display: "flex", width: "100%", height: "100%" }}></div>
         <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
           {t("DOWNLOAD")}
@@ -712,7 +809,7 @@ const Stats = () => {
           rowKey={"pt_no"}
           columns={patientsColumns}
           dataSource={patients.some((d) => d === undefined) ? [] : patients}
-          scroll={{ x: 1500, y: 1500 }}
+          scroll={{ x: 410, y: 1500 }}
           sticky
           pagination={true}
           offsetScroll={3}
@@ -727,7 +824,7 @@ const Stats = () => {
           rowKey={"inx"}
           columns={surveyColumns}
           dataSource={surveys.some((d) => d === undefined) ? [] : surveys}
-          scroll={{ x: 1500, y: 1500 }}
+          scroll={{ x: 580, y: 1500 }}
           sticky
           pagination={true}
           offsetScroll={3}

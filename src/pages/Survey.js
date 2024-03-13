@@ -2,18 +2,17 @@ import React, { useState } from "react";
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import {
   Button,
   Form,
   Input,
-  Select,
   Divider,
   Radio,
   Space,
   Row,
   Col,
-  } from "antd";
+} from "antd";
 import { ReactComponent as AngryIcon } from "../img/angry.svg";
 import { ReactComponent as SadIcon } from "../img/sad.svg";
 import { ReactComponent as IndifferentIcon } from "../img/indifferent.svg";
@@ -32,6 +31,7 @@ export const Survey = () => {
     satisfaction: "",
   });
 
+  // eslint-disable-next-line no-unused-vars
   const handleChangeSource = (values) => {
     const newValue = typeof values === "object" ? values.target.value : values;
     setSurveyResult((prevSurveyResult) => ({
@@ -40,6 +40,7 @@ export const Survey = () => {
     }));
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleChangeFirstVisit = (values) => {
     const newValue = typeof values === "object" ? values.target.value : values;
     setSurveyResult((prevSurveyResult) => ({
@@ -48,11 +49,20 @@ export const Survey = () => {
     }));
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleChangeSuggestions = (values) => {
     const newValue = typeof values === "object" ? values.target.value : values;
     setSurveyResult((prevSurveyResult) => ({
       ...prevSurveyResult,
       suggestion: newValue,
+    }));
+  };
+
+  const handleChangePrayer = (values) => {
+    const newValue = typeof values === "object" ? values.target.value : values;
+    setSurveyResult((prevSurveyResult) => ({
+      ...prevSurveyResult,
+      prayer_request: newValue,
     }));
   };
 
@@ -64,23 +74,31 @@ export const Survey = () => {
     }));
   };
 
+  const location = useLocation();
+
+  // eslint-disable-next-line no-unused-vars
   const onFinish = async (values) => {
+    console.log(location);
+
+
     try {
       if (
-        surveyResult.first !== "" ||
-        surveyResult.source !== "" ||
-        surveyResult.suggestion !== "" ||
-        surveyResult.satisfaction !== ""
+        // surveyResult.first !== "" ||
+        // surveyResult.source !== "" ||
+        // surveyResult.suggestion !== "" ||
+        surveyResult.satisfaction !== "" ||
+        surveyResult.prayer_request !== ""
       ) {
-        await firestore
-          .collection("surveys")
-          .add({
-            first: surveyResult.first,
-            source: surveyResult.source,
-            suggestion: surveyResult.suggestion,
-            satisfaction: surveyResult.satisfaction,
-            date: new Date(),
-          });
+        await firestore.collection("surveys").add({
+          // first: surveyResult.first,
+          // source: surveyResult.source,
+          // suggestion: surveyResult.suggestion,
+          satisfaction: surveyResult.satisfaction,
+          prayer_request: surveyResult.prayer_request,
+          gender: location.state.gender,
+          age_group: location.state.age_group,
+          date: new Date(),
+        });
         // Redirect to "/Anfitrion" after successful Firestore write
         history.push("/Anfitrion");
       } else {
@@ -94,7 +112,6 @@ export const Survey = () => {
   const onFinishFailed = (errorInfo) => {
     console.log("Failed:", errorInfo);
   };
-
 
   useHideMenu(true);
 
@@ -115,7 +132,7 @@ export const Survey = () => {
             labelCol={{ flex: "310px" }}
             labelWrap
           >
-            <Row>
+            {/* <Row>
               <Col xs={24} sm={24}>
                 <Form.Item label={t("howDidYouLearn")} name="username">
                   <Select
@@ -154,10 +171,18 @@ export const Survey = () => {
                   <TextArea rows={4} onChange={handleChangeSuggestions} />
                 </Form.Item>
               </Col>
+            </Row> */}
+            <Row>
+            <Col xs={24} sm={24}>
+            <Form.Item label={t("prayer")} name="prayer_request">
+                  <TextArea rows={4} onChange={handleChangePrayer} />
+                </Form.Item>
+              </Col>
+              <Divider />
             </Row>
             <Row>
               <Col xs={24} sm={24}>
-                <Form.Item label={t("satisfaction")} name="satisfaction">
+                <Form.Item label={t("satisfaction")} name="sat_gen">
                   <Radio.Group onChange={handleChangeSatisfaction}>
                     <Space direction="horizontal">
                       <Radio value={1}>
@@ -181,8 +206,65 @@ export const Survey = () => {
                   </Radio.Group>
                 </Form.Item>
               </Col>
+              <Divider />
             </Row>
-            <Divider />
+            {/* <Row>
+              <Col xs={24} sm={24}>
+                <Form.Item label={t("sat_anfi")} name="sat_anfi">
+                  <Radio.Group onChange={handleChangeSatisfaction}>
+                    <Space direction="horizontal">
+                      <Radio value={1}>
+                        <AngryIcon height="50px" width="50px">
+                          {" "}
+                        </AngryIcon>
+                      </Radio>
+                      <Radio value={2}>
+                        <SadIcon height="50px" width="50px"></SadIcon>
+                      </Radio>
+                      <Radio value={3}>
+                        <IndifferentIcon height="50px" width="50px" />
+                      </Radio>
+                      <Radio value={4}>
+                        <HappyIcon height="50px" width="50px" />
+                      </Radio>
+                      <Radio value={5}>
+                        <ThrilledIcon height="50px" width="50px" />
+                      </Radio>
+                    </Space>
+                  </Radio.Group>
+                </Form.Item>
+              </Col>
+              <Divider />
+            </Row>
+            {location.state.map((item) => (
+              <Row key={item}>
+                <Col xs={24} sm={24}>
+                  <Form.Item label={t("sat_"+item)} name={t("sat_"+item)}>
+                    <Radio.Group onChange={handleChangeSatisfaction}>
+                      <Space direction="horizontal">
+                        <Radio value={1}>
+                          <AngryIcon height="50px" width="50px">
+                            {" "}
+                          </AngryIcon>
+                        </Radio>
+                        <Radio value={2}>
+                          <SadIcon height="50px" width="50px"></SadIcon>
+                        </Radio>
+                        <Radio value={3}>
+                          <IndifferentIcon height="50px" width="50px" />
+                        </Radio>
+                        <Radio value={4}>
+                          <HappyIcon height="50px" width="50px" />
+                        </Radio>
+                        <Radio value={5}>
+                          <ThrilledIcon height="50px" width="50px" />
+                        </Radio>
+                      </Space>
+                    </Radio.Group>
+                  </Form.Item>
+                </Col>
+              </Row> */}
+
             <Row>
               <Col xs={24} sm={24} offset={6}>
                 <Space wrap>

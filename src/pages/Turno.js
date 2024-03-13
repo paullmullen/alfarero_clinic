@@ -5,6 +5,20 @@ import { useHideMenu } from "../hooks/useHideMenu";
 import { AlertInfo } from "../components/AlertInfo";
 import { useTranslation } from "react-i18next";
 import IconSizes from "../helpers/iconSizes";
+import one from "../img/1.svg";
+
+import two from "../img/2.svg";
+import three from "../img/3.svg";
+import four from "../img/4.svg";
+import five from "../img/5.svg";
+import six from "../img/6.svg";
+import seven from "../img/7.svg";
+import waiting from "../img/waiting.svg";
+import in_process from "../img/in_process.svg";
+import not_planned from "../img/not_planned.svg";
+import complete from "../img/complete.svg";
+import fin from "../img/fin.png";
+import pay from "../img/pay.svg";
 
 export const Turno = () => {
   useHideMenu(true);
@@ -23,7 +37,7 @@ export const Turno = () => {
       case "pending":
         statusIcon = (
           <Image
-            src={require("../img/not_planned.svg")}
+            src={not_planned}
             width={IconSizes.width}
             height={IconSizes.height}
             preview={false}
@@ -33,7 +47,7 @@ export const Turno = () => {
       case "in_process":
         statusIcon = (
           <Image
-            src={require("../img/in_process.svg")}
+            src={in_process}
             width={IconSizes.width}
             height={IconSizes.height}
             preview={false}
@@ -43,7 +57,7 @@ export const Turno = () => {
       case "waiting":
         statusIcon = (
           <Image
-            src={require("../img/waiting.svg")}
+            src={waiting}
             width={IconSizes.width}
             height={IconSizes.height}
             preview={false}
@@ -53,7 +67,7 @@ export const Turno = () => {
       case "pay":
         statusIcon = (
           <Image
-            src={require("../img/pay.svg")}
+            src={pay}
             width={IconSizes.width}
             height={IconSizes.height}
             preview={false}
@@ -63,7 +77,7 @@ export const Turno = () => {
       case "complete":
         statusIcon = (
           <Image
-            src={require("../img/complete.svg")}
+            src={complete}
             width={IconSizes.width}
             height={IconSizes.height}
             preview={false}
@@ -73,7 +87,7 @@ export const Turno = () => {
       case "1":
         statusIcon = (
           <Image
-            src={require("../img/1.svg")}
+            src={one}
             width={IconSizes.width}
             height={IconSizes.height}
             preview={false}
@@ -83,7 +97,7 @@ export const Turno = () => {
       case "2":
         statusIcon = (
           <Image
-            src={require("../img/2.svg")}
+            src={two}
             width={IconSizes.width}
             height={IconSizes.height}
             preview={false}
@@ -93,7 +107,7 @@ export const Turno = () => {
       case "3":
         statusIcon = (
           <Image
-            src={require("../img/3.svg")}
+            src={three}
             width={IconSizes.width}
             height={IconSizes.height}
             preview={false}
@@ -103,7 +117,7 @@ export const Turno = () => {
       case "4":
         statusIcon = (
           <Image
-            src={require("../img/4.svg")}
+            src={four}
             width={IconSizes.width}
             height={IconSizes.height}
             preview={false}
@@ -113,7 +127,7 @@ export const Turno = () => {
       case "5":
         statusIcon = (
           <Image
-            src={require("../img/5.svg")}
+            src={five}
             width={IconSizes.width}
             height={IconSizes.height}
             preview={false}
@@ -123,7 +137,7 @@ export const Turno = () => {
       case "6":
         statusIcon = (
           <Image
-            src={require("../img/6.svg")}
+            src={six}
             width={IconSizes.width}
             height={IconSizes.height}
             preview={false}
@@ -133,7 +147,7 @@ export const Turno = () => {
       case "7":
         statusIcon = (
           <Image
-            src={require("../img/7.svg")}
+            src={seven}
             width={IconSizes.width}
             height={IconSizes.height}
             preview={false}
@@ -143,7 +157,7 @@ export const Turno = () => {
       case "fin":
         statusIcon = (
           <Image
-            src={require("../img/fin.png")}
+            src={fin}
             width={IconSizes.width}
             height={IconSizes.height}
             preview={false}

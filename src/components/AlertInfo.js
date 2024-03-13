@@ -1,6 +1,10 @@
 import React from "react";
 import { Image, Alert, Divider, Typography, Space, Row, Col } from "antd";
 import { useTranslation } from "react-i18next";
+import waiting from "../img/waiting.svg";
+import in_process from "../img/in_process.svg";
+import complete from "../img/complete.svg";
+import eye from "../img/eye.svg";
 const { Title } = Typography;
 
 export const AlertInfo = () => {
@@ -17,7 +21,7 @@ export const AlertInfo = () => {
                 <Space>
                   <Image
                     preview={false}
-                    src={require("../img/waiting.svg")}
+                    src={waiting}
                     width={20}
                     height={80}
                   />
@@ -27,7 +31,7 @@ export const AlertInfo = () => {
                 <Space>
                   <Image
                     preview={false}
-                    src={require("../img/in_process.svg")}
+                    src={in_process}
                     width={20}
                     height={80}
                   />
@@ -37,9 +41,9 @@ export const AlertInfo = () => {
                 <Space>
                   <Image
                     preview={false}
-                    src={require("../img/eye.svg")}
-                    width={20}
-                    height={80}
+                    src={eye}
+                    // width={40}
+                    height={40}
                   />
                   <Title level={5}>{t('obser')}</Title>
                 </Space>
@@ -47,7 +51,7 @@ export const AlertInfo = () => {
                 <Space>
                   <Image
                     preview={false}
-                    src={require("../img/complete.svg")}
+                    src={complete}
                     width={20}
                     height={80}
                   />

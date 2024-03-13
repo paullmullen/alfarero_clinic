@@ -5,11 +5,9 @@ import {
   Button,
   Typography,
   Divider,
-
   Col,
   Row,
   Radio,
-
 } from "antd";
 import { SaveFilled } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
@@ -19,8 +17,10 @@ import { firestore } from "./../helpers/firebaseConfig";
 import { stations } from "../helpers/stations";
 import moment from "moment";
 import { useTranslation } from "react-i18next";
+import { QrReader } from "react-qr-reader";
+import CryptoJS from "crypto-js";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 const layout = {
   labelCol: { span: 8 },
@@ -38,6 +38,63 @@ export const Registro = () => {
   // const [selectedRecipeStations, setRecipeStations] = useState([]);
   const [disabledButton, setDisabledButton] = useState(false);
   const [t] = useTranslation("global");
+
+  const [scannerVisible, setScannerVisible] = useState(false); // Define scannerVisible for Registro component
+  const [qrCodeData, setQrCodeData] = useState(null); // Define qrCodeData for Registro component
+
+  const getVideoDevices = async () => {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    return devices.filter((device) => device.kind === "videoinput");
+  };
+
+  const handleToggleScanner = () => {
+    setScannerVisible(!scannerVisible);
+  };
+
+  const onResult = (data) => {
+    if (data) {
+      handleToggleScanner();
+      const decrypt = decryptData(data.text);
+      const temp = JSON.parse(decrypt);
+
+      if (temp.n) {
+        form.setFieldsValue({
+          paciente: temp.n,
+        });
+      }
+      if (temp.t) {
+        form.setFieldsValue({
+          tel: temp.t,
+        });
+      }
+    }
+  };
+
+  const handleScan = (data) => {
+    if (data) {
+      setQrCodeData(data);
+    }
+  };
+
+  const handleError = (error) => {
+    console.error(error);
+  };
+
+  const QRCodeScanner = () => {
+    return (
+      <div>
+        {scannerVisible && (
+          <QrReader
+            onError={handleError}
+            onScan={handleScan}
+            onResult={onResult}
+            key={"environment"}
+            constraints={{ facingMode: "environment" }}
+          />
+        )}
+      </div>
+    );
+  };
 
   useHideMenu(false);
 
@@ -60,7 +117,6 @@ export const Registro = () => {
     "7",
     "7",
   ];
-
 
   // Make all unused stations equal to pending.  This ensures that the pending stations exists so that they could be changed by the host.
   const fillMissingStations = (stations, visits) => {
@@ -99,8 +155,7 @@ export const Registro = () => {
     setPatientPlanOfCare(filledStations);
   };
 
-
-// Reset the form after successful entry to make room for the next new patient.
+  // Reset the form after successful entry to make room for the next new patient.
   const handleReset = () => {
     form.setFieldsValue({ stations: [] });
     form.resetFields();
@@ -108,7 +163,9 @@ export const Registro = () => {
   };
 
   useEffect(() => {
-    let isMounted = true;
+    console.log(getVideoDevices());
+
+
     let unsubscribe;
 
     const fetchData = async () => {
@@ -141,12 +198,8 @@ export const Registro = () => {
       if (unsubscribe) {
         unsubscribe();
       }
-      isMounted = false;
     };
-
-
   }, [t]);
-
 
   //Called by OnFinish and by the onValuesChange elmement of the form.
   const updateStatsCollection = async (station) => {
@@ -165,24 +218,27 @@ export const Registro = () => {
       if (statsData.date !== currentMonthDayYear) {
         // La fecha es diferente, reset the stats for all stations
         try {
-          firestore.collection("stats").get().then(function(querySnapshot) {
-            querySnapshot.forEach(function(doc) {
+          firestore
+            .collection("stats")
+            .get()
+            .then(function (querySnapshot) {
+              querySnapshot.forEach(function (doc) {
                 doc.ref.update({
-                    date: currentMonthDayYear,
-                    number_of_patients: 0,
-                    procedure_time_data: [],
-                    wait_time_data: [],
-                    avg_procedure_time: 0,
-                    avg_waiting_time: 0
+                  date: currentMonthDayYear,
+                  number_of_patients: 0,
+                  procedure_time_data: [],
+                  waiting_time_data: [],
+                  avg_procedure_time: 0,
+                  avg_waiting_time: 0,
                 });
+              });
             });
-        });
-
-      } catch (e) { console.log (e)}
-    } 
+        } catch (e) {
+          console.log(e);
+        }
+      }
       // La fecha es la misma, actualizar el número de pacientes del dia actual
       else if (station === statsDoc.data().station_type) {
-        console.log("same date");
         const currentDayPatients = statsData.number_of_patients || 0;
         await statsRef.update({
           number_of_patients: currentDayPatients + 1,
@@ -199,9 +255,9 @@ export const Registro = () => {
     }
   };
 
-  const handleChange = (selectedOption) => {
-    generateVisits(selectedOption);
-  };
+  // const handleChange = (selectedOption) => {
+  //   generateVisits(selectedOption);
+  // };
 
   const updateStations = (changedValues) => {
     let recipeOptions = [];
@@ -225,8 +281,24 @@ export const Registro = () => {
     }
   };
 
-  const onFinish = async (patient) => {
+  const secretPass = "XkhZG4fW2t2W";
 
+  const encryptData = (text) => {
+    const data = CryptoJS.AES.encrypt(
+      JSON.stringify(text),
+      secretPass
+    ).toString();
+
+    return data;
+  };
+
+  const decryptData = (text) => {
+    const bytes = CryptoJS.AES.decrypt(text, secretPass);
+    const data = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+    return data;
+  };
+
+  const onFinish = async (patient) => {
     setDisabledButton(true);
     const formattedPatient = {
       complete: false,
@@ -241,8 +313,9 @@ export const Registro = () => {
       stop_time: new Date(),
       wait_time: 0,
       type_of_visit: patient.tipo,
+      gender: patient.gender,
+      age_group: patient.age_group !== undefined ? patient.age_group : null
     };
-
     const patientRef = await firestore
       .collection("patients")
       .add(formattedPatient);
@@ -265,6 +338,17 @@ export const Registro = () => {
       }
     });
 
+    console.log("patient: ", patient.paciente);
+    const fooJson = {
+      n: "Paul Mullen",
+      t: "Lawrence",
+    };
+    const fooString = JSON.stringify(fooJson);
+
+    const foo = encryptData(fooString);
+    console.log("encrypted: ", foo);
+    console.log("decrypted: ", decryptData(foo, secretPass));
+
     showAlert("Success", t("patientWasCreated"), "success");
     handleReset();
   };
@@ -279,7 +363,6 @@ export const Registro = () => {
     <Row gutter={24} style={{ display: "contents" }}>
       <Col xs={24} sm={24}>
         <Title level={2}>{t("patientRegistration")}</Title>
-        <Text>{t("enterFields")}</Text>
         <Divider />
         <Form
           {...layout}
@@ -291,85 +374,175 @@ export const Registro = () => {
           onValuesChange={updateStations}
         >
           <Row gutter={24}>
-            <Col xs={24} sm={24}>
-              <Form.Item
-                label={t("patientName")}
-                name="paciente"
-                rules={[{ required: true, message: t("enterName") }]}
-              >
-                <Input />
-              </Form.Item>
+            <Col xs={4} sm={4}>
+              <Button onClick={handleToggleScanner} shape="round">
+                {t("SCAN")}
+              </Button>
+            </Col>
+            <Col xs={8} sm={8}>
+              {scannerVisible && (
+                <QRCodeScanner
+                  scannerVisible={scannerVisible}
+                  setScannerVisible={setScannerVisible}
+                  qrCodeData={qrCodeData}
+                  setQrCodeData={setQrCodeData}
+                />
+              )}
             </Col>
           </Row>
-          <Row gutter={24}>
+          <Row> 
             <Col xs={24} sm={24}>
-              <Form.Item
-                label={t("tel")}
-                name="tel"
-                rules={[
-                  {
-                    validator: (_, value) => {
-                      if (value === undefined || value === "") {
-                        return Promise.resolve();
-                      }
-                      if (
-                        /^(\+\d{1,3}[-  *])?\(?([0-9]{3,4})\)?[-.●  *]?([0-9]{3,4})[-.●  *]?([0-9]{3,4})?$/.test(
-                          value
-                        )
-                      ) {
-                        return Promise.resolve();
-                      }
-                      return Promise.reject(
-                        new Error(t("enterValidPhoneNumber"))
-                      );
-                    },
-                  },
-                ]}
-              >
-                <Input type="tel" />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={24}>
-            <Col xs={24} sm={24}>
-              <Form.Item
-                label={t("reasonForVisit")}
-                name="motivo"
-                rules={[{ required: true, message: t("reasonForVisit") }]}
-              >
-                <Input />
-              </Form.Item>
-            </Col>
-          </Row>
 
-          <Row gutter={24}>
-            <Col xs={24} sm={24}>
-              <Form.Item
-                label={t("visitTypes")}
-                name="tipo"
-                rules={[
-                  {
-                    required: true,
-                    message: t("selectExamType"),
-                  },
-                ]}
-              >
-                <Radio.Group
-            onChange={updateStations}
-            size = "large"  optionType="button"
-            style={{ display: 'flex', flexWrap: 'wrap' }}
-          >
-            {recipes.map(recipe => (
-              <Radio key={recipe.value} value={recipe.value} style={{ flex: `0 0 ${33}%` }}>
-                {recipe.label}
-              </Radio>
-            ))}
-          </Radio.Group>
-              </Form.Item>
-            </Col>
-          </Row>
+              <Row>
+                <Col xs={24} sm={24}>
+                  <Form.Item
+                    label={t("name")}
+                    name="paciente"
+                    rules={[{ required: true, message: t("name") }]}
+                  >
+                    <Input />
+                  </Form.Item>
+                </Col>
+              </Row>
 
-          {/* <Row gutter={24}>
+              <Row >
+              <Col xs={8} sm={8}>  
+                </Col>
+                <Col xs={7} sm={7}>
+                  <Form.Item
+                    label={t("age")}
+                    name="age_group"
+                    rules={[
+                      {
+                        required: true,
+                        message: t("selectPatientAge"),
+                      },
+                    ]}
+                  >
+                    <Radio.Group
+                      size="large"
+                      optionType="button"
+                      style={{ display: "flex", flexWrap: "wrap" }}
+                    >
+                      <Radio
+                        key="child"
+                        value = "child"
+                        style={{ flex: `0 0 ${12}%` }}
+                      >{t("child")}</Radio>
+                      <Radio
+                        key="adult"
+                        value="adult"
+                        style={{ flex: `0 0 ${12}%` }}
+                      >{t("adult")}</Radio>
+                    </Radio.Group>
+                  </Form.Item>
+                </Col>
+                <Col xs={8} sm={8}>
+                  <Form.Item
+                    label={t("gender")}
+                    name="gender"
+                    rules={[
+                      {
+                        required: true,
+                        message: t("selectPatientAge"),
+                      },
+                    ]}
+                  >
+                    <Radio.Group
+                      size="large"
+                      optionType="button"
+                      style={{ display: "flex", flexWrap: "wrap" }}
+                    >
+                      <Radio
+                        key="masculine"
+                        value = "masculine"
+                        style={{ flex: `0 0 ${12}%` }}
+                      >{t("male")}</Radio>
+                      <Radio
+                        key="feminine"
+                        value="feminine"
+                        style={{ flex: `0 0 ${12}%` }}
+                      >{t("female")}
+                      </Radio>
+                    </Radio.Group>
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Row style={{ display: "contents" }} gutter={24}>
+                <Col xs={24} sm={24}>
+                  <Form.Item
+                    label={t("tel")}
+                    name="tel"
+                    rules={[
+                      {
+                        validator: (_, value) => {
+                          if (value === undefined || value === "") {
+                            return Promise.resolve();
+                          }
+                          if (
+                            /^(\+\d{1,3}[-  *])?\(?([0-9]{3,4})\)?[-.●  *]?([0-9]{3,4})[-.●  *]?([0-9]{3,4})?$/.test(
+                              value
+                            )
+                          ) {
+                            return Promise.resolve();
+                          }
+                          return Promise.reject(
+                            new Error(t("enterValidPhoneNumber"))
+                          );
+                        },
+                      },
+                    ]}
+                  >
+                    <Input type="tel" />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row>
+                <Col xs={24} sm={24}>
+                  <Form.Item
+                    label={t("reasonForVisit")}
+                    name="motivo"
+                    rules={[{ required: true, message: t("reasonForVisit") }]}
+                  >
+                    <Input />
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Row gutter={24}>
+                <Col xs={24} sm={24}>
+                  <Form.Item
+                    label={t("visitTypes")}
+                    name="tipo"
+                    rules={[
+                      {
+                        required: true,
+                        message: t("selectExamType"),
+                      },
+                    ]}
+                  >
+                    <Radio.Group
+                      onChange={updateStations}
+                      size="large"
+                      optionType="button"
+                      style={{ display: "flex", flexWrap: "wrap" }}
+                    >
+                      {recipes.map((recipe) => (
+                        <Radio
+                          key={recipe.value}
+                          value={recipe.value}
+                          style={{ flex: `0 0 ${33}%` }}
+                        >
+                          {recipe.label}
+                        </Radio>
+                      ))}
+                    </Radio.Group>
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              {/* <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
                 label={t("stations")}
@@ -393,20 +566,22 @@ export const Registro = () => {
               </Form.Item>
             </Col>
           </Row> */}
-          <Row style={{ display: "contents" }} gutter={24}>
-            <Col xs={24} sm={24}>
-              <Form.Item {...tailLayout}>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  shape="round"
-                  name="register"
-                  disabled={disabledButton}
-                >
-                  <SaveFilled />
-                  {t("register")}
-                </Button>
-              </Form.Item>
+              <Row>
+                <Col xs={24} sm={24}>
+                  <Form.Item {...tailLayout}>
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      shape="round"
+                      name="register"
+                      disabled={disabledButton}
+                    >
+                      <SaveFilled />
+                      {t("register")}
+                    </Button>
+                  </Form.Item>
+                </Col>
+              </Row>
             </Col>
           </Row>
         </Form>

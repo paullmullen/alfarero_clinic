@@ -60,7 +60,6 @@ h5 {
 .ant-popover-title {
   text-align: center;
   text-transform: uppercase;
-
 }
 
 .noheader-popover .ant-popover-title {
@@ -102,14 +101,8 @@ h5 {
   font-size: small;
 }
 
-
-.ant-radio-button-wrapper-checked {
-  background-color: #1890ff; /* Replace with your desired color */
-  border-color: #1890ff; /* Replace with your desired color */
-  color: #fff; /* Replace with your desired text color */
-}
-
 /* This rule changes the background color of the unselected radio buttons on hover */
 .ant-radio-button-wrapper:not(.ant-radio-button-wrapper-checked):hover {
   background-color: #f5f5f5; /* Replace with your desired color */
 }
+
