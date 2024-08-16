@@ -146,7 +146,7 @@
   "turnTable": "Sala de Espera",
   "type_of_visit": "Tipo de Visita",
   "updateStatus": "Actualizar estatus",
-  "version": "1.1.11",
+  "version": "1.1.12",
   "visitCompleted": "Servicio completado",
   "visitPayed": "Pagando",
   "visitTypes": "Tipo de Visita",
@@ -165,7 +165,9 @@
   "CHILD_MASCULINE": "Niño Masculino",
   "CHILD_FEMININE": "Niña Feminina",
   "DEMOGRAPHICS": "Demographía",
-  "LAST60": "Tendencia: Últimos 60 Días",
-  "GOAL": "Meta"
-
+  "LAST": "Tendencia: Últimos ",
+  "GOAL": "Meta",
+  "DAYSAGO": "Datos de Tendencia",
+  "TRENDDAYS": "Días Anteriores Para Gráfica de Tendencias",
+  "DAYS": "Días"
 }

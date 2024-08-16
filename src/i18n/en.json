@@ -146,7 +146,7 @@
   "turnTable": "Work roster",
   "type_of_visit": "Tipo de Visita",
   "updateStatus": "Update Status",
-  "version": "1.1.11",
+  "version": "1.1.12",
   "visitCompleted": "Service completed",
   "visitPayed": "Paying",
   "visitTypes": "Type of Visit",
@@ -165,6 +165,9 @@
   "CHILD_MASCULINE": "Child Masculine",
   "CHILD_FEMININE": "Child Feminine",
   "DEMOGRAPHICS": "Demographics",
-  "LAST60": "Last 60 Days Trend",
-  "GOAL": "Goal"
+  "LAST": "Last ",
+  "GOAL": "Goal",
+  "DAYSAGO": "Trend Data",
+  "TRENDDAYS": "Trend Chart Days",
+  "DAYS": "Days"
 }

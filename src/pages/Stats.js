@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { firestore } from "./../helpers/firebaseConfig";
+
+/* eslint-disable no-unused-vars */
 import {
   BarChart,
   Bar,
@@ -12,10 +14,14 @@ import {
   Cell,
   ResponsiveContainer,
   Label,
+  Line,
 } from "recharts";
+/* eslint-enable no-unused-vars */
+
 import { useTranslation } from "react-i18next";
 import {
   Divider,
+  Input,
   Table,
   Row,
   Col,
@@ -30,13 +36,14 @@ import { stations } from "../helpers/stations";
 import { fetchSurveyData } from "../helpers/fetchSurveyData";
 import { fetchPatientsData } from "../helpers/fetchPatientsData";
 import { fetchWaitingTimeData } from "../helpers/fetchWaitingTimeData";
-import { fetchLast60Days } from "../helpers/fetchLast60Days";
+import { fetchDaysAgoData } from "../helpers/fetchDaysAgo";
 import { satIcon } from "../helpers/satIcon";
 import ExcelExport from "../helpers/Export";
 import { handleReadmitClick } from "../helpers/updateStationStatus";
 import es_ES from "antd/es/date-picker/locale/es_ES";
 import en_US from "antd/es/date-picker/locale/en_US";
 import enter from "../img/enter.png";
+import CustomTick from "../helpers/CustomTick"   //defines the bar chart properties
 
 const { RangePicker } = DatePicker;
 const datePickerLocales = {
@@ -52,12 +59,46 @@ const Stats = () => {
   const [surveys, setSurveys] = useState([]);
   const [satScore, setSatScore] = useState([]);
   const [ageGender, setAgeGender] = useState([]);
-  const [last60Days, setLast60Days] = useState({});
+  const [daysAgo, setDaysAgo] = useState({});
+  // eslint-disable-next-line no-unused-vars
+  const [rollingAverages, setRollingAverages] = useState([]);
   const [columnChanger, setColumnChanger] = useState(false); //toggling column changer triggers useEffect.  Can update columnChanger when the reenter button is clicked.
   const [dateRange, setDateRange] = useState([
     new Date().setHours(0, 0, 0, 0),
     new Date().setHours(23, 59, 59, 999),
   ]);
+
+  const [daysCount, setDaysCount] = useState(60);
+
+
+  const calculateRollingAverage = (data, windowSize = 15) => {
+    const rollingAverages = [];
+    for (let i = 0; i < data.length; i++) {
+      const windowData = data.slice(Math.max(0, i - windowSize + 1), i + 1);
+      const average = windowData.reduce((sum, point) => sum + point.count, 0) / windowData.length;
+      rollingAverages.push({ date: data[i].date, average });
+    }
+    return rollingAverages;
+  };
+  
+
+  const handleDaysCountChange = (e) => {
+    const value = e.target.value;
+    const parsedValue = value === '' ? '' : parseInt(value, 10);
+
+    if (value === '') {
+        setDaysCount('');
+        return; // Skip fetching data if the input is cleared
+    }
+
+    if (!isNaN(parsedValue) && parsedValue > 0) {
+        setDaysCount(parsedValue);
+        getAgoData(parsedValue); // Fetch data with the new valid integer value
+    } 
+
+  
+    }
+
 
   // State to keep track of sorting
   const [sortInfo, setSortInfo] = useState({});
@@ -149,7 +190,7 @@ const Stats = () => {
       case 6:
         return (
           <div style={{ textAlign: "center" }}>
-            <h2>{t("LAST60")}</h2>;
+            <h2>{t("LAST")} {daysCount} {t("DAYS")}</h2>;
           </div>
         );
       default:
@@ -189,9 +230,14 @@ const Stats = () => {
     setWaitingData(data);
   };
 
-  const getLast60Days = async () => {
-    const data = await fetchLast60Days();
-    setLast60Days(data);
+   const getAgoData = async () => {
+    const data = await fetchDaysAgoData(daysCount);
+    setDaysAgo(data);
+    if (data.length > 15) {
+      setRollingAverages(calculateRollingAverage(data));
+    } else {
+      setRollingAverages([]);
+    }
   };
 
   const surveySummary = async (surveys) => {
@@ -273,224 +319,7 @@ const Stats = () => {
     return barColors;
   };
 
-  const CustomTick = (props) => {
-    // eslint-disable-next-line react/prop-types
-    const { x, y, payload } = props;
-    // eslint-disable-next-line react/prop-types
-    switch (payload.value) {
-      case "1":
-        return (
-          <svg
-            x={x - 15}
-            y={y}
-            width="40"
-            height="40"
-            fill="none"
-            viewBox="0 0 100 100"
-          >
-            <circle
-              cx="36"
-              cy="33.4"
-              r="31.4"
-              stroke="#ED1C24"
-              strokeWidth="3"
-            />
-            <line
-              x1="17.9"
-              y1="16.6"
-              x2="33.8"
-              y2="26.8"
-              stroke="#ED1C24"
-              strokeWidth="3"
-            />
-            <line
-              x1="55.1"
-              y1="16.6"
-              x2="39.3"
-              y2="26.8"
-              stroke="#ED1C24"
-              strokeWidth="3"
-            />
-            <circle
-              cx="23"
-              cy="33.4"
-              r="5.1"
-              stroke="#ED1C24"
-              strokeWidth="3"
-            />
-            <circle
-              cx="50.3"
-              cy="33.4"
-              r="5.1"
-              stroke="#ED1C24"
-              strokeWidth="3"
-            />
-            <path
-              d="M36,54.1l-11.5-0.2c0.1-6.2,5.3-11.3,11.5-11.3c6.3,0,11.5,5.2,11.5,11.5H36z"
-              stroke="#ED1C24"
-              strokeWidth="3"
-            />
-          </svg>
-        );
-      case "2":
-        return (
-          <svg
-            x={x - 15}
-            y={y}
-            width="40"
-            height="40"
-            fill="none"
-            viewBox="0 0 100 100"
-          >
-            <circle
-              cx="36"
-              cy="33.4"
-              r="31.4"
-              stroke="#F7941D"
-              strokeWidth="3"
-            />
-            <circle
-              cx="23"
-              cy="27.4"
-              r="5.1"
-              stroke="#F7941D"
-              strokeWidth="3"
-            />
-            <circle
-              cx="50.3"
-              cy="27.4"
-              r="5.1"
-              stroke="#F7941D"
-              strokeWidth="3"
-            />
-            <path
-              d="M24.9,53.2v0.7c0.1-6.2,5.3-11.3,11.5-11.3c6.3,0,11.5,5.2,11.5,11.5"
-              stroke="#F7941D"
-              strokeWidth="3"
-            />
-          </svg>
-        );
-      case "3":
-        return (
-          <svg
-            x={x - 15}
-            y={y}
-            width="40"
-            height="40"
-            fill="none"
-            viewBox="0 0 100 100"
-          >
-            <circle
-              cx="36"
-              cy="33.4"
-              r="31.4"
-              stroke="#2E3192"
-              strokeWidth="3"
-            />
-            <circle
-              cx="23"
-              cy="27.4"
-              r="5.1"
-              stroke="#2E3192"
-              strokeWidth="3"
-            />
-            <circle
-              cx="50.3"
-              cy="27.4"
-              r="5.1"
-              stroke="#2E3192"
-              strokeWidth="3"
-            />
-            <line
-              x1="19.5"
-              y1="50.5"
-              x2="52.9"
-              y2="42.8"
-              stroke="#2E3192"
-              strokeWidth="3"
-            />
-          </svg>
-        );
-      case "4":
-        return (
-          <svg
-            x={x - 15}
-            y={y}
-            width="40"
-            height="40"
-            fill="none"
-            viewBox="0 0 100 100"
-          >
-            <circle
-              cx="36"
-              cy="33.4"
-              r="31.4"
-              stroke="#22DD22"
-              strokeWidth="3"
-            />
-            <circle
-              cx="23"
-              cy="27.4"
-              r="5.1"
-              stroke="#22DD22"
-              strokeWidth="3"
-            />
-            <circle
-              cx="50.3"
-              cy="27.4"
-              r="5.1"
-              stroke="#22DD22"
-              strokeWidth="3"
-            />
-            <path
-              d="M52.4,43.6v-0.4c-0.1,5-7.6,9-16.6,9c-9.1,0-16.6-4.1-16.6-9.2"
-              stroke="#22DD22"
-              strokeWidth="3"
-            />
-          </svg>
-        );
-      case "5":
-        return (
-          <svg
-            x={x - 15}
-            y={y}
-            width="40"
-            height="40"
-            fill="none"
-            viewBox="0 0 100 100"
-          >
-            <circle
-              cx="36"
-              cy="33.4"
-              r="31.4"
-              stroke="#009444"
-              strokeWidth="3"
-            />
-            <circle
-              cx="22.3"
-              cy="22.3"
-              r="5.1"
-              stroke="#009444"
-              strokeWidth="3"
-            />
-            <circle
-              cx="49.6"
-              cy="22.3"
-              r="5.1"
-              stroke="#009444"
-              strokeWidth="3"
-            />
-            <path
-              d="M58.2,32.6v-1C58,43.9,48,53.9,36,53.9c-12.2,0-22.2-10.3-22.2-22.7"
-              stroke="#009444"
-              strokeWidth="3"
-            />
-          </svg>
-        );
-      default:
-        return null;
-    }
-  };
+
 
   useEffect(() => {
     const doStuffInOrder = async () => {
@@ -498,7 +327,7 @@ const Stats = () => {
       await stationsData();
       await surveyData();
       await getWaitingData();
-      await getLast60Days();
+      await getAgoData(60);
     };
     doStuffInOrder();
   }, [t, columnChanger, dateRange]);
@@ -666,29 +495,42 @@ const Stats = () => {
 
   return (
     <div>
-      <Form form={form} layout="vertical">
-        <Form.Item
-          name="dateRange"
-          label={t("DATE_RANGE")}
-          rules={[
-            {
-              required: false,
-              message: "Please select a date range",
-            },
-          ]}
-        >
-          <RangePicker
-            format="DD-MMM-YYYY"
-            placeholder={[t("START_DATE"), t("END_DATE")]}
-            locale={
-              i18n.language === "es"
-                ? datePickerLocales.es
-                : datePickerLocales.en
-            }
-            onChange={onDateChange}
-          />
-        </Form.Item>
-      </Form>
+              <Form form={form} layout="vertical">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <Form.Item
+                    name="dateRange"
+                    label={t("DATE_RANGE")}
+                    style={{ margin: 0 }}
+                >
+                    <RangePicker
+                        format="DD-MMM-YYYY"
+                        placeholder={[t("START_DATE"), t("END_DATE")]}
+                        locale={
+                            i18n.language === "es"
+                                ? datePickerLocales.es
+                                : datePickerLocales.en
+                        }
+                        onChange={onDateChange}
+                    />
+                </Form.Item>
+                <Form.Item
+                    label={t("TRENDDAYS")}
+                    style={{ margin: 0 }}
+                >
+                    <Input
+                        id="daysInput"
+                        type="number"
+                        value={daysCount}
+                        onChange={(e) => setDaysCount(e.target.value)}
+                        onBlur={handleDaysCountChange}
+                        onPressEnter={handleDaysCountChange}
+                        min="0"
+                        style={{ width: '150px' }} // Adjust width here
+                    />
+                </Form.Item>
+            </div>
+        </Form>
+
       <Divider></Divider>
       <div className="stats-container">
         <div className="charts-container">
@@ -776,16 +618,22 @@ const Stats = () => {
           </ResponsiveContainer>
 
           <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-            <BarChart data={last60Days}>
+            <BarChart data={daysAgo}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
-              <YAxis dataKey="count" />
+              <YAxis>
+                <Label value={t("COUNT")} angle="-90" />
+              </YAxis>
               <Tooltip />
               <Legend content={() => renderLegendStations(6)} />
               <Bar dataKey="count" fill="#2255CC" />
               <ReferenceLine y={70} stroke="red" label={t("GOAL")} />
             </BarChart>
           </ResponsiveContainer>
+          {/* TODO:  Add the 15-day rolling average line to this chart */}
+
+
+
         </div>
 
         <div style={{ display: "flex", width: "100%", height: "100%" }}></div>
@@ -799,6 +647,10 @@ const Stats = () => {
           <Col>&nbsp;</Col>
           <Col>
             <ExcelExport data={surveys} reportName="todaysSurveys" />
+          </Col>
+          <Col>&nbsp;</Col>
+          <Col>
+            <ExcelExport data={daysAgo} reportName="DAYSAGO" />
           </Col>
         </Row>
         <Divider />
