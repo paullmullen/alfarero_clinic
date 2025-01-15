@@ -285,10 +285,7 @@ export const Turno = () => {
           const updatedData = snapshot.docs.map((doc) => doc.data());
 
           if (isMounted) {
-            const filteredUpdatedData = updatedData.filter(
-              (item) => item.complete !== true
-            );
-            setData(filteredUpdatedData);
+            setData(updatedData);
             autoScroll();
           }
         });
