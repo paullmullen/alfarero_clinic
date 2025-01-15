@@ -27,8 +27,6 @@ export const Turno = () => {
 
   const tableRef = useRef(null);
 
-
-
   // Shows editable icons in the patients table
 
   const renderStatusIcon = (status) => {
@@ -244,24 +242,22 @@ export const Turno = () => {
 
   const { columns, dataSource } = generateTableData(data);
 
-
   const autoScroll = () => {
-
     const scrollAmount = 20; // pixels
     const scrollSpeed = 1000; // milliseconds
     const scrollMax = 15000; // total size
-    let scrollPosition = 0
+    let scrollPosition = 0;
 
     const scrollInterval = setInterval(() => {
+      scrollPosition =
+        scrollPosition > scrollMax ? 0 : scrollPosition + scrollAmount;
 
-     scrollPosition = scrollPosition>scrollMax ? 0 : scrollPosition+scrollAmount;
-  
       const scrollContainer = document.querySelector("div.ant-table-body");
       if (scrollContainer) {
         scrollContainer.scrollTop = scrollPosition;
       }
     }, scrollSpeed);
-  
+
     return () => clearInterval(scrollInterval); // Clean up the interval when the component unmounts
   };
 
@@ -271,18 +267,18 @@ export const Turno = () => {
 
     const fetchData = async () => {
       try {
-        const collectionRef = firestore.collection("patients");
-        const initialSnapshot = await collectionRef.orderBy("start_time").get();
+        const collectionRef = firestore
+          .collection("patients")
+          .orderBy("complete") // Order by complete first
+          .orderBy("start_time") // Then order by start_time
+          .where("complete", "!=", true);
+        const initialSnapshot = await collectionRef.get();
         const initialData = initialSnapshot.docs.map((doc) => {
           return doc.data();
         });
 
-        const filteredData = initialData.filter(
-          (item) => item.complete !== true
-        );
-
         if (isMounted) {
-          setData(filteredData);
+          setData(initialData);
         }
 
         unsubscribe = collectionRef.onSnapshot((snapshot) => {
