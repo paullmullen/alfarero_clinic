@@ -11,6 +11,7 @@ import {
   Switch,
   Select,
 } from "antd";
+import { collection, query, where, orderBy, getDocs } from "firebase/firestore"; // Import necessary methods
 import { CloseCircleOutlined } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
@@ -45,14 +46,19 @@ export const Escritorio = () => {
     let isMounted = true;
     const fetchData = async () => {
       try {
-        const collectionRef = firestore.collection("patients");
+        // Create a reference for the 'patients' collection
+        const collectionRef = collection(firestore, "patients");
 
-        const query = collectionRef
-          .where("complete", "!=", true)
-          .where("plan_of_care", "array-contains", usuario.servicio)
-          .orderBy("complete", "start_time", "asc");
+        // Build the query with the new Firebase v9+ syntax
+        const q = query(
+          collectionRef,
+          where("complete", "!=", true),
+          where("plan_of_care", "array-contains", usuario.servicio),
+          orderBy("complete"),
+          orderBy("start_time", "asc")
+        );
 
-        const snapshot = await query.get();
+        const snapshot = await getDocs(q); // Fetch the documents using 'getDocs'
 
         const initialData = snapshot.docs.map((doc) => doc.data());
 
@@ -69,7 +75,7 @@ export const Escritorio = () => {
     return () => {
       isMounted = false; // Set the mounted flag to false to prevent state updates after unmounting
     };
-  }, [usuario.servicio, t]);
+  }, [usuario.servicio, t]); // Dependency array
 
   const salir = () => {
     localStorage.clear();

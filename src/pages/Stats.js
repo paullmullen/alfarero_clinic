@@ -32,6 +32,8 @@ import {
 } from "antd";
 
 import "firebase/compat/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore"; // Import necessary methods
+
 import { stations } from "../helpers/stations";
 import { fetchSurveyData } from "../helpers/fetchSurveyData";
 import { fetchPatientsData } from "../helpers/fetchPatientsData";
@@ -43,7 +45,7 @@ import { handleReadmitClick } from "../helpers/updateStationStatus";
 import es_ES from "antd/es/date-picker/locale/es_ES";
 import en_US from "antd/es/date-picker/locale/en_US";
 import enter from "../img/enter.png";
-import CustomTick from "../helpers/CustomTick"   //defines the bar chart properties
+import CustomTick from "../helpers/CustomTick"; //defines the bar chart properties
 
 const { RangePicker } = DatePicker;
 const datePickerLocales = {
@@ -70,35 +72,32 @@ const Stats = () => {
 
   const [daysCount, setDaysCount] = useState(60);
 
-
   const calculateRollingAverage = (data, windowSize = 15) => {
     const rollingAverages = [];
     for (let i = 0; i < data.length; i++) {
       const windowData = data.slice(Math.max(0, i - windowSize + 1), i + 1);
-      const average = windowData.reduce((sum, point) => sum + point.count, 0) / windowData.length;
+      const average =
+        windowData.reduce((sum, point) => sum + point.count, 0) /
+        windowData.length;
       rollingAverages.push({ date: data[i].date, average });
     }
     return rollingAverages;
   };
-  
 
   const handleDaysCountChange = (e) => {
     const value = e.target.value;
-    const parsedValue = value === '' ? '' : parseInt(value, 10);
+    const parsedValue = value === "" ? "" : parseInt(value, 10);
 
-    if (value === '') {
-        setDaysCount('');
-        return; // Skip fetching data if the input is cleared
+    if (value === "") {
+      setDaysCount("");
+      return; // Skip fetching data if the input is cleared
     }
 
     if (!isNaN(parsedValue) && parsedValue > 0) {
-        setDaysCount(parsedValue);
-        getAgoData(parsedValue); // Fetch data with the new valid integer value
-    } 
-
-  
+      setDaysCount(parsedValue);
+      getAgoData(parsedValue); // Fetch data with the new valid integer value
     }
-
+  };
 
   // State to keep track of sorting
   const [sortInfo, setSortInfo] = useState({});
@@ -112,36 +111,50 @@ const Stats = () => {
 
   const howManyToday = async (stationName) => {
     try {
-      const query = firestore
-        .collection("patients")
-        .where("start_time", ">=", new Date(dateRange[0]))
-        .where("start_time", "<=", new Date(dateRange[1]));
+      // Create a reference for the 'patients' collection
+      const patientsRef = collection(firestore, "patients");
 
-      const querySnapshot = await query.get();
+      // Create a query with the date range filters
+      const q = query(
+        patientsRef,
+        where("start_time", ">=", new Date(dateRange[0])),
+        where("start_time", "<=", new Date(dateRange[1]))
+      );
+
+      // Fetch documents using the query
+      const querySnapshot = await getDocs(q);
 
       let count = 0;
       let adultMasculine = 0;
       let adultFeminine = 0;
       let childMasculine = 0;
       let childFeminine = 0;
+
+      // Process each document
       querySnapshot.forEach((doc) => {
         const patient = doc.data();
+
+        // Check each plan of care for matching stations
         patient.plan_of_care.forEach((s) => {
           count += s.station === stationName && s.status !== "pending" ? 1 : 0;
         });
-        if (patient.gender == "masculine" && patient.age_group == "adult") {
+
+        // Update gender and age group counts
+        if (patient.gender === "masculine" && patient.age_group === "adult") {
           adultMasculine++;
         }
-        if (patient.gender == "feminine" && patient.age_group == "adult") {
+        if (patient.gender === "feminine" && patient.age_group === "adult") {
           adultFeminine++;
         }
-        if (patient.gender == "masculine" && patient.age_group == "child") {
+        if (patient.gender === "masculine" && patient.age_group === "child") {
           childMasculine++;
         }
-        if (patient.gender == "feminine" && patient.age_group == "child") {
+        if (patient.gender === "feminine" && patient.age_group === "child") {
           childFeminine++;
         }
       });
+
+      // Update state with age and gender data
       setAgeGender([
         { name: t("ADULT_FEMININE"), value: adultFeminine, fill: "#de7ad1" },
         { name: t("ADULT_MASCULINE"), value: adultMasculine, fill: "#7a98de" },
@@ -149,7 +162,7 @@ const Stats = () => {
         { name: t("CHILD_MASCULINE"), value: childMasculine, fill: "#7a98de" },
       ]);
 
-      return count;
+      return count; // Return the total count
     } catch (e) {
       console.error("Error fetching patient count:", e);
     }
@@ -190,7 +203,10 @@ const Stats = () => {
       case 6:
         return (
           <div style={{ textAlign: "center" }}>
-            <h2>{t("LAST")} {daysCount} {t("DAYS")}</h2>;
+            <h2>
+              {t("LAST")} {daysCount} {t("DAYS")}
+            </h2>
+            ;
           </div>
         );
       default:
@@ -226,11 +242,11 @@ const Stats = () => {
   };
 
   const getWaitingData = async () => {
-    const data = await fetchWaitingTimeData();  //waiting time data is always just for today
+    const data = await fetchWaitingTimeData(); //waiting time data is always just for today
     setWaitingData(data);
   };
 
-   const getAgoData = async () => {
+  const getAgoData = async () => {
     const data = await fetchDaysAgoData(daysCount);
     setDaysAgo(data);
     if (data.length > 15) {
@@ -318,8 +334,6 @@ const Stats = () => {
 
     return barColors;
   };
-
-
 
   useEffect(() => {
     const doStuffInOrder = async () => {
@@ -495,41 +509,38 @@ const Stats = () => {
 
   return (
     <div>
-              <Form form={form} layout="vertical">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <Form.Item
-                    name="dateRange"
-                    label={t("DATE_RANGE")}
-                    style={{ margin: 0 }}
-                >
-                    <RangePicker
-                        format="DD-MMM-YYYY"
-                        placeholder={[t("START_DATE"), t("END_DATE")]}
-                        locale={
-                            i18n.language === "es"
-                                ? datePickerLocales.es
-                                : datePickerLocales.en
-                        }
-                        onChange={onDateChange}
-                    />
-                </Form.Item>
-                <Form.Item
-                    label={t("TRENDDAYS")}
-                    style={{ margin: 0 }}
-                >
-                    <Input
-                        id="daysInput"
-                        type="number"
-                        value={daysCount}
-                        onChange={(e) => setDaysCount(e.target.value)}
-                        onBlur={handleDaysCountChange}
-                        onPressEnter={handleDaysCountChange}
-                        min="0"
-                        style={{ width: '150px' }} // Adjust width here
-                    />
-                </Form.Item>
-            </div>
-        </Form>
+      <Form form={form} layout="vertical">
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <Form.Item
+            name="dateRange"
+            label={t("DATE_RANGE")}
+            style={{ margin: 0 }}
+          >
+            <RangePicker
+              format="DD-MMM-YYYY"
+              placeholder={[t("START_DATE"), t("END_DATE")]}
+              locale={
+                i18n.language === "es"
+                  ? datePickerLocales.es
+                  : datePickerLocales.en
+              }
+              onChange={onDateChange}
+            />
+          </Form.Item>
+          <Form.Item label={t("TRENDDAYS")} style={{ margin: 0 }}>
+            <Input
+              id="daysInput"
+              type="number"
+              value={daysCount}
+              onChange={(e) => setDaysCount(e.target.value)}
+              onBlur={handleDaysCountChange}
+              onPressEnter={handleDaysCountChange}
+              min="0"
+              style={{ width: "150px" }} // Adjust width here
+            />
+          </Form.Item>
+        </div>
+      </Form>
 
       <Divider></Divider>
       <div className="stats-container">
@@ -631,9 +642,6 @@ const Stats = () => {
             </BarChart>
           </ResponsiveContainer>
           {/* TODO:  Add the 15-day rolling average line to this chart */}
-
-
-
         </div>
 
         <div style={{ display: "flex", width: "100%", height: "100%" }}></div>

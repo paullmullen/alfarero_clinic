@@ -1,4 +1,11 @@
 import { firestore } from "./../helpers/firebaseConfig";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  deleteDoc,
+} from "firebase/firestore"; // Import necessary methods
 
 export const handleStatusChange = async (value, hoveredRowKey, station) => {
   try {
@@ -139,7 +146,6 @@ export const handleDelete = async (hoveredRowKey, history) => {
   const docPatientRefFin = firestore.collection("patients").doc(hoveredRowKey);
   let result = [];
   if (docPatientRefFin) {
-
     try {
       await firestore.runTransaction(async (transaction) => {
         const doc = await transaction.get(docPatientRefFin);
@@ -154,7 +160,7 @@ export const handleDelete = async (hoveredRowKey, history) => {
           // result = poc
           //   .filter((item) => item.status !== 'pending')
           //   .map((item) => item.station);
-          result = {age_group: patData.age_group, gender: patData.gender};
+          result = { age_group: patData.age_group, gender: patData.gender };
         } else {
           console.log("HANDLE_DELETE: No such document.");
         }
@@ -195,12 +201,22 @@ export const handleReadmitClick = async (patientID) => {
 
 export const cleanPaulTests = async () => {
   console.log("Cleaning Paul Tests");
-  const toBeDeleted = firestore
-    .collection("patients")
-    .where("patient_name", "==", "Paul");
-  toBeDeleted.get().then(function (querySnapshot) {
-    querySnapshot.forEach(function (doc) {
-      doc.ref.delete();
+
+  try {
+    // Create a query to find patients with the name "Paul"
+    const patientsRef = collection(firestore, "patients");
+    const q = query(patientsRef, where("patient_name", "==", "Paul"));
+
+    // Get the documents matching the query
+    const querySnapshot = await getDocs(q);
+
+    // Delete each document
+    querySnapshot.forEach(async (doc) => {
+      await deleteDoc(doc.ref);
     });
-  });
+
+    console.log("Paul's test data cleaned successfully.");
+  } catch (error) {
+    console.error("Error cleaning Paul's tests:", error);
+  }
 };

@@ -8,6 +8,14 @@ import {
   Button,
   Popconfirm,
 } from "antd";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  onSnapshot,
+} from "firebase/firestore"; // Import necessary methods
 
 import { firestore } from "./../helpers/firebaseConfig";
 import {
@@ -70,39 +78,41 @@ export const Anfitrion = () => {
 
     const fetchData = async () => {
       try {
-        const collectionRef = firestore.collection("patients");
-        const statsRef = firestore.collection("stats");
+        // Create references for collections
+        const patientsRef = collection(firestore, "patients");
+        const statsRef = collection(firestore, "stats");
 
-        // *** Server-side filtering is done here ***
-        const q = collectionRef
-          .orderBy("start_time")
-          .where("start_time", ">=", today)
-          .where("start_time", "<", tomorrow)
-          .where("complete", "==", false); // Filter on 'complete' field
+        // Build queries with the new Firebase v9+ syntax
+        const q = query(
+          patientsRef,
+          orderBy("start_time"),
+          where("start_time", ">=", today),
+          where("start_time", "<", tomorrow),
+          where("complete", "==", false)
+        );
 
-        const initialSnapshot = await q.get(); // Use the query 'q'
-
-        const statsSnapshot = await statsRef.get();
+        const initialSnapshot = await getDocs(q); // Use 'getDocs' for the initial data fetch
+        const statsSnapshot = await getDocs(statsRef);
 
         const initialData = initialSnapshot.docs.map((doc) => doc.data());
-
         const initialStats = statsSnapshot.docs.map((doc) => doc.data());
 
         if (isMounted) {
-          setData(initialData); // Set the data directly
+          setData(initialData);
           setStatsData(initialStats);
         }
 
-        unsubscribe = q.onSnapshot((snapshot) => {
-          // Use the query 'q' here as well
+        // Listen for real-time updates on the 'patients' collection
+        unsubscribe = onSnapshot(q, (snapshot) => {
           const updatedData = snapshot.docs.map((doc) => doc.data());
 
           if (isMounted) {
-            setData(updatedData); // Set data directly
+            setData(updatedData);
           }
         });
 
-        unsubscribeStats = statsRef.onSnapshot((snapshot) => {
+        // Listen for real-time updates on the 'stats' collection
+        unsubscribeStats = onSnapshot(statsRef, (snapshot) => {
           const updatedData = snapshot.docs.map((doc) => doc.data());
           setStatsData(updatedData);
         });
@@ -123,7 +133,7 @@ export const Anfitrion = () => {
 
       isMounted = false;
     };
-  }, []);
+  }, [today, tomorrow]);
 
   // Shows editable icons in the host table
 

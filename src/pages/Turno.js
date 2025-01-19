@@ -1,12 +1,20 @@
 import React, { useRef, useEffect, useState } from "react";
 import { Table, Image } from "antd";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  onSnapshot,
+} from "firebase/firestore"; // Import the necessary methods
+
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { AlertInfo } from "../components/AlertInfo";
 import { useTranslation } from "react-i18next";
 import IconSizes from "../helpers/iconSizes";
 import one from "../img/1.svg";
-
 import two from "../img/2.svg";
 import three from "../img/3.svg";
 import four from "../img/4.svg";
@@ -267,21 +275,25 @@ export const Turno = () => {
 
     const fetchData = async () => {
       try {
-        const collectionRef = firestore
-          .collection("patients")
-          .orderBy("complete") // Order by complete first
-          .orderBy("start_time") // Then order by start_time
-          .where("complete", "!=", true);
-        const initialSnapshot = await collectionRef.get();
-        const initialData = initialSnapshot.docs.map((doc) => {
-          return doc.data();
-        });
+        // Create the Firestore query
+        const collectionRef = collection(firestore, "patients"); // Firestore collection reference
+        const q = query(
+          collectionRef,
+          where("complete", "!=", true),
+          orderBy("complete"),
+          orderBy("start_time")
+        );
+
+        // Get the initial snapshot of the collection
+        const initialSnapshot = await getDocs(q);
+        const initialData = initialSnapshot.docs.map((doc) => doc.data());
 
         if (isMounted) {
           setData(initialData);
         }
 
-        unsubscribe = collectionRef.onSnapshot((snapshot) => {
+        // Set up the real-time listener
+        unsubscribe = onSnapshot(q, (snapshot) => {
           const updatedData = snapshot.docs.map((doc) => doc.data());
 
           if (isMounted) {
@@ -297,13 +309,10 @@ export const Turno = () => {
     fetchData();
 
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
       isMounted = false;
-      clearInterval(autoScroll()); // Clear the interval when the component unmounts
+      if (unsubscribe) unsubscribe();
     };
-  }, []);
+  }, [firestore]);
 
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";

@@ -12,6 +12,18 @@ import {
 import { SaveFilled } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { useAlert } from "../hooks/alert";
+import {
+  getDocs,
+  collection,
+  query,
+  orderBy,
+  addDoc,
+  updateDoc,
+  doc,
+  getDoc,
+  setDoc,
+} from "firebase/firestore"; // Import necessary methods from Firestore
+
 import { firestore } from "./../helpers/firebaseConfig";
 // import { checkDuplicateRecord } from "../helpers/checkDuplicateRecord";
 import { stations } from "../helpers/stations";
@@ -165,15 +177,15 @@ export const Registro = () => {
   useEffect(() => {
     console.log(getVideoDevices());
 
-
     let unsubscribe;
 
     const fetchData = async () => {
       try {
-        const visitTypeRef = firestore
-          .collection("visit_types")
-          .orderBy("order");
-        const visitTypeSnapshot = await visitTypeRef.get();
+        const visitTypeRef = query(
+          collection(firestore, "visit_types"),
+          orderBy("order")
+        );
+        const visitTypeSnapshot = await getDocs(visitTypeRef); // Use getDocs to fetch data
         const visitRecipes = visitTypeSnapshot.docs.map((doc) => {
           return doc.data();
         });
@@ -201,57 +213,56 @@ export const Registro = () => {
     };
   }, [t]);
 
-  //Called by OnFinish and by the onValuesChange elmement of the form.
   const updateStatsCollection = async (station) => {
     const currentDate = moment();
-    const currentMonth = currentDate.month() + 1; // Obtener el número del mes actual
+    const currentMonth = currentDate.month() + 1; // Get the current month number
     const currentYear = currentDate.year();
     const currentDay = currentDate.toDate().getDate();
     const currentMonthDayYear = `${currentMonth}/${currentDay}/${currentYear}`;
-    const statsRef = firestore.collection("stats").doc(station);
 
-    // Obtener el documento de estadísticas de la estación actual
-    let statsDoc = await statsRef.get();
-    if (statsDoc.exists) {
-      // El documento de estadísticas ya existe
-      const statsData = statsDoc.data();
-      if (statsData.date !== currentMonthDayYear) {
-        // La fecha es diferente, reset the stats for all stations
-        try {
-          firestore
-            .collection("stats")
-            .get()
-            .then(function (querySnapshot) {
-              querySnapshot.forEach(function (doc) {
-                doc.ref.update({
-                  date: currentMonthDayYear,
-                  number_of_patients: 0,
-                  procedure_time_data: [],
-                  waiting_time_data: [],
-                  avg_procedure_time: 0,
-                  avg_waiting_time: 0,
-                });
-              });
+    const statsRef = doc(firestore, "stats", station); // Use doc for referencing the stats document
+
+    try {
+      // Get the stats document from Firestore
+      const statsDoc = await getDoc(statsRef);
+
+      if (statsDoc.exists()) {
+        const statsData = statsDoc.data();
+
+        if (statsData.date !== currentMonthDayYear) {
+          // If the date is different, reset the stats for all stations
+          const statsCollectionRef = collection(firestore, "stats");
+          const querySnapshot = await getDocs(statsCollectionRef);
+
+          // Reset stats for all stations
+          querySnapshot.forEach(async (doc) => {
+            await updateDoc(doc.ref, {
+              date: currentMonthDayYear,
+              number_of_patients: 0,
+              procedure_time_data: [],
+              waiting_time_data: [],
+              avg_procedure_time: 0,
+              avg_waiting_time: 0,
             });
-        } catch (e) {
-          console.log(e);
+          });
+        } else if (station === statsData.station_type) {
+          // If the date is the same, update the number of patients for the current day
+          const currentDayPatients = statsData.number_of_patients || 0;
+          await updateDoc(statsRef, {
+            number_of_patients: currentDayPatients + 1,
+          });
         }
+      } else {
+        // If the stats document does not exist, create it with the number of patients for the current day
+        const statsData = {
+          station_type: station,
+          number_of_patients: 1,
+          date: currentMonthDayYear,
+        };
+        await setDoc(statsRef, statsData);
       }
-      // La fecha es la misma, actualizar el número de pacientes del dia actual
-      else if (station === statsDoc.data().station_type) {
-        const currentDayPatients = statsData.number_of_patients || 0;
-        await statsRef.update({
-          number_of_patients: currentDayPatients + 1,
-        });
-      }
-    } else {
-      // El documento de estadísticas no existe, crearlo con el número de pacientes del mes actual
-      const statsData = {
-        station_type: station,
-        number_of_patients: 1,
-        date: currentMonthDayYear,
-      };
-      await statsRef.set(statsData);
+    } catch (error) {
+      console.log("Error updating stats collection:", error);
     }
   };
 
@@ -314,43 +325,57 @@ export const Registro = () => {
       wait_time: 0,
       type_of_visit: patient.tipo,
       gender: patient.gender,
-      age_group: patient.age_group !== undefined ? patient.age_group : null
+      age_group: patient.age_group !== undefined ? patient.age_group : null,
     };
-    const patientRef = await firestore
-      .collection("patients")
-      .add(formattedPatient);
-    const ptNo = patientRef.id;
-    const updatedPatient = { ...formattedPatient, pt_no: ptNo };
 
-    await patientRef.update(updatedPatient);
+    try {
+      // Use addDoc to add a new patient document
+      const patientRef = await addDoc(
+        collection(firestore, "patients"),
+        formattedPatient
+      );
 
-    // Actualizar el número de pacientes del mes actual en la colección "stats"
-    const selectedStations = patientPlanOfCare.map((visit) => {
-      return {
-        station: visit.station,
-        status: visit.status,
+      // Get the patient ID (doc id) after adding the document
+      const ptNo = patientRef.id;
+
+      // Prepare the updated patient data including the patient ID (pt_no)
+      const updatedPatient = { ...formattedPatient, pt_no: ptNo };
+
+      // Use updateDoc to update the newly created patient document with pt_no
+      await updateDoc(doc(firestore, "patients", ptNo), updatedPatient);
+
+      // Actualizar el número de pacientes del mes actual en la colección "stats"
+      const selectedStations = patientPlanOfCare.map((visit) => {
+        return {
+          station: visit.station,
+          status: visit.status,
+        };
+      });
+
+      selectedStations.forEach((station) => {
+        // only count scheduled stations... pending is not a planned station.
+        if (station.status !== "pending") {
+          updateStatsCollection(station.station);
+        }
+      });
+
+      console.log("patient: ", patient.paciente);
+      const fooJson = {
+        n: "Paul Mullen",
+        t: "Lawrence",
       };
-    });
-    selectedStations.forEach((station) => {
-      // only count scheduled stations... pending is not a planned station.
-      if (station.status !== "pending") {
-        updateStatsCollection(station.station);
-      }
-    });
+      const fooString = JSON.stringify(fooJson);
 
-    console.log("patient: ", patient.paciente);
-    const fooJson = {
-      n: "Paul Mullen",
-      t: "Lawrence",
-    };
-    const fooString = JSON.stringify(fooJson);
+      const foo = encryptData(fooString);
+      console.log("encrypted: ", foo);
+      console.log("decrypted: ", decryptData(foo, secretPass));
 
-    const foo = encryptData(fooString);
-    console.log("encrypted: ", foo);
-    console.log("decrypted: ", decryptData(foo, secretPass));
-
-    showAlert("Success", t("patientWasCreated"), "success");
-    handleReset();
+      showAlert("Success", t("patientWasCreated"), "success");
+      handleReset();
+    } catch (error) {
+      console.log("Error creating/updating patient: ", error);
+      showAlert("Error", t("somethingWentWrong"), "error");
+    }
   };
 
   const onFinishFailed = (errorInfo) => {
@@ -390,9 +415,8 @@ export const Registro = () => {
               )}
             </Col>
           </Row>
-          <Row> 
+          <Row>
             <Col xs={24} sm={24}>
-
               <Row>
                 <Col xs={24} sm={24}>
                   <Form.Item
@@ -405,9 +429,8 @@ export const Registro = () => {
                 </Col>
               </Row>
 
-              <Row >
-              <Col xs={8} sm={8}>  
-                </Col>
+              <Row>
+                <Col xs={8} sm={8}></Col>
                 <Col xs={7} sm={7}>
                   <Form.Item
                     label={t("age")}
@@ -426,14 +449,18 @@ export const Registro = () => {
                     >
                       <Radio
                         key="child"
-                        value = "child"
+                        value="child"
                         style={{ flex: `0 0 ${12}%` }}
-                      >{t("child")}</Radio>
+                      >
+                        {t("child")}
+                      </Radio>
                       <Radio
                         key="adult"
                         value="adult"
                         style={{ flex: `0 0 ${12}%` }}
-                      >{t("adult")}</Radio>
+                      >
+                        {t("adult")}
+                      </Radio>
                     </Radio.Group>
                   </Form.Item>
                 </Col>
@@ -455,14 +482,17 @@ export const Registro = () => {
                     >
                       <Radio
                         key="masculine"
-                        value = "masculine"
+                        value="masculine"
                         style={{ flex: `0 0 ${12}%` }}
-                      >{t("male")}</Radio>
+                      >
+                        {t("male")}
+                      </Radio>
                       <Radio
                         key="feminine"
                         value="feminine"
                         style={{ flex: `0 0 ${12}%` }}
-                      >{t("female")}
+                      >
+                        {t("female")}
                       </Radio>
                     </Radio.Group>
                   </Form.Item>
