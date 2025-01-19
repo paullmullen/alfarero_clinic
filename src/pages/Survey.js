@@ -1,18 +1,11 @@
 import React, { useState } from "react";
 import { firestore } from "./../helpers/firebaseConfig";
+import { collection, addDoc } from "firebase/firestore";
+
 import { useHideMenu } from "../hooks/useHideMenu";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
-import {
-  Button,
-  Form,
-  Input,
-  Divider,
-  Radio,
-  Space,
-  Row,
-  Col,
-} from "antd";
+import { Button, Form, Input, Divider, Radio, Space, Row, Col } from "antd";
 import { ReactComponent as AngryIcon } from "../img/angry.svg";
 import { ReactComponent as SadIcon } from "../img/sad.svg";
 import { ReactComponent as IndifferentIcon } from "../img/indifferent.svg";
@@ -80,7 +73,6 @@ export const Survey = () => {
   const onFinish = async (values) => {
     console.log(location);
 
-
     try {
       if (
         // surveyResult.first !== "" ||
@@ -89,12 +81,12 @@ export const Survey = () => {
         surveyResult.satisfaction !== "" ||
         surveyResult.prayer_request !== ""
       ) {
-        await firestore.collection("surveys").add({
+        await addDoc(collection(firestore, "surveys"), {
           // first: surveyResult.first,
           // source: surveyResult.source,
           // suggestion: surveyResult.suggestion,
           satisfaction: surveyResult.satisfaction,
-          prayer_request: surveyResult.prayer_request,
+          prayer_request: surveyResult.prayer_request || "",
           gender: location.state.gender,
           age_group: location.state.age_group,
           date: new Date(),
@@ -173,8 +165,8 @@ export const Survey = () => {
               </Col>
             </Row> */}
             <Row>
-            <Col xs={24} sm={24}>
-            <Form.Item label={t("prayer")} name="prayer_request">
+              <Col xs={24} sm={24}>
+                <Form.Item label={t("prayer")} name="prayer_request">
                   <TextArea rows={4} onChange={handleChangePrayer} />
                 </Form.Item>
               </Col>
