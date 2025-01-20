@@ -38,6 +38,7 @@ import { cleanPaulTests } from "../helpers/updateStationStatus";
 
 import { Anfitrion } from "./Anfitrion";
 import { useTranslation } from "react-i18next";
+import full_logo from "../img/full_logo.png";
 
 const { Sider, Content, Header } = Layout;
 const { Title } = Typography;
@@ -153,7 +154,8 @@ export const RouterPage = () => {
               display: "flex",
               flexDirection: "row",
               justifyContent: "space-between",
-              backgroundColor: "#fff",
+              backgroundColor:
+                process.env.REACT_APP_FIREBASE_DB !== "" ? "#e6e6fa" : "#fff", // Light purple for non-default DB
               alignItems: "center",
             }}
           >
@@ -162,7 +164,7 @@ export const RouterPage = () => {
               <Col xs={24} sm={24} md={24} lg={24}>
                 <a href="/registro">
                   <Image
-                    src={require("../img/full_logo.png")}
+                    src={full_logo}
                     style={{ margin: 0, flex: 1, justifyContent: "flex-start" }}
                     preview={false}
                     height={100}
@@ -183,7 +185,9 @@ export const RouterPage = () => {
                     onClick={handleHeaderTitleTap}
                     className="no-border-button"
                   >
-                    <Title level={4}>{t("headerTitle")}</Title>
+                    <Title style={{ backgroundColor: "transparent" }} level={4}>
+                      {t("headerTitle")}
+                    </Title>
                   </Button>
                 </div>
                 <Popover

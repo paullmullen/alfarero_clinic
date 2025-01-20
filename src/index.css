@@ -93,9 +93,18 @@ h5 {
 }
 
 .no-border-button {
-  outline: none;
+  background-color: transparent;
   border: none;
+  padding: 0; /* Remove any padding */
+  box-shadow: none; /* Remove focus shadow, if any */
 }
+
+.no-border-button:hover,
+.no-border-button:focus {
+  background-color: transparent; /* Prevent hover effects */
+  outline: none; /* Remove focus outline */
+}
+
 
 .wait_times {
   font-size: small;

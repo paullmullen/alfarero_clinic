@@ -1,43 +1,53 @@
-import { firestore } from "./../helpers/firebaseConfig";
 import { collection, getDocs } from "firebase/firestore";
+import { firestore } from "./../helpers/firebaseConfig";
 
 const fetchSurveyData = async (dateRange) => {
-  const surveyData = [];
-  const surveyCollection = collection(firestore, "surveys");
-  const surveySnapshot = await getDocs(surveyCollection)
+  try {
+    const surveyData = [];
+    const surveyCollection = collection(firestore, "surveys");
+    const surveySnapshot = await getDocs(surveyCollection);
 
-  const surveyEntries = surveySnapshot.docs.map((doc, counter) => {
-    const { date, first, satisfaction, suggestion, source, prayer_request, age_group, gender } = doc.data();
-    const dataEntry = {
-      date,
-      first,
-      satisfaction,
-      suggestion,
-      source,
-      prayer_request,
-      age_group,
-      gender
-    };
+    const surveyEntries = surveySnapshot.docs.map((doc, counter) => {
+      const {
+        date,
+        first,
+        satisfaction,
+        suggestion,
+        source,
+        prayer_request,
+        age_group,
+        gender,
+      } = doc.data();
 
-    if ((dataEntry.date.toMillis() >= dateRange[0]) && (dataEntry.date.toMillis() <= dateRange[1])) {
-      return {
-        inx: counter,
-        first: dataEntry.first,
-        source: dataEntry.source,
-        suggestion: dataEntry.suggestion,
-        satisfaction: satisfaction,
-        prayer_request: dataEntry.prayer_request,
-        age_group: age_group,
-        gender: gender
-      };
-    } else {
-      return null; // Return null for entries that are not for today
-    }
-  });
-  // Filter out the null entries and only keep the valid ones
-  surveyData.push(...surveyEntries.filter((entry) => (entry !== null) ));
+      // Check if the date is within the provided range
+      if (
+        date?.toMillis &&
+        date.toMillis() >= dateRange[0] &&
+        date.toMillis() <= dateRange[1]
+      ) {
+        return {
+          inx: counter,
+          first,
+          source,
+          suggestion,
+          satisfaction,
+          prayer_request,
+          age_group,
+          gender,
+        };
+      }
 
-  return surveyData;
+      return null; // Filter out entries outside the date range
+    });
+
+    // Filter out null entries and add valid ones to surveyData
+    surveyData.push(...surveyEntries.filter((entry) => entry !== null));
+
+    return surveyData;
+  } catch (error) {
+    console.error("Error fetching survey data:", error);
+    return [];
+  }
 };
 
 export { fetchSurveyData };

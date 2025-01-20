@@ -1,12 +1,20 @@
 import React, { useRef, useEffect, useState } from "react";
 import { Table, Image } from "antd";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  onSnapshot,
+} from "firebase/firestore"; // Import the necessary methods
+
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { AlertInfo } from "../components/AlertInfo";
 import { useTranslation } from "react-i18next";
 import IconSizes from "../helpers/iconSizes";
 import one from "../img/1.svg";
-
 import two from "../img/2.svg";
 import three from "../img/3.svg";
 import four from "../img/4.svg";
@@ -26,8 +34,6 @@ export const Turno = () => {
   const [t] = useTranslation("global");
 
   const tableRef = useRef(null);
-
-
 
   // Shows editable icons in the patients table
 
@@ -244,24 +250,22 @@ export const Turno = () => {
 
   const { columns, dataSource } = generateTableData(data);
 
-
   const autoScroll = () => {
-
     const scrollAmount = 20; // pixels
     const scrollSpeed = 1000; // milliseconds
     const scrollMax = 15000; // total size
-    let scrollPosition = 0
+    let scrollPosition = 0;
 
     const scrollInterval = setInterval(() => {
+      scrollPosition =
+        scrollPosition > scrollMax ? 0 : scrollPosition + scrollAmount;
 
-     scrollPosition = scrollPosition>scrollMax ? 0 : scrollPosition+scrollAmount;
-  
       const scrollContainer = document.querySelector("div.ant-table-body");
       if (scrollContainer) {
         scrollContainer.scrollTop = scrollPosition;
       }
     }, scrollSpeed);
-  
+
     return () => clearInterval(scrollInterval); // Clean up the interval when the component unmounts
   };
 
@@ -271,28 +275,29 @@ export const Turno = () => {
 
     const fetchData = async () => {
       try {
-        const collectionRef = firestore.collection("patients");
-        const initialSnapshot = await collectionRef.orderBy("start_time").get();
-        const initialData = initialSnapshot.docs.map((doc) => {
-          return doc.data();
-        });
-
-        const filteredData = initialData.filter(
-          (item) => item.complete !== true
+        // Create the Firestore query
+        const collectionRef = collection(firestore, "patients"); // Firestore collection reference
+        const q = query(
+          collectionRef,
+          where("complete", "!=", true),
+          orderBy("complete"),
+          orderBy("start_time")
         );
 
+        // Get the initial snapshot of the collection
+        const initialSnapshot = await getDocs(q);
+        const initialData = initialSnapshot.docs.map((doc) => doc.data());
+
         if (isMounted) {
-          setData(filteredData);
+          setData(initialData);
         }
 
-        unsubscribe = collectionRef.onSnapshot((snapshot) => {
+        // Set up the real-time listener
+        unsubscribe = onSnapshot(q, (snapshot) => {
           const updatedData = snapshot.docs.map((doc) => doc.data());
 
           if (isMounted) {
-            const filteredUpdatedData = updatedData.filter(
-              (item) => item.complete !== true
-            );
-            setData(filteredUpdatedData);
+            setData(updatedData);
             autoScroll();
           }
         });
@@ -304,13 +309,10 @@ export const Turno = () => {
     fetchData();
 
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
       isMounted = false;
-      clearInterval(autoScroll()); // Clear the interval when the component unmounts
+      if (unsubscribe) unsubscribe();
     };
-  }, []);
+  }, [firestore]);
 
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";

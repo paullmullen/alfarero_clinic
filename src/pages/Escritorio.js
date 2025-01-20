@@ -11,6 +11,7 @@ import {
   Switch,
   Select,
 } from "antd";
+import { collection, query, where, orderBy, getDocs } from "firebase/firestore"; // Import necessary methods
 import { CloseCircleOutlined } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
@@ -23,7 +24,6 @@ import waiting from "../img/waiting.svg";
 import in_process from "../img/in_process.svg";
 import complete from "../img/complete.svg";
 import fin from "../img/fin.png";
-
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -42,40 +42,40 @@ export const Escritorio = () => {
 
   // Connects info to render on the app with firebase in real time (comunication react-firebase)
 
-  useEffect(() => { 
+  useEffect(() => {
     let isMounted = true;
     const fetchData = async () => {
       try {
-        const collectionRef = firestore.collection("patients");
-        const snapshot = await collectionRef.orderBy("start_time", "asc").get();
+        // Create a reference for the 'patients' collection
+        const collectionRef = collection(firestore, "patients");
+
+        // Build the query with the new Firebase v9+ syntax
+        const q = query(
+          collectionRef,
+          where("complete", "!=", true),
+          where("plan_of_care", "array-contains", usuario.servicio),
+          orderBy("complete"),
+          orderBy("start_time", "asc")
+        );
+
+        const snapshot = await getDocs(q); // Fetch the documents using 'getDocs'
+
         const initialData = snapshot.docs.map((doc) => doc.data());
-  
+
         if (isMounted) {
-          const filteredData = initialData.filter(
-            (doc) =>
-              doc.complete !== true &&
-              doc.plan_of_care.some((item) => item.station === usuario.servicio),
-          );
-          
-          filteredData.sort(
-            (a, b) => a.start_time.toMillis() - b.start_time.toMillis(),
-          );
-    
-          setDocuments(filteredData);
+          setDocuments(initialData);
         }
       } catch (error) {
-        // Handle any potential errors
         console.error("Error fetching data:", error);
       }
     };
-  
+
     fetchData();
-  
+
     return () => {
       isMounted = false; // Set the mounted flag to false to prevent state updates after unmounting
     };
-  }, [usuario.servicio, t]);
-  
+  }, [usuario.servicio, t]); // Dependency array
 
   const salir = () => {
     localStorage.clear();
@@ -93,53 +93,24 @@ export const Escritorio = () => {
     switch (currentStatus) {
       case "waiting":
         statusIcon = (
-          <Image
-            src={waiting}
-            width={15}
-            height={10}
-            preview={false}
-          />
+          <Image src={waiting} width={15} height={10} preview={false} />
         );
         break;
       case "in_process":
         statusIcon = (
-          <Image
-            src={in_process}
-            width={15}
-            height={10}
-            preview={false}
-          />
+          <Image src={in_process} width={15} height={10} preview={false} />
         );
         break;
       case "complete":
         statusIcon = (
-          <Image
-            src={complete}
-            width={15}
-            height={10}
-            preview={false}
-          />
+          <Image src={complete} width={15} height={10} preview={false} />
         );
         break;
       case "fin":
-        statusIcon = (
-          <Image
-            src={fin}
-            width={20}
-            height={15}
-            preview={false}
-          />
-        );
+        statusIcon = <Image src={fin} width={20} height={15} preview={false} />;
         break;
       case "pay":
-        statusIcon = (
-          <Image
-            src={pay}
-            width={15}
-            height={10}
-            preview={false}
-          />
-        );
+        statusIcon = <Image src={pay} width={15} height={10} preview={false} />;
         break;
       default:
         statusIcon = null;
@@ -244,12 +215,12 @@ export const Escritorio = () => {
         } else if (value !== "waiting" && item.status === "waiting") {
           updatedItem.wait_end = Math.floor(Date.now() / 1000);
           updatedItem.waiting_time = Math.abs(
-            updatedItem.wait_end - updatedItem.wait_start,
+            updatedItem.wait_end - updatedItem.wait_start
           );
         } else if (value !== "in_process" && item.status === "in_process") {
           updatedItem.procedure_end = Math.floor(Date.now() / 1000);
           updatedItem.procedure_time = Math.abs(
-            updatedItem.procedure_end - updatedItem.procedure_start,
+            updatedItem.procedure_end - updatedItem.procedure_start
           );
         }
 
@@ -269,7 +240,7 @@ export const Escritorio = () => {
     if (doc.exists) {
       const statsData = doc.data();
       const updatedItem = updatedPlanOfCare.find(
-        (item) => item.station === currentStation,
+        (item) => item.station === currentStation
       );
 
       if (value === "waiting" && updatedItem.wait_start) {
@@ -297,11 +268,11 @@ export const Escritorio = () => {
 
       if (number_of_patients) {
         const validWaitingTimeData = waiting_time_data.filter(
-          (time) => !isNaN(time),
+          (time) => !isNaN(time)
         );
         const waitingAverage = Math.floor(
           validWaitingTimeData.reduce((acc, time) => acc + time, 0) /
-            number_of_patients,
+            number_of_patients
         );
         await statsDocRef.update({
           avg_waiting_time: waitingAverage,
@@ -310,11 +281,11 @@ export const Escritorio = () => {
 
       if (procedure_time_data && number_of_patients) {
         const validProcedureTimeData = procedure_time_data.filter(
-          (time) => !isNaN(time),
+          (time) => !isNaN(time)
         );
         const procedureAverage = Math.floor(
           validProcedureTimeData.reduce((acc, time) => acc + time, 0) /
-            number_of_patients,
+            number_of_patients
         );
         await statsDocRef.update({
           avg_procedure_time: procedureAverage,
@@ -354,27 +325,15 @@ export const Escritorio = () => {
               }}
             >
               <div>
-                <Image
-                  src={waiting}
-                  width={15}
-                  height={10}
-                />
+                <Image src={waiting} width={15} height={10} />
                 {t("waiting")}
               </div>
               <div>
-                <Image
-                  src={in_process}
-                  width={15}
-                  height={10}
-                />
+                <Image src={in_process} width={15} height={10} />
                 {t("beingAttended")}
               </div>
               <div>
-                <Image
-                  src={complete}
-                  width={15}
-                  height={10}
-                />
+                <Image src={complete} width={15} height={10} />
                 {t("visitCompleted")}
               </div>
             </div>

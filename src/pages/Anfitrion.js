@@ -8,6 +8,14 @@ import {
   Button,
   Popconfirm,
 } from "antd";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  onSnapshot,
+} from "firebase/firestore"; // Import necessary methods
 
 import { firestore } from "./../helpers/firebaseConfig";
 import {
@@ -58,20 +66,15 @@ export const Anfitrion = () => {
     history.replace("/ingresar-host");
   };
 
+  const onSave = () => {
+    console.log("Patient data saved");
+    // You can also perform other actions like updating state, making API calls, etc.
+  };
+
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Set time to the beginning of the day
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1); // Set time to the beginning of the next day
-
-  const refreshDoc = async (docRef, newData) => {
-    try {
-      await docRef.update(newData);
-      console.log(`Document with ID ${docRef.id} updated successfully.`);
-    } catch (error) {
-      console.error(`Error updating document with ID ${docRef.id}:`, error);
-    }
-  };
-
 
   useEffect(() => {
     let isMounted = true;
@@ -80,55 +83,41 @@ export const Anfitrion = () => {
 
     const fetchData = async () => {
       try {
-        const collectionRef = firestore.collection("patients");
-        const statsRef = firestore.collection("stats");
-        const initialSnapshot = await collectionRef
-          .orderBy("start_time")
-          .where("start_time", ">=", today)
-          .where("start_time", "<", tomorrow)
-          .get();
-        const statsSnapshot = await statsRef.get();
+        // Create references for collections
+        const patientsRef = collection(firestore, "patients");
+        const statsRef = collection(firestore, "stats");
 
-        const initialData = initialSnapshot.docs.map((doc) => {
-          const data = doc.data();
-          if (!data.pt_no) {
-            // If pt_no is blank, replace it with the documentID
-            data.pt_no = doc.id;
-
-            // Get a reference to the document in Firestore
-            const docRef = collectionRef.doc(doc.id);
-
-            // Call the refreshDoc() function to update the document
-            refreshDoc(docRef, data);
-          }
-          return data;
-        });
-
-        const initialStats = statsSnapshot.docs.map((doc) => {
-          return doc.data();
-        });
-
-        const filteredData = initialData.filter(
-          (item) => item.complete !== true
+        // Build queries with the new Firebase v9+ syntax
+        const q = query(
+          patientsRef,
+          orderBy("start_time"),
+          where("start_time", ">=", today),
+          where("start_time", "<", tomorrow),
+          where("complete", "==", false)
         );
 
+        const initialSnapshot = await getDocs(q); // Use 'getDocs' for the initial data fetch
+        const statsSnapshot = await getDocs(statsRef);
+
+        const initialData = initialSnapshot.docs.map((doc) => doc.data());
+        const initialStats = statsSnapshot.docs.map((doc) => doc.data());
+
         if (isMounted) {
-          setData(filteredData);
+          setData(initialData);
           setStatsData(initialStats);
         }
 
-        unsubscribe = collectionRef.onSnapshot((snapshot) => {
+        // Listen for real-time updates on the 'patients' collection
+        unsubscribe = onSnapshot(q, (snapshot) => {
           const updatedData = snapshot.docs.map((doc) => doc.data());
 
           if (isMounted) {
-            const filteredUpdatedData = updatedData.filter(
-              (item) => item.complete !== true
-            );
-            setData(filteredUpdatedData);
+            setData(updatedData);
           }
         });
 
-        unsubscribeStats = statsRef.onSnapshot((snapshot) => {
+        // Listen for real-time updates on the 'stats' collection
+        unsubscribeStats = onSnapshot(statsRef, (snapshot) => {
           const updatedData = snapshot.docs.map((doc) => doc.data());
           setStatsData(updatedData);
         });
@@ -149,7 +138,7 @@ export const Anfitrion = () => {
 
       isMounted = false;
     };
-  }, []);
+  }, [today, tomorrow]);
 
   // Shows editable icons in the host table
 
@@ -531,38 +520,41 @@ export const Anfitrion = () => {
         fixed: "left",
         render: (name) => (
           <table>
-            <tr>
-              <td>
-                <b> {name.split("|")[0]} </b>
-                <br /> {name.split("|")[1]} <br />
-                <i>{name.split("|")[2]} </i>
-                <br />
-                {name.split("|")[3]}{" "}
-              </td>
-              <td align="right">
-                <Popover
-                  content={
-                    <EditPatientData
-                      initialValues={{
-                        paciente: name.split("|")[0],
-                        tel: name.split("|")[3],
-                        motivo: name.split("|")[1],
-                        pt_no: hoveredRowKey
-                      }}
+            <tbody>
+              <tr>
+                <td>
+                  <b> {name.split("|")[0]} </b>
+                  <br /> {name.split("|")[1]} <br />
+                  <i>{name.split("|")[2]} </i>
+                  <br />
+                  {name.split("|")[3]}{" "}
+                </td>
+                <td align="right">
+                  <Popover
+                    content={
+                      <EditPatientData
+                        initialValues={{
+                          paciente: name.split("|")[0],
+                          tel: name.split("|")[3],
+                          motivo: name.split("|")[1],
+                          pt_no: hoveredRowKey,
+                        }}
+                        onSave={onSave}
+                      />
+                    }
+                    title={t("EDITPATIENTDATA")}
+                    trigger="click"
+                  >
+                    <Image
+                      src={edit}
+                      width={IconSizes.height}
+                      height={IconSizes.height}
+                      preview={false}
                     />
-                  }
-                  title={t("EDITPATIENTDATA")}
-                  trigger="click"
-                >
-                  <Image
-                    src={edit}
-                    width={IconSizes.height}
-                    height={IconSizes.height}
-                    preview={false}
-                  />
-                </Popover>
-              </td>
-            </tr>
+                  </Popover>
+                </td>
+              </tr>
+            </tbody>
           </table>
         ),
       },
