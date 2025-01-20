@@ -1,3 +1,4 @@
+import { firestore } from "../helpers/firebaseConfig"; // import your Firestore instance
 import {
   collection,
   query,
@@ -6,7 +7,6 @@ import {
   doc,
   updateDoc,
 } from "firebase/firestore";
-import { firestore } from "./../helpers/firebaseConfig";
 
 const updatePatientData = async (
   name,
@@ -17,23 +17,24 @@ const updatePatientData = async (
   console.log(name, phone, reasonForVisit, hoveredRowKey);
 
   try {
-    const patientRef = collection(firestore, "patients");
-    const q = query(patientRef, where("pt_no", "==", hoveredRowKey));
-    const querySnapshot = await getDocs(q);
+    const patientRef = collection(firestore, "patients"); // Use 'db' instead of 'firestore'
+    const q = query(patientRef, where("pt_no", "==", hoveredRowKey)); // Create query
+    const querySnapshot = await getDocs(q); // Fetch documents based on query
 
     if (!querySnapshot.empty) {
-      const patientDoc = querySnapshot.docs[0]; // Get the first document in the snapshot
-      const patientDocRef = doc(firestore, "patients", patientDoc.id); // Get a reference to the document
+      const patientDoc = querySnapshot.docs[0]; // Get the first matching document
+      const patientDocRef = doc(firestore, "patients", patientDoc.id); // Get document reference
       await updateDoc(patientDocRef, {
         patient_name: name,
         tel: phone,
         reason_for_visit: reasonForVisit,
-      }); // Update the fields
+      }); // Update the fields with the new data
+      console.log("Patient data updated successfully!");
     } else {
-      console.log("No matching documents");
+      console.log("No matching documents found.");
     }
   } catch (err) {
-    console.log("Error:", err.message);
+    console.error("Error:", err.message);
   }
 };
 

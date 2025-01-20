@@ -15,6 +15,7 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
   try {
     await runTransaction(firestore, async (transaction) => {
       const docPatientRef = doc(firestore, "patients", hoveredRowKey);
+
       const docStatsRef = doc(firestore, "stats", station);
 
       const [docPatient, docStats] = await Promise.all([

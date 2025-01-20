@@ -66,6 +66,11 @@ export const Anfitrion = () => {
     history.replace("/ingresar-host");
   };
 
+  const onSave = () => {
+    console.log("Patient data saved");
+    // You can also perform other actions like updating state, making API calls, etc.
+  };
+
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Set time to the beginning of the day
   const tomorrow = new Date(today);
@@ -515,38 +520,41 @@ export const Anfitrion = () => {
         fixed: "left",
         render: (name) => (
           <table>
-            <tr>
-              <td>
-                <b> {name.split("|")[0]} </b>
-                <br /> {name.split("|")[1]} <br />
-                <i>{name.split("|")[2]} </i>
-                <br />
-                {name.split("|")[3]}{" "}
-              </td>
-              <td align="right">
-                <Popover
-                  content={
-                    <EditPatientData
-                      initialValues={{
-                        paciente: name.split("|")[0],
-                        tel: name.split("|")[3],
-                        motivo: name.split("|")[1],
-                        pt_no: hoveredRowKey,
-                      }}
+            <tbody>
+              <tr>
+                <td>
+                  <b> {name.split("|")[0]} </b>
+                  <br /> {name.split("|")[1]} <br />
+                  <i>{name.split("|")[2]} </i>
+                  <br />
+                  {name.split("|")[3]}{" "}
+                </td>
+                <td align="right">
+                  <Popover
+                    content={
+                      <EditPatientData
+                        initialValues={{
+                          paciente: name.split("|")[0],
+                          tel: name.split("|")[3],
+                          motivo: name.split("|")[1],
+                          pt_no: hoveredRowKey,
+                        }}
+                        onSave={onSave}
+                      />
+                    }
+                    title={t("EDITPATIENTDATA")}
+                    trigger="click"
+                  >
+                    <Image
+                      src={edit}
+                      width={IconSizes.height}
+                      height={IconSizes.height}
+                      preview={false}
                     />
-                  }
-                  title={t("EDITPATIENTDATA")}
-                  trigger="click"
-                >
-                  <Image
-                    src={edit}
-                    width={IconSizes.height}
-                    height={IconSizes.height}
-                    preview={false}
-                  />
-                </Popover>
-              </td>
-            </tr>
+                  </Popover>
+                </td>
+              </tr>
+            </tbody>
           </table>
         ),
       },

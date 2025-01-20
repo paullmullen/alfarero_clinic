@@ -185,7 +185,9 @@ export const RouterPage = () => {
                     onClick={handleHeaderTitleTap}
                     className="no-border-button"
                   >
-                    <Title level={4}>{t("headerTitle")}</Title>
+                    <Title style={{ backgroundColor: "transparent" }} level={4}>
+                      {t("headerTitle")}
+                    </Title>
                   </Button>
                 </div>
                 <Popover
