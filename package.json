@@ -8,6 +8,7 @@
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "antd": "^4.7.0",
+    "axios": "^1.7.9",
     "chokidar": "^3.5.3",
     "crypto-js": "^4.1.1",
     "file-saver": "^2.0.5",

@@ -4,124 +4,40 @@ import {
   where,
   getDocs,
   deleteDoc,
-  runTransaction,
   doc,
   updateDoc,
   getDoc,
 } from "firebase/firestore";
 import { firestore } from "./../helpers/firebaseConfig";
 
+import axios from "axios";
+
 export const handleStatusChange = async (value, hoveredRowKey, station) => {
   try {
-    await runTransaction(firestore, async (transaction) => {
-      const docPatientRef = doc(firestore, "patients", hoveredRowKey);
+    // Getting the database name from the environment variable
+    const databaseName = process.env.REACT_APP_FIREBASE_DB;
 
-      const docStatsRef = doc(firestore, "stats", station);
-
-      const [docPatient, docStats] = await Promise.all([
-        transaction.get(docPatientRef),
-        transaction.get(docStatsRef),
-      ]);
-
-      let endOfWait = false;
-      let endOfProcess = false;
-
-      if (docPatient.exists()) {
-        const data = docPatient.data();
-        const updatedPlanOfCare = data.plan_of_care?.map((item) => {
-          if (item.station === station) {
-            const updatedItem = {
-              ...item,
-              status: value,
-            };
-
-            if (value === "waiting" && item.status !== "waiting") {
-              updatedItem.wait_start = Math.floor(Date.now() / 1000);
-            } else if (value === "in_process" && item.status !== "in_process") {
-              updatedItem.procedure_start = Math.floor(Date.now() / 1000);
-            }
-
-            if (value !== "waiting" && item.status === "waiting") {
-              updatedItem.wait_end = Math.floor(Date.now() / 1000);
-              updatedItem.waiting_time = Math.abs(
-                updatedItem.wait_end - updatedItem.wait_start
-              );
-              endOfWait = true;
-            } else if (value !== "in_process" && item.status === "in_process") {
-              updatedItem.procedure_end = Math.floor(Date.now() / 1000);
-              updatedItem.procedure_time = Math.abs(
-                updatedItem.procedure_end - updatedItem.procedure_start
-              );
-              endOfProcess = true;
-            }
-            return updatedItem;
-          }
-          return item;
-        });
-
-        transaction.update(docPatientRef, { plan_of_care: updatedPlanOfCare });
-
-        if (docStats.exists()) {
-          const statsData = docStats.data();
-          const updatedItem = updatedPlanOfCare.find(
-            (item) => item.station === station
-          );
-
-          if (endOfWait) {
-            const waitDifference = Math.abs(updatedItem.waiting_time);
-            transaction.update(docStatsRef, {
-              waiting_time_data: [
-                ...(statsData.waiting_time_data || []),
-                waitDifference,
-              ],
-            });
-          }
-
-          if (endOfProcess) {
-            const inProcessDifference = Math.abs(updatedItem.procedure_time);
-            transaction.update(docStatsRef, {
-              procedure_time_data: [
-                ...(statsData.procedure_time_data || []),
-                inProcessDifference,
-              ],
-            });
-          }
-
-          const { waiting_time_data, procedure_time_data, number_of_patients } =
-            statsData;
-
-          if (waiting_time_data && number_of_patients) {
-            const validWaitingTimeData = waiting_time_data.filter(
-              (time) => !isNaN(time)
-            );
-            const waitingAverage = Math.floor(
-              validWaitingTimeData.reduce((acc, time) => acc + time, 0) /
-                number_of_patients
-            );
-            transaction.update(docStatsRef, {
-              avg_waiting_time: waitingAverage,
-            });
-          }
-
-          if (number_of_patients) {
-            const validProcedureTimeData = procedure_time_data.filter(
-              (time) => !isNaN(time)
-            );
-            const procedureAverage = Math.floor(
-              validProcedureTimeData.reduce((acc, time) => acc + time, 0) /
-                number_of_patients
-            );
-            transaction.update(docStatsRef, {
-              avg_procedure_time: procedureAverage,
-            });
-          }
-        }
-      } else {
-        console.log("No such document!");
+    // Calling the cloud function with the required parameters
+    const response = await axios.post(
+      "https://us-central1-alfarero-478ad.cloudfunctions.net/updateStatusChange",
+      {
+        patientId: hoveredRowKey,
+        carePlanIndex: station,
+        newStatus: value,
+        databaseName: databaseName,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
+
+    console.log("Function response:", response.data);
+    return response.data; // Optionally return the result
   } catch (error) {
-    console.error("Error updating status:", error);
+    console.error("Error calling the cloud function:", error);
+    throw error; // Optionally rethrow the error if you want to handle it elsewhere
   }
 };
 
@@ -129,10 +45,12 @@ export const handleDelete = async (hoveredRowKey, history) => {
   try {
     const docPatientRef = doc(firestore, "patients", hoveredRowKey);
 
+    // Update the patient document to mark it as complete
     await updateDoc(docPatientRef, {
       complete: true,
     });
 
+    // Fetch the patient data after marking as complete
     const docSnapshot = await getDoc(docPatientRef);
     const patData = docSnapshot.exists() ? docSnapshot.data() : {};
 
@@ -141,6 +59,7 @@ export const handleDelete = async (hoveredRowKey, history) => {
       gender: patData.gender,
     };
 
+    // Redirect to the survey page with patient details
     history.push({ pathname: "/survey", state: result });
   } catch (error) {
     console.error("Error deleting patient:", error);
@@ -149,11 +68,15 @@ export const handleDelete = async (hoveredRowKey, history) => {
 
 export const handleReadmitClick = async (patientID) => {
   try {
+    // Reference the patient document
     const docPatientRef = doc(firestore, "patients", patientID);
 
+    // Update the `complete` field to `false`
     await updateDoc(docPatientRef, {
       complete: false,
     });
+
+    console.log(`Patient ${patientID} readmitted successfully.`);
   } catch (error) {
     console.error("Error readmitting patient:", error);
   }
@@ -161,13 +84,18 @@ export const handleReadmitClick = async (patientID) => {
 
 export const cleanPaulTests = async () => {
   try {
+    // Reference the "patients" collection
     const patientsRef = collection(firestore, "patients");
+
+    // Create a query to find patients with `patient_name` equal to "Paul"
     const q = query(patientsRef, where("patient_name", "==", "Paul"));
 
+    // Execute the query and get matching documents
     const querySnapshot = await getDocs(q);
 
-    for (const doc of querySnapshot.docs) {
-      await deleteDoc(doc.ref);
+    // Delete each document that matches the query
+    for (const patientDoc of querySnapshot.docs) {
+      await deleteDoc(patientDoc.ref);
     }
 
     console.log("Paul's test data cleaned successfully.");
