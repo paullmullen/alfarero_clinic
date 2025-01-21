@@ -141,10 +141,15 @@ export const Registro = () => {
     visits?.forEach((visit) => {
       const station = stations.find((s) => s.value === visit);
       if (station) {
+        console.log(station);
         result.push({
           order: order++,
           station: station.value,
           status: statusList[order],
+          ...(statusList[order] === "waiting" && {
+            // make sure there is a wait_start value when the patient setup is done.
+            wait_start: Math.floor(Date.now() / 1000),
+          }),
         });
       }
     });
