@@ -7,12 +7,20 @@ import {
   doc,
   updateDoc,
   getDoc,
+  Timestamp,
 } from "firebase/firestore";
+
 import { firestore } from "./../helpers/firebaseConfig";
+import { message } from "antd"; // Example library for popover (Ant Design)
 
 import axios from "axios";
 
-export const handleStatusChange = async (value, hoveredRowKey, station) => {
+export const handleStatusChange = async (
+  value,
+  hoveredRowKey,
+  station,
+  checkoutMessage
+) => {
   try {
     // Getting the database name from the environment variable
     const databaseName = process.env.REACT_APP_FIREBASE_DB;
@@ -34,6 +42,37 @@ export const handleStatusChange = async (value, hoveredRowKey, station) => {
     );
 
     console.log("Function response:", response.data);
+
+    // Check if the updatedPlanOfCare contains the specified statuses
+    const statusesToCheck = [
+      "waiting",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "in_process",
+      "obs",
+    ];
+    const hasRelevantStatuses = response.data.updatedPlanOfCare.some((entry) =>
+      statusesToCheck.includes(entry.status)
+    );
+
+    if (!hasRelevantStatuses) {
+      // Display a popover reminding the user to check the patient out
+
+      message.info({
+        content: checkoutMessage,
+        duration: 10, // Set to 0 to make it persist until dismissed
+        className: "custom-message", // Add custom styling
+        okText: "OK",
+        onClose: () => {
+          console.log("Message dismissed");
+        },
+      });
+    }
+
     return response.data; // Optionally return the result
   } catch (error) {
     console.error("Error calling the cloud function:", error);
@@ -48,6 +87,7 @@ export const handleDelete = async (hoveredRowKey, history) => {
     // Update the patient document to mark it as complete
     await updateDoc(docPatientRef, {
       complete: true,
+      stop_time: Timestamp.now(),
     });
 
     // Fetch the patient data after marking as complete

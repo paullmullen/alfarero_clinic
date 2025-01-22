@@ -153,7 +153,7 @@ exports.updateStatusChange = functions.https.onRequest((req, res) => {
 
       // Retrieve the entry and make updates
       const currentEntry = patientData.plan_of_care[carePlanEntryIndex];
-      const now = new Date().toISOString();
+      const now = admin.firestore.Timestamp.now();
 
       // Initialize an updated entry with existing values
       const updatedEntry = {
@@ -169,10 +169,10 @@ exports.updateStatusChange = functions.https.onRequest((req, res) => {
         updatedEntry.waiting_time = null;
       } else if (currentEntry.status === "waiting" && newStatus !== "waiting") {
         updatedEntry.waiting_end = now;
-        if (updatedEntry.waiting_start) {
-          const start = new Date(updatedEntry.waiting_start).getTime();
-          const end = new Date(updatedEntry.waiting_end).getTime();
-          updatedEntry.waiting_time = (end - start) / 1000; // Time in seconds
+        if (updatedEntry.waiting_start && updatedEntry.waiting_end) {
+          const start = updatedEntry.waiting_start;
+          const end = updatedEntry.waiting_end;
+          updatedEntry.waiting_time = end - start; // Time in seconds
         }
       }
 
@@ -185,16 +185,44 @@ exports.updateStatusChange = functions.https.onRequest((req, res) => {
         newStatus !== "in_process"
       ) {
         updatedEntry.in_process_end = now;
-        if (updatedEntry.in_process_start) {
-          const start = new Date(updatedEntry.in_process_start).getTime();
-          const end = new Date(updatedEntry.in_process_end).getTime();
-          updatedEntry.procedure_time = (end - start) / 1000; // Time in seconds
+        if (updatedEntry.in_process_start && updatedEntry.in_process_end) {
+          const start = updatedEntry.in_process_start;
+          const end = updatedEntry.in_process_end;
+          updatedEntry.procedure_time = end - start; // Time in seconds
         }
       }
 
       // Replace the entry in the `plan_of_care` array
-      const updatedPlanOfCare = [...patientData.plan_of_care];
+      let updatedPlanOfCare = [...patientData.plan_of_care];
       updatedPlanOfCare[carePlanEntryIndex] = updatedEntry;
+
+      // if the change is from anything to "complete", update the next eligible station to "waiting"
+      if (newStatus === "complete") {
+        let updated = false; // Track if we've already updated an eligible station
+        let updatedIndex = -1; // Track the index of the updated station
+
+        const tempPlanOfCare = updatedPlanOfCare.map((station, index) => {
+          if (
+            !updated &&
+            ["2", "3", "4", "5", "6", "7"].includes(station.status)
+          ) {
+            updated = true; // Mark the first eligible station for update
+            updatedIndex = index; // Save the index of the updated station
+            return {
+              ...station,
+              status: "waiting",
+              waiting_start: now,
+              lastUpdate: now,
+            };
+          }
+          return station;
+        });
+
+        // Update the plan of care with the modified station
+        if (updatedIndex !== -1) {
+          updatedPlanOfCare[updatedIndex] = tempPlanOfCare[updatedIndex];
+        }
+      }
 
       // Commit the updated array back to Firestore
       await patientRef.update({ plan_of_care: updatedPlanOfCare });

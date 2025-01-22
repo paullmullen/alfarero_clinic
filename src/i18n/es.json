@@ -61,7 +61,7 @@
   "firstVisit": "¿Fue esta su primera visita a esta clínica?",
   "fromAFriend": "Alguién me dijo",
   "greeting": "¡Bienvenido!",
-  "headerTitle": "Plan de Cuidado de Pacientes",
+  "headerTitle": "Plan de Atención de Pacientes",
   "hostLogin": "Login",
   "howDidYouLearn": "¿Cómo se enteró de nuestra clínica?",
   "infoPatient": "Información del Estatus del Paciente",
@@ -169,5 +169,6 @@
   "GOAL": "Meta",
   "DAYSAGO": "Datos de Tendencia",
   "TRENDDAYS": "Días Anteriores Para Gráfica de Tendencias",
-  "DAYS": "Días"
+  "DAYS": "Días",
+  "CHECKOUT": "Plan de atención completo: Cierre el registro del paciente."
 }
