@@ -1,5 +1,5 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore"; // Modular SDK
+import firebase from "firebase/compat/app";
+import { getFirestore } from "firebase/firestore";
 
 // Firebase configuration for your single project (same for both databases)
 const firebaseConfig = {
@@ -25,4 +25,4 @@ const firestore =
     : getFirestore(firebaseApp); // Use default database (production)
 
 console.log(firestore);
-export { firestore, firebaseApp };
+export { firebaseApp, firestore };
