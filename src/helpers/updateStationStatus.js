@@ -11,120 +11,72 @@ import {
 } from "firebase/firestore";
 
 import { firestore } from "./../helpers/firebaseConfig";
+import { message } from "antd"; // Example library for popover (Ant Design)
 
-export const handleStatusChange = async (value, hoveredRowKey, station) => {
+import axios from "axios";
+
+export const handleStatusChange = async (
+  value,
+  hoveredRowKey,
+  station,
+  checkoutMessage
+) => {
   try {
-    // Reference the Firestore document for the patient
-    const patientRef = doc(firestore, "patients", hoveredRowKey);
+    // Getting the database name from the environment variable
+    const databaseName = process.env.REACT_APP_FIREBASE_DB;
 
-    // Get the current patient document
-    const patientDoc = await getDoc(patientRef);
-    if (!patientDoc.exists) {
-      console.error("Patient document does not exist.");
-      return;
-    }
-
-    const patientData = patientDoc.data();
-
-    // Ensure `plan_of_care` exists and is an array
-    if (!Array.isArray(patientData.plan_of_care)) {
-      console.error("plan_of_care is missing or not an array.");
-      return;
-    }
-
-    // Find the index of the entry in `plan_of_care` that matches the station
-    const carePlanIndex = patientData.plan_of_care.findIndex(
-      (entry) => entry.station === station
+    // Calling the cloud function with the required parameters
+    const response = await axios.post(
+      "https://us-central1-alfarero-478ad.cloudfunctions.net/updateStatusChange",
+      {
+        patientId: hoveredRowKey,
+        carePlanIndex: station,
+        newStatus: value,
+        databaseName: databaseName,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
     );
 
-    if (carePlanIndex === -1) {
-      console.error("No matching station found in plan_of_care.");
-      return;
+    console.log("Function response:", response.data);
+
+    // Check if the updatedPlanOfCare contains the specified statuses
+    const statusesToCheck = [
+      "waiting",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "in_process",
+      "obs",
+    ];
+    const hasRelevantStatuses = response.data.updatedPlanOfCare.some((entry) =>
+      statusesToCheck.includes(entry.status)
+    );
+
+    if (!hasRelevantStatuses) {
+      // Display a popover reminding the user to check the patient out
+
+      message.info({
+        content: checkoutMessage,
+        duration: 10, // Set to 0 to make it persist until dismissed
+        className: "custom-message", // Add custom styling
+        okText: "OK",
+        onClose: () => {
+          console.log("Message dismissed");
+        },
+      });
     }
 
-    const updatedPlanOfCare = [...patientData.plan_of_care];
-    const currentEntry = updatedPlanOfCare[carePlanIndex];
-
-    // Initialize all the values we'll update
-    let newWaitingStart = currentEntry.waiting_start;
-    let newWaitingEnd = currentEntry.waiting_end;
-    let newWaitingTime = currentEntry.waiting_time;
-    let newInProcessStart = currentEntry.in_process_start;
-    let newInProcessEnd = currentEntry.in_process_end;
-    let newProcedureTime = currentEntry.procedure_time;
-
-    // Handle changes related to "waiting" status
-    if (value === "waiting" && currentEntry.status !== "waiting") {
-      // If changing to "waiting", set new waiting_start and clear waiting_end, waiting_time
-      console.log(
-        "Status changed to 'waiting', setting waiting_start and clearing waiting_end and waiting_time."
-      );
-      newWaitingStart = new Date().toISOString();
-      newWaitingEnd = null;
-      newWaitingTime = null;
-    } else if (currentEntry.status === "waiting" && value !== "waiting") {
-      // If changing from "waiting", set new waiting_end and calculate waiting_time
-      console.log(
-        "Status changed from 'waiting' to something else, setting waiting_end and calculating waiting_time."
-      );
-      newWaitingEnd = new Date().toISOString();
-      if (newWaitingStart) {
-        const waitingStart = new Date(newWaitingStart).getTime();
-        const waitingEnd = new Date(newWaitingEnd).getTime();
-        newWaitingTime = (waitingEnd - waitingStart) / 1000; // in seconds
-      }
-    }
-
-    // Handle changes related to "in_process" status
-    if (value === "in_process" && currentEntry.status !== "in_process") {
-      // If changing to "in_process", set new in_process_start and clear in_process_end, procedure_time
-      console.log(
-        "Status changed to 'in_process', setting in_process_start and clearing in_process_end and procedure_time."
-      );
-      newInProcessStart = new Date().toISOString();
-      newInProcessEnd = null;
-      newProcedureTime = null;
-    } else if (currentEntry.status === "in_process" && value !== "in_process") {
-      // If changing from "in_process", set new in_process_end and calculate procedure_time
-      console.log(
-        "Status changed from 'in_process' to something else, setting in_process_end and calculating procedure_time."
-      );
-      newInProcessEnd = new Date().toISOString();
-      if (newInProcessStart) {
-        const procedureStart = new Date(newInProcessStart).getTime();
-        const procedureEnd = new Date(newInProcessEnd).getTime();
-        newProcedureTime = (procedureEnd - procedureStart) / 1000; // in seconds
-      }
-    }
-
-    // Handle status change to something other than "waiting" or "in_process"
-    if (value !== "waiting" && value !== "in_process") {
-      console.log(
-        `Status changed from ${currentEntry.status} to ${value}, updating status.`
-      );
-    }
-
-    // Perform one massive update
-    updatedPlanOfCare[carePlanIndex] = {
-      ...currentEntry,
-      status: value,
-      waiting_start: newWaitingStart,
-      waiting_end: newWaitingEnd,
-      waiting_time: newWaitingTime,
-      in_process_start: newInProcessStart,
-      in_process_end: newInProcessEnd,
-      procedure_time: newProcedureTime,
-      lastUpdate: new Date().toISOString(),
-    };
-
-    // Commit the updated array back to Firestore
-    await updateDoc(patientRef, {
-      plan_of_care: updatedPlanOfCare,
-    });
-
-    console.log("Patient document updated successfully.");
+    return response.data; // Optionally return the result
   } catch (error) {
-    console.error("Error updating patient document:", error, value);
+    console.error("Error calling the cloud function:", error);
+    throw error; // Optionally rethrow the error if you want to handle it elsewhere
   }
 };
 

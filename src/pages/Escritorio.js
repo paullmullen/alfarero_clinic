@@ -209,7 +209,7 @@ export const Escritorio = () => {
         };
 
         if (value === "waiting" && item.status !== "waiting") {
-          updatedItem.wait_start = Math.floor(Date.now() / 1000);
+          updatedItem.waiting_start = Math.floor(Date.now() / 1000);
         } else if (value === "in_process" && item.status !== "in_process") {
           updatedItem.procedure_start = Math.floor(Date.now() / 1000);
         } else if (value !== "waiting" && item.status === "waiting") {
@@ -243,7 +243,7 @@ export const Escritorio = () => {
         (item) => item.station === currentStation
       );
 
-      if (value === "waiting" && updatedItem.wait_start) {
+      if (value === "waiting" && updatedItem.waiting_start) {
         const waitDifference = Math.abs(updatedItem.waiting_time);
         await statsDocRef.update({
           waiting_time_data: [

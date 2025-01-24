@@ -1,5 +1,5 @@
-import firebase from "firebase/compat/app";
 import { getFirestore } from "firebase/firestore";
+import { initializeApp } from "firebase/app";
 
 // Firebase configuration for your single project (same for both databases)
 const firebaseConfig = {
