@@ -2,7 +2,6 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const { getFirestore } = require("firebase-admin/firestore");
 
-admin.initializeApp();
 const db = admin.firestore();
 
 exports.getPatientCount = functions.https.onCall(async (data, context) => {

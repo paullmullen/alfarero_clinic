@@ -2,14 +2,9 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const { getFirestore } = require("firebase-admin/firestore");
 
-admin.initializeApp();
 const db = admin.firestore();
 
 const cors = require("cors")({ origin: true });
-
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
 
 exports.updateStatusChange = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
