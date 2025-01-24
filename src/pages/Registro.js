@@ -148,8 +148,8 @@ export const Registro = () => {
           station: station.value,
           status: statusList[order],
           ...(statusList[order] === "waiting" && {
-            // make sure there is a wait_start value when the patient setup is done.
-            waiting_start: Math.floor(Date.now() / 1000),
+            // make sure there is a waiting_start value when the patient setup is done.
+            waiting_start: Timestamp.now(),
           }),
         });
       }
