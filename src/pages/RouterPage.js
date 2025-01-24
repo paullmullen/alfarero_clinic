@@ -25,6 +25,15 @@ import {
   Link,
   Redirect,
 } from "react-router-dom";
+import { firestore } from "./../helpers/firebaseConfig";
+import {
+  doc,
+  updateDoc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+  Timestamp,
+} from "firebase/firestore";
 import { AlertProvider } from "../hooks/alert";
 import { Registro } from "./Registro";
 import { Turno } from "./Turno";
@@ -65,6 +74,37 @@ export const RouterPage = () => {
     }, 1000); // You can adjust the timeout duration as needed
   };
 
+  const checkAndUpdateTimestamp = async () => {
+    const timestampRef = doc(firestore, "run_aggregation", "timestamp");
+
+    try {
+      const docSnapshot = await getDoc(timestampRef);
+
+      if (docSnapshot.exists()) {
+        const lastUpdated = docSnapshot.data().last_updated;
+
+        // Ensure lastUpdated is a Firestore Timestamp
+        if (lastUpdated instanceof Timestamp) {
+          const currentTime = Timestamp.now(); // Get Firestore's current timestamp
+          const diffInSeconds = currentTime.seconds - lastUpdated.seconds; // Difference in seconds
+
+          if (diffInSeconds >= 60) {
+            // If more than 1 minute has passed
+            await updateDoc(timestampRef, { last_updated: serverTimestamp() });
+          }
+        } else {
+          console.error("Timestamp is not of type Firestore Timestamp.");
+        }
+      } else {
+        // If the document does not exist, create it with the current timestamp
+        await setDoc(timestampRef, { last_updated: serverTimestamp() });
+        console.log("Timestamp document created with current time.");
+      }
+    } catch (error) {
+      console.error("Error checking or updating timestamp:", error);
+    }
+  };
+
   const popoverContent = (
     <div>
       <Button
@@ -80,8 +120,9 @@ export const RouterPage = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
+      checkAndUpdateTimestamp();
       setCurrentTime(new Date());
-    }, 15000);
+    }, 60000);
 
     // Cleanup the interval on component unmount
     return () => clearInterval(interval);

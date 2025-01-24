@@ -1,7 +1,5 @@
-import firebase from "firebase/compat/app";
-import { getFirestore } from "firebase/firestore";
-import "firebase/compat/auth";
-import "firebase/compat/firestore";
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore"; // Modular SDK
 
 // Firebase configuration for your single project (same for both databases)
 const firebaseConfig = {
@@ -15,7 +13,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase app
-const firebaseApp = firebase.initializeApp(firebaseConfig);
+const firebaseApp = initializeApp(firebaseConfig);
 
 const dbName = process.env.REACT_APP_FIREBASE_DB || "default"; // Default to "default" if not set
 console.log("Database name: ", dbName);
