@@ -522,9 +522,13 @@ export const Anfitrion = () => {
         );
 
         if (!uniqueStations[plan.station] && item.fin !== true) {
+          const max_waiting_time = avg_time?.max_waiting_time || 0; // Get max_waiting_time for the station
           const waitText = avg_time
-            ? Math.round(avg_time.avg_waiting_time / 60)
+            ? Math.round(avg_time.avg_waiting_time / 60) // Convert seconds to minutes
             : "";
+
+          const isOverLimit =
+            avg_time && avg_time.avg_waiting_time > max_waiting_time;
 
           uniqueStations[plan.station] = {
             dataIndex: plan.station,
@@ -532,8 +536,15 @@ export const Anfitrion = () => {
             title: (
               <div>
                 {t(plan.station)}
-                <div className="wait_times">{waitText}m</div>
-                {/* <div className="wait_times">P: {procText}m</div> */}
+                <div
+                  className="wait_times"
+                  style={{
+                    color: isOverLimit ? "red" : "inherit",
+                    fontWeight: isOverLimit ? "bold" : "normal",
+                  }}
+                >
+                  {waitText}m
+                </div>
               </div>
             ),
             render: (status) => renderStatusIcon(status, plan.station),
