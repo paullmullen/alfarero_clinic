@@ -649,16 +649,41 @@ export const Anfitrion = () => {
 
     const dataSource = extractedPlanOfCare?.map((item) => {
       const stations = {};
-
       // eslint-disable-next-line no-unused-expressions
       item.plan_of_care?.forEach((plan) => {
         stations[plan.station] = plan.status;
       });
 
-      const avg_time =
-        item.avg_time !== 0 && !isNaN(item.avg_time)
-          ? Math.floor((Date.now() / 1000 - item.avg_time) / 60)
-          : 0;
+      // Find all stations with status "in_process" or "waiting"
+      const inProcessOrWaitingTimes = item.plan_of_care
+        ?.filter(
+          (plan) => plan.status === "in_process" || plan.status === "waiting"
+        )
+        .map((plan) => {
+          let timeElapsed = 0;
+
+          // For "waiting", calculate the time between waiting_start and the present time
+          if (plan.status === "waiting" && plan.waiting_start) {
+            timeElapsed = Math.floor(
+              (Timestamp.now().seconds - plan.waiting_start.seconds) / 60 // Convert to minutes
+            );
+          }
+
+          // For "in_process", calculate the time between in_process_start and the present time
+          if (plan.status === "in_process" && plan.in_process_start) {
+            timeElapsed = Math.floor(
+              (Timestamp.now().seconds - plan.in_process_start.seconds) / 60 // Convert to minutes
+            );
+          }
+
+          return timeElapsed;
+        });
+
+      // Find the max time among these stations (or 0 if there are no in_process/waiting stations)
+      const current_process = inProcessOrWaitingTimes.length
+        ? Math.max(...inProcessOrWaitingTimes)
+        : 0;
+
       return {
         pt_no: item.pt_no,
         patient_name:
@@ -670,11 +695,9 @@ export const Anfitrion = () => {
           "|" +
           (item.tel === null ? " " : "T: " + item.tel),
         avg_time:
-          avg_time.toString() +
+          current_process.toString() +
           "|" +
-          Math.round(
-            (new Date() - item.start_time.toDate()) / 24 / 60 / 60
-          ).toString(),
+          Math.round((Timestamp.now() - item.start_time) / 60).toString(),
         ...stations,
       };
     });
