@@ -35,6 +35,8 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
+import styled from "styled-components";
+
 import { AlertProvider } from "../hooks/alert";
 import { Registro } from "./Registro";
 import { Turno } from "./Turno";
@@ -54,7 +56,24 @@ import full_logo from "../img/full_logo.png";
 const { Sider, Content, Header } = Layout;
 const { Title } = Typography;
 
-// Info in the side bar
+const isAlfareroDev = process.env.REACT_APP_FIREBASE_DB !== "";
+
+// Sidebar customization with dynamic styles
+const CustomSider = styled(Sider)`
+  .ant-menu-dark .ant-menu-item-selected {
+    background-color: ${(props) =>
+      props.isDev ? "#52c41a" : "#1890ff"} !important;
+  }
+
+  .ant-menu-dark .ant-menu-item:hover {
+    background-color: ${(props) =>
+      props.isDev ? "#73d13d" : "#40a9ff"} !important;
+  }
+
+  .ant-menu-dark .ant-menu-item-selected a {
+    color: #ffffff !important;
+  }
+`;
 
 export const RouterPage = () => {
   const { ocultarMenu } = useContext(UiContext);
@@ -63,7 +82,6 @@ export const RouterPage = () => {
   const [tapCount, setTapCount] = useState(0);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
-  // count number of taps... 5 taps opens the admin features for database cleanup.
   const handleHeaderTitleTap = () => {
     setTapCount(tapCount + 1);
 
@@ -73,7 +91,7 @@ export const RouterPage = () => {
 
     setTimeout(() => {
       setTapCount(0); // Reset tap count after a timeout
-    }, 1000); // You can adjust the timeout duration as needed
+    }, 1000);
   };
 
   const checkAndUpdateTimestamp = async () => {
@@ -85,20 +103,17 @@ export const RouterPage = () => {
       if (docSnapshot.exists()) {
         const lastUpdated = docSnapshot.data().last_updated;
 
-        // Ensure lastUpdated is a Firestore Timestamp
         if (lastUpdated instanceof Timestamp) {
-          const currentTime = Timestamp.now(); // Get Firestore's current timestamp
-          const diffInSeconds = currentTime.seconds - lastUpdated.seconds; // Difference in seconds
+          const currentTime = Timestamp.now();
+          const diffInSeconds = currentTime.seconds - lastUpdated.seconds;
 
           if (diffInSeconds >= 60) {
-            // If more than 1 minute has passed
             await updateDoc(timestampRef, { last_updated: serverTimestamp() });
           }
         } else {
           console.error("Timestamp is not of type Firestore Timestamp.");
         }
       } else {
-        // If the document does not exist, create it with the current timestamp
         await setDoc(timestampRef, { last_updated: serverTimestamp() });
         console.log("Timestamp document created with current time.");
       }
@@ -126,7 +141,6 @@ export const RouterPage = () => {
       setCurrentTime(new Date());
     }, 60000);
 
-    // Cleanup the interval on component unmount
     return () => clearInterval(interval);
   }, []);
 
@@ -146,7 +160,6 @@ export const RouterPage = () => {
       icon: <CoffeeOutlined />,
       label: <Link to="/anfitrion">{t("pfm")}</Link>,
     },
-
     {
       key: "3",
       icon: <UserOutlined />,
@@ -177,43 +190,39 @@ export const RouterPage = () => {
       icon: <SettingOutlined />,
       label: <Link to="/settings">{t("SETTINGS")}</Link>,
     },
-    {
-      key: "9",
-      label: t("version"),
-    },
+    { key: "9", label: t("version") },
   ];
-
-  // Renders the visible screen
 
   return (
     <Layout style={{ minHeight: "100vh", minWidth: "100%" }}>
       <Router>
-        <Sider collapsedWidth="0" breakpoint="lg" hidden={ocultarMenu}>
+        <CustomSider
+          collapsedWidth="0"
+          breakpoint="lg"
+          hidden={ocultarMenu}
+          isDev={isAlfareroDev}
+        >
           <Menu
             theme="dark"
             mode="inline"
             defaultSelectedKeys={["1"]}
             items={menuItems}
           />
-        </Sider>
+        </CustomSider>
         <Layout className="site-layout">
           <Header
             style={{
               display: "flex",
-              flexDirection: "row",
               justifyContent: "space-between",
-              backgroundColor:
-                process.env.REACT_APP_FIREBASE_DB !== "" ? "#e6e6fa" : "#fff", // Light purple for non-default DB
+              backgroundColor: isAlfareroDev ? "#e6e6fa" : "#fff",
               alignItems: "center",
             }}
           >
             <Row>
-              <div className="header" />
-              <Col xs={24} sm={24} md={24} lg={24}>
+              <Col>
                 <a href="/registro">
                   <Image
                     src={full_logo}
-                    style={{ margin: 0, flex: 1, justifyContent: "flex-start" }}
                     preview={false}
                     height={100}
                     width={185}
@@ -221,41 +230,27 @@ export const RouterPage = () => {
                 </a>
               </Col>
             </Row>
-            <Row justify="center">
-              <Col xs={24} sm={24} md={24} lg={24}>
+            <Row>
+              <Col>
                 <Title level={4}>{formattedTime}</Title>
               </Col>
             </Row>
-            <Row justify="center">
-              <Col xs={24} sm={24} md={24} lg={24}>
+            <Row>
+              <Col>
                 <div onClick={handleHeaderTitleTap}>
-                  <Button
-                    onClick={handleHeaderTitleTap}
-                    className="no-border-button"
-                  >
-                    <Title style={{ backgroundColor: "transparent" }} level={4}>
-                      {t("headerTitle")}
-                    </Title>
+                  <Button className="no-border-button">
+                    <Title level={4}>{t("headerTitle")}</Title>
                   </Button>
                 </div>
                 <Popover
                   content={popoverContent}
-                  display="none"
-                  overlayClassName="noheader-popover"
                   open={popoverOpen}
-                  onOpenChange={(open) => setPopoverOpen(open)}
-                ></Popover>
+                  onOpenChange={setPopoverOpen}
+                />
               </Col>
             </Row>
           </Header>
-          <Content
-            className="site-layout-background"
-            style={{
-              margin: "24px 16px",
-              padding: 24,
-              minHeight: 280,
-            }}
-          >
+          <Content style={{ margin: "24px 16px", padding: 24, minHeight: 280 }}>
             <AlertProvider>
               <Switch>
                 <Route path="/ingresar-host" component={IngresarHost} />
