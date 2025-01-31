@@ -1,7 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-admin.initializeApp();
-const db = admin.firestore();
+const { getFirestore } = require("firebase-admin/firestore");
 
 exports.fetchPatientsData = functions.https.onCall(async (data, context) => {
   const { dateRange } = data;

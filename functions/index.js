@@ -2,7 +2,7 @@ const admin = require("firebase-admin");
 const functions = require("firebase-functions");
 
 // Import your functions from their respective files
-const { aggregateTimes } = require("./aggregateTimes");
+// const { aggregateTimes } = require("./aggregateTimes");
 const { getPatientCount } = require("./getPatientCount");
 const { updateStatusChange } = require("./updateStatusChange");
 const { getPatientsData } = require("./getPatientsData");
