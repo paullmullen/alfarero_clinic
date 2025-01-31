@@ -5,6 +5,7 @@ const functions = require("firebase-functions");
 const { aggregateTimes } = require("./aggregateTimes");
 const { getPatientCount } = require("./getPatientCount");
 const { updateStatusChange } = require("./updateStatusChange");
+const { getPatientsData } = require("./getPatientsData");
 
 admin.initializeApp();
 
@@ -12,3 +13,4 @@ admin.initializeApp();
 exports.aggregateTimes = aggregateTimes;
 exports.getPatientCount = getPatientCount;
 exports.updateStatusChange = updateStatusChange;
+exports.getPatientsData = this.getPatientsData;
