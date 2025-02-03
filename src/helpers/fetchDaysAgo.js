@@ -1,49 +1,21 @@
-import { firestore } from "./firebaseConfig";
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  Timestamp,
-} from "firebase/firestore";
+import axios from "axios";
 
 const fetchDaysAgoData = async (daysCount) => {
-  const daysAgo = new Date();
-  daysAgo.setDate(daysAgo.getDate() - daysCount);
-
-  const patientsCollection = collection(firestore, "patients");
-  const q = query(
-    patientsCollection,
-    where("start_time", ">=", Timestamp.fromDate(daysAgo))
-  );
-  const patientsSnapshot = await getDocs(q);
-
-  // Map snapshot to a histogram
-  const patientCountHistogram = patientsSnapshot.docs.reduce(
-    (histogram, doc) => {
-      const startTime = doc.data().start_time.toDate();
-      const day = startTime.toLocaleDateString("en-US", {
-        month: "2-digit",
-        day: "2-digit",
-      }); // Format as MM-DD
-
-      const existingEntry = histogram.find((entry) => entry.date === day);
-      if (existingEntry) {
-        existingEntry.count++;
-      } else {
-        histogram.push({ date: day, count: 1 });
+  try {
+    const response = await axios.post(
+      "https://us-central1-alfarero-478ad.cloudfunctions.net/fetchDaysAgoData", // Replace with your actual function URL
+      { daysCount }, // ✅ Sending daysCount as a JSON payload
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
       }
-      return histogram;
-    },
-    []
-  );
-
-  // Sort histogram by date
-  patientCountHistogram.sort(
-    (a, b) => new Date(`2023-${a.date}`) - new Date(`2023-${b.date}`)
-  );
-
-  return patientCountHistogram;
+    );
+    return response.data; // ✅ Return the response data
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return [];
+  }
 };
 
 export { fetchDaysAgoData };

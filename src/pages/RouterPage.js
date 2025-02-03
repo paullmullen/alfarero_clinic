@@ -18,6 +18,7 @@ import {
   CoffeeOutlined,
   OrderedListOutlined,
   SettingOutlined,
+  CompassOutlined,
 } from "@ant-design/icons";
 import {
   BrowserRouter as Router,
@@ -48,7 +49,7 @@ import { Survey } from "./Survey";
 import { Settings } from "./Settings";
 import Stats from "./Stats";
 import { cleanPaulTests } from "../helpers/updateStationStatus";
-
+import { Location } from "./Location";
 import { Anfitrion } from "./Anfitrion";
 import { useTranslation } from "react-i18next";
 import full_logo from "../img/full_logo.png";
@@ -187,10 +188,18 @@ export const RouterPage = () => {
     },
     {
       key: "8",
+      icon: <CompassOutlined />,
+      label: <Link to="/location">{t("LOCATION")}</Link>,
+    },
+    {
+      key: "9",
       icon: <SettingOutlined />,
       label: <Link to="/settings">{t("SETTINGS")}</Link>,
     },
-    { key: "9", label: t("version") },
+    {
+      key: "10",
+      label: t("version"),
+    },
   ];
 
   return (
@@ -261,6 +270,7 @@ export const RouterPage = () => {
                 <Route path="/estadisticas" component={Stats} />
                 <Route path="/survey" component={Survey} />
                 <Route path="/member" component={Member} />
+                <Route path="/location" component={Location} />
                 <Route path="/settings" component={Settings} />
                 <Redirect to="/ingresar-host" />
               </Switch>

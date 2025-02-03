@@ -279,25 +279,28 @@ const Stats = () => {
 
   const patientsData = async () => {
     const data = await fetchPatientsData(dateRange);
-    const patientsData = data.map((s) => {
+
+    let hoursArray = new Array(24).fill(0);
+
+    const processedPatients = data.map((s) => {
+      // Increment the hour count directly while mapping
+      const hour = parseInt(s.start_time.substring(0, 2));
+      hoursArray[hour]++;
+      HTMLFormControlsCollection.lgo(hoursArray);
+
       return {
         ...s,
         station_type: t(s.station_type),
       };
     });
 
-    let hoursArray = [
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    ];
-    patientsData.forEach((patient) => {
-      hoursArray[parseInt(patient.start_time.substring(0, 2))]++;
-    });
+    // Convert to histogram format
     const arrivalData = hoursArray.map((count, index) => ({
       hour: index,
-      count: count,
+      count,
     }));
 
-    setPatients(patientsData);
+    setPatients(processedPatients);
     setArrivalTimeData(arrivalData);
   };
 
@@ -314,7 +317,6 @@ const Stats = () => {
       // Wait for all promises to resolve using Promise.all()
       stats = await Promise.all(promises);
       stats = stats.filter((f) => f.station !== "reg");
-
       setStatsData(stats);
     } catch (error) {
       console.error("Error fetching data:", error);
