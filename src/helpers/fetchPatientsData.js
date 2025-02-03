@@ -1,63 +1,44 @@
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+const { onRequest } = require("firebase-functions/v2/https");
+const admin = require("firebase-admin");
 
-const fetchPatientsData = async (dateRange) => {
-  const db = getFirestore(); // Initialize Firestore
-  const patientsData = [];
-  const patientsCollection = collection(db, "patients");
-  const patientsSnapshot = await getDocs(patientsCollection);
+admin.initializeApp();
 
-  patientsSnapshot.forEach((doc) => {
-    const {
-      pt_no,
-      patient_name,
-      start_time,
-      reason_for_visit,
-      type_of_visit,
-      plan_of_care,
-      complete,
-      gender,
-      age_group,
-    } = doc.data();
-
-    let patientPoc = [];
-    let totalWait = 0;
-
-    // Process plan_of_care
-    plan_of_care.forEach((poc) => {
-      if (poc.status === "complete") {
-        patientPoc.push(poc.station);
-      }
-      if (poc.waiting_time) {
-        totalWait += poc.waiting_time;
-      }
-    });
-
-    const pocString = patientPoc.join(", ");
-
-    // Filter data within the specified date range
-    if (
-      start_time.toMillis() >= dateRange[0] &&
-      start_time.toMillis() <= dateRange[1]
-    ) {
-      patientsData.push({
-        pt_no,
-        patient_name,
-        date: start_time.toDate().toLocaleDateString("en-US"), // Simplify date formatting
-        start_time: start_time
-          .toDate()
-          .toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-        reason_for_visit,
-        type_of_visit,
-        plan_of_care: pocString,
-        total_wait: Math.round(totalWait / 60), // Convert seconds to minutes
-        complete,
-        gender,
-        age_group,
-      });
+exports.fetchPatientsData = onRequest(
+  {
+    cors: [/localhost(:\d+)?$/, "http://multimedica.org"],
+    methods: ["GET", "POST", "OPTIONS"], // Allowed methods
+  },
+  async (req, res) => {
+    if (req.method !== "POST") {
+      return res.status(405).send("Method Not Allowed");
     }
-  });
 
-  return patientsData;
-};
+    try {
+      const { dateRange } = req.body;
 
-export { fetchPatientsData };
+      // Firestore query logic
+      const db = admin.firestore();
+      const patientsCollection = db.collection("patients");
+      const snapshot = await patientsCollection.get();
+
+      const patientsData = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        const start_time = data.start_time.toMillis();
+        if (start_time >= dateRange[0] && start_time <= dateRange[1]) {
+          patientsData.push({
+            pt_no: data.pt_no,
+            patient_name: data.patient_name,
+            start_time: data.start_time.toDate(),
+            reason_for_visit: data.reason_for_visit,
+          });
+        }
+      });
+
+      return res.status(200).json({ patientsData });
+    } catch (error) {
+      console.error("Error fetching patients data:", error);
+      return res.status(500).send("Internal Server Error");
+    }
+  }
+);
