@@ -24,5 +24,4 @@ const firestore =
     ? getFirestore(firebaseApp, "alfarero-dev") // Use dev database
     : getFirestore(firebaseApp); // Use default database (production)
 
-console.log(firestore);
 export { firebaseApp, firestore };
