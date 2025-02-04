@@ -31,7 +31,6 @@ import {
   DatePicker,
 } from "antd";
 
-import "firebase/compat/firestore";
 import { collection, query, where, getDocs } from "firebase/firestore"; // Import necessary methods
 
 import { stations } from "../helpers/stations";
