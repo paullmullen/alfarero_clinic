@@ -9,7 +9,7 @@ import {
   Select,
   Button,
 } from "antd";
-import { SketchPicker } from "react-color";
+import { HexColorPicker } from "react-colorful"; // Import from react-colorful
 import { firestore } from "../helpers/firebaseConfig";
 import { useTranslation } from "react-i18next";
 import { useHideMenu } from "../hooks/useHideMenu";
@@ -164,10 +164,10 @@ export const Settings = () => {
             />
           </Col>
           <Col span={6}>
-            <SketchPicker
+            <HexColorPicker
               color={location.background_color}
-              onChangeComplete={(color) =>
-                handleLocationUpdate(location.id, "background_color", color.hex)
+              onChange={(color) =>
+                handleLocationUpdate(location.id, "background_color", color)
               }
             />
           </Col>
