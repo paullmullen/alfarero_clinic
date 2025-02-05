@@ -184,6 +184,7 @@ export const Settings = () => {
             />
           </Col>
           <Col span={3}>
+            <Text>{t("LATITUDE")}</Text>
             <InputNumber
               value={location.latitude}
               onChange={(value) =>
@@ -193,6 +194,7 @@ export const Settings = () => {
             />
           </Col>
           <Col span={3}>
+            <Text>{t("LONGITUDE")}</Text>
             <InputNumber
               value={location.longitude}
               onChange={(value) =>
