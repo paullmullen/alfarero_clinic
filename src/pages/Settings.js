@@ -92,7 +92,7 @@ export const Settings = () => {
         background_color: "#ffffff",
         stations: [],
         latitude: 14.6232421,
-        longitude: 90.5304184,
+        longitude: -90.5304184,
       };
       const docRef = await addDoc(
         collection(firestore, "locations"),
@@ -149,7 +149,7 @@ export const Settings = () => {
       {locations.map((location) => (
         <Row
           key={location.id}
-          align="middle"
+          align="top"
           gutter={16}
           style={{
             marginBottom: "16px",
@@ -175,19 +175,24 @@ export const Settings = () => {
             />
           </Col>
 
-          <Col span={8}>
+          <Col span={12}>
             <LocationPicker
               currentLocation={{
                 lat: location.latitude,
                 lng: location.longitude,
               }}
               onLocationSelect={(lat, lng) => {
+                console.log("boom");
                 handleLocationUpdate(location.id, "latitude", lat);
                 handleLocationUpdate(location.id, "longitude", lng);
               }}
             />
           </Col>
-          <Col span={6}>
+
+          <Col span={24}>
+            <div>
+              <br></br>
+            </div>
             <Select
               mode="multiple"
               value={location.stations}
