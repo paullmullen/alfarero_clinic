@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import React, { useState, useEffect } from "react";
 import {
   Form,
@@ -30,7 +32,7 @@ import { firestore } from "./../helpers/firebaseConfig";
 import { stations } from "../helpers/stations";
 import moment from "moment";
 import { useTranslation } from "react-i18next";
-import { QrReader } from "react-qr-reader";
+// import { QrReader } from "react-qr-reader";
 import CryptoJS from "crypto-js";
 
 const { Title } = Typography;
@@ -96,7 +98,7 @@ export const Registro = () => {
   const QRCodeScanner = () => {
     return (
       <div>
-        {scannerVisible && (
+        {/* {scannerVisible && (
           <QrReader
             onError={handleError}
             onScan={handleScan}
@@ -104,7 +106,7 @@ export const Registro = () => {
             key={"environment"}
             constraints={{ facingMode: "environment" }}
           />
-        )}
+        )} */}
       </div>
     );
   };
