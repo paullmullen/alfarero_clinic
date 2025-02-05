@@ -1,71 +1,107 @@
 import React, { useEffect, useState } from "react";
-import { Form, InputNumber, Button, Typography, Divider, Row, Col } from "antd";
-import { SaveOutlined } from "@ant-design/icons";
+import {
+  Input,
+  InputNumber,
+  Typography,
+  Divider,
+  Row,
+  Col,
+  Select,
+  Button,
+} from "antd";
+import { SketchPicker } from "react-color";
 import { firestore } from "../helpers/firebaseConfig";
 import { useTranslation } from "react-i18next";
 import { useHideMenu } from "../hooks/useHideMenu";
-import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  addDoc,
+} from "firebase/firestore";
 
 const { Title, Text } = Typography;
 
 export const Settings = () => {
-  // eslint-disable-next-line
-  const [t, i18n] = useTranslation("global");
-
+  const [t] = useTranslation("global");
   const [stations, setStations] = useState([]);
-  const [form] = Form.useForm();
+  const [locations, setLocations] = useState([]);
 
-  // Fetch all stations from the `stats` collection
   useEffect(() => {
     const fetchStations = async () => {
       try {
-        const statsRef = collection(firestore, "stats"); // Reference the "stats" collection
-        const snapshot = await getDocs(statsRef); // Fetch all documents in the collection
+        const statsRef = collection(firestore, "stats");
+        const snapshot = await getDocs(statsRef);
         const stationData = snapshot.docs.map((doc) => ({
           id: doc.id,
           name: t(doc.id),
-          max_waiting_time: doc.data().max_waiting_time || 0, // Default to 0 if the field doesn't exist
+          max_waiting_time: doc.data().max_waiting_time || 0,
           ...doc.data(),
         }));
-        setStations(stationData); // Update state with the fetched data
-
-        // Preload form fields with max_waiting_time values
-        const initialValues = {};
-        stationData.forEach((station) => {
-          initialValues[station.id] = station.max_waiting_time;
-        });
-        form.setFieldsValue(initialValues); // Set initial values in the form
+        setStations(stationData);
       } catch (error) {
         console.error("Error fetching stations:", error);
       }
     };
 
+    const fetchLocations = async () => {
+      try {
+        const locationsRef = collection(firestore, "locations");
+        const snapshot = await getDocs(locationsRef);
+        const locationData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().name,
+          stations: doc.data().stations || [],
+          background_color: doc.data().background_color || "#ffffff",
+          latitude: doc.data().latitude || 0,
+          longitude: doc.data().longitude || 0,
+        }));
+        setLocations(locationData);
+      } catch (error) {
+        console.error("Error fetching locations:", error);
+      }
+    };
+
     fetchStations();
-  }, [form]);
-  const onFinish = async (values) => {
+    fetchLocations();
+  }, []);
+
+  const handleLocationUpdate = async (locationId, key, value) => {
     try {
-      const updates = [];
-      Object.entries(values).forEach(([stationId, maxTime]) => {
-        if (maxTime !== undefined) {
-          // Create a reference to the specific station document
-          const stationDocRef = doc(firestore, "stats", stationId);
-
-          // Add the update promise to the array
-          const updatePromise = updateDoc(stationDocRef, {
-            max_waiting_time: maxTime,
-          });
-          updates.push(updatePromise);
-        }
-      });
-
-      // Wait for all updates to complete
-      await Promise.all(updates);
-      console.log("Max waiting times updated successfully!");
+      const locationDocRef = doc(firestore, "locations", locationId);
+      await updateDoc(locationDocRef, { [key]: value });
+      setLocations((prevLocations) =>
+        prevLocations.map((loc) =>
+          loc.id === locationId ? { ...loc, [key]: value } : loc
+        )
+      );
+      console.log(`Updated ${key} for location:`, locationId);
     } catch (error) {
-      console.error("Error updating max waiting times:", error);
+      console.error(`Error updating ${key} for location:`, error);
     }
   };
-  // Hide the menu (if applicable)
+
+  const handleAddLocation = async () => {
+    try {
+      const newLocation = {
+        name: "New Location",
+        background_color: "#ffffff",
+        stations: [],
+        latitude: 0,
+        longitude: 0,
+      };
+      const docRef = await addDoc(
+        collection(firestore, "locations"),
+        newLocation
+      );
+      setLocations([...locations, { id: docRef.id, ...newLocation }]);
+      console.log("Added new location");
+    } catch (error) {
+      console.error("Error adding new location:", error);
+    }
+  };
+
   useHideMenu(false);
 
   return (
@@ -77,56 +113,103 @@ export const Settings = () => {
         </div>
       </Divider>
 
-      <Form
-        form={form}
-        onFinish={onFinish}
-        layout="vertical"
-        style={{ maxWidth: "600px", margin: "0 auto" }}
-      >
-        {stations.map((station) => (
-          <Row
-            key={station.id}
-            align="middle"
-            gutter={16}
-            style={{ marginBottom: "16px" }}
-          >
-            {/* Label Column */}
-            <Col span={12}>
-              <Text style={{ fontSize: "16px" }}>{station.name}</Text>
-            </Col>
-
-            {/* Input Column */}
-            <Col span={12}>
-              <Form.Item
-                name={station.id}
-                rules={[
-                  {
-                    type: "number",
-                    min: 0,
-                    message: t("POSITIVE_NUMBER"),
-                  },
-                ]}
-                style={{ marginBottom: 0 }}
-              >
-                <InputNumber
-                  style={{
-                    width: "50%",
-                    textAlign: "right", // Align numbers to the right
-                  }}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        ))}
-
-        <Row justify="center">
-          <Col>
-            <Button type="primary" htmlType="submit" shape="round">
-              <SaveOutlined /> Save Settings
-            </Button>
+      {stations.map((station) => (
+        <Row
+          key={station.id}
+          align="middle"
+          gutter={16}
+          style={{ marginBottom: "16px" }}
+        >
+          <Col span={12}>
+            <Text style={{ fontSize: "16px" }}>{station.name}</Text>
+          </Col>
+          <Col span={12}>
+            <InputNumber
+              style={{ width: "50%", textAlign: "right" }}
+              value={station.max_waiting_time}
+              onChange={(value) =>
+                handleLocationUpdate(station.id, "max_waiting_time", value)
+              }
+              min={0}
+            />
           </Col>
         </Row>
-      </Form>
+      ))}
+
+      <Divider orientation="left">
+        <div style={{ textAlign: "left" }}>
+          <Title level={2}>{t("LOCATIONS")}</Title>
+          <Text>{t("MANAGE_LOCATIONS")}</Text>
+        </div>
+      </Divider>
+
+      {locations.map((location) => (
+        <Row
+          key={location.id}
+          align="middle"
+          gutter={16}
+          style={{
+            marginBottom: "16px",
+            backgroundColor: location.background_color,
+            padding: "8px",
+            borderRadius: "5px",
+          }}
+        >
+          <Col span={4}>
+            <Input
+              value={location.name}
+              onChange={(e) =>
+                handleLocationUpdate(location.id, "name", e.target.value)
+              }
+            />
+          </Col>
+          <Col span={6}>
+            <SketchPicker
+              color={location.background_color}
+              onChangeComplete={(color) =>
+                handleLocationUpdate(location.id, "background_color", color.hex)
+              }
+            />
+          </Col>
+          <Col span={6}>
+            <Select
+              mode="multiple"
+              value={location.stations}
+              onChange={(stations) =>
+                handleLocationUpdate(location.id, "stations", stations)
+              }
+              style={{ width: "100%" }}
+              placeholder={t("ADD_STATIONS")}
+              options={stations.map((s) => ({ label: s.name, value: s.id }))}
+            />
+          </Col>
+          <Col span={3}>
+            <InputNumber
+              value={location.latitude}
+              onChange={(value) =>
+                handleLocationUpdate(location.id, "latitude", value)
+              }
+              placeholder="Latitude"
+            />
+          </Col>
+          <Col span={3}>
+            <InputNumber
+              value={location.longitude}
+              onChange={(value) =>
+                handleLocationUpdate(location.id, "longitude", value)
+              }
+              placeholder="Longitude"
+            />
+          </Col>
+        </Row>
+      ))}
+      <Button
+        type="primary"
+        onClick={handleAddLocation}
+        style={{ marginTop: "16px" }}
+      >
+        {t("ADD_LOCATION")}
+      </Button>
     </div>
   );
 };
