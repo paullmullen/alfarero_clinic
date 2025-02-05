@@ -9,7 +9,7 @@ import {
   Select,
   Button,
 } from "antd";
-import { HexColorPicker } from "react-colorful"; // Import from react-colorful
+import { HexColorPicker } from "react-colorful"; // Updated import
 import { firestore } from "../helpers/firebaseConfig";
 import { useTranslation } from "react-i18next";
 import { useHideMenu } from "../hooks/useHideMenu";
@@ -20,6 +20,9 @@ import {
   updateDoc,
   addDoc,
 } from "firebase/firestore";
+
+// Import the LocationPicker component
+import { LocationPicker } from "../components/LocationPicker";
 
 const { Title, Text } = Typography;
 
@@ -88,8 +91,8 @@ export const Settings = () => {
         name: "New Location",
         background_color: "#ffffff",
         stations: [],
-        latitude: 0,
-        longitude: 0,
+        latitude: 14.6232421,
+        longitude: 90.5304184,
       };
       const docRef = await addDoc(
         collection(firestore, "locations"),
@@ -171,6 +174,19 @@ export const Settings = () => {
               }
             />
           </Col>
+
+          <Col span={8}>
+            <LocationPicker
+              currentLocation={{
+                lat: location.latitude,
+                lng: location.longitude,
+              }}
+              onLocationSelect={(lat, lng) => {
+                handleLocationUpdate(location.id, "latitude", lat);
+                handleLocationUpdate(location.id, "longitude", lng);
+              }}
+            />
+          </Col>
           <Col span={6}>
             <Select
               mode="multiple"
@@ -181,26 +197,6 @@ export const Settings = () => {
               style={{ width: "100%" }}
               placeholder={t("ADD_STATIONS")}
               options={stations.map((s) => ({ label: s.name, value: s.id }))}
-            />
-          </Col>
-          <Col span={3}>
-            <Text>{t("LATITUDE")}</Text>
-            <InputNumber
-              value={location.latitude}
-              onChange={(value) =>
-                handleLocationUpdate(location.id, "latitude", value)
-              }
-              placeholder="Latitude"
-            />
-          </Col>
-          <Col span={3}>
-            <Text>{t("LONGITUDE")}</Text>
-            <InputNumber
-              value={location.longitude}
-              onChange={(value) =>
-                handleLocationUpdate(location.id, "longitude", value)
-              }
-              placeholder="Longitude"
             />
           </Col>
         </Row>

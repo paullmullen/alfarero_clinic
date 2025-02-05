@@ -1,4 +1,6 @@
 @import "~antd/dist/antd.css";
+@import 'leaflet/dist/leaflet.css';
+
 
 #components-layout-demo-custom-trigger .trigger {
   font-size: 18px;
