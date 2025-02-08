@@ -137,14 +137,12 @@ export const Registro = () => {
   const fillMissingStations = (stations, visits) => {
     const result = [];
     const visitsSet = new Set(visits);
-    console.log(visits, stations);
 
     let order = -1;
 
     visits?.forEach((visit) => {
       const station = stations.find((s) => s.value === visit);
       if (station) {
-        console.log(station);
         result.push({
           order: order++,
           station: station.value,
@@ -166,7 +164,6 @@ export const Registro = () => {
         });
       }
     });
-    console.log(result);
     return result;
   };
 
@@ -183,8 +180,6 @@ export const Registro = () => {
   };
 
   useEffect(() => {
-    console.log(getVideoDevices());
-
     let unsubscribe;
 
     const fetchData = async () => {
@@ -367,7 +362,6 @@ export const Registro = () => {
         }
       });
 
-      console.log("patient: ", patient.paciente);
       const fooJson = {
         n: "Paul Mullen",
         t: "Lawrence",
@@ -375,8 +369,6 @@ export const Registro = () => {
       const fooString = JSON.stringify(fooJson);
 
       const foo = encryptData(fooString);
-      console.log("encrypted: ", foo);
-      console.log("decrypted: ", decryptData(foo, secretPass));
 
       showAlert("Success", t("patientWasCreated"), "success");
       handleReset();
