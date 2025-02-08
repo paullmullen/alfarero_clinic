@@ -8,15 +8,8 @@ import {
   Button,
   Popconfirm,
 } from "antd";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  getDocs,
-  onSnapshot,
-  Timestamp,
-} from "firebase/firestore"; // Import necessary methods
+import { collection, getDocs, Timestamp } from "firebase/firestore"; // Import necessary methods
+import { fetchPatientsData } from "../helpers/fetchPatientsData";
 
 import { firestore } from "./../helpers/firebaseConfig";
 import {
@@ -72,45 +65,47 @@ export const Anfitrion = () => {
     // You can also perform other actions like updating state, making API calls, etc.
   };
 
-  const today = Timestamp.fromDate(new Date(new Date().setHours(0, 0, 0, 0)));
-
-  // Calculate `tomorrow` as a Firestore Timestamp for the start of the next day
-  const tomorrow = Timestamp.fromDate(
-    new Date(new Date().setHours(0, 0, 0, 0) + 24 * 60 * 60 * 1000)
+  const now = new Date();
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    0,
+    0,
+    0,
+    0
   );
+  const tomorrow = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1,
+    0,
+    0,
+    0,
+    0
+  );
+
+  // Convert to Firestore Timestamp
+  const todayTimestamp = Timestamp.fromDate(today);
+  const tomorrowTimestamp = Timestamp.fromDate(tomorrow);
 
   useEffect(() => {
     let isMounted = true;
     let unsubscribe;
 
+    const dateRange = [todayTimestamp, tomorrowTimestamp];
+
     const fetchData = async () => {
       try {
-        // Create references for collections
-        const patientsRef = collection(firestore, "patients");
-
-        // Build queries with the new Firebase v9+ syntax
-        const q = query(
-          patientsRef,
-          orderBy("start_time"),
-          where("start_time", ">=", today),
-          where("start_time", "<", tomorrow),
-          where("complete", "==", false)
-        );
-
         // Initial fetch for patients
-        const initialSnapshot = await getDocs(q);
-        const initialData = initialSnapshot.docs.map((doc) => doc.data());
+        console.log(dateRange);
+        const initialData = await fetchPatientsData(
+          dateRange,
+          process.env.REACT_APP_FIREBASE_DB
+        );
         if (isMounted) {
           setData(initialData);
         }
-
-        // Listen for real-time updates on the 'patients' collection
-        unsubscribe = onSnapshot(q, (snapshot) => {
-          const updatedData = snapshot.docs.map((doc) => doc.data());
-          if (isMounted) {
-            setData(updatedData);
-          }
-        });
 
         // Fetch statsData occasionally
         if (isMounted) {

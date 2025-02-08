@@ -277,15 +277,17 @@ const Stats = () => {
   };
 
   const patientsData = async () => {
-    const data = await fetchPatientsData(dateRange);
-
+    const data = await fetchPatientsData(
+      dateRange,
+      process.env.REACT_APP_FIREBASE_DB
+    );
+    console.log(data);
     let hoursArray = new Array(24).fill(0);
 
     const processedPatients = data.map((s) => {
       // Increment the hour count directly while mapping
       const hour = parseInt(s.start_time.substring(0, 2));
       hoursArray[hour]++;
-      HTMLFormControlsCollection.lgo(hoursArray);
 
       return {
         ...s,

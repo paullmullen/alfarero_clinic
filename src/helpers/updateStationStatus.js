@@ -41,8 +41,6 @@ export const handleStatusChange = async (
       }
     );
 
-    console.log("Function response:", response.data);
-
     // Check if the updatedPlanOfCare contains the specified statuses
     const statusesToCheck = [
       "waiting",
@@ -115,8 +113,6 @@ export const handleReadmitClick = async (patientID) => {
     await updateDoc(docPatientRef, {
       complete: false,
     });
-
-    console.log(`Patient ${patientID} readmitted successfully.`);
   } catch (error) {
     console.error("Error readmitting patient:", error);
   }
