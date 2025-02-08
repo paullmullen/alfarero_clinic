@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Table,
   Image,
@@ -8,7 +8,7 @@ import {
   Button,
   Popconfirm,
 } from "antd";
-import { collection, getDocs, Timestamp } from "firebase/firestore"; // Import necessary methods
+import { collection, getDocs, Timestamp, onSnapshot } from "firebase/firestore"; // Import necessary methods
 import { fetchPatientsData } from "../helpers/fetchPatientsData";
 
 import { firestore } from "./../helpers/firebaseConfig";
@@ -42,6 +42,8 @@ export const Anfitrion = () => {
   const [statsData, setStatsData] = useState([]);
   const [station, setStation] = useState("");
   const [hoveredRowKey, setHoveredRowKey] = useState(null);
+  const [patientsChanged, setPatientsChanged] = useState(true); // for a firestore listener that triggers a useEffect to reload the anfi table.
+  const prevPatientsChangedRef = useRef(false); // Ref to store the previous value of patientsChanged.  the initial values of patientsChanged=true and ref=false will trigger the first render.
 
   const [t] = useTranslation("global");
 
@@ -90,44 +92,63 @@ export const Anfitrion = () => {
   const tomorrowTimestamp = Timestamp.fromDate(tomorrow);
 
   useEffect(() => {
-    let isMounted = true;
-    let unsubscribe;
-
-    const dateRange = [todayTimestamp, tomorrowTimestamp];
-
-    const fetchData = async () => {
-      try {
-        // Initial fetch for patients
-        console.log(dateRange);
-        const initialData = await fetchPatientsData(
-          dateRange,
-          process.env.REACT_APP_FIREBASE_DB
-        );
-        if (isMounted) {
-          setData(initialData);
-        }
-
-        // Fetch statsData occasionally
-        if (isMounted) {
-          const statsRef = collection(firestore, "stats");
-          const statsSnapshot = await getDocs(statsRef);
-          const statsData = statsSnapshot.docs.map((doc) => doc.data());
-          setStatsData(statsData);
-        }
-      } catch (error) {
-        console.log(error);
+    const unsubscribePatients = onSnapshot(
+      collection(firestore, "patients"),
+      () => {
+        // Whenever there's a change in the 'patients' collection, update the state
+        setPatientsChanged(true);
       }
-    };
+    );
 
-    fetchData();
-
+    // Cleanup listener on unmount
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-      isMounted = false;
+      unsubscribePatients();
     };
-  }, [today]);
+  }, []); // Only set up the listener once, on mount
+
+  useEffect(() => {
+    if (prevPatientsChangedRef.current === false && patientsChanged === true) {
+      console.log("running");
+      let isMounted = true;
+      let unsubscribe;
+
+      const dateRange = [todayTimestamp, tomorrowTimestamp];
+
+      const fetchData = async () => {
+        try {
+          // Initial fetch for patients
+          console.log(dateRange);
+          const initialData = await fetchPatientsData(
+            dateRange,
+            process.env.REACT_APP_FIREBASE_DB
+          );
+          if (isMounted) {
+            setData(initialData);
+          }
+          setPatientsChanged(false);
+
+          // Fetch statsData occasionally
+          if (isMounted) {
+            const statsRef = collection(firestore, "stats");
+            const statsSnapshot = await getDocs(statsRef);
+            const statsData = statsSnapshot.docs.map((doc) => doc.data());
+            setStatsData(statsData);
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      };
+
+      fetchData();
+
+      return () => {
+        if (unsubscribe) {
+          unsubscribe();
+        }
+        isMounted = false;
+      };
+    }
+  }, [patientsChanged]);
 
   // Shows editable icons in the host table
 
