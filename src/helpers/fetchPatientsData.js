@@ -1,4 +1,4 @@
-const fetchPatientsData = async (dateRange, database) => {
+const fetchPatientsData = async (dateRange, database, include_completed) => {
   try {
     const response = await fetch(
       "https://us-central1-alfarero-478ad.cloudfunctions.net/fetchPatientsData",
@@ -7,7 +7,11 @@ const fetchPatientsData = async (dateRange, database) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ dateRange, database: database }),
+        body: JSON.stringify({
+          dateRange,
+          database: database,
+          include_completed: include_completed,
+        }),
       }
     );
 

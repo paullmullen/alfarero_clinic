@@ -108,7 +108,6 @@ export const Anfitrion = () => {
 
   useEffect(() => {
     if (prevPatientsChangedRef.current === false && patientsChanged === true) {
-      console.log("running");
       let isMounted = true;
       let unsubscribe;
 
@@ -117,10 +116,10 @@ export const Anfitrion = () => {
       const fetchData = async () => {
         try {
           // Initial fetch for patients
-          console.log(dateRange);
           const initialData = await fetchPatientsData(
             dateRange,
-            process.env.REACT_APP_FIREBASE_DB
+            process.env.REACT_APP_FIREBASE_DB,
+            "false" // do not fetch completed patients
           );
           if (isMounted) {
             setData(initialData);

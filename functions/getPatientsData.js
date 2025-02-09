@@ -17,7 +17,8 @@ exports.fetchPatientsData = onRequest(
     }
 
     try {
-      const { dateRange, database } = req.body; // Destructure in a single line
+      const { dateRange, database, include_completed } = req.body; // Destructure in a single line
+      console.log(dateRange, database, include_completed);
 
       const db =
         database === "alfarero-dev"
@@ -28,25 +29,50 @@ exports.fetchPatientsData = onRequest(
 
       // Firestore query logic
       const patientsCollection = db.collection("patients");
-      const snapshot = await patientsCollection
-        .where(
-          "start_time",
-          ">=",
-          new admin.firestore.Timestamp(dateRange[0].seconds, 0)
-        )
-        .where(
-          "start_time",
-          "<=",
-          new admin.firestore.Timestamp(dateRange[1].seconds, 0)
-        )
-        .get();
+      let snapshot;
+
+      if (include_completed === "false") {
+        snapshot = await patientsCollection
+          .where(
+            "start_time",
+            ">=",
+            new admin.firestore.Timestamp(dateRange[0].seconds, 0)
+          )
+          .where(
+            "start_time",
+            "<=",
+            new admin.firestore.Timestamp(dateRange[1].seconds, 0)
+          )
+          .get();
+      } else {
+        snapshot = await patientsCollection
+          .where(
+            "start_time",
+            ">=",
+            new admin.firestore.Timestamp(dateRange[0].seconds, 0)
+          )
+          .where(
+            "start_time",
+            "<=",
+            new admin.firestore.Timestamp(dateRange[1].seconds, 0)
+          )
+          .where("completed", "==", "false")
+          .get();
+      }
 
       const patientsData = snapshot.docs.map((doc) => ({
         pt_no: doc.data().pt_no,
         patient_name: doc.data().patient_name,
         start_time: doc.data().start_time.toDate(),
+        stop_time: doc.data().start_time.toDate(),
+        age_group: doc.data().age_group,
+        gender: doc.data().gender,
         reason_for_visit: doc.data().reason_for_visit,
         plan_of_care: doc.data().plan_of_care,
+        complete: doc.data().complete,
+        tel: doc.data().tel,
+        type_of_visit: doc.data().type_of_visit,
+        waiting_time: doc.data().waiting_time,
       }));
 
       console.log(patientsData);

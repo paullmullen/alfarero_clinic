@@ -82,6 +82,7 @@ export const handleDelete = async (hoveredRowKey, history) => {
   try {
     const docPatientRef = doc(firestore, "patients", hoveredRowKey);
 
+    console.log(docPatientRef);
     // Update the patient document to mark it as complete
     await updateDoc(docPatientRef, {
       complete: true,
@@ -112,6 +113,7 @@ export const handleReadmitClick = async (patientID) => {
     // Update the `complete` field to `false`
     await updateDoc(docPatientRef, {
       complete: false,
+      stop_time: null,
     });
   } catch (error) {
     console.error("Error readmitting patient:", error);
