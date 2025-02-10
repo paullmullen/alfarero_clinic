@@ -119,7 +119,7 @@ export const Anfitrion = () => {
           const initialData = await fetchPatientsData(
             dateRange,
             process.env.REACT_APP_FIREBASE_DB,
-            "false" // do not fetch completed patients
+            "active" // do not fetch completed patients... other options are "complete" and "both"
           );
           if (isMounted) {
             setData(initialData);

@@ -31,7 +31,7 @@ exports.fetchPatientsData = onRequest(
       const patientsCollection = db.collection("patients");
       let snapshot;
 
-      if (include_completed === "false") {
+      if (include_completed === "both") {
         snapshot = await patientsCollection
           .where(
             "start_time",
@@ -43,6 +43,20 @@ exports.fetchPatientsData = onRequest(
             "<=",
             new admin.firestore.Timestamp(dateRange[1].seconds, 0)
           )
+          .get();
+      } else if (include_completed == "active") {
+        snapshot = await patientsCollection
+          .where(
+            "start_time",
+            ">=",
+            new admin.firestore.Timestamp(dateRange[0].seconds, 0)
+          )
+          .where(
+            "start_time",
+            "<=",
+            new admin.firestore.Timestamp(dateRange[1].seconds, 0)
+          )
+          .where("complete", "==", false)
           .get();
       } else {
         snapshot = await patientsCollection
@@ -56,7 +70,8 @@ exports.fetchPatientsData = onRequest(
             "<=",
             new admin.firestore.Timestamp(dateRange[1].seconds, 0)
           )
-          .where("completed", "==", "false")
+          .where("complete", "==", true)
+
           .get();
       }
 
