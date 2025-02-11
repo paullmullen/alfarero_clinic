@@ -709,7 +709,6 @@ export const Anfitrion = () => {
           }
           return timeElapsed;
         });
-      console.log(item.start_time);
       // Find the max time among these stations (or 0 if there are no in_process/waiting stations)
       const current_process = inProcessOrWaitingTimes.length
         ? Math.max(...inProcessOrWaitingTimes)

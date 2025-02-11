@@ -71,8 +71,6 @@ export const Survey = () => {
 
   // eslint-disable-next-line no-unused-vars
   const onFinish = async (values) => {
-    console.log(location);
-
     try {
       if (
         // surveyResult.first !== "" ||
