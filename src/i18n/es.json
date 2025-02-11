@@ -139,6 +139,8 @@
   "satscores": "Nivel de Satisfacción",
   "selectAstation": "Seleccione una estacion",
   "selectExamType": "Seleccione Tipo de Examen",
+  "selectPatientAge": "Seleccione Niño o Adulto",
+  "selectPatientGender": "Seleccione Genero",
   "selectType": "Seleccione Clase de Visita",
   "service": "Servicio",
   "SETTINGS": "Ajustes",

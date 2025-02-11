@@ -470,7 +470,7 @@ export const Registro = () => {
                     rules={[
                       {
                         required: true,
-                        message: t("selectPatientAge"),
+                        message: t("selectPatientGender"),
                       },
                     ]}
                   >
