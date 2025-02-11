@@ -527,6 +527,9 @@ export const Anfitrion = () => {
 
       return startTimeA - startTimeB;
     });
+    // -----------------------------------------------------------------------------------------------------------------------------------------------------
+    // This section determines the headers for the table, including both the names of the stations and the average waiting time at that station.
+    // -----------------------------------------------------------------------------------------------------------------------------------------------------
 
     // eslint-disable-next-line no-unused-expressions
     extractedPlanOfCare?.forEach((item) => {
@@ -535,7 +538,6 @@ export const Anfitrion = () => {
         const avg_time = statsData.find(
           (element) => element.station_type === stationName
         );
-
         if (!uniqueStations[plan.station] && item.fin !== true) {
           const max_waiting_time = avg_time?.max_waiting_time || 0; // Get max_waiting_time for the station
           const waitText = avg_time
@@ -619,21 +621,21 @@ export const Anfitrion = () => {
       ...Object.values(uniqueStations),
       {
         title: t("waitingTime"),
-        dataIndex: "avg_time",
-        key: "patient",
+        dataIndex: "wtg_time",
+        key: "wtg_time",
         width: 70,
         align: "center",
         fixed: "right",
-        render: (avg_time) => {
-          const displayValue = isNaN(avg_time) ? 0 : avg_time;
+        render: (wtg_time) => {
+          const displayValue = isNaN(wtg_time) ? 0 : wtg_time;
           const style = {
             fontSize: "18px",
             color: displayValue > 15 ? "red" : "inherit",
           };
           return (
             <span style={style}>
-              {avg_time.split("|")[0]} min <hr></hr>
-              <h5>{avg_time.split("|")[1]} min</h5>
+              {wtg_time.split("|")[0]} min <hr></hr>
+              <h5>{wtg_time.split("|")[1]} min</h5>
             </span>
           );
         },
@@ -662,6 +664,10 @@ export const Anfitrion = () => {
       },
     ];
 
+    // -----------------------------------------------------------------------------------------------------------------------------------------------------
+    // This is the content of the table.   The table headers are above
+    // -----------------------------------------------------------------------------------------------------------------------------------------------------
+
     const dataSource = extractedPlanOfCare?.map((item) => {
       const stations = {};
       // eslint-disable-next-line no-unused-expressions
@@ -677,28 +683,37 @@ export const Anfitrion = () => {
         .map((plan) => {
           let timeElapsed = 0;
 
-          // For "waiting", calculate the time between waiting_start and the present time
-          if (plan.status === "waiting" && plan.waiting_start) {
+          if (
+            plan.status === "waiting" &&
+            plan.waiting_start?._seconds !== undefined
+          ) {
             timeElapsed = Math.floor(
-              (Timestamp.now().seconds - plan.waiting_start.seconds) / 60 // Convert to minutes
+              (Timestamp.now().seconds - plan.waiting_start._seconds) / 60
             );
+          } else if (plan.status === "waiting") {
+            console.warn("Missing or invalid waiting_start for:", plan.station);
           }
 
-          // For "in_process", calculate the time between in_process_start and the present time
-          if (plan.status === "in_process" && plan.in_process_start) {
+          if (
+            plan.status === "in_process" &&
+            plan.in_process_start?._seconds !== undefined
+          ) {
             timeElapsed = Math.floor(
-              (Timestamp.now().seconds - plan.in_process_start.seconds) / 60 // Convert to minutes
+              (Timestamp.now().seconds - plan.in_process_start._seconds) / 60
+            );
+          } else if (plan.status === "in_process") {
+            console.warn(
+              "Missing or invalid in_process_start for:",
+              plan.station
             );
           }
-
           return timeElapsed;
         });
-
+      console.log(item.start_time);
       // Find the max time among these stations (or 0 if there are no in_process/waiting stations)
       const current_process = inProcessOrWaitingTimes.length
         ? Math.max(...inProcessOrWaitingTimes)
         : 0;
-
       return {
         pt_no: item.pt_no,
         patient_name:
@@ -708,11 +723,15 @@ export const Anfitrion = () => {
           "|" +
           t(item.type_of_visit) +
           "|" +
-          (item.tel === null ? " " : "T: " + item.tel),
-        avg_time:
-          current_process.toString() +
+          (item.tel === null ? " " : item.tel),
+        wtg_time:
+          current_process.toString() + //time at current station if not complete
           "|" +
-          Math.round((Timestamp.now() - item.start_time) / 60).toString(),
+          Math.round(
+            (Timestamp.now().seconds -
+              new Date(item.start_time).getTime() / 1000) /
+              60
+          ).toString(),
         ...stations,
       };
     });
