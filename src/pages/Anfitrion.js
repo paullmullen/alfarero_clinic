@@ -8,8 +8,8 @@ import {
   Button,
   Popconfirm,
 } from "antd";
-import { collection, getDocs, Timestamp, onSnapshot } from "firebase/firestore"; // Import necessary methods
-import { fetchPatientsData } from "../helpers/fetchPatientsData";
+import { collection, Timestamp, onSnapshot } from "firebase/firestore"; // Import necessary methods
+import { fetchData } from "../helpers/fetchData";
 
 import { firestore } from "./../helpers/firebaseConfig";
 import {
@@ -113,32 +113,13 @@ export const Anfitrion = () => {
 
       const dateRange = [todayTimestamp, tomorrowTimestamp];
 
-      const fetchData = async () => {
-        try {
-          // Initial fetch for patients
-          const initialData = await fetchPatientsData(
-            dateRange,
-            process.env.REACT_APP_FIREBASE_DB,
-            "active" // do not fetch completed patients... other options are "complete" and "both"
-          );
-          if (isMounted) {
-            setData(initialData);
-          }
-          setPatientsChanged(false);
-
-          // Fetch statsData occasionally
-          if (isMounted) {
-            const statsRef = collection(firestore, "stats");
-            const statsSnapshot = await getDocs(statsRef);
-            const statsData = statsSnapshot.docs.map((doc) => doc.data());
-            setStatsData(statsData);
-          }
-        } catch (error) {
-          console.log(error);
-        }
-      };
-
-      fetchData();
+      fetchData({
+        dateRange,
+        setData,
+        setPatientsChanged,
+        setStatsData,
+        isMounted,
+      });
 
       return () => {
         if (unsubscribe) {

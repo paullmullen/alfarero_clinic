@@ -1,18 +1,13 @@
 import React, { useRef, useEffect, useState } from "react";
 import { Table, Image } from "antd";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  getDocs,
-  onSnapshot,
-} from "firebase/firestore"; // Import the necessary methods
+import { collection, onSnapshot, Timestamp } from "firebase/firestore"; // Import the necessary methods
 
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { AlertInfo } from "../components/AlertInfo";
 import { useTranslation } from "react-i18next";
+import { fetchData } from "../helpers/fetchData";
+
 import IconSizes from "../helpers/iconSizes";
 import one from "../img/1.svg";
 import two from "../img/2.svg";
@@ -32,6 +27,10 @@ export const Turno = () => {
   useHideMenu(true);
   const [data, setData] = useState([]);
   const [t] = useTranslation("global");
+  const [patientsChanged, setPatientsChanged] = useState(true); // for a firestore listener that triggers a useEffect to reload the anfi table.
+  // eslint-disable-next-line no-unused-vars
+  const [statsData, setStatsData] = useState([]);
+  const prevPatientsChangedRef = useRef(false); // Ref to store the previous value of patientsChanged.  the initial values of patientsChanged=true and ref=false will trigger the first render.
 
   const tableRef = useRef(null);
 
@@ -250,6 +249,7 @@ export const Turno = () => {
 
   const { columns, dataSource } = generateTableData(data);
 
+  // eslint-disable-next-line no-unused-vars
   const autoScroll = () => {
     const scrollAmount = 20; // pixels
     const scrollSpeed = 1000; // milliseconds
@@ -269,50 +269,68 @@ export const Turno = () => {
     return () => clearInterval(scrollInterval); // Clean up the interval when the component unmounts
   };
 
+  const now = new Date();
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    0,
+    0,
+    0,
+    0
+  );
+  const tomorrow = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1,
+    0,
+    0,
+    0,
+    0
+  );
+
+  // Convert to Firestore Timestamp
+  const todayTimestamp = Timestamp.fromDate(today);
+  const tomorrowTimestamp = Timestamp.fromDate(tomorrow);
+
   useEffect(() => {
-    let isMounted = true;
-    let unsubscribe;
-
-    const fetchData = async () => {
-      try {
-        // Create the Firestore query
-        const collectionRef = collection(firestore, "patients"); // Firestore collection reference
-        const q = query(
-          collectionRef,
-          where("complete", "!=", true),
-          orderBy("complete"),
-          orderBy("start_time")
-        );
-
-        // Get the initial snapshot of the collection
-        const initialSnapshot = await getDocs(q);
-        const initialData = initialSnapshot.docs.map((doc) => doc.data());
-
-        if (isMounted) {
-          setData(initialData);
-        }
-
-        // Set up the real-time listener
-        unsubscribe = onSnapshot(q, (snapshot) => {
-          const updatedData = snapshot.docs.map((doc) => doc.data());
-
-          if (isMounted) {
-            setData(updatedData);
-            autoScroll();
-          }
-        });
-      } catch (error) {
-        console.log(error);
+    const unsubscribePatients = onSnapshot(
+      collection(firestore, "patients"),
+      () => {
+        // Whenever there's a change in the 'patients' collection, update the state
+        setPatientsChanged(true);
       }
-    };
+    );
 
-    fetchData();
-
+    // Cleanup listener on unmount
     return () => {
-      isMounted = false;
-      if (unsubscribe) unsubscribe();
+      unsubscribePatients();
     };
-  }, [firestore]);
+  }, []); // Only set up the listener once, on mount
+
+  useEffect(() => {
+    if (prevPatientsChangedRef.current === false && patientsChanged === true) {
+      let isMounted = true;
+      let unsubscribe;
+
+      const dateRange = [todayTimestamp, tomorrowTimestamp];
+
+      fetchData({
+        dateRange,
+        setData,
+        setPatientsChanged,
+        setStatsData,
+        isMounted,
+      });
+
+      return () => {
+        if (unsubscribe) {
+          unsubscribe();
+        }
+        isMounted = false;
+      };
+    }
+  }, [patientsChanged]);
 
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";
