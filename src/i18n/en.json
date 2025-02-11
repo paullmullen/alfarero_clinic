@@ -139,6 +139,8 @@
   "satscores": "Satisfaction Scores",
   "selectAstation": "Select a station",
   "selectExamType": "Select Exam Type",
+  "selectPatientAge": "Select Child or Adult",
+  "selectPatientGender": "Select Patient Gender",
   "selectType": "Select Type of Visit",
   "service": "Service",
   "services": "Services",

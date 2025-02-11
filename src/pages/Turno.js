@@ -180,8 +180,8 @@ export const Turno = () => {
   const generateTableData = (extractedPlanOfCare) => {
     const uniqueStations = {};
     extractedPlanOfCare.sort((a, b) => {
-      const startTimeA = new Date(a.start_time.toMillis());
-      const startTimeB = new Date(b.start_time.toMillis());
+      const startTimeA = new Date(a.start_time);
+      const startTimeB = new Date(b.start_time);
       return startTimeA - startTimeB;
     });
     extractedPlanOfCare.forEach((item) => {

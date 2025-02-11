@@ -3,7 +3,7 @@ import axios from "axios";
 const fetchDaysAgoData = async (daysCount) => {
   try {
     const response = await axios.post(
-      "https://us-central1-alfarero-478ad.cloudfunctions.net/fetchDaysAgoData", // Replace with your actual function URL
+      "https://us-central1-alfarero-478ad.cloudfunctions.net/fetchDaysAgoData",
       { daysCount }, // ✅ Sending daysCount as a JSON payload
       {
         headers: {
@@ -11,7 +11,7 @@ const fetchDaysAgoData = async (daysCount) => {
         },
       }
     );
-    return response.data; // ✅ Return the response data
+    return response.data;
   } catch (error) {
     console.error("Error fetching data:", error);
     return [];
