@@ -9,7 +9,7 @@
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "ajv": "^8.17.1",
-    "antd": "^4.7.0",
+    "antd": "^5.24.0",
     "axios": "^1.7.9",
     "chokidar": "^3.5.3",
     "crypto-js": "^4.1.1",
