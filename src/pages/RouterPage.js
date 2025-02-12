@@ -60,7 +60,9 @@ const { Title } = Typography;
 const isAlfareroDev = process.env.REACT_APP_FIREBASE_DB !== "";
 
 // Sidebar customization with dynamic styles
-const CustomSider = styled(Sider)`
+const CustomSider = styled(Sider).withConfig({
+  shouldForwardProp: (prop) => prop !== "isDev",
+})`
   .ant-menu-dark .ant-menu-item-selected {
     background-color: ${(props) =>
       props.isDev ? "#52c41a" : "#1890ff"} !important;
