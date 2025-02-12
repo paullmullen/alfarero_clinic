@@ -33,6 +33,8 @@ export const Turno = () => {
   const prevPatientsChangedRef = useRef(false); // Ref to store the previous value of patientsChanged.  the initial values of patientsChanged=true and ref=false will trigger the first render.
 
   const tableRef = useRef(null);
+  const scrollSpeed = 2; // Adjust scroll speed here
+  let scrolling = true;
 
   // Shows editable icons in the patients table
 
@@ -336,20 +338,40 @@ export const Turno = () => {
     return index % 2 === 0 ? "even-row" : "odd-row";
   };
 
+  useEffect(() => {
+    const tableBody = tableRef.current?.querySelector(".ant-table-body");
+    if (!tableBody) return;
+
+    const scrollInterval = setInterval(() => {
+      if (!scrolling) return;
+
+      if (
+        tableBody.scrollTop + tableBody.clientHeight >=
+        tableBody.scrollHeight
+      ) {
+        tableBody.scrollTop = 0; // Reset to top
+      } else {
+        tableBody.scrollTop += scrollSpeed;
+      }
+    }, 50);
+
+    return () => clearInterval(scrollInterval);
+  }, []);
+
   // Renders the visible screen
   return (
-    <div ref={tableRef} className="table-container">
+    <div>
       <AlertInfo />
-      <Table
-        rowKey={"pt_no"}
-        columns={columns}
-        dataSource={data.some((d) => d === undefined) ? [] : dataSource}
-        scroll={{ x: 1500, y: 1500 }}
-        sticky
-        pagination={false}
-        rowClassName={getRowClassName}
-      />
-      {/* <Footer /> */}
+      <div ref={tableRef} style={{ height: 600, overflow: "hidden" }}>
+        <Table
+          columns={columns}
+          dataSource={data.some((d) => d === undefined) ? [] : dataSource}
+          scroll={{ y: 600 }}
+          pagination={false}
+          rowClassName={getRowClassName}
+        />
+        {/* <Footer /> */}
+      </div>
     </div>
   );
 };
