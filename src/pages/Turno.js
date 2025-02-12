@@ -364,6 +364,7 @@ export const Turno = () => {
       <AlertInfo />
       <div ref={tableRef} style={{ height: 600, overflow: "hidden" }}>
         <Table
+          rowKey={"pt_no"}
           columns={columns}
           dataSource={data.some((d) => d === undefined) ? [] : dataSource}
           scroll={{ y: 600 }}
