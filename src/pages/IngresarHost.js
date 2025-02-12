@@ -44,7 +44,7 @@ export const IngresarHost = () => {
   const { showAlert } = useAlert();
   const [form] = Form.useForm();
   const [usuario] = useState(getUsuarioStorage());
-  const [t,i18n] = useTranslation("global");
+  const [t, i18n] = useTranslation("global");
 
   useHideMenu(false);
 
@@ -156,7 +156,7 @@ export const IngresarHost = () => {
                 ]}
                 {...halfLayout}
               >
-                <Select showArrow>
+                <Select>
                   {stationOptions.map((option) => (
                     <Option key={option.value} value={option.value}>
                       {option.label}
@@ -182,4 +182,3 @@ export const IngresarHost = () => {
     </Row>
   );
 };
-
