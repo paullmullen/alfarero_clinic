@@ -5,12 +5,12 @@
 
 //***************************************************************** */
 //
-// PROD VERSION
+// DEV VERSION
 //
 // THERE ARE TWO DIFFERENT AGGREGATE-TIMES.JS FILES.  ONE FOR DEV AND ONE
 // FOR PROD.  THE ONLY DIFFERENCE IS THIS LINE
-// const db = getFirestore(admin); // specify the db name
-// THERE IS NO DB NAMED IN THE PROD VERSION.
+// const db = getFirestore(admin.app(), "alfarero-dev"); // specify the db name
+// THERE IS NO DB NAMED IN THE PROD VERSION
 //
 //***************************************************************** */
 
@@ -22,7 +22,7 @@ const { Timestamp } = require("firebase-admin/firestore");
 // Initialize Firebase Admin with a specific database URL
 admin.initializeApp();
 
-const db = getFirestore(admin); // specify the db name
+const db = getFirestore(admin.app(), "alfarero-dev"); // specify the db name
 
 functions.cloudEvent("aggregateTimes", async (cloudEvent) => {
   // Log the change (optional)

@@ -73,9 +73,15 @@ const Stats = () => {
   ]);
   const [daysCount, setDaysCount] = useState(60);
 
-  const dayjsRange = dateRange
-    ? [dayjs(dateRange[0].toDate()), dayjs(dateRange[1].toDate())]
-    : null;
+  const safeDateRange =
+    Array.isArray(dateRange) && dateRange.length === 2
+      ? dateRange
+      : [todayTimestamp, tomorrowTimestamp]; // Use known constants if invalid
+
+  const dayjsRange = [
+    dayjs(safeDateRange[0].toDate()),
+    dayjs(safeDateRange[1].toDate()),
+  ];
 
   const calculateRollingAverage = (data, windowSize = 15) => {
     const rollingAverages = [];
@@ -248,8 +254,12 @@ const Stats = () => {
 
   const getWaitingData = async () => {
     const data = await fetchWaitingTimeData(); //waiting time data is always just for today
-    console.log(data);
-    setWaitingData(data);
+    const minuteData = data.map((entry) => ({
+      ...entry,
+      avg_waiting_time: entry.avg_waiting_time / 1000,
+      avg_procedure_time: entry.avg_procedure_time / 1000,
+    }));
+    setWaitingData(minuteData);
   };
 
   const getAgoData = async () => {
