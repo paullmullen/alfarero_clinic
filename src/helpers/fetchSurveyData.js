@@ -1,13 +1,39 @@
-import { collection, getDocs } from "firebase/firestore";
-import { firestore } from "./../helpers/firebaseConfig";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  Timestamp,
+} from "firebase/firestore";
+import { firestore } from "../helpers/firebaseConfig";
 
 const fetchSurveyData = async (dateRange) => {
   try {
-    const surveyData = [];
-    const surveyCollection = collection(firestore, "surveys");
-    const surveySnapshot = await getDocs(surveyCollection);
+    if (!dateRange || dateRange.length !== 2) {
+      throw new Error("Invalid date range provided.");
+    }
 
-    const surveyEntries = surveySnapshot.docs.map((doc, counter) => {
+    // Ensure dateRange values are Firestore Timestamps
+    const startTimestamp =
+      dateRange[0] instanceof Timestamp
+        ? dateRange[0]
+        : Timestamp.fromMillis(dateRange[0]); // Converts ms to Firestore Timestamp
+
+    const endTimestamp =
+      dateRange[1] instanceof Timestamp
+        ? dateRange[1]
+        : Timestamp.fromMillis(dateRange[1]); // Converts ms to Firestore Timestamp
+
+    // Firestore Query
+    const surveyQuery = query(
+      collection(firestore, "surveys"),
+      where("date", ">=", startTimestamp),
+      where("date", "<=", endTimestamp)
+    );
+
+    const querySnapshot = await getDocs(surveyQuery);
+
+    const surveyData = querySnapshot.docs.map((doc, index) => {
       const {
         date,
         first,
@@ -19,29 +45,18 @@ const fetchSurveyData = async (dateRange) => {
         gender,
       } = doc.data();
 
-      // Check if the date is within the provided range
-      if (
-        date?.toMillis &&
-        date.toMillis() >= dateRange[0] &&
-        date.toMillis() <= dateRange[1]
-      ) {
-        return {
-          inx: counter,
-          first,
-          source,
-          suggestion,
-          satisfaction,
-          prayer_request,
-          age_group,
-          gender,
-        };
-      }
-
-      return null; // Filter out entries outside the date range
+      return {
+        date: date,
+        inx: index,
+        first,
+        source,
+        suggestion,
+        satisfaction,
+        prayer_request,
+        age_group,
+        gender,
+      };
     });
-
-    // Filter out null entries and add valid ones to surveyData
-    surveyData.push(...surveyEntries.filter((entry) => entry !== null));
 
     return surveyData;
   } catch (error) {
