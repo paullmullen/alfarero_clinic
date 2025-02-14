@@ -35,6 +35,7 @@ import fin from "../img/fin.png";
 import eye from "../img/eye.svg";
 import edit from "../img/edit.svg";
 import EditPatientData from "../components/EditPatientData.js";
+import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
 
 export const Anfitrion = () => {
   useHideMenu(true);
@@ -67,29 +68,7 @@ export const Anfitrion = () => {
     // You can also perform other actions like updating state, making API calls, etc.
   };
 
-  const now = new Date();
-  const today = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    0,
-    0,
-    0,
-    0
-  );
-  const tomorrow = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate() + 1,
-    0,
-    0,
-    0,
-    0
-  );
-
-  // Convert to Firestore Timestamp
-  const todayTimestamp = Timestamp.fromDate(today);
-  const tomorrowTimestamp = Timestamp.fromDate(tomorrow);
+  const { todayTimestamp, tomorrowTimestamp } = getTodayAndTomorrowTimestamps();
 
   useEffect(() => {
     const unsubscribePatients = onSnapshot(
@@ -522,11 +501,11 @@ export const Anfitrion = () => {
         if (!uniqueStations[plan.station] && item.fin !== true) {
           const max_waiting_time = avg_time?.max_waiting_time || 0; // Get max_waiting_time for the station
           const waitText = avg_time
-            ? Math.round(avg_time.avg_waiting_time / 60) // Convert seconds to minutes
+            ? Math.round(avg_time.avg_waiting_time / 60000) // Convert milliseconds to minutes
             : "";
 
           const isOverLimit =
-            avg_time && avg_time.avg_waiting_time > max_waiting_time;
+            avg_time && avg_time.avg_waiting_time / 1000 > max_waiting_time; // max waiting time is in seconds.  stored data is in milliseconds
 
           uniqueStations[plan.station] = {
             dataIndex: plan.station,

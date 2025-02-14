@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { firestore } from "./../helpers/firebaseConfig";
-
 /* eslint-disable no-unused-vars */
+
+import React, { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -16,7 +15,6 @@ import {
   Label,
   Line,
 } from "recharts";
-/* eslint-enable no-unused-vars */
 
 import { useTranslation } from "react-i18next";
 import {
@@ -31,7 +29,9 @@ import {
   DatePicker,
 } from "antd";
 
-import { collection, query, where, getDocs } from "firebase/firestore"; // Import necessary methods
+import dayjs from "dayjs";
+
+import { Timestamp } from "firebase/firestore"; // Import necessary methods
 
 import { stations } from "../helpers/stations";
 import { fetchSurveyData } from "../helpers/fetchSurveyData";
@@ -45,6 +45,7 @@ import es_ES from "antd/es/date-picker/locale/es_ES";
 import en_US from "antd/es/date-picker/locale/en_US";
 import enter from "../img/enter.png";
 import CustomTick from "../helpers/CustomTick"; //defines the bar chart properties
+import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
 
 const { RangePicker } = DatePicker;
 const datePickerLocales = {
@@ -64,12 +65,17 @@ const Stats = () => {
   // eslint-disable-next-line no-unused-vars
   const [rollingAverages, setRollingAverages] = useState([]);
   const [columnChanger, setColumnChanger] = useState(false); //toggling column changer triggers useEffect.  Can update columnChanger when the reenter button is clicked.
-  const [dateRange, setDateRange] = useState([
-    new Date().setHours(0, 0, 0, 0),
-    new Date().setHours(23, 59, 59, 999),
-  ]);
 
+  const { todayTimestamp, tomorrowTimestamp } = getTodayAndTomorrowTimestamps();
+  const [dateRange, setDateRange] = useState([
+    todayTimestamp,
+    tomorrowTimestamp,
+  ]);
   const [daysCount, setDaysCount] = useState(60);
+
+  const dayjsRange = dateRange
+    ? [dayjs(dateRange[0].toDate()), dayjs(dateRange[1].toDate())]
+    : null;
 
   const calculateRollingAverage = (data, windowSize = 15) => {
     const rollingAverages = [];
@@ -109,49 +115,41 @@ const Stats = () => {
   const [t, i18n] = useTranslation("global");
 
   const howManyToday = async (stationName) => {
+    let count = 0;
+    let adultMasculine = 0;
+    let adultFeminine = 0;
+    let childMasculine = 0;
+    let childFeminine = 0;
+
     try {
-      // Create a reference for the 'patients' collection
-      const patientsRef = collection(firestore, "patients");
-
-      // Create a query with the date range filters
-      const q = query(
-        patientsRef,
-        where("start_time", ">=", new Date(dateRange[0])),
-        where("start_time", "<=", new Date(dateRange[1]))
-      );
-
-      // Fetch documents using the query
-      const querySnapshot = await getDocs(q);
-
-      let count = 0;
-      let adultMasculine = 0;
-      let adultFeminine = 0;
-      let childMasculine = 0;
-      let childFeminine = 0;
-
       // Process each document
-      querySnapshot.forEach((doc) => {
-        const patient = doc.data();
+      if (patients.length > 0) {
+        patients.forEach((doc) => {
+          const patient = doc.data;
 
-        // Check each plan of care for matching stations
-        patient.plan_of_care.forEach((s) => {
-          count += s.station === stationName && s.status !== "pending" ? 1 : 0;
+          // Check each plan of care for matching stations
+          doc.plan_of_care.forEach((s) => {
+            count +=
+              s.station === stationName && s.status !== "pending" ? 1 : 0;
+          });
+
+          // Update gender and age group counts
+          if (doc.gender === "masculine" && doc.age_group === "adult") {
+            adultMasculine++;
+          }
+          if (doc.gender === "feminine" && doc.age_group === "adult") {
+            adultFeminine++;
+          }
+          if (doc.gender === "masculine" && doc.age_group === "child") {
+            childMasculine++;
+          }
+          if (doc.gender === "feminine" && doc.age_group === "child") {
+            childFeminine++;
+          }
         });
-
-        // Update gender and age group counts
-        if (patient.gender === "masculine" && patient.age_group === "adult") {
-          adultMasculine++;
-        }
-        if (patient.gender === "feminine" && patient.age_group === "adult") {
-          adultFeminine++;
-        }
-        if (patient.gender === "masculine" && patient.age_group === "child") {
-          childMasculine++;
-        }
-        if (patient.gender === "feminine" && patient.age_group === "child") {
-          childFeminine++;
-        }
-      });
+      } else {
+        console.log("No Patients in date range.");
+      }
 
       // Update state with age and gender data
       setAgeGender([
@@ -208,6 +206,12 @@ const Stats = () => {
             ;
           </div>
         );
+      case 7:
+        return (
+          <div style={{ textAlign: "center" }}>
+            <h2>{t("PROCEDURE_TIME")}</h2>;
+          </div>
+        );
       default:
         return null; // Return null instead of an empty string
     }
@@ -216,20 +220,22 @@ const Stats = () => {
   const [form] = Form.useForm();
   // Set default start date and end date to the current date
 
-  const onDateChange = (values) => {
-    if (values) {
+  const handleDateChange = (values) => {
+    if (values && values.length === 2) {
+      // Convert Dayjs objects to JavaScript Date, adjust time, then convert to Firestore Timestamp
+      const startDate = values[0].toDate(); // Get the start date as a JavaScript Date
+      startDate.setHours(0, 0, 0, 0); // Set to the beginning of the day (midnight)
+
+      const endDate = values[1].toDate(); // Get the end date as a JavaScript Date
+      endDate.setHours(23, 59, 59, 999); // Set to the last millisecond of the day
+
       setDateRange([
-        values[0]._d.setHours(0, 0, 0, 0),
-        values[1]._d.setHours(23, 59, 59, 999),
+        Timestamp.fromDate(startDate), // Start of the selected day as a Firestore Timestamp
+        Timestamp.fromDate(endDate), // End of the selected day as a Firestore Timestamp
       ]);
     } else {
-      const midnightToday = new Date();
-      const tonightToday = new Date();
-
-      midnightToday.setHours(0, 0, 0, 0);
-      tonightToday.setHours(23, 59, 59, 999);
-
-      setDateRange([new Date(midnightToday), new Date(tonightToday)]);
+      // Fallback to default date range if no value is selected
+      setDateRange([todayTimestamp, tomorrowTimestamp]); // Replace with your default values
     }
   };
 
@@ -242,6 +248,7 @@ const Stats = () => {
 
   const getWaitingData = async () => {
     const data = await fetchWaitingTimeData(); //waiting time data is always just for today
+    console.log(data);
     setWaitingData(data);
   };
 
@@ -279,14 +286,15 @@ const Stats = () => {
   const patientsData = async () => {
     const data = await fetchPatientsData(
       dateRange,
-      process.env.REACT_APP_FIREBASE_DB
+      process.env.REACT_APP_FIREBASE_DB,
+      "both"
     );
-    console.log(data);
     let hoursArray = new Array(24).fill(0);
 
     const processedPatients = data.map((s) => {
       // Increment the hour count directly while mapping
-      const hour = parseInt(s.start_time.substring(0, 2));
+      const date = new Date(s.start_time);
+      const hour = date.getHours(s.start_time);
       hoursArray[hour]++;
 
       return {
@@ -301,23 +309,53 @@ const Stats = () => {
       count,
     }));
 
-    setPatients(processedPatients);
+    // this adds a string that contcatenates all used services into a string for use later in the completed patients table.
+    const formattedPatients = processedPatients.map((patient) => ({
+      ...patient, // Spread existing patient data
+      servicesString: Array.isArray(patient.plan_of_care)
+        ? patient.plan_of_care
+            .filter((s) => s.status !== "pending")
+            .map((s) => s.station)
+            .join(", ") || t("NO_SERVICE")
+        : patient.complete
+        ? t("NO_SERVICE")
+        : "",
+
+      totalWaitingTime: Array.isArray(patient.plan_of_care)
+        ? patient.plan_of_care.reduce((total, station) => {
+            // Check if both waiting_start and waiting_end exist
+            if (station.waiting_start && station.waiting_end) {
+              const timeDifference = Math.round(
+                (station.waiting_end._seconds -
+                  station.waiting_start._seconds) /
+                  60
+              );
+              return total + timeDifference;
+            } else {
+              return total;
+            }
+          }, 0)
+        : 0, // Default to 0 if `plan_of_care` isn't an array
+    }));
+    setPatients(formattedPatients);
     setArrivalTimeData(arrivalData);
   };
 
   const stationsData = async () => {
     try {
-      let stats = [];
-
-      // Create an array of Promises for each station
+      // Create an array of promises that fetch station counts
       const promises = stations.map(async (s) => {
         const count = await howManyToday(s.value);
         return { station: s.value, count };
       });
 
-      // Wait for all promises to resolve using Promise.all()
-      stats = await Promise.all(promises);
+      // Wait for all promises to resolve
+      let stats = await Promise.all(promises);
+
+      // Filter out the 'reg' station
       stats = stats.filter((f) => f.station !== "reg");
+
+      // Update state
       setStatsData(stats);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -350,7 +388,6 @@ const Stats = () => {
   }, [t, columnChanger, dateRange]);
 
   const barColors = getBarColors();
-  const waitTimeChartData = waitingData;
 
   const patientsColumns = [
     {
@@ -369,7 +406,7 @@ const Stats = () => {
       width: 50,
       fixed: "left",
       sorter: (a, b) => a.age_group.localeCompare(b.age_group),
-      render: (name) => <div>{name}</div>,
+      render: (name) => <div>{t(name)}</div>,
     },
     {
       title: t("gender"),
@@ -378,7 +415,7 @@ const Stats = () => {
       width: 50,
       fixed: "left",
       sorter: (a, b) => a.gender.localeCompare(b.gender),
-      render: (name) => <div>{name}</div>,
+      render: (name) => <div>{t(name)}</div>,
     },
     // {
     //   title: t("reason_for_visit"),
@@ -399,8 +436,8 @@ const Stats = () => {
     },
     {
       title: t("TOTALWAIT"),
-      dataIndex: "total_wait",
-      key: "type",
+      dataIndex: "totalWaitingTime",
+      key: "totalWaitingTime",
       width: 50,
       fixed: "left",
       render: (total) => <div>{t(total)} min</div>,
@@ -413,23 +450,24 @@ const Stats = () => {
       fixed: "left",
       defaultSortOrder: "ascend",
       sorter: (a, b) => a.start_time.localeCompare(b.start_time),
-      render: (time) => <div>{time}</div>,
+      render: (start_time) =>
+        start_time
+          ? new Date(start_time).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true, // 24-hour format
+            })
+          : "", // If no start_time, return an empty string
     },
     {
       title: t("services"),
-      dataIndex: "plan_of_care",
-      key: "poc",
+      dataIndex: "servicesString",
+      key: "servicesString",
       // Adjust the width for the services column as needed.
       width: 250,
       fixed: "left",
       wordWrap: true,
-      render: (services, patient) => (
-        <div>
-          {services === "" && patient.complete === true
-            ? t("NO_SERVICE")
-            : services}
-        </div>
-      ),
+      render: (servicesString) => <div>{servicesString}</div>,
     },
     {
       title: t("READMIT"),
@@ -521,13 +559,14 @@ const Stats = () => {
           >
             <RangePicker
               format="DD-MMM-YYYY"
+              value={dayjsRange}
               placeholder={[t("START_DATE"), t("END_DATE")]}
               locale={
                 i18n.language === "es"
                   ? datePickerLocales.es
                   : datePickerLocales.en
               }
-              onChange={onDateChange}
+              onChange={handleDateChange}
             />
           </Form.Item>
           <Form.Item label={t("TRENDDAYS")} style={{ margin: 0 }}>
@@ -603,9 +642,10 @@ const Stats = () => {
               <Bar dataKey="count" fill="#8884d8" />
             </BarChart>
           </ResponsiveContainer>
-
+        </div>
+        <div className="charts-container">
           <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-            <BarChart data={waitTimeChartData}>
+            <BarChart data={waitingData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="station_type" />
               <YAxis>
@@ -614,6 +654,17 @@ const Stats = () => {
               <Tooltip />
               <Legend content={() => renderLegendStations(4)} />
               <Bar dataKey="avg_waiting_time" fill="#22CC55" />
+            </BarChart>
+          </ResponsiveContainer>
+          <ResponsiveContainer width="50%" height="100%" minHeight="300px">
+            <BarChart data={waitingData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="station_type" />
+              <YAxis>
+                <Label value={t("MINUTES")} angle="-90" />
+              </YAxis>
+              <Tooltip />
+              <Legend content={() => renderLegendStations(7)} />
               <Bar dataKey="avg_procedure_time" fill="#2255CC" />
             </BarChart>
           </ResponsiveContainer>

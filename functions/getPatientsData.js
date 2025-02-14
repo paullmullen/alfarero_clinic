@@ -1,3 +1,8 @@
+//***************************************************************** */
+// NOTE THAT THIS IS A GOOGLE CLOUD FUNCTION THAT NEEDS TO BE DEPLOYED
+// AS A CLOUD FUNCTION AND NOT AS PART OF THE CLIENT SIDE CODE.
+//***************************************************************** */
+
 const { onRequest } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const { getFirestore } = require("firebase-admin/firestore");

@@ -6,6 +6,7 @@
 const functions = require("@google-cloud/functions-framework");
 const admin = require("firebase-admin");
 const { getFirestore } = require("firebase-admin/firestore");
+const { Timestamp } = require("firebase-admin/firestore");
 
 // Initialize Firebase Admin with a specific database URL
 admin.initializeApp();
@@ -18,16 +19,18 @@ functions.cloudEvent("aggregateTimes", async (cloudEvent) => {
 
   console.log(`Function triggered by event on: ${cloudEvent.source}`);
   console.log(`Event type: ${cloudEvent.type}`);
-
+  const now = new Date();
+  now.setHours(0, 0, 0, 0); // Set time to midnight
+  const todayMidnight = Timestamp.fromDate(now);
   try {
-    // Step 1: Query all patients where complete == false
+    // Step 1: Query all patients for today
     const patientsSnapshot = await db
       .collection("patients")
-      .where("complete", "==", false)
+      .where("start_time", ">", todayMidnight)
       .get();
 
+    console.log("# Patients Retrieved:", patientsSnapshot.size);
     if (patientsSnapshot.empty) {
-      console.log("No active patients found. Resetting averages in stats.");
       // Reset averages in stats collection if no active patients
       const statsSnapshot = await db.collection("stats").get();
       const resetPromises = statsSnapshot.docs.map((doc) =>
@@ -46,23 +49,29 @@ functions.cloudEvent("aggregateTimes", async (cloudEvent) => {
     }
 
     // Step 2: Collect waiting times and procedure times for each station
-    const stationTimes = {}; // { stationName: [waitingTime1, waitingTime2, ...] }
     const stationProcedureTimes = {}; // { stationName: [procedureTime1, procedureTime2, ...] }
+    const stationWaitingTimes = {}; // { stationName: [waitingTime1, waitngTime2, ...] }
 
     patientsSnapshot.forEach((doc) => {
       const patient = doc.data();
       const planOfCare = patient.plan_of_care || [];
 
       planOfCare.forEach((entry) => {
-        const { station, waiting_time, in_process_start, in_process_end } =
-          entry;
+        const {
+          station,
+          waiting_start,
+          waiting_end,
+          in_process_start,
+          in_process_end,
+        } = entry;
 
-        // Collect waiting time data
-        if (station && waiting_time != null) {
-          if (!stationTimes[station]) {
-            stationTimes[station] = [];
+        // Collect waiting time data (difference between waiting_end and waiting_start)
+        if (station && waiting_start && waiting_end) {
+          const waitingTime = waiting_end.toDate() - waiting_start.toDate();
+          if (!stationWaitingTimes[station]) {
+            stationWaitingTimes[station] = [];
           }
-          stationTimes[station].push(waiting_time);
+          stationWaitingTimes[station].push(waitingTime);
         }
 
         // Collect procedure time data (difference between in_process_end and in_process_start)
@@ -77,19 +86,19 @@ functions.cloudEvent("aggregateTimes", async (cloudEvent) => {
       });
     });
 
-    console.log("Collected station waiting times:", stationTimes);
+    console.log("Collected station waiting times:", stationWaitingTimes);
     console.log("Collected station procedure times:", stationProcedureTimes);
 
     // Step 3: Calculate averages for each station
-    const averages = {};
+    const waitingAverages = {};
     const procedureAverages = {};
 
     // Calculate average waiting times
-    for (const station in stationTimes) {
-      const times = stationTimes[station];
+    for (const station in stationWaitingTimes) {
+      const times = stationWaitingTimes[station];
       const total = times.reduce((sum, time) => sum + time, 0);
       const avg = total / times.length;
-      averages[station] = avg;
+      waitingAverages[station] = avg;
     }
 
     // Calculate average procedure times
@@ -100,7 +109,7 @@ functions.cloudEvent("aggregateTimes", async (cloudEvent) => {
       procedureAverages[station] = avg;
     }
 
-    console.log("Calculated station averages (waiting time):", averages);
+    console.log("Calculated station averages (waiting time):", waitingAverages);
     console.log(
       "Calculated station averages (procedure time):",
       procedureAverages
@@ -110,14 +119,14 @@ functions.cloudEvent("aggregateTimes", async (cloudEvent) => {
     const updatePromises = [];
 
     // Update stats collection with waiting_time_data and procedure_time_data
-    Object.entries(averages).forEach(([station, avg_waiting_time]) => {
+    Object.entries(waitingAverages).forEach(([station]) => {
       updatePromises.push(
         db
           .collection("stats")
           .doc(station)
           .update({
-            avg_waiting_time,
-            waiting_time_data: stationTimes[station], // Store waiting_time_data
+            avg_waiting_time: waitingAverages[station],
+            waiting_time_data: stationWaitingTimes[station], // Store waiting_time_data
             avg_procedure_time: procedureAverages[station] || 0, // If no procedure time, set to 0
             procedure_time_data: stationProcedureTimes[station] || [], // Store procedure_time_data
           })
@@ -127,7 +136,7 @@ functions.cloudEvent("aggregateTimes", async (cloudEvent) => {
     // Ensure stations with no active patients are reset to 0 for both waiting_time and procedure_time
     const statsSnapshot = await db.collection("stats").get();
     statsSnapshot.docs.forEach((doc) => {
-      if (!averages[doc.id]) {
+      if (!waitingAverages[doc.id]) {
         updatePromises.push(
           doc.ref.update({
             avg_waiting_time: 0,
