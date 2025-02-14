@@ -702,7 +702,26 @@ export const Anfitrion = () => {
 
   // Helper to add different color on the table depending if it's even or row
   const getRowClassName = (record, index) => {
-    return index % 2 === 0 ? "even-row" : "odd-row";
+    // Extract stations from statsData
+    const stations = statsData.map((station) => station.station_type); // Assuming statsData contains station names
+
+    // Check if all statuses for the stations are either "pending" or "complete"
+    let allPendingOrComplete = true; // Assume true initially
+
+    stations.forEach((station) => {
+      const status = record[station]; // Directly access the status
+      // Check if the status is neither "pending" nor "complete"
+      if (status !== "pending" && status !== "complete") {
+        allPendingOrComplete = false; // If we find a status that's not "pending" or "complete", set it to false
+      }
+    });
+
+    // Set the appropriate row class
+    return allPendingOrComplete
+      ? "highlight-row" // Highlight the row if all statuses are "pending" or "complete"
+      : index % 2 === 0
+      ? "even-row"
+      : "odd-row";
   };
 
   // Renders the visible screen
@@ -714,8 +733,6 @@ export const Anfitrion = () => {
         rowKey={"pt_no"}
         columns={columns}
         dataSource={data.some((d) => d === undefined) ? [] : dataSource}
-        // scroll={{ x: 1500, y: 1500 }}
-        sticky
         pagination={false}
         offsetScroll={3}
         rowClassName={getRowClassName}

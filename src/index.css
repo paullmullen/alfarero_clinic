@@ -44,6 +44,10 @@
   height: 2px;
 }
 
+.highlight-row {
+  background-color: #fff9c4 !important; /* Light yellow */
+}
+
 .center-cell {
   text-align: center;
 }
