@@ -11,6 +11,25 @@
 // FOR PROD.  THE ONLY DIFFERENCE IS THIS LINE
 // const db = getFirestore(admin); // specify the db name
 // THERE IS NO DB NAMED IN THE PROD VERSION.
+////
+// This version should be triggered by a cloud trigger configured as follows:
+// Firestore Trigger
+// Event Type: google.cloud.firestore.document.v1.updated
+// Region: nam5
+// Database: alfarero-dev
+// Service URL Path:  //firestore.googleapis.com/projects/alfarero-478ad/databases/(default)/run_aggregation/timestamp/last_updated
+//
+//
+// It requires a package.json file with the following dependencies:
+// {
+//   "dependencies": {
+//     "@google-cloud/functions-framework": "^3.0.0",
+//     "firebase-admin": "^11.0.0",
+//       "firebase-functions": "^4.0.0",
+
+//     "protobufjs": "^7.0.0"
+//   }
+// }
 //
 //***************************************************************** */
 
@@ -22,148 +41,201 @@ const { Timestamp } = require("firebase-admin/firestore");
 // Initialize Firebase Admin with a specific database URL
 admin.initializeApp();
 
-const db = getFirestore(admin); // specify the db name
+const db = getFirestore(admin.app()); // specify the db name
 
-functions.cloudEvent("aggregateTimes", async (cloudEvent) => {
-  // Log the change (optional)
-  console.log("Aggregation triggered by timestamp update");
-
-  console.log(`Function triggered by event on: ${cloudEvent.source}`);
-  console.log(`Event type: ${cloudEvent.type}`);
-  const now = new Date();
-  now.setHours(0, 0, 0, 0); // Set time to midnight
-  const todayMidnight = Timestamp.fromDate(now);
+async function processAggregation(startTime, endTime, prefix = "") {
   try {
-    // Step 1: Query all patients for today
     const patientsSnapshot = await db
       .collection("patients")
-      .where("start_time", ">", todayMidnight)
+      .where("start_time", ">", startTime)
+      .where("start_time", "<=", endTime)
       .get();
 
-    console.log("# Patients Retrieved:", patientsSnapshot.size);
     if (patientsSnapshot.empty) {
-      // Reset averages in stats collection if no active patients
       const statsSnapshot = await db.collection("stats").get();
       const resetPromises = statsSnapshot.docs.map((doc) =>
         doc.ref.update({
-          avg_waiting_time: 0,
-          avg_procedure_time: 0,
-          waiting_time_data: [],
-          procedure_time_data: [], // Reset procedure_time_data as well
+          [`${prefix}avg_waiting_time`]: 0,
+          [`${prefix}avg_procedure_time`]: 0,
+          [`${prefix}waiting_time_data`]: [],
+          [`${prefix}procedure_time_data`]: [],
+          [`${prefix}count`]: 0,
+          [`${prefix}adult_masculine`]: 0,
+          [`${prefix}adult_feminine`]: 0,
+          [`${prefix}child_masculine`]: 0,
+          [`${prefix}child_feminine`]: 0,
         })
       );
       await Promise.all(resetPromises);
-      console.log(
-        "All station averages reset to 0 and waiting_time_data, procedure_time_data cleared."
-      );
       return;
     }
 
-    // Step 2: Collect waiting times and procedure times for each station
-    const stationProcedureTimes = {}; // { stationName: [procedureTime1, procedureTime2, ...] }
-    const stationWaitingTimes = {}; // { stationName: [waitingTime1, waitngTime2, ...] }
+    const stationProcedureTimes = {};
+    const stationWaitingTimes = {};
+    const ageGenderCounts = {};
 
     patientsSnapshot.forEach((doc) => {
       const patient = doc.data();
       const planOfCare = patient.plan_of_care || [];
 
-      planOfCare.forEach((entry) => {
-        const {
+      planOfCare.forEach(
+        ({
           station,
           waiting_start,
           waiting_end,
           in_process_start,
           in_process_end,
-        } = entry;
+          status,
+        }) => {
+          if (!station) return;
 
-        // Collect waiting time data (difference between waiting_end and waiting_start)
-        if (station && waiting_start && waiting_end) {
-          const waitingTime = waiting_end.toDate() - waiting_start.toDate();
-          if (!stationWaitingTimes[station]) {
-            stationWaitingTimes[station] = [];
+          // Waiting Time Calculation
+          if (waiting_start && waiting_end) {
+            const waitingTime = waiting_end.toDate() - waiting_start.toDate();
+            if (!stationWaitingTimes[station])
+              stationWaitingTimes[station] = [];
+            stationWaitingTimes[station].push(waitingTime);
           }
-          stationWaitingTimes[station].push(waitingTime);
-        }
 
-        // Collect procedure time data (difference between in_process_end and in_process_start)
-        if (station && in_process_start && in_process_end) {
-          const procedureTime =
-            in_process_end.toDate() - in_process_start.toDate();
-          if (!stationProcedureTimes[station]) {
-            stationProcedureTimes[station] = [];
+          // Procedure Time Calculation
+          if (in_process_start && in_process_end) {
+            const procedureTime =
+              in_process_end.toDate() - in_process_start.toDate();
+            if (!stationProcedureTimes[station])
+              stationProcedureTimes[station] = [];
+            stationProcedureTimes[station].push(procedureTime);
           }
-          stationProcedureTimes[station].push(procedureTime);
+
+          // Age & Gender Categorization
+          if (!ageGenderCounts[station]) {
+            ageGenderCounts[station] = {
+              adultMasculine: 0,
+              adultFeminine: 0,
+              childMasculine: 0,
+              childFeminine: 0,
+              totalCount: 0,
+            };
+          }
+
+          if (
+            patient.gender === "masculine" &&
+            patient.age_group === "adult" &&
+            status !== "pending"
+          ) {
+            ageGenderCounts[station].adultMasculine++;
+            ageGenderCounts[station].totalCount++;
+          }
+          if (
+            patient.gender === "feminine" &&
+            patient.age_group === "adult" &&
+            status !== "pending"
+          ) {
+            ageGenderCounts[station].adultFeminine++;
+            ageGenderCounts[station].totalCount++;
+          }
+          if (
+            patient.gender === "masculine" &&
+            patient.age_group === "child" &&
+            status !== "pending"
+          ) {
+            ageGenderCounts[station].childMasculine++;
+            ageGenderCounts[station].totalCount++;
+          }
+          if (
+            patient.gender === "feminine" &&
+            patient.age_group === "child" &&
+            status !== "pending"
+          ) {
+            ageGenderCounts[station].childFeminine++;
+            ageGenderCounts[station].totalCount++;
+          }
         }
-      });
+      );
     });
 
-    console.log("Collected station waiting times:", stationWaitingTimes);
-    console.log("Collected station procedure times:", stationProcedureTimes);
-
-    // Step 3: Calculate averages for each station
+    // Calculate Averages
     const waitingAverages = {};
     const procedureAverages = {};
 
-    // Calculate average waiting times
     for (const station in stationWaitingTimes) {
       const times = stationWaitingTimes[station];
-      const total = times.reduce((sum, time) => sum + time, 0);
-      const avg = total / times.length;
-      waitingAverages[station] = avg;
+      waitingAverages[station] =
+        times.reduce((sum, time) => sum + time, 0) / times.length;
     }
 
-    // Calculate average procedure times
     for (const station in stationProcedureTimes) {
       const times = stationProcedureTimes[station];
-      const total = times.reduce((sum, time) => sum + time, 0);
-      const avg = total / times.length;
-      procedureAverages[station] = avg;
+      procedureAverages[station] =
+        times.reduce((sum, time) => sum + time, 0) / times.length;
     }
 
-    console.log("Calculated station averages (waiting time):", waitingAverages);
-    console.log(
-      "Calculated station averages (procedure time):",
-      procedureAverages
-    );
-
-    // Step 4: Update the stats collection
+    // Firestore Updates
     const updatePromises = [];
 
-    // Update stats collection with waiting_time_data and procedure_time_data
+    console.log("waiting averages", waitingAverages);
+    console.log("procedure_averages", procedureAverages);
+    console.log("agegender", ageGenderCounts);
+
     Object.entries(waitingAverages).forEach(([station]) => {
       updatePromises.push(
         db
           .collection("stats")
           .doc(station)
           .update({
-            avg_waiting_time: waitingAverages[station],
-            waiting_time_data: stationWaitingTimes[station], // Store waiting_time_data
-            avg_procedure_time: procedureAverages[station] || 0, // If no procedure time, set to 0
-            procedure_time_data: stationProcedureTimes[station] || [], // Store procedure_time_data
+            [`${prefix}avg_waiting_time`]: waitingAverages[station] || 0,
+            [`${prefix}waiting_time_data`]: stationWaitingTimes[station] || [],
           })
       );
     });
 
-    // Ensure stations with no active patients are reset to 0 for both waiting_time and procedure_time
-    const statsSnapshot = await db.collection("stats").get();
-    statsSnapshot.docs.forEach((doc) => {
-      if (!waitingAverages[doc.id]) {
-        updatePromises.push(
-          doc.ref.update({
-            avg_waiting_time: 0,
-            waiting_time_data: [],
-            avg_procedure_time: 0,
-            procedure_time_data: [], // Clear procedure_time_data if no active patients
+    Object.entries(procedureAverages).forEach(([station]) => {
+      updatePromises.push(
+        db
+          .collection("stats")
+          .doc(station)
+          .update({
+            [`${prefix}avg_procedure_time`]: procedureAverages[station] || 0,
+            [`${prefix}procedure_time_data`]:
+              stationProcedureTimes[station] || [],
           })
-        );
-      }
+      );
+    });
+
+    Object.entries(ageGenderCounts).forEach(([station, counts]) => {
+      updatePromises.push(
+        db
+          .collection("stats")
+          .doc(station)
+          .update({
+            [`${prefix}adult_masculine`]: counts.adultMasculine,
+            [`${prefix}adult_feminine`]: counts.adultFeminine,
+            [`${prefix}child_masculine`]: counts.childMasculine,
+            [`${prefix}child_feminine`]: counts.childFeminine,
+            [`${prefix}count`]: counts.totalCount,
+          })
+      );
     });
 
     await Promise.all(updatePromises);
-    console.log(
-      "Stats collection updated successfully with waiting_time_data and procedure_time_data."
-    );
   } catch (error) {
     console.error("Error processing aggregation:", error);
+  }
+}
+
+functions.cloudEvent("aggregateTimes-dev", async () => {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const todayMidnight = Timestamp.fromDate(now);
+  await processAggregation(todayMidnight, Timestamp.now(), "");
+
+  const rangeDoc = await db
+    .collection("run_aggregation")
+    .doc("timestamp")
+    .get();
+  if (rangeDoc.exists) {
+    const { range_start, range_end } = rangeDoc.data();
+    if (range_start && range_end) {
+      await processAggregation(range_start, range_end, "range_");
+    }
   }
 });

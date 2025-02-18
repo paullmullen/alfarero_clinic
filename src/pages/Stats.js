@@ -29,11 +29,17 @@ import {
   DatePicker,
 } from "antd";
 
+import { firestore } from "./../helpers/firebaseConfig";
+
 import dayjs from "dayjs";
 
-import { Timestamp } from "firebase/firestore"; // Import necessary methods
-
-import { stations } from "../helpers/stations";
+import {
+  Timestamp,
+  collection,
+  getDocs,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
 import { fetchSurveyData } from "../helpers/fetchSurveyData";
 import { fetchPatientsData } from "../helpers/fetchPatientsData";
 import { fetchWaitingTimeData } from "../helpers/fetchWaitingTimeData";
@@ -71,17 +77,12 @@ const Stats = () => {
     todayTimestamp,
     tomorrowTimestamp,
   ]);
+  const [pickerRange, setPickerRange] = useState([
+    todayTimestamp.toDate(),
+    tomorrowTimestamp.toDate(),
+  ]);
+
   const [daysCount, setDaysCount] = useState(60);
-
-  const safeDateRange =
-    Array.isArray(dateRange) && dateRange.length === 2
-      ? dateRange
-      : [todayTimestamp, tomorrowTimestamp]; // Use known constants if invalid
-
-  const dayjsRange = [
-    dayjs(safeDateRange[0].toDate()),
-    dayjs(safeDateRange[1].toDate()),
-  ];
 
   const calculateRollingAverage = (data, windowSize = 15) => {
     const rollingAverages = [];
@@ -119,57 +120,6 @@ const Stats = () => {
   };
 
   const [t, i18n] = useTranslation("global");
-
-  const howManyToday = async (stationName) => {
-    let count = 0;
-    let adultMasculine = 0;
-    let adultFeminine = 0;
-    let childMasculine = 0;
-    let childFeminine = 0;
-
-    try {
-      // Process each document
-      if (patients.length > 0) {
-        patients.forEach((doc) => {
-          const patient = doc.data;
-
-          // Check each plan of care for matching stations
-          doc.plan_of_care.forEach((s) => {
-            count +=
-              s.station === stationName && s.status !== "pending" ? 1 : 0;
-          });
-
-          // Update gender and age group counts
-          if (doc.gender === "masculine" && doc.age_group === "adult") {
-            adultMasculine++;
-          }
-          if (doc.gender === "feminine" && doc.age_group === "adult") {
-            adultFeminine++;
-          }
-          if (doc.gender === "masculine" && doc.age_group === "child") {
-            childMasculine++;
-          }
-          if (doc.gender === "feminine" && doc.age_group === "child") {
-            childFeminine++;
-          }
-        });
-      } else {
-        console.log("No Patients in date range.");
-      }
-
-      // Update state with age and gender data
-      setAgeGender([
-        { name: t("ADULT_FEMININE"), value: adultFeminine, fill: "#de7ad1" },
-        { name: t("ADULT_MASCULINE"), value: adultMasculine, fill: "#7a98de" },
-        { name: t("CHILD_FEMININE"), value: childFeminine, fill: "#de7ad1" },
-        { name: t("CHILD_MASCULINE"), value: childMasculine, fill: "#7a98de" },
-      ]);
-
-      return count; // Return the total count
-    } catch (e) {
-      console.error("Error fetching patient count:", e);
-    }
-  };
 
   const renderLegendStations = (props) => {
     switch (props) {
@@ -224,25 +174,52 @@ const Stats = () => {
   };
 
   const [form] = Form.useForm();
-  // Set default start date and end date to the current date
 
   const handleDateChange = (values) => {
-    if (values && values.length === 2) {
-      // Convert Dayjs objects to JavaScript Date, adjust time, then convert to Firestore Timestamp
-      const startDate = values[0].toDate(); // Get the start date as a JavaScript Date
-      startDate.setHours(0, 0, 0, 0); // Set to the beginning of the day (midnight)
+    let startDate, endDate;
 
-      const endDate = values[1].toDate(); // Get the end date as a JavaScript Date
-      endDate.setHours(23, 59, 59, 999); // Set to the last millisecond of the day
-
-      setDateRange([
-        Timestamp.fromDate(startDate), // Start of the selected day as a Firestore Timestamp
-        Timestamp.fromDate(endDate), // End of the selected day as a Firestore Timestamp
-      ]);
+    // Check the type of values[0] and values[1]
+    if (values[0] instanceof Timestamp) {
+      // Firestore Timestamp
+      startDate = values[0].toDate(); // Convert Firestore Timestamp to JavaScript Date
+      endDate = values[1].toDate();
+    } else if (dayjs(values[0]).isValid()) {
+      // dayjs object
+      startDate = dayjs(values[0]).toDate(); // Convert dayjs to JavaScript Date
+      endDate = dayjs(values[1]).toDate();
+    } else if (values[0] instanceof Date) {
+      // JavaScript Date object
+      startDate = values[0];
+      endDate = values[1];
     } else {
-      // Fallback to default date range if no value is selected
-      setDateRange([todayTimestamp, tomorrowTimestamp]); // Replace with your default values
+      console.error("Invalid date type");
+      return; // Exit early if the date type is unrecognized
     }
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 23, 59, 99);
+    // Log to see the values after conversion
+    console.log(startDate, endDate);
+
+    // Store Firestore Timestamp
+    setDateRange([
+      Timestamp.fromDate(startDate), // Start of the selected day as a Firestore Timestamp
+      Timestamp.fromDate(endDate), // End of the selected day as a Firestore Timestamp
+    ]);
+
+    console.log("dateRange: ", dateRange);
+    console.log("setting date range in firestore");
+
+    const runAggregationRef = doc(firestore, "run_aggregation", "timestamp");
+    updateDoc(runAggregationRef, {
+      range_start: Timestamp.fromDate(startDate),
+      range_end: Timestamp.fromDate(endDate),
+    });
+
+    console.log("finished setting date range in firestore");
+    setColumnChanger(!columnChanger);
+
+    // Set the picker range as dayjs objects (for displaying in the picker)
+    setPickerRange(dayjs(startDate), dayjs(endDate));
   };
 
   const surveyData = async () => {
@@ -353,20 +330,30 @@ const Stats = () => {
 
   const stationsData = async () => {
     try {
-      // Create an array of promises that fetch station counts
-      const promises = stations.map(async (s) => {
-        const count = await howManyToday(s.value);
-        return { station: s.value, count };
+      const statsCollection = await getDocs(collection(firestore, "stats"));
+      const stats = statsCollection.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          count: data.count,
+          range_count: data.range_count,
+          adult_feminine: data.adult_feminine,
+          range_adult_feminine: data.range_adult_feminine,
+          adult_masculine: data.adult_masculine,
+          range_adult_masculine: data.range_adult_masculine,
+          child_feminine: data.child_feminine,
+          range_child_feminine: data.range_child_feminine,
+          child_masculine: data.child_masculine,
+          range_child_masculine: data.range_child_masculine,
+          avg_waiting_time: data.avg_waiting_time,
+          range_avg_waiting_time: data.range_avg_waiting_time,
+          avg_procedure_time: data.avg_procedure_time,
+          range_avg_procedure_time: data.range_avg_procedure_time,
+          station_type: data.station_type,
+        };
       });
 
-      // Wait for all promises to resolve
-      let stats = await Promise.all(promises);
-
-      // Filter out the 'reg' station
-      stats = stats.filter((f) => f.station !== "reg");
-
-      // Update state
       setStatsData(stats);
+      console.log(stats);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -395,7 +382,7 @@ const Stats = () => {
       await getAgoData(60);
     };
     doStuffInOrder();
-  }, [t, columnChanger, dateRange]);
+  }, [columnChanger]);
 
   const barColors = getBarColors();
 
@@ -569,8 +556,7 @@ const Stats = () => {
           >
             <RangePicker
               format="DD-MMM-YYYY"
-              value={dayjsRange}
-              placeholder={[t("START_DATE"), t("END_DATE")]}
+              value={pickerRange}
               locale={
                 i18n.language === "es"
                   ? datePickerLocales.es
@@ -601,12 +587,12 @@ const Stats = () => {
             <ResponsiveContainer width="50%" height="100%" minHeight="300px">
               <BarChart data={statsData} label="station">
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="station" />
-                <YAxis />
+                <XAxis dataKey="station_type" />
+                <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend content={() => renderLegendStations(1)} />
 
-                <Bar dataKey="count">
+                <Bar dataKey="range_count">
                   {statsData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={barColors[index]} />
                   ))}
@@ -618,7 +604,7 @@ const Stats = () => {
                 <BarChart data={satScore}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="level" tick={<CustomTick />} />
-                  <YAxis dataKey="count" />
+                  <YAxis dataKey="count" allowDecimals={false} />
                   <Tooltip />
                   <Legend content={() => renderLegendStations(2)} />
 
@@ -643,7 +629,7 @@ const Stats = () => {
             <BarChart data={arrivalTimeData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="hour" />
-              <YAxis>
+              <YAxis allowDecimals={false}>
                 <Label value={t("NUM_PTS")} angle="-90" />
               </YAxis>
               <Tooltip />

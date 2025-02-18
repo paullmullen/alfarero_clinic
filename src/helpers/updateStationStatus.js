@@ -62,7 +62,7 @@ export const handleStatusChange = async (
 
       message.info({
         content: checkoutMessage,
-        duration: 10, // Set to 0 to make it persist until dismissed
+        duration: 2, // Set to 0 to make it persist until dismissed
         className: "custom-message", // Add custom styling
         okText: "OK",
         onClose: () => {
