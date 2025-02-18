@@ -27,6 +27,7 @@ import {
   Button,
   Form,
   DatePicker,
+  Typography,
 } from "antd";
 
 import { firestore } from "./../helpers/firebaseConfig";
@@ -54,6 +55,7 @@ import CustomTick from "../helpers/CustomTick"; //defines the bar chart properti
 import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
 
 const { RangePicker } = DatePicker;
+const { Text } = Typography;
 const datePickerLocales = {
   en: en_US, // Use the locale object for English
   es: es_ES, // Use the locale object for Spanish
@@ -595,18 +597,6 @@ const Stats = () => {
               onChange={handleDateChange}
             />
           </Form.Item>
-          <Form.Item label={t("TRENDDAYS")} style={{ margin: 0 }}>
-            <Input
-              id="daysInput"
-              type="number"
-              value={daysCount}
-              onChange={(e) => setDaysCount(e.target.value)}
-              onBlur={handleDaysCountChange}
-              onPressEnter={handleDaysCountChange}
-              min="0"
-              style={{ width: "150px" }} // Adjust width here
-            />
-          </Form.Item>
         </div>
       </Form>
 
@@ -747,8 +737,8 @@ const Stats = () => {
           </ResponsiveContainer>
 
           {/* total patients trend */}
-
           <ResponsiveContainer width="50%" height="100%" minHeight="300px">
+            {/* Bar chart for total patients trend */}
             <BarChart data={daysAgo}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
@@ -761,55 +751,70 @@ const Stats = () => {
               <ReferenceLine y={70} stroke="red" label={t("GOAL")} />
             </BarChart>
           </ResponsiveContainer>
+
           {/* TODO:  Add the 15-day rolling average line to this chart */}
         </div>
-
-        <div style={{ display: "flex", width: "100%", height: "100%" }}></div>
-        <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-          {t("DOWNLOAD")}
-        </h2>
-        <Row>
-          <Col>
-            <ExcelExport data={patients} reportName="TODAYSPATIENTS" />
-          </Col>
-          <Col>&nbsp;</Col>
-          <Col>
-            <ExcelExport data={surveys} reportName="todaysSurveys" />
-          </Col>
-          <Col>&nbsp;</Col>
-          <Col>
-            <ExcelExport data={daysAgo} reportName="DAYSAGO" />
-          </Col>
-        </Row>
-        <Divider />
-        <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-          {t("todaysComplete")} ({patients.length})
-        </h2>
-        <Table
-          rowKey={"pt_no"}
-          columns={patientsColumns}
-          dataSource={patients.some((d) => d === undefined) ? [] : patients}
-          scroll={{ x: 410, y: 1500 }}
-          sticky
-          pagination={true}
-          offsetScroll={3}
-          onChange={handleTableChange} // Attach the handleTableChange function
-          {...sortInfo} // Spread the sortInfo to apply sorting
-        />
-        <Divider></Divider>
-        <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
-          {t("todaysSurveys")} ({surveys.length})
-        </h2>
-        <Table
-          rowKey={"inx"}
-          columns={surveyColumns}
-          dataSource={surveys.some((d) => d === undefined) ? [] : surveys}
-          scroll={{ x: 580, y: 1500 }}
-          sticky
-          pagination={true}
-          offsetScroll={3}
-        />
       </div>
+      <Row>
+        <Col span={12}>&nbsp;</Col>
+        <Col span={12} alignItems={"center"} type="flex" align="middle">
+          <Text strong>{t("TRENDDAYS")} </Text>
+          <Input
+            id="daysInput"
+            type="number"
+            value={daysCount}
+            onChange={(e) => setDaysCount(e.target.value)}
+            onBlur={handleDaysCountChange}
+            onPressEnter={handleDaysCountChange}
+            min="0"
+            style={{ width: "50px" }}
+          />
+        </Col>
+      </Row>
+      <Divider />
+      <Row>
+        <Col span={24} type="flex" align="middle">
+          <br></br>
+          <br></br>
+          <h2>{t("DOWNLOAD")}</h2>
+          <ExcelExport data={patients} reportName="TODAYSPATIENTS" />
+          &nbsp;
+          <ExcelExport data={surveys} reportName="todaysSurveys" />
+          &nbsp;
+          <ExcelExport data={daysAgo} reportName="DAYSAGO" />
+          <br></br>
+          <br></br>
+          <br></br>
+        </Col>
+      </Row>
+      <Divider />
+      <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+        {t("todaysComplete")} ({patients.length})
+      </h2>
+      <Table
+        rowKey={"pt_no"}
+        columns={patientsColumns}
+        dataSource={patients.some((d) => d === undefined) ? [] : patients}
+        scroll={{ x: 410, y: 1500 }}
+        sticky
+        pagination={true}
+        offsetScroll={3}
+        onChange={handleTableChange} // Attach the handleTableChange function
+        {...sortInfo} // Spread the sortInfo to apply sorting
+      />
+      <Divider></Divider>
+      <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+        {t("todaysSurveys")} ({surveys.length})
+      </h2>
+      <Table
+        rowKey={"inx"}
+        columns={surveyColumns}
+        dataSource={surveys.some((d) => d === undefined) ? [] : surveys}
+        scroll={{ x: 580, y: 1500 }}
+        sticky
+        pagination={true}
+        offsetScroll={3}
+      />
     </div>
   );
 };
