@@ -8,10 +8,14 @@
 // PROD VERSION
 //
 // THERE ARE TWO DIFFERENT AGGREGATE-TIMES.JS FILES.  ONE FOR DEV AND ONE
-// FOR PROD.  THE ONLY DIFFERENCE IS THIS LINE
+// FOR PROD.  THE ONLY DIFFERENCE ARE THESE TWO LINES
+//
 // const db = getFirestore(admin); // specify the db name
-// THERE IS NO DB NAMED IN THE PROD VERSION.
-////
+// ****  THERE IS NO DB NAMED IN THE PROD VERSION.
+//
+//  functions.cloudEvent("aggregateTimes", async () => {
+// **** THE ENTRY POINT FOR THE PROD VERSION IS DIFFERENT FROM THE DEV VERSION
+
 // This version should be triggered by a cloud trigger configured as follows:
 // Firestore Trigger
 // Event Type: google.cloud.firestore.document.v1.updated
@@ -222,7 +226,7 @@ async function processAggregation(startTime, endTime, prefix = "") {
   }
 }
 
-functions.cloudEvent("aggregateTimes-dev", async () => {
+functions.cloudEvent("aggregateTimes", async () => {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const todayMidnight = Timestamp.fromDate(now);

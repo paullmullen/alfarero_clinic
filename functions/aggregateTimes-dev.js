@@ -5,13 +5,17 @@
 
 //***************************************************************** */
 //
-// DEV VERSION
+// PROD VERSION
 //
 // THERE ARE TWO DIFFERENT AGGREGATE-TIMES.JS FILES.  ONE FOR DEV AND ONE
-// FOR PROD.  THE ONLY DIFFERENCE IS THIS LINE
-// const db = getFirestore(admin.app(), "alfarero-dev"); // specify the db name
-// THERE IS NO DB NAMED IN THE PROD VERSION
+// FOR PROD.  THE ONLY DIFFERENCE ARE THESE TWO LINES
 //
+// const db = getFirestore(admin.app(), "alfarero-dev");
+// ****  THERE IS NO DB NAMED IN THE PROD VERSION.
+//
+//  functions.cloudEvent("aggregateTimes-dev", async () => {
+// **** THE ENTRY POINT FOR THE PROD VERSION IS DIFFERENT FROM THE DEV VERSION
+
 // This version should be triggered by a cloud trigger configured as follows:
 // Firestore Trigger
 // Event Type: google.cloud.firestore.document.v1.updated

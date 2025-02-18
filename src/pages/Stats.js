@@ -229,16 +229,6 @@ const Stats = () => {
     setSatScore(satScore);
   };
 
-  const getWaitingData = async () => {
-    const data = await fetchWaitingTimeData(); //waiting time data is always just for today
-    const minuteData = data.map((entry) => ({
-      ...entry,
-      avg_waiting_time: entry.avg_waiting_time / 1000,
-      avg_procedure_time: entry.avg_procedure_time / 1000,
-    }));
-    setWaitingData(minuteData);
-  };
-
   const getAgoData = async () => {
     const data = await fetchDaysAgoData(daysCount);
     setDaysAgo(data);
@@ -378,11 +368,51 @@ const Stats = () => {
       await patientsData();
       await stationsData();
       await surveyData();
-      await getWaitingData();
       await getAgoData(60);
     };
     doStuffInOrder();
   }, [columnChanger]);
+
+  // update the demographics data when the stats data changes.
+
+  useEffect(() => {
+    const sums = patients.reduce(
+      (acc, patient) => {
+        acc.adult_masculine +=
+          patient.gender === "masculine" && patient.age_group === "adult"
+            ? 1
+            : 0;
+        acc.adult_feminine +=
+          patient.gender === "feminine" && patient.age_group === "adult"
+            ? 1
+            : 0;
+        acc.child_masculine +=
+          patient.gender === "masculine" && patient.age_group === "child"
+            ? 1
+            : 0;
+        acc.child_feminine +=
+          patient.gender === "feminine" && patient.age_group === "child"
+            ? 1
+            : 0;
+        return acc;
+      },
+      {
+        adult_masculine: 0,
+        adult_feminine: 0,
+        child_masculine: 0,
+        child_feminine: 0,
+      }
+    );
+
+    const formattedData = [
+      { group: "ADULT_MASCULINE", count: sums.adult_masculine },
+      { group: "ADULT_FEMININE", count: sums.adult_feminine },
+      { group: "CHILD_MASCULINE", count: sums.child_masculine },
+      { group: "CHILD_FEMININE", count: sums.child_feminine },
+    ];
+
+    setAgeGender(formattedData);
+  }, [statsData]);
 
   const barColors = getBarColors();
 
@@ -584,6 +614,8 @@ const Stats = () => {
       <div className="stats-container">
         <div className="charts-container">
           <div style={{ display: "flex", width: "100%", height: "100%" }}>
+            {/* station count graph */}
+
             <ResponsiveContainer width="50%" height="100%" minHeight="300px">
               <BarChart data={statsData} label="station">
                 <CartesianGrid strokeDasharray="3 3" />
@@ -599,6 +631,9 @@ const Stats = () => {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+
+            {/* sat score graph */}
+
             <ResponsiveContainer width="50%" height="100%" minHeight="300px">
               {satScore.length > 0 ? (
                 <BarChart data={satScore}>
@@ -624,6 +659,8 @@ const Stats = () => {
           </div>
         </div>
 
+        {/* arrival time graph */}
+
         <div className="charts-container">
           <ResponsiveContainer width="50%" height="100%" minHeight="300px">
             <BarChart data={arrivalTimeData}>
@@ -639,44 +676,77 @@ const Stats = () => {
             </BarChart>
           </ResponsiveContainer>
         </div>
+
+        {/* average waiting time graph */}
         <div className="charts-container">
           <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-            <BarChart data={waitingData}>
+            <BarChart
+              data={statsData.map((d) => ({
+                ...d,
+                range_avg_waiting_time: d.range_avg_waiting_time / 60000,
+              }))}
+            >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="station_type" />
-              <YAxis>
+              <YAxis allowDecimals={false}>
                 <Label value={t("MINUTES")} angle="-90" />
               </YAxis>
               <Tooltip />
               <Legend content={() => renderLegendStations(4)} />
-              <Bar dataKey="avg_waiting_time" fill="#22CC55" />
+              <Bar dataKey="range_avg_waiting_time" fill="#22CC55" />
             </BarChart>
           </ResponsiveContainer>
+
+          {/* average procedure time graph */}
+
           <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-            <BarChart data={waitingData}>
+            <BarChart
+              data={statsData.map((d) => ({
+                ...d,
+                range_avg_procedure_time: d.range_avg_procedure_time / 60000,
+              }))}
+            >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="station_type" />
-              <YAxis>
+              <YAxis allowDecimals={false}>
                 <Label value={t("MINUTES")} angle="-90" />
               </YAxis>
               <Tooltip />
               <Legend content={() => renderLegendStations(7)} />
-              <Bar dataKey="avg_procedure_time" fill="#2255CC" />
+              <Bar dataKey="range_avg_procedure_time" fill="#2255CC" />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
+        {/* demographics graph */}
+
         <div className="charts-container">
           <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-            <BarChart data={ageGender}>
+            <BarChart
+              data={ageGender.map((d) => ({
+                ...d,
+                translatedGroup: t(d.group),
+              }))} // Translate group names
+            >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis dataKey="value" />
+              <XAxis dataKey="translatedGroup" />
+              <YAxis allowDecimals={false} />
               <Tooltip />
               <Legend content={() => renderLegendStations(5)} />
-              <Bar dataKey="value" fill="fill" />
+              <Bar dataKey="count">
+                {ageGender.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={
+                      entry.group.includes("FEMININE") ? "#FF69B4" : "#1E90FF"
+                    }
+                  />
+                ))}
+              </Bar>{" "}
             </BarChart>
           </ResponsiveContainer>
+
+          {/* total patients trend */}
 
           <ResponsiveContainer width="50%" height="100%" minHeight="300px">
             <BarChart data={daysAgo}>
