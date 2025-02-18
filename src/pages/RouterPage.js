@@ -97,6 +97,15 @@ export const RouterPage = () => {
     }, 1000);
   };
 
+  /**********************************************************************/
+  // This function runs whenever a user has the app open.  It causes a
+  // change to the run_aggregation collection in the database.  There is a
+  // cloud function that is triggered to run whenever that collection is
+  // modified.  That function aggregates statistics for reporting.
+  // When the last user closes the app, the function will not run again
+  // and the cloud function will stop being triggered, saving cloud costs.
+  /**********************************************************************/
+
   const checkAndUpdateTimestamp = async () => {
     const timestampRef = doc(firestore, "run_aggregation", "timestamp");
 
