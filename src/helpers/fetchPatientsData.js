@@ -1,4 +1,19 @@
+import { getDoc, doc } from "firebase/firestore";
+import { firestore } from "../helpers/firebaseConfig";
+
 const fetchPatientsData = async (dateRange, database, include_completed) => {
+  if (!dateRange || dateRange.length !== 2) {
+    const docRef = doc(firestore, "run_aggregation", "timestamp");
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      dateRange = [data.range_start, data.range_end];
+    } else {
+      console.log("No date range in stats collection.!");
+    }
+  }
+
   try {
     const response = await fetch(
       "https://us-central1-alfarero-478ad.cloudfunctions.net/fetchPatientsData",
