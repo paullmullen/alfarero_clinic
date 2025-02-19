@@ -40,6 +40,7 @@ import {
   getDocs,
   updateDoc,
   doc,
+  getDoc,
 } from "firebase/firestore";
 import { fetchSurveyData } from "../helpers/fetchSurveyData";
 import { fetchPatientsData } from "../helpers/fetchPatientsData";
@@ -75,10 +76,7 @@ const Stats = () => {
   const [columnChanger, setColumnChanger] = useState(false); //toggling column changer triggers useEffect.  Can update columnChanger when the reenter button is clicked.
 
   const { todayTimestamp, tomorrowTimestamp } = getTodayAndTomorrowTimestamps();
-  const [dateRange, setDateRange] = useState([
-    todayTimestamp,
-    tomorrowTimestamp,
-  ]);
+  const [dateRange, setDateRange] = useState([]);
   const [pickerRange, setPickerRange] = useState([
     todayTimestamp.toDate(),
     tomorrowTimestamp.toDate(),
@@ -200,7 +198,6 @@ const Stats = () => {
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(23, 23, 59, 99);
     // Log to see the values after conversion
-    console.log(startDate, endDate);
 
     // Store Firestore Timestamp
     setDateRange([
@@ -208,16 +205,12 @@ const Stats = () => {
       Timestamp.fromDate(endDate), // End of the selected day as a Firestore Timestamp
     ]);
 
-    console.log("dateRange: ", dateRange);
-    console.log("setting date range in firestore");
-
     const runAggregationRef = doc(firestore, "run_aggregation", "timestamp");
     updateDoc(runAggregationRef, {
       range_start: Timestamp.fromDate(startDate),
       range_end: Timestamp.fromDate(endDate),
     });
 
-    console.log("finished setting date range in firestore");
     setColumnChanger(!columnChanger);
 
     // Set the picker range as dayjs objects (for displaying in the picker)
@@ -365,8 +358,27 @@ const Stats = () => {
     return barColors;
   };
 
+  const fetchTimestamps = async () => {
+    try {
+      const docRef = doc(firestore, "run_aggregation", "timestamp");
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setDateRange([data.range_start, data.range_end]);
+      } else {
+        console.log("No such document!");
+      }
+    } catch (error) {
+      console.error("Error fetching timestamps:", error);
+    }
+  };
+
+  fetchTimestamps();
+
   useEffect(() => {
     const doStuffInOrder = async () => {
+      await fetchTimestamps();
       await patientsData();
       await stationsData();
       await surveyData();
@@ -432,7 +444,7 @@ const Stats = () => {
       title: t("age"),
       dataIndex: "age_group",
       key: "age_group",
-      width: 50,
+      width: 25,
       fixed: "left",
       sorter: (a, b) => a.age_group.localeCompare(b.age_group),
       render: (name) => <div>{t(name)}</div>,
@@ -441,7 +453,7 @@ const Stats = () => {
       title: t("gender"),
       dataIndex: "gender",
       key: "gender",
-      width: 50,
+      width: 30,
       fixed: "left",
       sorter: (a, b) => a.gender.localeCompare(b.gender),
       render: (name) => <div>{t(name)}</div>,
@@ -467,7 +479,7 @@ const Stats = () => {
       title: t("TOTALWAIT"),
       dataIndex: "totalWaitingTime",
       key: "totalWaitingTime",
-      width: 50,
+      width: 25,
       fixed: "left",
       render: (total) => <div>{t(total)} min</div>,
     },
@@ -475,7 +487,7 @@ const Stats = () => {
       title: t("start_time"),
       dataIndex: "start_time",
       key: "start_time",
-      width: 50,
+      width: 30,
       fixed: "left",
       defaultSortOrder: "ascend",
       sorter: (a, b) => a.start_time.localeCompare(b.start_time),
@@ -493,7 +505,7 @@ const Stats = () => {
       dataIndex: "servicesString",
       key: "servicesString",
       // Adjust the width for the services column as needed.
-      width: 250,
+      width: 50,
       fixed: "left",
       wordWrap: true,
       render: (servicesString) => <div>{servicesString}</div>,
@@ -503,7 +515,7 @@ const Stats = () => {
       dataIndex: "pt_no",
       key: "estado",
       width: 10,
-      fixed: "right",
+      fixed: "left",
       render: (ptNo) => {
         const patient = patients.find((item) => item.pt_no === ptNo);
         let isDisabled = patient ? !patient.complete : false;
@@ -575,6 +587,17 @@ const Stats = () => {
     },
   ];
 
+  const formatDate = (timestamp) => {
+    if (!timestamp) return "Loading...";
+
+    const locale = i18n.language; // get the current language from i18n
+
+    return timestamp.toDate().toLocaleDateString(locale, {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
   // Renders the visible screen
 
   return (
@@ -601,6 +624,15 @@ const Stats = () => {
       </Form>
 
       <Divider></Divider>
+      <Row>
+        <Col span={24} type="flex" align="middle">
+          <h1>
+            {t("STATSFOR")} {formatDate(dateRange[0])} {t("TO")}{" "}
+            {formatDate(dateRange[1])}
+          </h1>
+          <Divider />
+        </Col>
+      </Row>
       <div className="stats-container">
         <div className="charts-container">
           <div style={{ display: "flex", width: "100%", height: "100%" }}>

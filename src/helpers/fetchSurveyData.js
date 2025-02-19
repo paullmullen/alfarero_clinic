@@ -4,13 +4,23 @@ import {
   where,
   getDocs,
   Timestamp,
+  doc,
+  getDoc,
 } from "firebase/firestore";
 import { firestore } from "../helpers/firebaseConfig";
 
 const fetchSurveyData = async (dateRange) => {
   try {
     if (!dateRange || dateRange.length !== 2) {
-      throw new Error("Invalid date range provided.");
+      const docRef = doc(firestore, "run_aggregation", "timestamp");
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        dateRange = [data.range_start, data.range_end];
+      } else {
+        console.log("No date range in stats collection.!");
+      }
     }
 
     // Ensure dateRange values are Firestore Timestamps
