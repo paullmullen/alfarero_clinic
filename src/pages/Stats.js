@@ -14,6 +14,7 @@ import {
   ResponsiveContainer,
   Label,
   Line,
+  ComposedChart,
 } from "recharts";
 
 import { useTranslation } from "react-i18next";
@@ -54,6 +55,7 @@ import en_US from "antd/es/date-picker/locale/en_US";
 import enter from "../img/enter.png";
 import CustomTick from "../helpers/CustomTick"; //defines the bar chart properties
 import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
+import { CatchingPokemonSharp } from "@mui/icons-material";
 
 const { RangePicker } = DatePicker;
 const { Text } = Typography;
@@ -91,8 +93,13 @@ const Stats = () => {
       const average =
         windowData.reduce((sum, point) => sum + point.count, 0) /
         windowData.length;
-      rollingAverages.push({ date: data[i].date, average });
+      rollingAverages.push({
+        date: data[i].date,
+        count: data[i].count,
+        average,
+      });
     }
+    console.log(rollingAverages);
     return rollingAverages;
   };
 
@@ -518,7 +525,8 @@ const Stats = () => {
       fixed: "left",
       render: (ptNo) => {
         const patient = patients.find((item) => item.pt_no === ptNo);
-        let isDisabled = patient ? !patient.complete : false;
+        console.log(patient);
+        let isDisabled = !patient.complete;
         return (
           <Button
             type="text"
@@ -770,8 +778,7 @@ const Stats = () => {
 
           {/* total patients trend */}
           <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-            {/* Bar chart for total patients trend */}
-            <BarChart data={daysAgo}>
+            <ComposedChart data={rollingAverages}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis>
@@ -779,9 +786,21 @@ const Stats = () => {
               </YAxis>
               <Tooltip />
               <Legend content={() => renderLegendStations(6)} />
-              <Bar dataKey="count" fill="#2255CC" />
               <ReferenceLine y={70} stroke="red" label={t("GOAL")} />
-            </BarChart>
+
+              {/* Bars */}
+              <Bar dataKey="count" fill="#2255CC" />
+
+              {/* Line - Must be inside ComposedChart */}
+              <Line
+                type="monotone"
+                dataKey="average"
+                stroke="cyan"
+                strokeWidth={4}
+                dot={false}
+                connectNulls={true} // Ensures continuous line
+              />
+            </ComposedChart>
           </ResponsiveContainer>
 
           {/* TODO:  Add the 15-day rolling average line to this chart */}
