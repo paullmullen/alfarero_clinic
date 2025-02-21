@@ -378,7 +378,7 @@ export const Registro = () => {
   };
 
   const onFinishFailed = (errorInfo) => {
-    console.log("Failed:", errorInfo);
+    console.log("Form incomplete:", errorInfo);
   };
 
   // Renders the visible screen
