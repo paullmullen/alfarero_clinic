@@ -99,7 +99,6 @@ const Stats = () => {
         average,
       });
     }
-    console.log(rollingAverages);
     return rollingAverages;
   };
 
@@ -345,7 +344,6 @@ const Stats = () => {
       });
 
       setStatsData(stats);
-      console.log(stats);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -525,7 +523,6 @@ const Stats = () => {
       fixed: "left",
       render: (ptNo) => {
         const patient = patients.find((item) => item.pt_no === ptNo);
-        console.log(patient);
         let isDisabled = !patient.complete;
         return (
           <Button

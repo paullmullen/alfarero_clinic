@@ -13,7 +13,11 @@ app = admin.initializeApp();
 
 exports.fetchPatientsData = onRequest(
   {
-    cors: [/localhost(:\d+)?$/, "http://multimedica.org"],
+    cors: [
+      /localhost(:\d+)?$/,
+      "http://multimedica.org",
+      "https://alfarero-478ad--testing-nc9ftcse.web.app",
+    ],
     methods: ["GET", "POST", "OPTIONS"], // Allowed methods
   },
   async (req, res) => {
@@ -23,7 +27,12 @@ exports.fetchPatientsData = onRequest(
 
     try {
       const { dateRange, database, include_completed } = req.body; // Destructure in a single line
-      console.log(dateRange, database, include_completed);
+      console.log(
+        "Received Request Data:",
+        dateRange,
+        database,
+        include_completed
+      );
 
       const db =
         database === "alfarero-dev"

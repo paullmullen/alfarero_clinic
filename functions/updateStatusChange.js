@@ -3,25 +3,55 @@
 // AS A CLOUD FUNCTION AND NOT AS PART OF THE CLIENT SIDE CODE.
 //***************************************************************** */
 
-const functions = require("firebase-functions");
+const { onRequest } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const { getFirestore } = require("firebase-admin/firestore");
 
-const db = admin.firestore();
+const app = admin.initializeApp(); // Ensure this is properly declared
 
-const cors = require("cors")({ origin: true });
+exports.updateStatusChange = onRequest(
+  {
+    cors: [
+      /localhost(:\d+)?$/,
+      "http://multimedica.org",
+      "https://alfarero-478ad--testing-nc9ftcse.web.app",
+    ],
+    methods: ["GET", "POST", "OPTIONS"], // Allowed methods
+  },
+  async (req, res) => {
+    if (req.method !== "POST") {
+      return res.status(405).send("Method Not Allowed");
+    }
 
-exports.updateStatusChange = functions.https.onRequest((req, res) => {
-  cors(req, res, async () => {
     try {
       const { patientId, carePlanIndex, newStatus, databaseName } = req.body;
 
-      console.log("Received Request Data:", {
+      console.log(
+        "Received Request Data:",
         patientId,
         carePlanIndex,
         newStatus,
-        databaseName,
-      });
+        databaseName
+      );
+
+      if (!patientId || !carePlanIndex || !newStatus || !databaseName) {
+        console.error("Invalid arguments:", {
+          patientId,
+          carePlanIndex,
+          newStatus,
+          databaseName,
+        });
+        return res
+          .status(400)
+          .json({ error: "Invalid arguments. Missing required data." });
+      }
+
+      const db =
+        databaseName === "alfarero-dev"
+          ? getFirestore(app, "alfarero-dev") // Explicitly select the correct database
+          : getFirestore(app);
+
+      console.log("Using Firestore database:", db._databaseId.database);
 
       // Validate required data
       if (!patientId || !carePlanIndex || !newStatus || !databaseName) {
@@ -35,12 +65,6 @@ exports.updateStatusChange = functions.https.onRequest((req, res) => {
           error: "Invalid arguments. Missing required data.",
         });
       }
-
-      // Get Firestore instance based on the database name
-      const db =
-        databaseName === "alfarero-dev"
-          ? getFirestore(admin.app(), "alfarero-dev") // Dev database
-          : getFirestore(admin.app()); // Default production database
 
       console.log(`Using database: ${databaseName}`);
 
@@ -174,5 +198,5 @@ exports.updateStatusChange = functions.https.onRequest((req, res) => {
         .status(500)
         .json({ error: "Internal Server Error", details: error.message });
     }
-  });
-});
+  }
+);
