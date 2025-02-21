@@ -21,6 +21,7 @@ import {
 } from "../helpers/checkDuplicateRecord";
 import { stations } from "../helpers/stations";
 import { useTranslation } from "react-i18next";
+import { updateDoc } from "firebase/firestore";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -56,6 +57,7 @@ export const IngresarHost = () => {
   // Validation functionality on the screen's form
 
   const onFinish = async ({ host, servicio }) => {
+    console.log("Starting onFinish");
     if (host.trim() === "" || !servicio) {
       showAlert("Error", t("allFieldsAlert"), "warning");
       return;
@@ -63,20 +65,24 @@ export const IngresarHost = () => {
 
     try {
       const isDuplicate = await checkDuplicateRecord("hosts", "host", host);
-
+      console.log("isDuplicate", isDuplicate);
       if (!isDuplicate) {
         const hostData = { host, servicio };
         await firestore.collection("hosts").add(hostData);
         showAlert("Success", t("infoSavedSuccessfully"), "success");
       } else {
+        console.log("getting duplicate record ref");
         const hostRef = await getDuplicateRecordRef("hosts", "host", host);
+        console.log("got duplicate record ref", hostRef, typeof hostRef);
 
         if (hostRef) {
-          await hostRef.update({ servicio });
+          console.log("updating host record");
+          await updateDoc(hostRef, { servicio });
           showAlert("Success", t("dataUpdatedAlert"), "success");
         }
+        console.log("end of isDuplicate");
       }
-
+      console.log("setItem");
       localStorage.setItem("host", host);
       localStorage.setItem("servicio", servicio);
       if (servicio !== "pfm") {
@@ -87,6 +93,7 @@ export const IngresarHost = () => {
       }
     } catch (error) {
       showAlert("Error", t("errorWhileSaving"), "error");
+      console.error("Error while saving host", error);
     }
   };
 
