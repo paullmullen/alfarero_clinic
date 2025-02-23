@@ -799,8 +799,6 @@ const Stats = () => {
               />
             </ComposedChart>
           </ResponsiveContainer>
-
-          {/* TODO:  Add the 15-day rolling average line to this chart */}
         </div>
       </div>
       <Row>
@@ -815,7 +813,7 @@ const Stats = () => {
             onBlur={handleDaysCountChange}
             onPressEnter={handleDaysCountChange}
             min="0"
-            style={{ width: "50px" }}
+            style={{ width: "60px" }}
           />
         </Col>
       </Row>
