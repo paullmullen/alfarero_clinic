@@ -1,4 +1,4 @@
-const fetchDaysAgoData = async (daysCount) => {
+const fetchDaysAgoData = async (database, daysCount) => {
   const numericDaysCount =
     typeof daysCount === "number" ? daysCount : Number(daysCount);
   try {
@@ -9,7 +9,10 @@ const fetchDaysAgoData = async (daysCount) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ daysCount: numericDaysCount }),
+        body: JSON.stringify({
+          daysCount: numericDaysCount,
+          database: database,
+        }),
       }
     );
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);

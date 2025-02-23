@@ -231,7 +231,10 @@ const Stats = () => {
   };
 
   const getAgoData = async () => {
-    const data = await fetchDaysAgoData(daysCount);
+    const data = await fetchDaysAgoData(
+      process.env.REACT_APP_FIREBASE_DB,
+      daysCount
+    );
     setDaysAgo(data);
     if (data.length > 15) {
       setRollingAverages(calculateRollingAverage(data));
