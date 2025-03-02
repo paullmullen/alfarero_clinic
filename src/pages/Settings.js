@@ -68,7 +68,7 @@ export const Settings = () => {
 
     fetchStations();
     fetchLocations();
-  }, []);
+  }, [stations, locations]);
 
   const handleLocationUpdate = async (locationId, key, value) => {
     try {
@@ -82,6 +82,16 @@ export const Settings = () => {
       console.log(`Updated ${key} for location:`, locationId);
     } catch (error) {
       console.error(`Error updating ${key} for location:`, error);
+    }
+  };
+
+  const handleMaxTimeUpdate = async (stationId, value) => {
+    try {
+      const maxTimeDocReference = doc(firestore, "stats", stationId);
+      await updateDoc(maxTimeDocReference, { max_waiting_time: value });
+      console.log(`Updated waitingtime for:`, stationId);
+    } catch (error) {
+      console.error(`Error updating waiting_time:`, error);
     }
   };
 
@@ -117,25 +127,20 @@ export const Settings = () => {
       </Divider>
 
       {stations.map((station) => (
-        <Row
-          key={station.id}
-          align="middle"
-          gutter={16}
-          style={{ marginBottom: "16px" }}
-        >
-          <Col span={12}>
+        <Row key={station.id} align="middle" style={{ marginBottom: "16px" }}>
+          <Col span={6}>&nbsp;</Col>
+          <Col span={3}>
             <Text style={{ fontSize: "16px" }}>{station.name}</Text>
           </Col>
-          <Col span={12}>
+          <Col span={4}>
             <InputNumber
               style={{ width: "50%", textAlign: "right" }}
               value={station.max_waiting_time}
-              onChange={(value) =>
-                handleLocationUpdate(station.id, "max_waiting_time", value)
-              }
+              onChange={(value) => handleMaxTimeUpdate(station.id, value)}
               min={0}
             />
           </Col>
+          <Col span={8}>{(station.max_waiting_time / 60).toFixed(1)} min</Col>
         </Row>
       ))}
 

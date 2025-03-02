@@ -506,7 +506,14 @@ export const Anfitrion = () => {
 
           const isOverLimit =
             avg_time && avg_time.avg_waiting_time / 1000 > max_waiting_time; // max waiting time is in seconds.  stored data is in milliseconds
-
+          console.log(
+            "Station: ",
+            plan.station,
+            "avg_waiting_time:",
+            avg_time.avg_waiting_time / 1000,
+            "Max Time: ",
+            max_waiting_time
+          );
           uniqueStations[plan.station] = {
             dataIndex: plan.station,
             key: plan.station,
@@ -516,7 +523,7 @@ export const Anfitrion = () => {
                 <div
                   className="wait_times"
                   style={{
-                    color: isOverLimit ? "red" : "inherit",
+                    color: isOverLimit ? "red" : "black",
                     fontWeight: isOverLimit ? "bold" : "normal",
                   }}
                 >
@@ -590,7 +597,7 @@ export const Anfitrion = () => {
           const displayValue = isNaN(wtg_time) ? 0 : wtg_time;
           const style = {
             fontSize: "18px",
-            color: displayValue > 15 ? "red" : "inherit",
+            color: displayValue > 15 ? "red" : "black",
           };
           return (
             <span style={style}>
@@ -706,7 +713,7 @@ export const Anfitrion = () => {
     const stations = statsData.map((station) => station.station_type); // Assuming statsData contains station names
 
     // Check if all statuses for the stations are either "pending" or "complete"
-    let allPendingOrComplete = true; // Assume true initially
+    let allPendingOrComplete = false;
 
     stations.forEach((station) => {
       const status = record[station]; // Directly access the status
