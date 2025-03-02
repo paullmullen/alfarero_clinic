@@ -15,7 +15,7 @@ exports.fetchPatientsData = onRequest(
   {
     cors: [
       /localhost(:\d+)?$/,
-      "http://multimedica.org",
+      "https://multimedica.org",
       "https://alfarero-478ad--testing-nc9ftcse.web.app",
     ],
     methods: ["GET", "POST", "OPTIONS"], // Allowed methods

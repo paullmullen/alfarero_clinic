@@ -13,7 +13,7 @@ exports.updateStatusChange = onRequest(
   {
     cors: [
       /localhost(:\d+)?$/,
-      "http://multimedica.org",
+      "https://multimedica.org",
       "https://alfarero-478ad--testing-nc9ftcse.web.app",
     ],
     methods: ["GET", "POST", "OPTIONS"], // Allowed methods
@@ -34,7 +34,7 @@ exports.updateStatusChange = onRequest(
         databaseName
       );
 
-      if (!patientId || !carePlanIndex || !newStatus || !databaseName) {
+      if (!patientId || !carePlanIndex || !newStatus) {
         console.error("Invalid arguments:", {
           patientId,
           carePlanIndex,
@@ -54,12 +54,11 @@ exports.updateStatusChange = onRequest(
       console.log("Using Firestore database:", db._databaseId.database);
 
       // Validate required data
-      if (!patientId || !carePlanIndex || !newStatus || !databaseName) {
+      if (!patientId || !carePlanIndex || !newStatus) {
         console.error("Invalid arguments:", {
           patientId,
           carePlanIndex,
           newStatus,
-          databaseName,
         });
         return res.status(400).json({
           error: "Invalid arguments. Missing required data.",
