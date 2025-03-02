@@ -244,7 +244,7 @@ export const RouterPage = () => {
                   <Image
                     src={full_logo}
                     preview={false}
-                    height={100}
+                    height={42}
                     width={185}
                   />
                 </a>

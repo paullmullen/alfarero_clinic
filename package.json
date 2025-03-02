@@ -6,6 +6,7 @@
     "@ant-design/icons": "^4.2.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
+    "@firebase/auth": "^1.9.0",
     "@mui/icons-material": "^6.4.3",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
