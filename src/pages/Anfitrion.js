@@ -506,14 +506,7 @@ export const Anfitrion = () => {
 
           const isOverLimit =
             avg_time && avg_time.avg_waiting_time / 1000 > max_waiting_time; // max waiting time is in seconds.  stored data is in milliseconds
-          console.log(
-            "Station: ",
-            plan.station,
-            "avg_waiting_time:",
-            avg_time.avg_waiting_time / 1000,
-            "Max Time: ",
-            max_waiting_time
-          );
+
           uniqueStations[plan.station] = {
             dataIndex: plan.station,
             key: plan.station,
