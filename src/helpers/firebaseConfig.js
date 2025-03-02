@@ -1,5 +1,6 @@
 import { getFirestore } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
 
 // Firebase configuration for your single project (same for both databases)
 const firebaseConfig = {
@@ -14,6 +15,7 @@ const firebaseConfig = {
 
 // Initialize Firebase app
 const firebaseApp = initializeApp(firebaseConfig);
+export const auth = getAuth(firebaseApp);
 
 const dbName = process.env.REACT_APP_FIREBASE_DB || "default"; // Default to "default" if not set
 console.log("Database name: ", dbName);
