@@ -706,7 +706,7 @@ const Stats = () => {
             </BarChart>
           </ResponsiveContainer>
         </div>
-
+        <div>{t("PRE_MARCH_MESSAGE")}</div>
         {/* average waiting time graph */}
         <div className="charts-container">
           <ResponsiveContainer width="50%" height="100%" minHeight="300px">

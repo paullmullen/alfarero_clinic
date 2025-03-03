@@ -91,7 +91,9 @@ async function processAggregation(startTime, endTime, prefix = "") {
 
           // Waiting Time Calculation
           if (waiting_start && waiting_end) {
-            const waitingTime = waiting_end.toDate() - waiting_start.toDate();
+            const waitingTime = Math.abs(
+              waiting_end.toDate() - waiting_start.toDate()
+            );
             if (!stationWaitingTimes[station])
               stationWaitingTimes[station] = [];
             stationWaitingTimes[station].push(waitingTime);
@@ -99,8 +101,9 @@ async function processAggregation(startTime, endTime, prefix = "") {
 
           // Procedure Time Calculation
           if (in_process_start && in_process_end) {
-            const procedureTime =
-              in_process_end.toDate() - in_process_start.toDate();
+            const procedureTime = Math.abs(
+              in_process_end.toDate() - in_process_start.toDate()
+            );
             if (!stationProcedureTimes[station])
               stationProcedureTimes[station] = [];
             stationProcedureTimes[station].push(procedureTime);
