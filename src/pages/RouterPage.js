@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, Suspense, lazy } from "react";
 import {
   Layout,
   Menu,
@@ -39,20 +39,37 @@ import {
 import styled from "styled-components";
 
 import { AlertProvider } from "../hooks/alert";
-import { Registro } from "./Registro";
-import { Turno } from "./Turno";
-import { Escritorio } from "./Escritorio";
-import { Member } from "./Member";
 import { UiContext } from "../context/UiContext";
-import { IngresarHost } from "./IngresarHost";
-import { Survey } from "./Survey";
-import { Settings } from "./Settings";
-import Stats from "./Stats";
-import { cleanPaulTests } from "../helpers/updateStationStatus";
-// import { Location } from "./Location";
-import { Anfitrion } from "./Anfitrion";
+import { LoginPage } from "./LoginPage";
 import { useTranslation } from "react-i18next";
 import full_logo from "../img/full_logo.png";
+import { cleanPaulTests } from "../helpers/updateStationStatus";
+
+const Registro = lazy(() =>
+  import("./Registro").then((module) => ({ default: module.Registro }))
+);
+const Turno = lazy(() =>
+  import("./Turno").then((module) => ({ default: module.Turno }))
+);
+const Escritorio = lazy(() =>
+  import("./Escritorio").then((module) => ({ default: module.Escritorio }))
+);
+const Member = lazy(() =>
+  import("./Member").then((module) => ({ default: module.Member }))
+);
+const IngresarHost = lazy(() =>
+  import("./IngresarHost").then((module) => ({ default: module.IngresarHost }))
+);
+const Survey = lazy(() =>
+  import("./Survey").then((module) => ({ default: module.Survey }))
+);
+const Settings = lazy(() =>
+  import("./Settings").then((module) => ({ default: module.Settings }))
+);
+const Stats = lazy(() => import("./Stats"));
+const Anfitrion = lazy(() =>
+  import("./Anfitrion").then((module) => ({ default: module.Anfitrion }))
+);
 
 const { Sider, Content, Header } = Layout;
 const { Title } = Typography;
@@ -211,6 +228,11 @@ export const RouterPage = () => {
       key: "10",
       label: t("version"),
     },
+    {
+      key: "11",
+      icon: <LoginOutlined />,
+      label: <Link to="/loginpage">{t("NewLogin")}</Link>,
+    },
   ];
 
   return (
@@ -272,19 +294,22 @@ export const RouterPage = () => {
           </Header>
           <Content style={{ margin: "24px 16px", padding: 24, minHeight: 280 }}>
             <AlertProvider>
-              <Switch>
-                <Route path="/ingresar-host" component={IngresarHost} />
-                <Route path="/registro" component={Registro} />
-                <Route path="/turnos" component={Turno} />
-                <Route path="/escritorio" component={Escritorio} />
-                <Route path="/anfitrion" component={Anfitrion} />
-                <Route path="/estadisticas" component={Stats} />
-                <Route path="/survey" component={Survey} />
-                <Route path="/member" component={Member} />
-                {/* <Route path="/location" component={Location} /> */}
-                <Route path="/settings" component={Settings} />
-                <Redirect to="/ingresar-host" />
-              </Switch>
+              <Suspense fallback={<div>Loading...</div>}>
+                <Switch>
+                  <Route path="/ingresar-host" component={IngresarHost} />
+                  <Route path="/registro" component={Registro} />
+                  <Route path="/turnos" component={Turno} />
+                  <Route path="/escritorio" component={Escritorio} />
+                  <Route path="/anfitrion" component={Anfitrion} />
+                  <Route path="/estadisticas" component={Stats} />
+                  <Route path="/survey" component={Survey} />
+                  <Route path="/member" component={Member} />
+                  {/* <Route path="/location" component={Location} /> */}
+                  <Route path="/settings" component={Settings} />
+                  <Route path="/loginpage" component={LoginPage} />
+                  <Redirect to="/ingresar-host" />
+                </Switch>
+              </Suspense>
             </AlertProvider>
           </Content>
         </Layout>
