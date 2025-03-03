@@ -703,20 +703,21 @@ export const Anfitrion = () => {
   const getRowClassName = (record, index) => {
     // Extract stations from statsData
     const stations = statsData.map((station) => station.station_type); // Assuming statsData contains station names
-
     // Check if all statuses for the stations are either "pending" or "complete"
     let allPendingOrComplete = true;
+    let firstPassComplete = false;
 
     stations.forEach((station) => {
-      const status = record[station]; // Directly access the status
-      // Check if the status is neither "pending" nor "complete"
+      firstPassComplete = true;
+      const status = record[station];
+      // Check if the status is neither "pending" nor "complete" then the patient is not done yet.
       if (status !== "pending" && status !== "complete") {
         allPendingOrComplete = false; // If we find a status that's not "pending" or "complete", set it to false
       }
     });
 
     // Set the appropriate row class
-    return allPendingOrComplete
+    return allPendingOrComplete && firstPassComplete
       ? "highlight-row" // Highlight the row if all statuses are "pending" or "complete"
       : index % 2 === 0
       ? "even-row"

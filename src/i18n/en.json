@@ -16,6 +16,7 @@
   "MINUTES": "Minutes",
   "NO_SERVICE": "Left without service.",
   "NUM_PTS": "Number of Patients",
+  "PRE_MARCH_MESSAGE": "Procedure and wait time data prior to March 1 2025 are not reliable.",
   "PRINTMEMBERSHIPCARD": "Print Membership Card",
   "PROCEDURE_TIME": "Average Procedure Time",
   "READMIT": " ",
