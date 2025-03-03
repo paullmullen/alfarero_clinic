@@ -610,6 +610,7 @@ const Stats = () => {
 
   return (
     <div>
+      {/* Begin Segment 1 */}
       <Form form={form} layout="vertical">
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <Form.Item
@@ -820,7 +821,9 @@ const Stats = () => {
           />
         </Col>
       </Row>
+      {/* End of segment 1 */}
       <Divider />
+      {/* Begin Segment 2 */}
       <Row>
         <Col span={24} type="flex" align="middle">
           <br></br>
@@ -836,7 +839,9 @@ const Stats = () => {
           <br></br>
         </Col>
       </Row>
+      {/* End Segment 2 */}
       <Divider />
+      {/* Begin Segment 3 */}
       <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
         {t("todaysComplete")} ({patients.length})
       </h2>
@@ -864,6 +869,7 @@ const Stats = () => {
         pagination={true}
         offsetScroll={3}
       />
+      {/* End Segment 3 */}
     </div>
   );
 };
