@@ -19,7 +19,7 @@ import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
 import { Redirect, useHistory } from "react-router-dom";
 import { firestore } from "./../helpers/firebaseConfig";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import pay from "../img/pay.svg";
 import waiting from "../img/waiting.svg";
@@ -29,7 +29,7 @@ import fin from "../img/fin.png";
 import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
 import {
   handleStatusChange,
-  handleDelete,
+  // handleDelete,
 } from "./../helpers/updateStationStatus";
 
 const { Title, Text } = Typography;
@@ -82,7 +82,7 @@ export const Escritorio = () => {
         setStatsData,
         isMounted,
       });
-      console.log(data, statsData, dateRange);
+      console.log(statsData);
       return () => {
         if (unsubscribe) {
           unsubscribe();
@@ -150,9 +150,17 @@ export const Escritorio = () => {
     },
     {
       title: t("age"),
-      dataIndex: "age",
-      key: "edad",
+      dataIndex: "age_group",
+      key: "age_group",
+      render: (text) => t(text), // Translate the stored value before displaying it
     },
+    {
+      title: t("gender"),
+      dataIndex: "gender",
+      key: "gender",
+      render: (text) => t(text), // Translate the stored value before displaying it
+    },
+
     {
       title: t("reasonForVisit"),
       dataIndex: "reason_for_visit",
@@ -176,7 +184,15 @@ export const Escritorio = () => {
         <div className="center-cell">
           <Select
             value={record.status}
-            onChange={(value) => handleStatusChange(record, value)}
+            onChange={(value) => {
+              console.log({ value, record });
+              handleStatusChange(
+                value,
+                record.pt_no,
+                usuario.servicio,
+                t("complete")
+              );
+            }}
             size="large"
             style={{ width: "100%" }} // Ajustar el ancho del Select al 100%
           >
@@ -188,27 +204,27 @@ export const Escritorio = () => {
         </div>
       ),
     },
-    {
-      title: "",
-      dataIndex: "complete",
-      key: "estado",
-      render: (complete, record) => (
-        <Link
-          to="#"
-          onClick={() => handleCompleteChange(record)}
-          style={{ color: complete ? "green" : "red", cursor: "pointer" }}
-        >
-          {complete ? "Completo" : "Eliminar"}
-        </Link>
-      ),
-    },
+    // {
+    //   title: "",
+    //   dataIndex: "complete",
+    //   key: "estado",
+    //   render: (complete, record) => (
+    //     <Link
+    //       to="#"
+    //       onClick={() => handleCompleteChange(record)}
+    //       style={{ color: complete ? "green" : "red", cursor: "pointer" }}
+    //     >
+    //       {complete ? "Completo" : "Eliminar"}
+    //     </Link>
+    //   ),
+    // },
   ];
 
   // Functionality of changing and update status
 
-  const handleCompleteChange = (record) => {
-    handleDelete(record, history);
-  };
+  // const handleCompleteChange = (record) => {
+  //   handleDelete(record, history);
+  // };
 
   // Helper to add different color on the table depending if it's even or row
 
