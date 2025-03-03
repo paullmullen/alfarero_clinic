@@ -199,7 +199,6 @@ export const Escritorio = () => {
             <Option value="in_process">{t("beingAttended")}</Option>
             <Option value="waiting">{t("waiting")}</Option>
             <Option value="complete">{t("visitCompleted")}</Option>
-            <Option value="pay">{t("visitPayed")}</Option>
           </Select>
         </div>
       ),
