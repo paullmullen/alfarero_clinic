@@ -8,14 +8,10 @@
 // PROD VERSION
 //
 // THERE ARE TWO DIFFERENT AGGREGATE-TIMES.JS FILES.  ONE FOR DEV AND ONE
-// FOR PROD.  THE ONLY DIFFERENCE ARE THESE TWO LINES
-//
+// FOR PROD.  THE ONLY DIFFERENCE IS THIS LINE
 // const db = getFirestore(admin); // specify the db name
-// ****  THERE IS NO DB NAMED IN THE PROD VERSION.
-//
-//  functions.cloudEvent("aggregateTimes", async () => {
-// **** THE ENTRY POINT FOR THE PROD VERSION IS DIFFERENT FROM THE DEV VERSION
-
+// THERE IS NO DB NAMED IN THE PROD VERSION.
+////
 // This version should be triggered by a cloud trigger configured as follows:
 // Firestore Trigger
 // Event Type: google.cloud.firestore.document.v1.updated
@@ -95,7 +91,9 @@ async function processAggregation(startTime, endTime, prefix = "") {
 
           // Waiting Time Calculation
           if (waiting_start && waiting_end) {
-            const waitingTime = waiting_end.toDate() - waiting_start.toDate();
+            const waitingTime = Math.abs(
+              waiting_end.toDate() - waiting_start.toDate()
+            );
             if (!stationWaitingTimes[station])
               stationWaitingTimes[station] = [];
             stationWaitingTimes[station].push(waitingTime);
@@ -103,8 +101,9 @@ async function processAggregation(startTime, endTime, prefix = "") {
 
           // Procedure Time Calculation
           if (in_process_start && in_process_end) {
-            const procedureTime =
-              in_process_end.toDate() - in_process_start.toDate();
+            const procedureTime = Math.abs(
+              in_process_end.toDate() - in_process_start.toDate()
+            );
             if (!stationProcedureTimes[station])
               stationProcedureTimes[station] = [];
             stationProcedureTimes[station].push(procedureTime);

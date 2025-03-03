@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Row,
   Col,
@@ -11,7 +11,9 @@ import {
   Switch,
   Select,
 } from "antd";
-import { collection, query, where, orderBy, getDocs } from "firebase/firestore"; // Import necessary methods
+import { collection, onSnapshot } from "firebase/firestore"; // Import the necessary methods
+import { fetchData } from "../helpers/fetchData";
+
 import { CloseCircleOutlined } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
@@ -24,14 +26,23 @@ import waiting from "../img/waiting.svg";
 import in_process from "../img/in_process.svg";
 import complete from "../img/complete.svg";
 import fin from "../img/fin.png";
+import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
+import {
+  handleStatusChange,
+  handleDelete,
+} from "./../helpers/updateStationStatus";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
+const { todayTimestamp, tomorrowTimestamp } = getTodayAndTomorrowTimestamps();
 
 export const Escritorio = () => {
-  const [documents, setDocuments] = useState([]);
   const [usuario] = useState(getUsuarioStorage());
   const history = useHistory();
+  const [patientsChanged, setPatientsChanged] = useState(true); // for a firestore listener that triggers a useEffect to reload the anfi table.
+  const prevPatientsChangedRef = useRef(false); // Ref to store the previous value of patientsChanged.  the initial values of patientsChanged=true and ref=false will trigger the first render.
+  const [data, setData] = useState([]);
+  const [statsData, setStatsData] = useState([]);
 
   const [visible, setVisible] = useState(true);
   const [t] = useTranslation("global");
@@ -43,39 +54,43 @@ export const Escritorio = () => {
   // Connects info to render on the app with firebase in real time (comunication react-firebase)
 
   useEffect(() => {
-    let isMounted = true;
-    const fetchData = async () => {
-      try {
-        // Create a reference for the 'patients' collection
-        const collectionRef = collection(firestore, "patients");
-
-        // Build the query with the new Firebase v9+ syntax
-        const q = query(
-          collectionRef,
-          where("complete", "!=", true),
-          where("plan_of_care", "array-contains", usuario.servicio),
-          orderBy("complete"),
-          orderBy("start_time", "asc")
-        );
-
-        const snapshot = await getDocs(q); // Fetch the documents using 'getDocs'
-
-        const initialData = snapshot.docs.map((doc) => doc.data());
-
-        if (isMounted) {
-          setDocuments(initialData);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
+    const unsubscribePatients = onSnapshot(
+      collection(firestore, "patients"),
+      () => {
+        // Whenever there's a change in the 'patients' collection, update the state
+        setPatientsChanged(true);
       }
-    };
+    );
 
-    fetchData();
-
+    // Cleanup listener on unmount
     return () => {
-      isMounted = false; // Set the mounted flag to false to prevent state updates after unmounting
+      unsubscribePatients();
     };
-  }, [usuario.servicio, t]); // Dependency array
+  }, []); // Only set up the listener once, on mount
+
+  useEffect(() => {
+    if (prevPatientsChangedRef.current === false && patientsChanged === true) {
+      let isMounted = true;
+      let unsubscribe;
+
+      const dateRange = [todayTimestamp, tomorrowTimestamp];
+
+      fetchData({
+        dateRange,
+        setData,
+        setPatientsChanged,
+        setStatsData,
+        isMounted,
+      });
+      console.log(data, statsData, dateRange);
+      return () => {
+        if (unsubscribe) {
+          unsubscribe();
+        }
+        isMounted = false;
+      };
+    }
+  }, [patientsChanged]);
 
   const salir = () => {
     localStorage.clear();
@@ -192,115 +207,7 @@ export const Escritorio = () => {
   // Functionality of changing and update status
 
   const handleCompleteChange = (record) => {
-    const updatedComplete = !record.complete;
-
-    firestore.collection("patients").doc(record.pt_no).update({
-      complete: updatedComplete,
-    });
-  };
-  //
-  const handleStatusChange = async (record, value) => {
-    const currentStation = usuario.servicio;
-    const updatedPlanOfCare = record.plan_of_care.map((item) => {
-      if (item.station === currentStation) {
-        const updatedItem = {
-          ...item,
-          status: value,
-        };
-
-        if (value === "waiting" && item.status !== "waiting") {
-          updatedItem.waiting_start = Math.floor(Date.now() / 1000);
-        } else if (value === "in_process" && item.status !== "in_process") {
-          updatedItem.procedure_start = Math.floor(Date.now() / 1000);
-        } else if (value !== "waiting" && item.status === "waiting") {
-          updatedItem.wait_end = Math.floor(Date.now() / 1000);
-          updatedItem.waiting_time = Math.abs(
-            updatedItem.wait_end - updatedItem.wait_start
-          );
-        } else if (value !== "in_process" && item.status === "in_process") {
-          updatedItem.procedure_end = Math.floor(Date.now() / 1000);
-          updatedItem.procedure_time = Math.abs(
-            updatedItem.procedure_end - updatedItem.procedure_start
-          );
-        }
-
-        return updatedItem;
-      }
-
-      return item;
-    });
-
-    await firestore.collection("patients").doc(record.pt_no).update({
-      plan_of_care: updatedPlanOfCare,
-    });
-
-    const statsDocRef = firestore.collection("stats").doc(currentStation);
-    const doc = await statsDocRef.get();
-
-    if (doc.exists) {
-      const statsData = doc.data();
-      const updatedItem = updatedPlanOfCare.find(
-        (item) => item.station === currentStation
-      );
-
-      if (value === "waiting" && updatedItem.waiting_start) {
-        const waitDifference = Math.abs(updatedItem.waiting_time);
-        await statsDocRef.update({
-          waiting_time_data: [
-            ...(statsData.waiting_time_data || []),
-            waitDifference,
-          ].filter((time) => !isNaN(time)),
-        });
-      }
-
-      if (value === "in_process" && updatedItem.procedure_start) {
-        const inProcessDifference = Math.abs(updatedItem.procedure_time);
-        await statsDocRef.update({
-          procedure_time_data: [
-            ...(statsData.procedure_time_data || []),
-            inProcessDifference,
-          ].filter((time) => !isNaN(time)),
-        });
-      }
-
-      const { waiting_time_data, procedure_time_data, number_of_patients } =
-        statsData;
-
-      if (number_of_patients) {
-        const validWaitingTimeData = waiting_time_data.filter(
-          (time) => !isNaN(time)
-        );
-        const waitingAverage = Math.floor(
-          validWaitingTimeData.reduce((acc, time) => acc + time, 0) /
-            number_of_patients
-        );
-        await statsDocRef.update({
-          avg_waiting_time: waitingAverage,
-        });
-      }
-
-      if (procedure_time_data && number_of_patients) {
-        const validProcedureTimeData = procedure_time_data.filter(
-          (time) => !isNaN(time)
-        );
-        const procedureAverage = Math.floor(
-          validProcedureTimeData.reduce((acc, time) => acc + time, 0) /
-            number_of_patients
-        );
-        await statsDocRef.update({
-          avg_procedure_time: procedureAverage,
-        });
-
-        if (value === "in_process" || value === "waiting") {
-          await firestore
-            .collection("patients")
-            .doc(record.pt_no)
-            .update({
-              avg_time: Math.floor(Date.now() / 1000),
-            });
-        }
-      }
-    }
+    handleDelete(record, history);
   };
 
   // Helper to add different color on the table depending if it's even or row
@@ -373,10 +280,10 @@ export const Escritorio = () => {
       <Divider />
       <Row>
         <Col span={24}>
-          {documents.length > 0 ? (
+          {data.length > 0 ? (
             <Table
               rowKey={"pt_no"}
-              dataSource={documents}
+              dataSource={data}
               pagination={false}
               columns={columns}
               rowClassName={getRowClassName}

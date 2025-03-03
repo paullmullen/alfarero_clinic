@@ -15,6 +15,7 @@
   "MINUTES": "Minutos",
   "NO_SERVICE": "Salio sin servicio.",
   "NUM_PTS": "Cantidad de Pacients",
+  "PRE_MARCH_MESSAGE": "Los datos de procedimientos y tiempos de espera anteriores al 1 de marzo de 2025 no son confiables.",
   "PRINTMEMBERSHIPCARD": "Imprimir Tarjeta de Membresia",
   "PROCEDURE_TIME": "Promedio: Procedimiento",
   "READMIT": " ",

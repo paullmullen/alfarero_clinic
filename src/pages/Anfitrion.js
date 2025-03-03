@@ -506,7 +506,6 @@ export const Anfitrion = () => {
 
           const isOverLimit =
             avg_time && avg_time.avg_waiting_time / 1000 > max_waiting_time; // max waiting time is in seconds.  stored data is in milliseconds
-
           uniqueStations[plan.station] = {
             dataIndex: plan.station,
             key: plan.station,
@@ -706,7 +705,7 @@ export const Anfitrion = () => {
     const stations = statsData.map((station) => station.station_type); // Assuming statsData contains station names
 
     // Check if all statuses for the stations are either "pending" or "complete"
-    let allPendingOrComplete = false;
+    let allPendingOrComplete = true;
 
     stations.forEach((station) => {
       const status = record[station]; // Directly access the status
