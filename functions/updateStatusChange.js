@@ -39,7 +39,6 @@ exports.updateStatusChange = onRequest(
           patientId,
           carePlanIndex,
           newStatus,
-          databaseName,
         });
         return res
           .status(400)
@@ -65,7 +64,9 @@ exports.updateStatusChange = onRequest(
         });
       }
 
-      console.log(`Using database: ${databaseName}`);
+      console.log(
+        `Using database: ${databaseName} and patientId: ${patientId}`
+      );
 
       // Reference and fetch the patient document
       const patientRef = db.collection("patients").doc(patientId);
@@ -160,29 +161,35 @@ exports.updateStatusChange = onRequest(
         let updated = false; // Track if we've already updated an eligible station
         let updatedIndex = -1; // Track the index of the updated station
 
-        const tempPlanOfCare = updatedPlanOfCare.map((station, index) => {
-          if (
-            !updated &&
-            ["2", "3", "4", "5", "6", "7"].includes(station.status)
-          ) {
-            updated = true; // Mark the first eligible station for update
-            updatedIndex = index; // Save the index of the updated station
-            return {
-              ...station,
-              status: "waiting",
-              waiting_start: now,
-              lastUpdate: now,
-            };
-          }
-          return station;
-        });
+        //but first, make sure no other station is already in "waiting" or "in_process"
+        const alreadyWaitingOrInProcess = updatedPlanOfCare.some((s) =>
+          ["waiting", "in_process"].includes(s.status)
+        );
 
-        // Update the plan of care with the modified station
-        if (updatedIndex !== -1) {
-          updatedPlanOfCare[updatedIndex] = tempPlanOfCare[updatedIndex];
+        if (!alreadyWaitingOrInProcess) {
+          const tempPlanOfCare = updatedPlanOfCare.map((station, index) => {
+            if (
+              !updated &&
+              ["2", "3", "4", "5", "6", "7"].includes(station.status)
+            ) {
+              updated = true; // Mark the first eligible station for update
+              updatedIndex = index; // Save the index of the updated station
+              return {
+                ...station,
+                status: "waiting",
+                waiting_start: now,
+                lastUpdate: now,
+              };
+            }
+            return station;
+          });
+
+          // Update the plan of care with the modified station
+          if (updatedIndex !== -1) {
+            updatedPlanOfCare[updatedIndex] = tempPlanOfCare[updatedIndex];
+          }
         }
       }
-
       // Commit the updated array back to Firestore
       await patientRef.update({ plan_of_care: updatedPlanOfCare });
 

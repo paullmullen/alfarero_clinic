@@ -1,13 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import {
-  Table,
-  Image,
-  Space,
-  Popover,
-  Divider,
-  Button,
-  Popconfirm,
-} from "antd";
+import { Table, Image, Space, Popover, Popconfirm } from "antd";
 import { collection, Timestamp, onSnapshot } from "firebase/firestore"; // Import necessary methods
 import { fetchData } from "../helpers/fetchData";
 
@@ -56,11 +48,6 @@ export const Anfitrion = () => {
 
   const handleMouseLeave = () => {
     setHoveredRowKey("");
-  };
-
-  const salir = () => {
-    localStorage.clear();
-    history.replace("/ingresar-host");
   };
 
   const onSave = () => {
@@ -470,7 +457,7 @@ export const Anfitrion = () => {
       </Space>
     );
 
-  // Makes render the table that changes in real time (patients and their status)
+  // Render the table that changes in real time (patients and their status)
   const generateTableData = (extractedPlanOfCare) => {
     const uniqueStations = {};
     // eslint-disable-next-line no-unused-expressions
@@ -734,24 +721,14 @@ export const Anfitrion = () => {
         columns={columns}
         dataSource={data.some((d) => d === undefined) ? [] : dataSource}
         pagination={false}
-        offsetScroll={3}
+        scroll={{ y: 850 }} // Enables only vertical scrolling (height = 500px)
+        sticky={{ offsetHeader: 0 }} // Keeps headers fixed
         rowClassName={getRowClassName}
         onRow={(record) => ({
           onMouseEnter: () => handleMouseEnter(record),
           onMouseLeave: () => handleMouseLeave(),
         })}
       />
-      <Divider>
-        <Button
-          shape="round"
-          type="danger"
-          onClick={salir}
-          style={{ marginTop: "10px" }}
-        >
-          {/* <CloseCircleOutlined />
-          {t("logout")} */}
-        </Button>
-      </Divider>
     </>
   );
 };

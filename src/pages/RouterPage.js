@@ -13,7 +13,7 @@ import {
   UserOutlined,
   ClockCircleOutlined,
   LoginOutlined,
-  IdcardOutlined,
+  // IdcardOutlined,
   BarChartOutlined,
   CoffeeOutlined,
   OrderedListOutlined,
@@ -204,11 +204,11 @@ export const RouterPage = () => {
       icon: <OrderedListOutlined />,
       label: <Link to="/escritorio">{t("desk")}</Link>,
     },
-    {
-      key: "6",
-      icon: <IdcardOutlined />,
-      label: <Link to="/member">{t("MEMBERSHIP")}</Link>,
-    },
+    // {
+    //   key: "6",
+    //   icon: <IdcardOutlined />,
+    //   label: <Link to="/member">{t("MEMBERSHIP")}</Link>,
+    // },
     {
       key: "7",
       icon: <BarChartOutlined />,
@@ -228,11 +228,11 @@ export const RouterPage = () => {
       key: "10",
       label: t("version"),
     },
-    {
-      key: "11",
-      icon: <LoginOutlined />,
-      label: <Link to="/loginpage">{t("NewLogin")}</Link>,
-    },
+    // {
+    //   key: "11",
+    //   icon: <LoginOutlined />,
+    //   label: <Link to="/loginpage">{t("NewLogin")}</Link>,
+    // },
   ];
 
   return (
