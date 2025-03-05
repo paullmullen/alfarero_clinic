@@ -1,4 +1,6 @@
 import React, { useContext, useEffect, useState, Suspense, lazy } from "react";
+import { Timestamp } from "firebase/firestore";
+
 import {
   Layout,
   Menu,
@@ -34,7 +36,6 @@ import {
   getDoc,
   setDoc,
   serverTimestamp,
-  Timestamp,
 } from "firebase/firestore";
 import styled from "styled-components";
 
@@ -100,7 +101,17 @@ export const RouterPage = () => {
   const [t] = useTranslation("global");
   const [currentTime, setCurrentTime] = useState(new Date());
   const [tapCount, setTapCount] = useState(0);
+  const [count, setCount] = useState(0);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const today = new Date();
+
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date();
+  tomorrow.setHours(24, 0, 0, 0);
+
+  // Convert JS Date to Firestore Timestamp
+  const todayTimestamp = Timestamp.fromDate(today);
+  const tomorrowTimestamp = Timestamp.fromDate(tomorrow);
 
   const handleHeaderTitleTap = () => {
     setTapCount(tapCount + 1);
@@ -165,9 +176,43 @@ export const RouterPage = () => {
   );
 
   useEffect(() => {
+    const fetchPatientCount = async () => {
+      try {
+        const response = await fetch(
+          "https://us-central1-alfarero-478ad.cloudfunctions.net/getPatientCount",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              database: process.env.REACT_APP_FIREBASE_DB,
+              startTimestamp: todayTimestamp,
+              endTimestamp: tomorrowTimestamp,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+
+        const data = await response.json();
+        console.log(data);
+        console.log(data.records);
+        setCount(data.records);
+        return;
+      } catch (error) {
+        console.error("Error fetching patients:", error);
+        return;
+      }
+    };
+
     const interval = setInterval(() => {
       checkAndUpdateTimestamp();
       setCurrentTime(new Date());
+      console.log("calling fetch patient count");
+      fetchPatientCount();
     }, 60000);
 
     return () => clearInterval(interval);
@@ -274,7 +319,9 @@ export const RouterPage = () => {
             </Row>
             <Row>
               <Col>
-                <Title level={4}>{formattedTime}</Title>
+                <Title level={4}>
+                  {formattedTime} - {count} {t("patients")}
+                </Title>
               </Col>
             </Row>
             <Row>
