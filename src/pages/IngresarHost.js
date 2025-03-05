@@ -14,7 +14,7 @@ import { useHistory, Redirect } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
 import { useAlert } from "../hooks/alert";
-import { firestore } from "./../helpers/firebaseConfig";
+import { getFirestore, collection, addDoc } from "firebase/firestore"; // Updated imports
 import {
   checkDuplicateRecord,
   getDuplicateRecordRef,
@@ -68,7 +68,12 @@ export const IngresarHost = () => {
       console.log("isDuplicate", isDuplicate);
       if (!isDuplicate) {
         const hostData = { host, servicio };
-        await firestore.collection("hosts").add(hostData);
+
+        // Get Firestore instance and add host data
+        const db = getFirestore(); // Initialize Firestore
+        const hostsCollection = collection(db, "hosts"); // Reference to 'hosts' collection
+        await addDoc(hostsCollection, hostData); // Add host data
+
         showAlert("Success", t("infoSavedSuccessfully"), "success");
       } else {
         console.log("getting duplicate record ref");
@@ -92,7 +97,7 @@ export const IngresarHost = () => {
         history.push("/anfitrion");
       }
     } catch (error) {
-      showAlert("Error", t("errorWhileSaving"), "error");
+      showAlert("Error", t("errorWhileSaving"), " error");
       console.error("Error while saving host", error);
     }
   };
