@@ -138,32 +138,46 @@ export const Registro = () => {
     const result = [];
     const visitsSet = new Set(visits);
 
-    let order = -1;
+    // The fixed order of stations
+    const stationOrder = [
+      "reg",
+      "nur",
+      "doc",
+      "ped",
+      "og",
+      "lab",
+      "pha",
+      "pt",
+      "den",
+      "nut",
+      "psi",
+      "ora",
+    ];
+    let order = 0;
 
-    visits?.forEach((visit) => {
-      const station = stations.find((s) => s.value === visit);
+    // Iterate through the fixed order of stations
+    stationOrder.forEach((stationValue) => {
+      const station = stations.find((s) => s.value === stationValue);
       if (station) {
-        result.push({
-          order: order++,
-          station: station.value,
-          status: statusList[order],
-          ...(statusList[order] === "waiting" && {
-            // make sure there is a waiting_start value when the patient setup is done.
-            waiting_start: Timestamp.now(),
-          }),
-        });
+        if (visitsSet.has(stationValue)) {
+          result.push({
+            order: order++,
+            station: station.value,
+            status: statusList[order],
+            ...(statusList[order] === "waiting" && {
+              waiting_start: Timestamp.now(),
+            }),
+          });
+        } else {
+          result.push({
+            order: order++,
+            station: station.value,
+            status: "pending",
+          });
+        }
       }
     });
 
-    stations.forEach((station) => {
-      if (!visitsSet.has(station.value)) {
-        result.push({
-          order: order++,
-          station: station.value,
-          status: "pending",
-        });
-      }
-    });
     return result;
   };
 
