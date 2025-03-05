@@ -176,6 +176,15 @@ export const RouterPage = () => {
   );
 
   useEffect(() => {
+    const interval = setInterval(() => {
+      checkAndUpdateTimestamp();
+      setCurrentTime(new Date());
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     const fetchPatientCount = async () => {
       try {
         const response = await fetch(
@@ -207,16 +216,8 @@ export const RouterPage = () => {
         return;
       }
     };
-
-    const interval = setInterval(() => {
-      checkAndUpdateTimestamp();
-      setCurrentTime(new Date());
-      console.log("calling fetch patient count");
-      fetchPatientCount();
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, []);
+    fetchPatientCount();
+  }, [currentTime]);
 
   const formattedTime = currentTime.toLocaleTimeString([], {
     hour: "2-digit",
@@ -320,7 +321,10 @@ export const RouterPage = () => {
             <Row>
               <Col>
                 <Title level={4}>
-                  {formattedTime} - {count} {t("patients")}
+                  <Title level={4}>
+                    {formattedTime}{" "}
+                    {count !== 0 && `- ${count} ${t("patients")}`}
+                  </Title>
                 </Title>
               </Col>
             </Row>
