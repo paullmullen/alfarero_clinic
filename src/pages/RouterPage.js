@@ -15,12 +15,12 @@ import {
   UserOutlined,
   ClockCircleOutlined,
   LoginOutlined,
-  // IdcardOutlined,
+  IdcardOutlined,
   BarChartOutlined,
   CoffeeOutlined,
   OrderedListOutlined,
   SettingOutlined,
-  // CompassOutlined,
+  CompassOutlined,
 } from "@ant-design/icons";
 import {
   BrowserRouter as Router,
@@ -250,21 +250,21 @@ export const RouterPage = () => {
       icon: <OrderedListOutlined />,
       label: <Link to="/escritorio">{t("desk")}</Link>,
     },
-    // {
-    //   key: "6",
-    //   icon: <IdcardOutlined />,
-    //   label: <Link to="/member">{t("MEMBERSHIP")}</Link>,
-    // },
+    {
+      key: "6",
+      icon: <IdcardOutlined />,
+      label: <Link to="/member">{t("MEMBERSHIP")}</Link>,
+    },
     {
       key: "7",
       icon: <BarChartOutlined />,
       label: <Link to="/estadisticas">{t("statistics")}</Link>,
     },
-    // {
-    //   key: "8",
-    //   icon: <CompassOutlined />,
-    //   label: <Link to="/location">{t("LOCATION")}</Link>,
-    // },
+    {
+      key: "8",
+      icon: <CompassOutlined />,
+      label: <Link to="/location">{t("LOCATION")}</Link>,
+    },
     {
       key: "9",
       icon: <SettingOutlined />,
@@ -274,11 +274,11 @@ export const RouterPage = () => {
       key: "10",
       label: t("version"),
     },
-    // {
-    //   key: "11",
-    //   icon: <LoginOutlined />,
-    //   label: <Link to="/loginpage">{t("NewLogin")}</Link>,
-    // },
+    {
+      key: "11",
+      icon: <LoginOutlined />,
+      label: <Link to="/loginpage">{t("NewLogin")}</Link>,
+    },
   ];
 
   return (
