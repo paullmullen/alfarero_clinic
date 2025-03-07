@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useEffect, useState } from "react";
 import {
   Input,
@@ -33,6 +34,7 @@ export const Settings = () => {
   const [stations, setStations] = useState([]);
   const [locations, setLocations] = useState([]);
   const [users, setUsers] = useState([]);
+  const [permissionKeys, setPermissionKeys] = useState({});
 
   useEffect(() => {
     const fetchStations = async () => {
@@ -59,8 +61,7 @@ export const Settings = () => {
           id: doc.id,
           name: doc.data().name || "Unknown",
           email: doc.data().email || "unknown",
-          admin: doc.data().admin || false,
-          can_edit: doc.data().can_edit || false,
+          permissions: doc.data().permissions || [],
         }));
         setUsers(userData);
       } catch (error) {
@@ -91,18 +92,37 @@ export const Settings = () => {
     fetchUsers();
   }, []);
 
-  const handlePermissionChange = async (userId, key, value) => {
-    try {
-      const userDocRef = doc(firestore, "users", userId);
-      await updateDoc(userDocRef, { [key]: value });
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.id === userId ? { ...user, [key]: value } : user
-        )
-      );
-    } catch (error) {
-      console.error("Error updating permissions:", error);
-    }
+  useEffect(() => {
+    const extractPermissionKeys = (usersData) => {
+      const allKeys = new Set();
+      usersData.forEach((user) => {
+        console.log(user.name, user.permissions);
+        Object.keys(user.permissions).forEach((key) => allKeys.add(key));
+      });
+      console.log("Permission Keys: ", allKeys);
+      setPermissionKeys(Array.from(allKeys));
+    };
+    extractPermissionKeys(users);
+  }, [users]);
+
+  const handlePermissionChange = async (userId, permissionKey, value) => {
+    const userRef = doc(firestore, "users", userId);
+    const user = users.find((u) => u.id === userId);
+    if (!user) return;
+
+    const updatedPermissions = Object.entries(user.permissions).map(
+      ([key, val]) =>
+        key === permissionKey ? { [key]: value } : { [key]: val }
+    );
+
+    await updateDoc(userRef, { permissions: updatedPermissions });
+    setUsers((prevUsers) =>
+      prevUsers.map((u) =>
+        u.id === userId
+          ? { ...u, permissions: { ...u.permissions, [permissionKey]: value } }
+          : u
+      )
+    );
   };
 
   const handleLocationUpdate = async (locationId, key, value) => {
@@ -271,32 +291,36 @@ export const Settings = () => {
             key: "email",
           },
 
-          {
-            title: t("ADMIN"),
-            dataIndex: "admin",
-            key: "admin",
-            render: (text, record) => (
-              <Switch
-                checked={record.admin}
-                onChange={(checked) =>
-                  handlePermissionChange(record.id, "admin", checked)
+          ...(Array.isArray(permissionKeys) ? permissionKeys : []).map(
+            (key) => ({
+              title: key,
+              dataIndex: "permissions",
+              key: key,
+              render: (_, record) => {
+                try {
+                  // Convert array of objects into a lookup object
+                  const permissionsMap = Array.isArray(record.permissions)
+                    ? record.permissions.reduce((acc, perm) => {
+                        acc[perm.name] = perm.value; // Adjust based on Firestore structure
+                        return acc;
+                      }, {})
+                    : {};
+
+                  return (
+                    <Switch
+                      checked={permissionsMap[key] || false}
+                      onChange={(e) =>
+                        handlePermissionChange(record.id, key, e.target.checked)
+                      }
+                    />
+                  );
+                } catch (innerError) {
+                  console.error("Error inside render function:", innerError);
+                  return <span>Error</span>; // Prevent crash
                 }
-              />
-            ),
-          },
-          {
-            title: t("CAN_EDIT"),
-            dataIndex: "can_edit",
-            key: "can_edit",
-            render: (text, record) => (
-              <Switch
-                checked={record.can_edit}
-                onChange={(checked) =>
-                  handlePermissionChange(record.id, "can_edit", checked)
-                }
-              />
-            ),
-          },
+              },
+            })
+          ),
         ]}
       />
     </div>
