@@ -18,7 +18,15 @@ const LoginPage = () => {
       <h2>Login Page</h2>
       {user ? (
         <div>
-          <p>Welcome, {user.displayName}</p>
+          <p>
+            Welcome, {user.displayName}
+            <br />
+            Firebase UID: {user.uid}
+            <br />
+            {user.email}
+            <br />
+            Microsoft UID: {user.providerData[0].uid}
+          </p>
           <button onClick={logout}>Logout</button>
         </div>
       ) : (

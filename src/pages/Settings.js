@@ -8,6 +8,8 @@ import {
   Col,
   Select,
   Button,
+  Switch,
+  Table,
 } from "antd";
 import { HexColorPicker } from "react-colorful"; // Updated import
 import { firestore } from "../helpers/firebaseConfig";
@@ -30,6 +32,7 @@ export const Settings = () => {
   const [t] = useTranslation("global");
   const [stations, setStations] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     const fetchStations = async () => {
@@ -45,6 +48,23 @@ export const Settings = () => {
         setStations(stationData);
       } catch (error) {
         console.error("Error fetching stations:", error);
+      }
+    };
+
+    const fetchUsers = async () => {
+      try {
+        const usersRef = collection(firestore, "users");
+        const snapshot = await getDocs(usersRef);
+        const userData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().name || "Unknown",
+          email: doc.data().email || "unknown",
+          admin: doc.data().admin || false,
+          can_edit: doc.data().can_edit || false,
+        }));
+        setUsers(userData);
+      } catch (error) {
+        console.error("Error fetching users:", error);
       }
     };
 
@@ -68,7 +88,22 @@ export const Settings = () => {
 
     fetchStations();
     fetchLocations();
-  }, [stations, locations]);
+    fetchUsers();
+  }, []);
+
+  const handlePermissionChange = async (userId, key, value) => {
+    try {
+      const userDocRef = doc(firestore, "users", userId);
+      await updateDoc(userDocRef, { [key]: value });
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === userId ? { ...user, [key]: value } : user
+        )
+      );
+    } catch (error) {
+      console.error("Error updating permissions:", error);
+    }
+  };
 
   const handleLocationUpdate = async (locationId, key, value) => {
     try {
@@ -218,6 +253,52 @@ export const Settings = () => {
       >
         {t("ADD_LOCATION")}
       </Button>
+      <Divider orientation="left">
+        <Title level={2}>{t("USER_PERMISSIONS")}</Title>
+      </Divider>
+      <Table
+        dataSource={users}
+        rowKey="id"
+        columns={[
+          {
+            title: t("NAME"),
+            dataIndex: "name",
+            key: "name",
+          },
+          {
+            title: t("EMAIL"),
+            dataIndex: "email",
+            key: "email",
+          },
+
+          {
+            title: t("ADMIN"),
+            dataIndex: "admin",
+            key: "admin",
+            render: (text, record) => (
+              <Switch
+                checked={record.admin}
+                onChange={(checked) =>
+                  handlePermissionChange(record.id, "admin", checked)
+                }
+              />
+            ),
+          },
+          {
+            title: t("CAN_EDIT"),
+            dataIndex: "can_edit",
+            key: "can_edit",
+            render: (text, record) => (
+              <Switch
+                checked={record.can_edit}
+                onChange={(checked) =>
+                  handlePermissionChange(record.id, "can_edit", checked)
+                }
+              />
+            ),
+          },
+        ]}
+      />
     </div>
   );
 };
