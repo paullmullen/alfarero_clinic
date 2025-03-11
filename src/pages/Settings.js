@@ -21,7 +21,9 @@ import {
   getDocs,
   doc,
   updateDoc,
+  onSnapshot,
   addDoc,
+  Timestamp,
 } from "firebase/firestore";
 
 // Import the LocationPicker component
@@ -53,27 +55,6 @@ export const Settings = () => {
       }
     };
 
-    const fetchUsers = async () => {
-      try {
-        const usersRef = collection(firestore, "users");
-        const snapshot = await getDocs(usersRef);
-
-        const userData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          name: doc.data().name || "Unknown",
-          email: doc.data().email || "Unknown",
-          permissions:
-            typeof doc.data().permissions === "object" &&
-            doc.data().permissions !== null
-              ? doc.data().permissions
-              : {}, // Ensure it's an object (map)
-        }));
-        setUsers(userData);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
-    };
-
     const fetchLocations = async () => {
       try {
         const locationsRef = collection(firestore, "locations");
@@ -94,7 +75,26 @@ export const Settings = () => {
 
     fetchStations();
     fetchLocations();
-    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    const usersRef = collection(firestore, "users");
+
+    const unsubscribe = onSnapshot(usersRef, (snapshot) => {
+      const userData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name || "Unknown",
+        email: doc.data().email || "Unknown",
+        permissions:
+          typeof doc.data().permissions === "object" &&
+          doc.data().permissions !== null
+            ? doc.data().permissions
+            : {}, // Ensure it's an object (map)
+      }));
+      setUsers(userData);
+    });
+
+    return () => unsubscribe(); // Cleanup on unmount
   }, []);
 
   useEffect(() => {
@@ -103,21 +103,24 @@ export const Settings = () => {
       usersData.forEach((user) => {
         Object.keys(user.permissions).forEach((key) => allKeys.add(key));
       });
-      setPermissionKeys(Array.from(allKeys));
+      setPermissionKeys(Array.from(allKeys).sort()); // Sort alphabetically
     };
     extractPermissionKeys(users);
-    console.log(permissionKeys);
   }, [users]);
 
   const handlePermissionChange = async (userId, permissionKey, newValue) => {
     try {
       const userRef = doc(firestore, "users", userId);
+      const updatedTimestamp = Timestamp.now(); // Capture timestamp once
 
       await updateDoc(userRef, {
-        [`permissions.${permissionKey}`]: newValue, // Update specific field
+        [`permissions.${permissionKey}`]: newValue,
+        updated: updatedTimestamp, // Update specific field
       });
 
-      console.log(`Updated ${permissionKey} to ${newValue} for user ${userId}`);
+      console.log(
+        `Updated ${permissionKey} to ${newValue} for user ${userId} at ${updatedTimestamp}.`
+      );
       setUsers((prevUsers) =>
         prevUsers.map((user) =>
           user.id === userId
@@ -125,8 +128,9 @@ export const Settings = () => {
                 ...user,
                 permissions: {
                   ...user.permissions,
-                  [permissionKey]: newValue, // Update the specific key
+                  [permissionKey]: newValue,
                 },
+                updated: updatedTimestamp,
               }
             : user
         )
