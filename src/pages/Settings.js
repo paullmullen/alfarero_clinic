@@ -12,7 +12,7 @@ import {
   Switch,
   Table,
 } from "antd";
-import { HexColorPicker } from "react-colorful"; // Updated import
+import { HexColorPicker } from "react-colorful";
 import { firestore } from "../helpers/firebaseConfig";
 import { useTranslation } from "react-i18next";
 import { useHideMenu } from "../hooks/useHideMenu";
@@ -57,11 +57,16 @@ export const Settings = () => {
       try {
         const usersRef = collection(firestore, "users");
         const snapshot = await getDocs(usersRef);
+
         const userData = snapshot.docs.map((doc) => ({
           id: doc.id,
           name: doc.data().name || "Unknown",
-          email: doc.data().email || "unknown",
-          permissions: doc.data().permissions || [],
+          email: doc.data().email || "Unknown",
+          permissions:
+            typeof doc.data().permissions === "object" &&
+            doc.data().permissions !== null
+              ? doc.data().permissions
+              : {}, // Ensure it's an object (map)
         }));
         setUsers(userData);
       } catch (error) {
@@ -96,33 +101,39 @@ export const Settings = () => {
     const extractPermissionKeys = (usersData) => {
       const allKeys = new Set();
       usersData.forEach((user) => {
-        console.log(user.name, user.permissions);
         Object.keys(user.permissions).forEach((key) => allKeys.add(key));
       });
-      console.log("Permission Keys: ", allKeys);
       setPermissionKeys(Array.from(allKeys));
     };
     extractPermissionKeys(users);
+    console.log(permissionKeys);
   }, [users]);
 
-  const handlePermissionChange = async (userId, permissionKey, value) => {
-    const userRef = doc(firestore, "users", userId);
-    const user = users.find((u) => u.id === userId);
-    if (!user) return;
+  const handlePermissionChange = async (userId, permissionKey, newValue) => {
+    try {
+      const userRef = doc(firestore, "users", userId);
 
-    const updatedPermissions = Object.entries(user.permissions).map(
-      ([key, val]) =>
-        key === permissionKey ? { [key]: value } : { [key]: val }
-    );
+      await updateDoc(userRef, {
+        [`permissions.${permissionKey}`]: newValue, // Update specific field
+      });
 
-    await updateDoc(userRef, { permissions: updatedPermissions });
-    setUsers((prevUsers) =>
-      prevUsers.map((u) =>
-        u.id === userId
-          ? { ...u, permissions: { ...u.permissions, [permissionKey]: value } }
-          : u
-      )
-    );
+      console.log(`Updated ${permissionKey} to ${newValue} for user ${userId}`);
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === userId
+            ? {
+                ...user,
+                permissions: {
+                  ...user.permissions,
+                  [permissionKey]: newValue, // Update the specific key
+                },
+              }
+            : user
+        )
+      );
+    } catch (error) {
+      console.error("Error updating permissions:", error);
+    }
   };
 
   const handleLocationUpdate = async (locationId, key, value) => {
@@ -299,18 +310,16 @@ export const Settings = () => {
               render: (_, record) => {
                 try {
                   // Convert array of objects into a lookup object
-                  const permissionsMap = Array.isArray(record.permissions)
-                    ? record.permissions.reduce((acc, perm) => {
-                        acc[perm.name] = perm.value; // Adjust based on Firestore structure
-                        return acc;
-                      }, {})
-                    : {};
-
+                  const permissionsMap =
+                    typeof record.permissions === "object" &&
+                    record.permissions !== null
+                      ? { ...record.permissions } // Ensure it's copied properly
+                      : {};
                   return (
                     <Switch
                       checked={permissionsMap[key] || false}
-                      onChange={(e) =>
-                        handlePermissionChange(record.id, key, e.target.checked)
+                      onChange={(checked) =>
+                        handlePermissionChange(record.id, key, checked)
                       }
                     />
                   );
