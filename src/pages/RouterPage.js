@@ -1,4 +1,11 @@
-import React, { useContext, useEffect, useState, Suspense, lazy } from "react";
+import React, {
+  useContext,
+  useEffect,
+  useState,
+  Suspense,
+  lazy,
+  createContext,
+} from "react";
 import { Timestamp } from "firebase/firestore";
 
 import {
@@ -29,13 +36,15 @@ import {
   Link,
   Redirect,
 } from "react-router-dom";
-import { firestore } from "./../helpers/firebaseConfig";
+import { firestore, auth } from "./../helpers/firebaseConfig";
+import { onAuthStateChanged } from "firebase/auth";
 import {
   doc,
   updateDoc,
   getDoc,
   setDoc,
   serverTimestamp,
+  // collection,
 } from "firebase/firestore";
 import styled from "styled-components";
 
@@ -45,6 +54,69 @@ import { LoginPage } from "./LoginPage";
 import { useTranslation } from "react-i18next";
 import full_logo from "../img/full_logo.png";
 import { cleanPaulTests } from "../helpers/updateStationStatus";
+import PropTypes from "prop-types";
+
+// Permissions stuff
+// permissionsContext.js
+
+const PermissionsContext = createContext({
+  permissions: null,
+  loading: true,
+  user: null,
+  setUserPermissions: () => {}, // Function to update user permissions
+});
+
+// const getPermissionsData = async (userId) => {
+//   console.log("userId:", userId);
+//   const usersRef = collection(firestore, "users");
+//   const userData = usersRef.doc(userId);
+//   return userData.permissions;
+// };
+
+export const PermissionsProvider = ({ children }) => {
+  const [permissions, setPermissions] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        try {
+          const userRef = doc(firestore, "users", currentUser.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            setPermissions(userSnap.data().permissions || null);
+          } else {
+            setPermissions(null); // No permissions found
+          }
+        } catch (error) {
+          console.error("Error fetching user permissions:", error);
+          setPermissions(null);
+        }
+      } else {
+        setPermissions(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  return (
+    <PermissionsContext.Provider value={{ permissions, loading, user }}>
+      {children}
+    </PermissionsContext.Provider>
+  );
+};
+
+export const usePermissions = () => {
+  return useContext(PermissionsContext);
+};
+
+PermissionsProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
 
 const Registro = lazy(() =>
   import("./Registro").then((module) => ({ default: module.Registro }))
@@ -60,6 +132,9 @@ const Member = lazy(() =>
 );
 const IngresarHost = lazy(() =>
   import("./IngresarHost").then((module) => ({ default: module.IngresarHost }))
+);
+const Location = lazy(() =>
+  import("./Location").then((module) => ({ default: module.Location }))
 );
 const Survey = lazy(() =>
   import("./Survey").then((module) => ({ default: module.Survey }))
@@ -103,6 +178,10 @@ export const RouterPage = () => {
   const [tapCount, setTapCount] = useState(0);
   const [count, setCount] = useState(0);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const permissionsData = usePermissions();
+  console.log("Permissions Hook Output:", permissionsData);
+  // eslint-disable-next-line no-unused-vars
+  const { permissions, user, loading } = usePermissions();
   const today = new Date();
 
   today.setHours(0, 0, 0, 0);
@@ -280,90 +359,129 @@ export const RouterPage = () => {
     },
   ];
 
-  return (
-    <Layout style={{ minHeight: "100vh", minWidth: "100%" }}>
-      <Router>
-        <CustomSider
-          collapsedWidth="0"
-          breakpoint="lg"
-          hidden={ocultarMenu}
-          isDev={isAlfareroDev}
-        >
-          <Menu
-            theme="dark"
-            mode="inline"
-            defaultSelectedKeys={["1"]}
-            items={menuItems}
-          />
-        </CustomSider>
-        <Layout className="site-layout">
-          <Header
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              backgroundColor: isAlfareroDev ? "#e6e6fa" : "#fff",
-              alignItems: "center",
-            }}
+  if (auth) {
+    return (
+      <Layout style={{ minHeight: "100vh", minWidth: "100%" }}>
+        <Router>
+          <CustomSider
+            collapsedWidth="0"
+            breakpoint="lg"
+            hidden={ocultarMenu}
+            isDev={isAlfareroDev}
           >
-            <Row>
-              <Col>
-                <a href="/registro">
-                  <Image
-                    src={full_logo}
-                    preview={false}
-                    height={42}
-                    width={185}
-                  />
-                </a>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <Title level={4}>
+            <Menu
+              theme="dark"
+              mode="inline"
+              defaultSelectedKeys={["1"]}
+              items={menuItems}
+            />
+          </CustomSider>
+          <Layout className="site-layout">
+            <Header
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                backgroundColor: isAlfareroDev ? "#e6e6fa" : "#fff",
+                alignItems: "center",
+              }}
+            >
+              <Row>
+                <Col>
+                  <a href="/registro">
+                    <Image
+                      src={full_logo}
+                      preview={false}
+                      height={42}
+                      width={185}
+                    />
+                  </a>
+                </Col>
+              </Row>
+              <Row>
+                <Col>
                   <Title level={4}>
-                    {formattedTime}{" "}
-                    {count !== 0 && `- ${count} ${t("patients")}`}
+                    <Title level={4}>
+                      {formattedTime}{" "}
+                      {count !== 0 && `- ${count} ${t("patients")}`}
+                    </Title>
                   </Title>
-                </Title>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <div onClick={handleHeaderTitleTap}>
-                  <Button className="no-border-button">
-                    <Title level={4}>{t("headerTitle")}</Title>
-                  </Button>
-                </div>
-                <Popover
-                  content={popoverContent}
-                  open={popoverOpen}
-                  onOpenChange={setPopoverOpen}
-                />
-              </Col>
-            </Row>
-          </Header>
-          <Content style={{ margin: "24px 16px", padding: 24, minHeight: 280 }}>
-            <AlertProvider>
-              <Suspense fallback={<div>Loading...</div>}>
-                <Switch>
-                  <Route path="/ingresar-host" component={IngresarHost} />
-                  <Route path="/registro" component={Registro} />
-                  <Route path="/turnos" component={Turno} />
-                  <Route path="/escritorio" component={Escritorio} />
-                  <Route path="/anfitrion" component={Anfitrion} />
-                  <Route path="/estadisticas" component={Stats} />
-                  <Route path="/survey" component={Survey} />
-                  <Route path="/member" component={Member} />
-                  {/* <Route path="/location" component={Location} /> */}
-                  <Route path="/settings" component={Settings} />
-                  <Route path="/loginpage" component={LoginPage} />
-                  <Redirect to="/ingresar-host" />
-                </Switch>
-              </Suspense>
-            </AlertProvider>
-          </Content>
-        </Layout>
-      </Router>
-    </Layout>
-  );
+                </Col>
+              </Row>
+              <Row>
+                <Col>
+                  <div onClick={handleHeaderTitleTap}>
+                    <Button className="no-border-button">
+                      <Title level={4}>{t("headerTitle")}</Title>
+                    </Button>
+                  </div>
+                  <Popover
+                    content={popoverContent}
+                    open={popoverOpen}
+                    onOpenChange={setPopoverOpen}
+                  />
+                </Col>
+              </Row>
+            </Header>
+            <Content
+              style={{ margin: "24px 16px", padding: 24, minHeight: 280 }}
+            >
+              <AlertProvider>
+                <Suspense fallback={<div>Loading...</div>}>
+                  <Switch>
+                    <Route path="/ingresar-host" component={IngresarHost} />
+                    <Route path="/registro" component={Registro} />
+                    <Route path="/turnos" component={Turno} />
+                    <Route path="/escritorio" component={Escritorio} />
+                    <Route path="/anfitrion" component={Anfitrion} />
+                    <Route path="/survey" component={Survey} />
+                    <Route path="/member" component={Member} />
+                    <Route path="/location" component={Location} />
+                    <Route path="/loginpage" component={LoginPage} />
+
+                    {/* Protected Routes */}
+                    <Route
+                      path="/estadisticas"
+                      render={(props) =>
+                        permissions?.stats ? (
+                          <Stats {...props} />
+                        ) : (
+                          <Redirect to="/not-authorized" />
+                        )
+                      }
+                    />
+                    <Route
+                      path="/settings"
+                      render={(props) =>
+                        permissions?.settings ? (
+                          <Settings {...props} />
+                        ) : (
+                          <Redirect to="/not-authorized" />
+                        )
+                      }
+                    />
+
+                    {/* Not Authorized Page */}
+                    <Route
+                      path="/not-authorized"
+                      render={() => (
+                        <div>
+                          <h1>{t("NOT_AUTHORIZED")}</h1>
+                          <h2>{t("NOT_AUTHD_MESSAGE")}</h2>
+                        </div>
+                      )}
+                    />
+
+                    {/* Catch-all Redirect */}
+                    <Redirect to="/ingresar-host" />
+                  </Switch>
+                </Suspense>
+              </AlertProvider>
+            </Content>
+          </Layout>
+        </Router>
+      </Layout>
+    );
+  } else {
+    return <text>Not authorized</text>;
+  }
 };

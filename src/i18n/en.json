@@ -19,6 +19,8 @@
   "MINUTES": "Minutes",
   "NAME": "Name",
   "NO_SERVICE": "Left without service.",
+  "NOT_AUTHORIZED": "Not authorized.",
+  "NOT_AUTHD_MESSAGE": "Contact your manager for access to this page.",
   "NUM_PTS": "Number of Patients",
   "PRE_MARCH_MESSAGE": "Procedure and wait time data prior to March 1 2025 are not reliable.",
   "PRINTMEMBERSHIPCARD": "Print Membership Card",

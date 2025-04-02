@@ -6,6 +6,8 @@ import {
   OAuthProvider,
   signOut,
 } from "firebase/auth";
+import { usePermissions } from "./permissionsContext";
+import { useContext } from "react";
 
 // Firebase configuration for your single project (same for both databases)
 const firebaseConfig = {
@@ -38,17 +40,22 @@ const firestore =
 const loginWithMicrosoft = async () => {
   const provider = new OAuthProvider("microsoft.com");
 
-  // Ensure the provider is explicitly set to use the tenant-specific endpoint
   if (firebaseConfig.tenantId) {
     provider.setCustomParameters({
-      tenant: firebaseConfig.tenantId, // Explicitly set tenant-specific endpoint
+      tenant: firebaseConfig.tenantId,
     });
   }
 
   console.log(provider);
+
   try {
     const result = await signInWithPopup(auth, provider);
     console.log("User Info:", result.user);
+
+    // Access PermissionsContext and update user info
+    const { setUserPermissions } = useContext(usePermissions);
+    setUserPermissions(result.user); // Update context with the logged-in user
+
     return result.user;
   } catch (error) {
     console.error("Error logging in:", error);

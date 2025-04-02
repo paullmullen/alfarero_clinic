@@ -7,7 +7,6 @@
   "DATE_RANGE": "Rango de Fechas",
   "DOWNLOAD": "Descargar para Excel",
   "EMAIL": "eMail",
-
   "END_DATE": "Fetcha Final",
   "GOLD": "ORO",
   "Happy": "Contento",
@@ -19,6 +18,8 @@
   "MINUTES": "Minutos",
   "NAME": "Nombre",
   "NO_SERVICE": "Salio sin servicio.",
+  "NOT_AUTHORIZED": "No autorizado.",
+  "NOT_AUTHD_MESSAGE": "Contacte a su gerente para acceder a esta página.",
   "NUM_PTS": "Cantidad de Pacients",
   "PRE_MARCH_MESSAGE": "Los datos de procedimientos y tiempos de espera anteriores al 1 de marzo de 2025 no son confiables.",
   "PRINTMEMBERSHIPCARD": "Imprimir Tarjeta de Membresia",
