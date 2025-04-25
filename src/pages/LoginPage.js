@@ -25,7 +25,12 @@ const LoginPage = () => {
             <br />
             {user.email}
             <br />
-            Microsoft UID: {user.providerData[0].uid}
+            {/* Check if providerData exists and has elements */}
+            {user.providerData && user.providerData.length > 0 ? (
+              <span>Microsoft UID: {user.providerData[0].uid}</span>
+            ) : (
+              <span>No Microsoft account linked</span>
+            )}
           </p>
           <button onClick={logout}>Logout</button>
         </div>

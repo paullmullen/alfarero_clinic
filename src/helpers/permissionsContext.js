@@ -1,4 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import { auth } from "./firebaseConfig";
+import { getPermissionsData } from "./getPermissionsData";
+import PropTypes from "prop-types";
+
+// Set session expiration time (in hours)
+const SESSION_TIMEOUT_HOURS = 24;
 
 // Create context with default values
 const PermissionsContext = createContext({
@@ -8,37 +16,69 @@ const PermissionsContext = createContext({
   setUserPermissions: () => {},
 });
 
-// Provider component to wrap around your app
+// Provider component
 export const PermissionsProvider = ({ children }) => {
   const [permissions, setPermissions] = useState(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch permissions when user changes
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log("Current user: ", user);
+      if (user) {
+        const lastSignIn = new Date(user.metadata.lastSignInTime).getTime();
+        const now = Date.now();
+        const hoursSinceSignIn = (now - lastSignIn) / (1000 * 60 * 60);
+
+        if (hoursSinceSignIn > SESSION_TIMEOUT_HOURS) {
+          console.log("Session expired. Logging out...");
+          await signOut(auth);
+          setUser(null);
+          setPermissions(null);
+          navigate("/login");
+        } else {
+          setUser(user);
+        }
+      } else {
+        setUser(null);
+        setPermissions(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
+
+  useEffect(() => {
     const fetchPermissions = async () => {
       if (user) {
         try {
-          // Replace this with your actual permissions-fetching logic
           const permissionsData = await getPermissionsData(user.uid);
+          console.log("Permissions:", permissionsData.permissions);
           setPermissions(permissionsData);
         } catch (error) {
           console.error("Error fetching permissions:", error);
-        } finally {
-          setLoading(false);
         }
-      } else {
-        setLoading(false);
       }
     };
 
     fetchPermissions();
-  }, [user]); // Runs when `user` changes
+  }, [user]);
 
-  // Function to update user in context
-  const setUserPermissions = (newUser) => {
+  // Allow manual setting of user and permissions (e.g. after login)
+  const setUserPermissions = async (newUser) => {
     setUser(newUser);
-    setLoading(true); // Set loading to true while fetching new permissions
+    if (newUser) {
+      try {
+        const permissionsData = await getPermissionsData(newUser.uid);
+        setPermissions(permissionsData);
+      } catch (error) {
+        console.error("Error setting user permissions:", error);
+      }
+    } else {
+      setPermissions(null);
+    }
   };
 
   return (
@@ -53,4 +93,8 @@ export const PermissionsProvider = ({ children }) => {
 // Custom hook to use PermissionsContext
 export const usePermissions = () => {
   return useContext(PermissionsContext);
+};
+
+PermissionsProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };

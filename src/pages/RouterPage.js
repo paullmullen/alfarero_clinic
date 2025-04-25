@@ -31,10 +31,10 @@ import {
 } from "@ant-design/icons";
 import {
   BrowserRouter as Router,
-  Switch,
+  Routes,
   Route,
   Link,
-  Redirect,
+  Navigate,
 } from "react-router-dom";
 import { firestore, auth } from "./../helpers/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
@@ -80,6 +80,7 @@ export const PermissionsProvider = ({ children }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      console.log("Current User: ", currentUser);
       setUser(currentUser);
       if (currentUser) {
         try {
@@ -87,6 +88,7 @@ export const PermissionsProvider = ({ children }) => {
           const userSnap = await getDoc(userRef);
           if (userSnap.exists()) {
             setPermissions(userSnap.data().permissions || null);
+            console.log("permissions:", userSnap.data().permissions);
           } else {
             setPermissions(null); // No permissions found
           }
@@ -178,10 +180,13 @@ export const RouterPage = () => {
   const [tapCount, setTapCount] = useState(0);
   const [count, setCount] = useState(0);
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const permissionsData = usePermissions();
-  console.log("Permissions Hook Output:", permissionsData);
   // eslint-disable-next-line no-unused-vars
   const { permissions, user, loading } = usePermissions();
+  console.log("Permissions Hook Output:", permissions);
+
+  if (!user) {
+    console.log("no user");
+  }
   const today = new Date();
 
   today.setHours(0, 0, 0, 0);
@@ -427,53 +432,28 @@ export const RouterPage = () => {
             >
               <AlertProvider>
                 <Suspense fallback={<div>Loading...</div>}>
-                  <Switch>
-                    <Route path="/ingresar-host" component={IngresarHost} />
-                    <Route path="/registro" component={Registro} />
-                    <Route path="/turnos" component={Turno} />
-                    <Route path="/escritorio" component={Escritorio} />
-                    <Route path="/anfitrion" component={Anfitrion} />
-                    <Route path="/survey" component={Survey} />
-                    <Route path="/member" component={Member} />
-                    <Route path="/location" component={Location} />
-                    <Route path="/loginpage" component={LoginPage} />
+                  <Routes>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/registro" element={<Registro />} />
+                    <Route path="/turnos" element={<Turno />} />
+                    <Route path="/escritorio" element={<Escritorio />} />
+                    <Route path="/member" element={<Member />} />
+                    <Route path="/ingresar-host" element={<IngresarHost />} />
+                    <Route path="/location" element={<Location />} />
+                    <Route path="/survey" element={<Survey />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/estadisticas" element={<Stats />} />
+                    <Route path="/anfitrion" element={<Anfitrion />} />
 
-                    {/* Protected Routes */}
+                    {/* Redirect for root path */}
                     <Route
-                      path="/estadisticas"
-                      render={(props) =>
-                        permissions?.stats ? (
-                          <Stats {...props} />
-                        ) : (
-                          <Redirect to="/not-authorized" />
-                        )
-                      }
-                    />
-                    <Route
-                      path="/settings"
-                      render={(props) =>
-                        permissions?.settings ? (
-                          <Settings {...props} />
-                        ) : (
-                          <Redirect to="/not-authorized" />
-                        )
-                      }
+                      path="/"
+                      element={<Navigate to="/registro" replace />}
                     />
 
-                    {/* Not Authorized Page */}
-                    <Route
-                      path="/not-authorized"
-                      render={() => (
-                        <div>
-                          <h1>{t("NOT_AUTHORIZED")}</h1>
-                          <h2>{t("NOT_AUTHD_MESSAGE")}</h2>
-                        </div>
-                      )}
-                    />
-
-                    {/* Catch-all Redirect */}
-                    <Redirect to="/ingresar-host" />
-                  </Switch>
+                    {/* Catch-all route for 404 */}
+                    <Route path="*" element={<div>404 - Page Not Found</div>} />
+                  </Routes>
                 </Suspense>
               </AlertProvider>
             </Content>

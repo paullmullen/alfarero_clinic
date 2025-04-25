@@ -4,7 +4,7 @@ import { collection, addDoc } from "firebase/firestore";
 
 import { useHideMenu } from "../hooks/useHideMenu";
 import { useTranslation } from "react-i18next";
-import { useHistory, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button, Form, Input, Divider, Radio, Space, Row, Col } from "antd";
 import { ReactComponent as AngryIcon } from "../img/angry.svg";
 import { ReactComponent as SadIcon } from "../img/sad.svg";
@@ -15,7 +15,7 @@ import { ReactComponent as ThrilledIcon } from "../img/thrilled.svg";
 const { TextArea } = Input;
 
 export const Survey = () => {
-  const history = useHistory();
+  const history = useNavigate();
   const [t] = useTranslation("global");
   const [surveyResult, setSurveyResult] = useState({
     source: "",

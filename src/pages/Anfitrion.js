@@ -8,7 +8,7 @@ import {
   handleStatusChange,
   handleDelete,
 } from "./../helpers/updateStationStatus";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { AlertInfo } from "../components/AlertInfo";
 import { useTranslation } from "react-i18next";
@@ -40,7 +40,7 @@ export const Anfitrion = () => {
 
   const [t] = useTranslation("global");
 
-  const history = useHistory();
+  const history = useNavigate();
 
   const handleMouseEnter = (record) => {
     setHoveredRowKey(record.pt_no);

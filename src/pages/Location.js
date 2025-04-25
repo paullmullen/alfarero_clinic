@@ -4,12 +4,12 @@ import React, { useEffect } from "react";
 import { Row, Col, Divider, Typography, Button, Select, Form } from "antd";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom"; // Use useHistory for React Router v5
+import { useNavigate } from "react-router-dom";
 
 const { Title, Text } = Typography;
 
 export const Location = () => {
-  const history = useHistory(); // Corrected hook for React Router v5
+  const history = useNavigate(); // Corrected hook for React Router v5
   const [t] = useTranslation("global");
 
   useHideMenu(false);
