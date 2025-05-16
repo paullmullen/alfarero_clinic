@@ -1,11 +1,13 @@
 import React from "react";
 import { UiProvider } from "./context/UiContext";
-import { RouterPage } from "./pages/RouterPage";
+import { PermissionsProvider, RouterPage } from "./pages/RouterPage";
 
 export const AlfareroApp = () => {
   return (
-    <UiProvider>
-      <RouterPage />
-    </UiProvider>
+    <PermissionsProvider>
+      <UiProvider>
+        <RouterPage />
+      </UiProvider>
+    </PermissionsProvider>
   );
 };

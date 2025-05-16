@@ -46,6 +46,7 @@ import {
   serverTimestamp,
   // collection,
 } from "firebase/firestore";
+import { ProtectedRoute } from "./../components/ProtectedRoute";
 import styled from "styled-components";
 
 import { AlertProvider } from "../hooks/alert";
@@ -181,8 +182,8 @@ export const RouterPage = () => {
   const [count, setCount] = useState(0);
   const [popoverOpen, setPopoverOpen] = useState(false);
   // eslint-disable-next-line no-unused-vars
-  const { permissions, user, loading } = usePermissions();
-  console.log("Permissions Hook Output:", permissions);
+  const { permissions: permissionsArray, user, loading } = usePermissions();
+  const permissions = permissionsArray?.[0] || {};
 
   if (!user) {
     console.log("no user");
@@ -307,13 +308,13 @@ export const RouterPage = () => {
     minute: "2-digit",
   });
 
-  const menuItems = [
+  const rawMenuItems = [
     {
       key: "1",
       icon: <LoginOutlined />,
       label: <Link to="/ingresar-host">{t("hostLogin")}</Link>,
     },
-    {
+    permissions.host && {
       key: "2",
       icon: <CoffeeOutlined />,
       label: <Link to="/anfitrion">{t("pfm")}</Link>,
@@ -338,7 +339,7 @@ export const RouterPage = () => {
       icon: <IdcardOutlined />,
       label: <Link to="/member">{t("MEMBERSHIP")}</Link>,
     },
-    {
+    permissions.stats && {
       key: "7",
       icon: <BarChartOutlined />,
       label: <Link to="/estadisticas">{t("statistics")}</Link>,
@@ -348,21 +349,22 @@ export const RouterPage = () => {
       icon: <CompassOutlined />,
       label: <Link to="/location">{t("LOCATION")}</Link>,
     },
-    {
+    permissions.settings && {
       key: "9",
       icon: <SettingOutlined />,
       label: <Link to="/settings">{t("SETTINGS")}</Link>,
     },
     {
       key: "10",
-      label: t("version"),
-    },
-    {
-      key: "11",
       icon: <LoginOutlined />,
       label: <Link to="/loginpage">{t("NewLogin")}</Link>,
     },
+    {
+      key: "11",
+      label: t("version"),
+    },
   ];
+  const menuItems = rawMenuItems.filter(Boolean);
 
   if (auth) {
     return (
@@ -441,9 +443,33 @@ export const RouterPage = () => {
                     <Route path="/ingresar-host" element={<IngresarHost />} />
                     <Route path="/location" element={<Location />} />
                     <Route path="/survey" element={<Survey />} />
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="/estadisticas" element={<Stats />} />
-                    <Route path="/anfitrion" element={<Anfitrion />} />
+                    {/* Protected Routes */}
+                    <Route
+                      path="/estadisticas"
+                      element={
+                        <ProtectedRoute requiredPermission="stats">
+                          <Stats />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/settings"
+                      element={
+                        <ProtectedRoute requiredPermission="settings">
+                          <Settings />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/anfitrion"
+                      element={
+                        <ProtectedRoute requiredPermission="host">
+                          <Anfitrion />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route path="/loginpage" element={<LoginPage />} />
 
                     {/* Redirect for root path */}
                     <Route
