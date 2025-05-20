@@ -7,7 +7,6 @@ import React, {
   createContext,
 } from "react";
 import { Timestamp } from "firebase/firestore";
-
 import {
   Layout,
   Menu,
@@ -44,11 +43,9 @@ import {
   getDoc,
   setDoc,
   serverTimestamp,
-  // collection,
 } from "firebase/firestore";
 import { ProtectedRoute } from "./../components/ProtectedRoute";
 import styled from "styled-components";
-
 import { AlertProvider } from "../hooks/alert";
 import { UiContext } from "../context/UiContext";
 import { LoginPage } from "./LoginPage";
@@ -57,22 +54,13 @@ import full_logo from "../img/full_logo.png";
 import { cleanPaulTests } from "../helpers/updateStationStatus";
 import PropTypes from "prop-types";
 
-// Permissions stuff
-// permissionsContext.js
-
+// PermissionsContext
 const PermissionsContext = createContext({
   permissions: null,
   loading: true,
   user: null,
-  setUserPermissions: () => {}, // Function to update user permissions
+  setUserPermissions: () => {},
 });
-
-// const getPermissionsData = async (userId) => {
-//   console.log("userId:", userId);
-//   const usersRef = collection(firestore, "users");
-//   const userData = usersRef.doc(userId);
-//   return userData.permissions;
-// };
 
 export const PermissionsProvider = ({ children }) => {
   const [permissions, setPermissions] = useState(null);
@@ -88,14 +76,30 @@ export const PermissionsProvider = ({ children }) => {
           const userRef = doc(firestore, "users", currentUser.uid);
           const userSnap = await getDoc(userRef);
           if (userSnap.exists()) {
-            setPermissions(userSnap.data().permissions || null);
-            console.log("permissions:", userSnap.data().permissions);
+            let perms = userSnap.data().permissions || {
+              host: false,
+              settings: false,
+              stats: false,
+            };
+            if (Array.isArray(perms)) {
+              perms = perms[0] || {
+                host: false,
+                settings: false,
+                stats: false,
+              };
+              console.warn(
+                "Converting array-based permissions to object:",
+                perms
+              );
+            }
+            setPermissions(perms);
+            console.log("permissions:", perms);
           } else {
-            setPermissions(null); // No permissions found
+            setPermissions({ host: false, settings: false, stats: false });
           }
         } catch (error) {
           console.error("Error fetching user permissions:", error);
-          setPermissions(null);
+          setPermissions({ host: false, settings: false, stats: false });
         }
       } else {
         setPermissions(null);
@@ -106,19 +110,25 @@ export const PermissionsProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
+  const setUserPermissions = (newPermissions) => {
+    setPermissions(newPermissions);
+  };
+
   return (
-    <PermissionsContext.Provider value={{ permissions, loading, user }}>
+    <PermissionsContext.Provider
+      value={{ permissions, loading, user, setUserPermissions }}
+    >
       {children}
     </PermissionsContext.Provider>
   );
 };
 
-export const usePermissions = () => {
-  return useContext(PermissionsContext);
-};
-
 PermissionsProvider.propTypes = {
   children: PropTypes.node.isRequired,
+};
+
+export const usePermissions = () => {
+  return useContext(PermissionsContext);
 };
 
 const Registro = lazy(() =>
@@ -174,64 +184,40 @@ const CustomSider = styled(Sider).withConfig({
   }
 `;
 
-export const RouterPage = () => {
-  const { ocultarMenu } = useContext(UiContext);
-  const [t] = useTranslation("global");
+// Sub-component for the main layout to avoid hook mismatch
+const MainLayout = ({ ocultarMenu, t, permissions }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [tapCount, setTapCount] = useState(0);
   const [count, setCount] = useState(0);
   const [popoverOpen, setPopoverOpen] = useState(false);
-  // eslint-disable-next-line no-unused-vars
-  const { permissions: permissionsArray, user, loading } = usePermissions();
-  const permissions = permissionsArray?.[0] || {};
 
-  if (!user) {
-    console.log("no user");
-  }
   const today = new Date();
-
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date();
   tomorrow.setHours(24, 0, 0, 0);
 
-  // Convert JS Date to Firestore Timestamp
   const todayTimestamp = Timestamp.fromDate(today);
   const tomorrowTimestamp = Timestamp.fromDate(tomorrow);
 
   const handleHeaderTitleTap = () => {
     setTapCount(tapCount + 1);
-
     if (tapCount + 1 === 5) {
       setPopoverOpen(true);
     }
-
     setTimeout(() => {
-      setTapCount(0); // Reset tap count after a timeout
+      setTapCount(0);
     }, 1000);
   };
 
-  /**********************************************************************/
-  // This function runs whenever a user has the app open.  It causes a
-  // change to the run_aggregation collection in the database.  There is a
-  // cloud function that is triggered to run whenever that collection is
-  // modified.  That function aggregates statistics for reporting.
-  // When the last user closes the app, the function will not run again
-  // and the cloud function will stop being triggered, saving cloud costs.
-  /**********************************************************************/
-
   const checkAndUpdateTimestamp = async () => {
     const timestampRef = doc(firestore, "run_aggregation", "timestamp");
-
     try {
       const docSnapshot = await getDoc(timestampRef);
-
       if (docSnapshot.exists()) {
         const lastUpdated = docSnapshot.data().last_updated;
-
         if (lastUpdated instanceof Timestamp) {
           const currentTime = Timestamp.now();
           const diffInSeconds = currentTime.seconds - lastUpdated.seconds;
-
           if (diffInSeconds >= 60) {
             await updateDoc(timestampRef, { last_updated: serverTimestamp() });
           }
@@ -265,7 +251,6 @@ export const RouterPage = () => {
       checkAndUpdateTimestamp();
       setCurrentTime(new Date());
     }, 60000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -286,22 +271,17 @@ export const RouterPage = () => {
             }),
           }
         );
-
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
-
         const data = await response.json();
-
         setCount(data.records);
-        return;
       } catch (error) {
         console.error("Error fetching patients:", error);
-        return;
       }
     };
     fetchPatientCount();
-  }, [currentTime]);
+  }, [currentTime, todayTimestamp, tomorrowTimestamp]);
 
   const formattedTime = currentTime.toLocaleTimeString([], {
     hour: "2-digit",
@@ -314,10 +294,11 @@ export const RouterPage = () => {
       icon: <LoginOutlined />,
       label: <Link to="/ingresar-host">{t("hostLogin")}</Link>,
     },
-    permissions.host && {
+    {
       key: "2",
       icon: <CoffeeOutlined />,
       label: <Link to="/anfitrion">{t("pfm")}</Link>,
+      disabled: !permissions?.host,
     },
     {
       key: "3",
@@ -339,20 +320,22 @@ export const RouterPage = () => {
       icon: <IdcardOutlined />,
       label: <Link to="/member">{t("MEMBERSHIP")}</Link>,
     },
-    permissions.stats && {
+    {
       key: "7",
       icon: <BarChartOutlined />,
       label: <Link to="/estadisticas">{t("statistics")}</Link>,
+      disabled: !permissions?.stats,
     },
     {
       key: "8",
       icon: <CompassOutlined />,
       label: <Link to="/location">{t("LOCATION")}</Link>,
     },
-    permissions.settings && {
+    {
       key: "9",
       icon: <SettingOutlined />,
       label: <Link to="/settings">{t("SETTINGS")}</Link>,
+      disabled: !permissions?.settings,
     },
     {
       key: "10",
@@ -364,130 +347,140 @@ export const RouterPage = () => {
       label: t("version"),
     },
   ];
-  const menuItems = rawMenuItems.filter(Boolean);
 
-  if (auth) {
-    return (
-      <Layout style={{ minHeight: "100vh", minWidth: "100%" }}>
-        <Router>
-          <CustomSider
-            collapsedWidth="0"
-            breakpoint="lg"
-            hidden={ocultarMenu}
-            isDev={isAlfareroDev}
+  const menuItems = rawMenuItems.filter((item) => !item.disabled);
+
+  return (
+    <Layout style={{ minHeight: "100vh", minWidth: "100%" }}>
+      <Router>
+        <CustomSider
+          collapsedWidth="0"
+          breakpoint="lg"
+          hidden={ocultarMenu}
+          isDev={isAlfareroDev}
+        >
+          <Menu
+            theme="dark"
+            mode="inline"
+            defaultSelectedKeys={["1"]}
+            items={menuItems}
+          />
+        </CustomSider>
+        <Layout className="site-layout">
+          <Header
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              backgroundColor: isAlfareroDev ? "#e6e6fa" : "#fff",
+              alignItems: "center",
+            }}
           >
-            <Menu
-              theme="dark"
-              mode="inline"
-              defaultSelectedKeys={["1"]}
-              items={menuItems}
-            />
-          </CustomSider>
-          <Layout className="site-layout">
-            <Header
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                backgroundColor: isAlfareroDev ? "#e6e6fa" : "#fff",
-                alignItems: "center",
-              }}
-            >
-              <Row>
-                <Col>
-                  <a href="/registro">
-                    <Image
-                      src={full_logo}
-                      preview={false}
-                      height={42}
-                      width={185}
-                    />
-                  </a>
-                </Col>
-              </Row>
-              <Row>
-                <Col>
-                  <Title level={4}>
-                    <Title level={4}>
-                      {formattedTime}{" "}
-                      {count !== 0 && `- ${count} ${t("patients")}`}
-                    </Title>
-                  </Title>
-                </Col>
-              </Row>
-              <Row>
-                <Col>
-                  <div onClick={handleHeaderTitleTap}>
-                    <Button className="no-border-button">
-                      <Title level={4}>{t("headerTitle")}</Title>
-                    </Button>
-                  </div>
-                  <Popover
-                    content={popoverContent}
-                    open={popoverOpen}
-                    onOpenChange={setPopoverOpen}
+            <Row>
+              <Col>
+                <a href="/registro">
+                  <Image
+                    src={full_logo}
+                    preview={false}
+                    height={42}
+                    width={185}
                   />
-                </Col>
-              </Row>
-            </Header>
-            <Content
-              style={{ margin: "24px 16px", padding: 24, minHeight: 280 }}
-            >
-              <AlertProvider>
-                <Suspense fallback={<div>Loading...</div>}>
-                  <Routes>
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/registro" element={<Registro />} />
-                    <Route path="/turnos" element={<Turno />} />
-                    <Route path="/escritorio" element={<Escritorio />} />
-                    <Route path="/member" element={<Member />} />
-                    <Route path="/ingresar-host" element={<IngresarHost />} />
-                    <Route path="/location" element={<Location />} />
-                    <Route path="/survey" element={<Survey />} />
-                    {/* Protected Routes */}
-                    <Route
-                      path="/estadisticas"
-                      element={
-                        <ProtectedRoute requiredPermission="stats">
-                          <Stats />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/settings"
-                      element={
-                        <ProtectedRoute requiredPermission="settings">
-                          <Settings />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/anfitrion"
-                      element={
-                        <ProtectedRoute requiredPermission="host">
-                          <Anfitrion />
-                        </ProtectedRoute>
-                      }
-                    />
+                </a>
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <Title level={4}>
+                  {formattedTime} {count !== 0 && `- ${count} ${t("patients")}`}
+                </Title>
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <div onClick={handleHeaderTitleTap}>
+                  <Button className="no-border-button">
+                    <Title level={4}>{t("headerTitle")}</Title>
+                  </Button>
+                </div>
+                <Popover
+                  content={popoverContent}
+                  open={popoverOpen}
+                  onOpenChange={setPopoverOpen}
+                />
+              </Col>
+            </Row>
+          </Header>
+          <Content style={{ margin: "24px 16px", padding: 24, minHeight: 280 }}>
+            <AlertProvider>
+              <Suspense fallback={<div>Loading...</div>}>
+                <Routes>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/registro" element={<Registro />} />
+                  <Route path="/turnos" element={<Turno />} />
+                  <Route path="/escritorio" element={<Escritorio />} />
+                  <Route path="/member" element={<Member />} />
+                  <Route path="/ingresar-host" element={<IngresarHost />} />
+                  <Route path="/location" element={<Location />} />
+                  <Route path="/survey" element={<Survey />} />
+                  <Route
+                    path="/estadisticas"
+                    element={
+                      <ProtectedRoute requiredPermission="stats">
+                        <Stats />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/settings"
+                    element={
+                      <ProtectedRoute requiredPermission="settings">
+                        <Settings />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/anfitrion"
+                    element={
+                      <ProtectedRoute requiredPermission="host">
+                        <Anfitrion />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/loginpage" element={<LoginPage />} />
+                  <Route
+                    path="/"
+                    element={<Navigate to="/registro" replace />}
+                  />
+                  <Route path="*" element={<div>404 - Page Not Found</div>} />
+                </Routes>
+              </Suspense>
+            </AlertProvider>
+          </Content>
+        </Layout>
+      </Router>
+    </Layout>
+  );
+};
 
-                    <Route path="/loginpage" element={<LoginPage />} />
+MainLayout.propTypes = {
+  ocultarMenu: PropTypes.bool.isRequired,
+  t: PropTypes.func.isRequired,
+  permissions: PropTypes.object,
+};
 
-                    {/* Redirect for root path */}
-                    <Route
-                      path="/"
-                      element={<Navigate to="/registro" replace />}
-                    />
+export const RouterPage = () => {
+  const { ocultarMenu } = useContext(UiContext);
+  const [t] = useTranslation("global");
+  const { permissions, user, loading } = usePermissions();
 
-                    {/* Catch-all route for 404 */}
-                    <Route path="*" element={<div>404 - Page Not Found</div>} />
-                  </Routes>
-                </Suspense>
-              </AlertProvider>
-            </Content>
-          </Layout>
-        </Router>
-      </Layout>
-    );
-  } else {
-    return <text>Not authorized</text>;
+  if (loading) {
+    return <div>Loading...</div>;
   }
+
+  if (!user) {
+    return <LoginPage />;
+  }
+
+  return (
+    <MainLayout ocultarMenu={ocultarMenu} t={t} permissions={permissions} />
+  );
 };

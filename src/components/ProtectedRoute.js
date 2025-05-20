@@ -17,7 +17,7 @@ export const ProtectedRoute = ({ children, requiredPermission }) => {
 
   if (loading) return null;
 
-  if (!user || !permissions[0]?.[requiredPermission]) {
+  if (!user || !permissions?.[requiredPermission]) {
     return <Navigate to="/turnos" />;
   }
 
