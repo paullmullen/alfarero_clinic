@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useEffect, useState } from "react";
 import {
   Input,
@@ -8,8 +9,10 @@ import {
   Col,
   Select,
   Button,
+  Switch,
+  Table,
 } from "antd";
-import { HexColorPicker } from "react-colorful"; // Updated import
+import { HexColorPicker } from "react-colorful";
 import { firestore } from "../helpers/firebaseConfig";
 import { useTranslation } from "react-i18next";
 import { useHideMenu } from "../hooks/useHideMenu";
@@ -18,7 +21,9 @@ import {
   getDocs,
   doc,
   updateDoc,
+  onSnapshot,
   addDoc,
+  Timestamp,
 } from "firebase/firestore";
 
 // Import the LocationPicker component
@@ -30,6 +35,8 @@ export const Settings = () => {
   const [t] = useTranslation("global");
   const [stations, setStations] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [permissionKeys, setPermissionKeys] = useState({});
 
   useEffect(() => {
     const fetchStations = async () => {
@@ -68,7 +75,70 @@ export const Settings = () => {
 
     fetchStations();
     fetchLocations();
-  }, [stations, locations]);
+  }, []);
+
+  useEffect(() => {
+    const usersRef = collection(firestore, "users");
+
+    const unsubscribe = onSnapshot(usersRef, (snapshot) => {
+      const userData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.data().name || "Unknown",
+        email: doc.data().email || "Unknown",
+        permissions:
+          typeof doc.data().permissions === "object" &&
+          doc.data().permissions !== null
+            ? doc.data().permissions
+            : {}, // Ensure it's an object (map)
+      }));
+      setUsers(userData);
+    });
+
+    return () => unsubscribe(); // Cleanup on unmount
+  }, []);
+
+  useEffect(() => {
+    const extractPermissionKeys = (usersData) => {
+      const allKeys = new Set();
+      usersData.forEach((user) => {
+        Object.keys(user.permissions).forEach((key) => allKeys.add(key));
+      });
+      setPermissionKeys(Array.from(allKeys).sort()); // Sort alphabetically
+    };
+    extractPermissionKeys(users);
+  }, [users]);
+
+  const handlePermissionChange = async (userId, permissionKey, newValue) => {
+    try {
+      const userRef = doc(firestore, "users", userId);
+      const updatedTimestamp = Timestamp.now(); // Capture timestamp once
+
+      await updateDoc(userRef, {
+        [`permissions.${permissionKey}`]: newValue,
+        updated: updatedTimestamp, // Update specific field
+      });
+
+      console.log(
+        `Updated ${permissionKey} to ${newValue} for user ${userId} at ${updatedTimestamp}.`
+      );
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === userId
+            ? {
+                ...user,
+                permissions: {
+                  ...user.permissions,
+                  [permissionKey]: newValue,
+                },
+                updated: updatedTimestamp,
+              }
+            : user
+        )
+      );
+    } catch (error) {
+      console.error("Error updating permissions:", error);
+    }
+  };
 
   const handleLocationUpdate = async (locationId, key, value) => {
     try {
@@ -218,6 +288,54 @@ export const Settings = () => {
       >
         {t("ADD_LOCATION")}
       </Button>
+      <Divider orientation="left">
+        <Title level={2}>{t("USER_PERMISSIONS")}</Title>
+      </Divider>
+      <Table
+        dataSource={users}
+        rowKey="id"
+        columns={[
+          {
+            title: t("NAME"),
+            dataIndex: "name",
+            key: "name",
+          },
+          {
+            title: t("EMAIL"),
+            dataIndex: "email",
+            key: "email",
+          },
+
+          ...(Array.isArray(permissionKeys) ? permissionKeys : []).map(
+            (key) => ({
+              title: key,
+              dataIndex: "permissions",
+              key: key,
+              render: (_, record) => {
+                try {
+                  // Convert array of objects into a lookup object
+                  const permissionsMap =
+                    typeof record.permissions === "object" &&
+                    record.permissions !== null
+                      ? { ...record.permissions } // Ensure it's copied properly
+                      : {};
+                  return (
+                    <Switch
+                      checked={permissionsMap[key] || false}
+                      onChange={(checked) =>
+                        handlePermissionChange(record.id, key, checked)
+                      }
+                    />
+                  );
+                } catch (innerError) {
+                  console.error("Error inside render function:", innerError);
+                  return <span>Error</span>; // Prevent crash
+                }
+              },
+            })
+          ),
+        ]}
+      />
     </div>
   );
 };

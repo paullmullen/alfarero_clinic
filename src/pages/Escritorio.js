@@ -17,7 +17,7 @@ import { fetchData } from "../helpers/fetchData";
 import { CloseCircleOutlined } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
-import { Redirect, useHistory } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { firestore } from "./../helpers/firebaseConfig";
 // import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -38,7 +38,7 @@ const { todayTimestamp, tomorrowTimestamp } = getTodayAndTomorrowTimestamps();
 
 export const Escritorio = () => {
   const [usuario] = useState(getUsuarioStorage());
-  const history = useHistory();
+  const history = useNavigate();
   const [patientsChanged, setPatientsChanged] = useState(true); // for a firestore listener that triggers a useEffect to reload the anfi table.
   const prevPatientsChangedRef = useRef(false); // Ref to store the previous value of patientsChanged.  the initial values of patientsChanged=true and ref=false will trigger the first render.
   const [data, setData] = useState([]);
@@ -138,7 +138,7 @@ export const Escritorio = () => {
   useHideMenu(false);
 
   if (!usuario.host || !usuario.servicio) {
-    return <Redirect to="/ingresar-host" />;
+    return <Navigate to="/ingresar-host" />;
   }
 
   // Content of the whole rendered table

@@ -98,7 +98,6 @@ export const handleDelete = async (hoveredRowKey, history) => {
       gender: patData.gender,
     };
 
-    // Redirect to the survey page with patient details
     history.push({ pathname: "/survey", state: result });
   } catch (error) {
     console.error("Error deleting patient:", error);

@@ -10,7 +10,7 @@ import {
   Col,
 } from "antd";
 import { SaveOutlined } from "@ant-design/icons";
-import { useHistory, Redirect } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { getUsuarioStorage } from "../helpers/getUsuarioStorage";
 import { useAlert } from "../hooks/alert";
@@ -41,7 +41,7 @@ const tailLayout = {
 };
 
 export const IngresarHost = () => {
-  const history = useHistory();
+  const history = useNavigate();
   const { showAlert } = useAlert();
   const [form] = Form.useForm();
   const [usuario] = useState(getUsuarioStorage());
@@ -109,9 +109,9 @@ export const IngresarHost = () => {
   };
 
   if (usuario.host && usuario.servicio !== "pfm") {
-    return <Redirect to="/escritorio" />;
+    return <Navigate to="/escritorio" />;
   } else if (usuario.host && usuario.servicio === "pfm") {
-    return <Redirect to="/anfitrion" />;
+    return <Navigate to="/anfitrion" />;
   }
 
   // Renders the visible screen
