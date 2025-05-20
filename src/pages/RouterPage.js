@@ -48,7 +48,6 @@ import { ProtectedRoute } from "./../components/ProtectedRoute";
 import styled from "styled-components";
 import { AlertProvider } from "../hooks/alert";
 import { UiContext } from "../context/UiContext";
-import { LoginPage } from "./LoginPage";
 import { useTranslation } from "react-i18next";
 import full_logo from "../img/full_logo.png";
 import { cleanPaulTests } from "../helpers/updateStationStatus";
@@ -69,7 +68,6 @@ export const PermissionsProvider = ({ children }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      console.log("Current User: ", currentUser);
       setUser(currentUser);
       if (currentUser) {
         try {
@@ -93,7 +91,6 @@ export const PermissionsProvider = ({ children }) => {
               );
             }
             setPermissions(perms);
-            console.log("permissions:", perms);
           } else {
             setPermissions({ host: false, settings: false, stats: false });
           }
@@ -159,6 +156,9 @@ const Stats = lazy(() => import("./Stats"));
 const Anfitrion = lazy(() =>
   import("./Anfitrion").then((module) => ({ default: module.Anfitrion }))
 );
+const LoginPage = lazy(() =>
+  import("./LoginPage").then((module) => ({ default: module.LoginPage }))
+);
 
 const { Sider, Content, Header } = Layout;
 const { Title } = Typography;
@@ -184,8 +184,8 @@ const CustomSider = styled(Sider).withConfig({
   }
 `;
 
-// Sub-component for the main layout to avoid hook mismatch
-const MainLayout = ({ ocultarMenu, t, permissions }) => {
+// Sub-component for the main layout
+const MainLayout = ({ ocultarMenu, t, permissions, children }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [tapCount, setTapCount] = useState(0);
   const [count, setCount] = useState(0);
@@ -340,7 +340,7 @@ const MainLayout = ({ ocultarMenu, t, permissions }) => {
     {
       key: "10",
       icon: <LoginOutlined />,
-      label: <Link to="/loginpage">{t("NewLogin")}</Link>,
+      label: <Link to="/loginpage">{t("Login")}</Link>,
     },
     {
       key: "11",
@@ -410,50 +410,7 @@ const MainLayout = ({ ocultarMenu, t, permissions }) => {
             </Row>
           </Header>
           <Content style={{ margin: "24px 16px", padding: 24, minHeight: 280 }}>
-            <AlertProvider>
-              <Suspense fallback={<div>Loading...</div>}>
-                <Routes>
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/registro" element={<Registro />} />
-                  <Route path="/turnos" element={<Turno />} />
-                  <Route path="/escritorio" element={<Escritorio />} />
-                  <Route path="/member" element={<Member />} />
-                  <Route path="/ingresar-host" element={<IngresarHost />} />
-                  <Route path="/location" element={<Location />} />
-                  <Route path="/survey" element={<Survey />} />
-                  <Route
-                    path="/estadisticas"
-                    element={
-                      <ProtectedRoute requiredPermission="stats">
-                        <Stats />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/settings"
-                    element={
-                      <ProtectedRoute requiredPermission="settings">
-                        <Settings />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/anfitrion"
-                    element={
-                      <ProtectedRoute requiredPermission="host">
-                        <Anfitrion />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="/loginpage" element={<LoginPage />} />
-                  <Route
-                    path="/"
-                    element={<Navigate to="/registro" replace />}
-                  />
-                  <Route path="*" element={<div>404 - Page Not Found</div>} />
-                </Routes>
-              </Suspense>
-            </AlertProvider>
+            <AlertProvider>{children}</AlertProvider>
           </Content>
         </Layout>
       </Router>
@@ -465,6 +422,7 @@ MainLayout.propTypes = {
   ocultarMenu: PropTypes.bool.isRequired,
   t: PropTypes.func.isRequired,
   permissions: PropTypes.object,
+  children: PropTypes.node.isRequired,
 };
 
 export const RouterPage = () => {
@@ -472,15 +430,53 @@ export const RouterPage = () => {
   const [t] = useTranslation("global");
   const { permissions, user, loading } = usePermissions();
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!user) {
-    return <LoginPage />;
-  }
-
   return (
-    <MainLayout ocultarMenu={ocultarMenu} t={t} permissions={permissions} />
+    <Suspense fallback={<div>Loading...</div>}>
+      <MainLayout ocultarMenu={ocultarMenu} t={t} permissions={permissions}>
+        {loading ? (
+          <div>Loading...</div>
+        ) : !user ? (
+          <LoginPage />
+        ) : (
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/registro" element={<Registro />} />
+            <Route path="/turnos" element={<Turno />} />
+            <Route path="/escritorio" element={<Escritorio />} />
+            <Route path="/member" element={<Member />} />
+            <Route path="/ingresar-host" element={<IngresarHost />} />
+            <Route path="/location" element={<Location />} />
+            <Route path="/survey" element={<Survey />} />
+            <Route
+              path="/estadisticas"
+              element={
+                <ProtectedRoute requiredPermission="stats">
+                  <Stats />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute requiredPermission="settings">
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/anfitrion"
+              element={
+                <ProtectedRoute requiredPermission="host">
+                  <Anfitrion />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/loginpage" element={<LoginPage />} />
+            <Route path="/" element={<Navigate to="/registro" replace />} />
+            <Route path="*" element={<div>404 - Page Not Found</div>} />
+          </Routes>
+        )}
+      </MainLayout>
+    </Suspense>
   );
 };

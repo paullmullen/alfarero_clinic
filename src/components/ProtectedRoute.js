@@ -6,15 +6,6 @@ import { usePermissions } from "../pages/RouterPage";
 export const ProtectedRoute = ({ children, requiredPermission }) => {
   const { permissions, loading, user } = usePermissions();
 
-  console.log(
-    "Required Permission:",
-    requiredPermission,
-    "\nPermissions",
-    permissions,
-    "\nAuth'd:",
-    permissions?.[requiredPermission]
-  );
-
   if (loading) return null;
 
   if (!user || !permissions?.[requiredPermission]) {
