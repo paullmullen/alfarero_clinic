@@ -24,6 +24,8 @@ import {
   onSnapshot,
   addDoc,
   Timestamp,
+  query,
+  orderBy,
 } from "firebase/firestore";
 
 // Import the LocationPicker component
@@ -78,21 +80,28 @@ export const Settings = () => {
   }, []);
 
   useEffect(() => {
+    // Create a query with sorting by name in ascending order
     const usersRef = collection(firestore, "users");
+    const usersQuery = query(usersRef, orderBy("name", "asc"));
 
-    const unsubscribe = onSnapshot(usersRef, (snapshot) => {
-      const userData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        name: doc.data().name || "Unknown",
-        email: doc.data().email || "Unknown",
-        permissions:
-          typeof doc.data().permissions === "object" &&
-          doc.data().permissions !== null
-            ? doc.data().permissions
-            : {}, // Ensure it's an object (map)
-      }));
-      setUsers(userData);
-    });
+    const unsubscribe = onSnapshot(
+      usersQuery,
+      (snapshot) => {
+        const userData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          name: doc.data().name || "Unknown", // Fallback for missing name
+          email: doc.data().email || "Unknown", // Fallback for missing email
+          permissions:
+            doc.data().permissions && typeof doc.data().permissions === "object"
+              ? doc.data().permissions
+              : {}, // Ensure permissions is an object
+        }));
+        setUsers(userData);
+      },
+      (error) => {
+        console.error("Error fetching users:", error); // Basic error handling
+      }
+    );
 
     return () => unsubscribe(); // Cleanup on unmount
   }, []);

@@ -322,6 +322,13 @@ const Stats = () => {
     setArrivalTimeData(arrivalData);
   };
 
+  const setLastDaysRange = (days) => {
+    const endDate = dayjs(); // Current date
+    const startDate = endDate.subtract(days, "day"); // Subtract N days
+    form.setFieldsValue({ dateRange: [startDate, endDate] }); // Update form field
+    handleDateChange([startDate, endDate]); // Update pickerRange state
+  };
+
   const stationsData = async () => {
     try {
       const statsCollection = await getDocs(collection(firestore, "stats"));
@@ -616,7 +623,7 @@ const Stats = () => {
           <Form.Item
             name="dateRange"
             label={t("DATE_RANGE")}
-            style={{ margin: 0 }}
+            style={{ margin: 0 }} // Flex to maintain layout
           >
             <RangePicker
               format="DD-MMM-YYYY"
@@ -627,8 +634,21 @@ const Stats = () => {
                   : datePickerLocales.en
               }
               onChange={handleDateChange}
+              style={{ width: "50%" }}
             />
           </Form.Item>
+          <Button
+            onClick={() => setLastDaysRange(30)}
+            style={{ whiteSpace: "nowrap" }} // Prevent text wrapping
+          >
+            {t("LAST_30_DAYS")}
+          </Button>
+          <Button
+            onClick={() => setLastDaysRange(60)}
+            style={{ whiteSpace: "nowrap" }}
+          >
+            {t("LAST_60_DAYS")}
+          </Button>
         </div>
       </Form>
 

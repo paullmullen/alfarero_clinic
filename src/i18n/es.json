@@ -84,6 +84,8 @@
   "infoSavedSuccessfully": "Datos guardados correctamente",
   "lab": "Lab",
   "lab_results": "Lab: Resultados",
+  "LAST_30_DAYS": "Últimos 30 Días",
+  "LAST_60_DAYS": "Últimos 60 Días",
   "LATITUDE": "Latitud",
   "lecturaExt": "Lectura Externa",
   "lecturaInt": "Lectura Interna",

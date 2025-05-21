@@ -28,13 +28,7 @@ import {
   SettingOutlined,
   CompassOutlined,
 } from "@ant-design/icons";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Link,
-  Navigate,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { firestore, auth } from "./../helpers/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import {
@@ -293,6 +287,7 @@ const MainLayout = ({ ocultarMenu, t, permissions, children }) => {
       key: "1",
       icon: <LoginOutlined />,
       label: <Link to="/ingresar-host">{t("hostLogin")}</Link>,
+      disabled: !permissions?.basic,
     },
     {
       key: "2",
@@ -304,6 +299,7 @@ const MainLayout = ({ ocultarMenu, t, permissions, children }) => {
       key: "3",
       icon: <UserOutlined />,
       label: <Link to="/registro">{t("register")}</Link>,
+      disabled: !permissions?.host,
     },
     {
       key: "4",
@@ -314,11 +310,13 @@ const MainLayout = ({ ocultarMenu, t, permissions, children }) => {
       key: "5",
       icon: <OrderedListOutlined />,
       label: <Link to="/escritorio">{t("desk")}</Link>,
+      disabled: !permissions?.basic,
     },
     {
       key: "6",
       icon: <IdcardOutlined />,
       label: <Link to="/member">{t("MEMBERSHIP")}</Link>,
+      disabled: !permissions?.basic,
     },
     {
       key: "7",
@@ -330,6 +328,7 @@ const MainLayout = ({ ocultarMenu, t, permissions, children }) => {
       key: "8",
       icon: <CompassOutlined />,
       label: <Link to="/location">{t("LOCATION")}</Link>,
+      disabled: !permissions?.basic,
     },
     {
       key: "9",
@@ -377,7 +376,7 @@ const MainLayout = ({ ocultarMenu, t, permissions, children }) => {
           >
             <Row>
               <Col>
-                <a href="/registro">
+                <a href="/loginpage">
                   <Image
                     src={full_logo}
                     preview={false}
@@ -440,13 +439,55 @@ export const RouterPage = () => {
         ) : (
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/registro" element={<Registro />} />
+            <Route
+              path="/registro"
+              element={
+                <ProtectedRoute requiredPermission="host">
+                  <Registro />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/turnos" element={<Turno />} />
-            <Route path="/escritorio" element={<Escritorio />} />
-            <Route path="/member" element={<Member />} />
-            <Route path="/ingresar-host" element={<IngresarHost />} />
-            <Route path="/location" element={<Location />} />
-            <Route path="/survey" element={<Survey />} />
+            <Route
+              path="/escritorio"
+              element={
+                <ProtectedRoute requiredPermission="basic">
+                  <Escritorio />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/member"
+              element={
+                <ProtectedRoute requiredPermission="basic">
+                  <Member />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/ingresar-host"
+              element={
+                <ProtectedRoute requiredPermission="basic">
+                  <IngresarHost />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/location"
+              element={
+                <ProtectedRoute requiredPermission="basic">
+                  <Location />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/survey"
+              element={
+                <ProtectedRoute requiredPermission="basic">
+                  <Survey />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/estadisticas"
               element={
@@ -471,8 +512,8 @@ export const RouterPage = () => {
                 </ProtectedRoute>
               }
             />
-            <Route path="/loginpage" element={<LoginPage />} />
-            <Route path="/" element={<Navigate to="/registro" replace />} />
+            <Route path="/loginpage" element={<LoginPage />} />{" "}
+            <Route path="/" element={<LoginPage />} />
             <Route path="*" element={<div>404 - Page Not Found</div>} />
           </Routes>
         )}
