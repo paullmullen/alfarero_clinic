@@ -1,4 +1,3 @@
-// firebaseConfig.js
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import {
@@ -21,17 +20,35 @@ const firebaseConfig = {
   tenantId: process.env.REACT_APP_FIREBASE_TENANT_ID,
 };
 
-const firebaseApp = initializeApp(firebaseConfig);
-const firestore = getFirestore(firebaseApp);
-const auth = getAuth(firebaseApp);
+// Log config for debugging
+console.log("Firebase Config:", {
+  ...firebaseConfig,
+  apiKey: firebaseConfig.apiKey ? "[REDACTED]" : undefined,
+});
+
+let firebaseApp;
+let firestore;
+let auth;
+
+try {
+  firebaseApp = initializeApp(firebaseConfig);
+  firestore = getFirestore(firebaseApp);
+  auth = getAuth(firebaseApp);
+} catch (error) {
+  console.error(
+    "Firebase initialization error:",
+    error.message,
+    error.stack,
+    error
+  );
+  throw error; // Rethrow to fail fast during development
+}
 
 const loginWithMicrosoft = async () => {
   const provider = new OAuthProvider("microsoft.com");
-
   if (firebaseConfig.tenantId) {
     provider.setCustomParameters({ tenant: firebaseConfig.tenantId });
   }
-
   return signInWithPopup(auth, provider);
 };
 

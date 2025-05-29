@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense, Component } from "react";
 import {
   Input,
   InputNumber,
@@ -11,6 +11,8 @@ import {
   Button,
   Switch,
   Table,
+  Form,
+  message,
 } from "antd";
 import { HexColorPicker } from "react-colorful";
 import { firestore } from "../helpers/firebaseConfig";
@@ -26,19 +28,78 @@ import {
   Timestamp,
   query,
   orderBy,
+  getDoc,
 } from "firebase/firestore";
+import axios from "axios";
 
 // Import the LocationPicker component
-import { LocationPicker } from "../components/LocationPicker";
+import LocationPicker from "../components/LocationPicker";
+
+// Error Boundary to catch rendering issues
+class ErrorBoundary extends Component {
+  state = { hasError: false };
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <div>Error loading component. Please try again.</div>;
+    }
+    return this.props.children;
+  }
+}
 
 const { Title, Text } = Typography;
 
-export const Settings = () => {
+const Settings = () => {
   const [t] = useTranslation("global");
+  const [form] = Form.useForm();
   const [stations, setStations] = useState([]);
   const [locations, setLocations] = useState([]);
   const [users, setUsers] = useState([]);
   const [permissionKeys, setPermissionKeys] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  const sendEmail = async (values) => {
+    setLoading(true);
+    try {
+      const messageDocRef = doc(firestore, "signupMessage", "email_message");
+      const messageDoc = await getDoc(messageDocRef);
+
+      if (!messageDoc.exists()) {
+        message.error(t("EMAIL_MESSAGE_NOT_FOUND"));
+        setLoading(false);
+        return;
+      }
+
+      const { text, subjectLine } = messageDoc.data();
+
+      const response = await axios.post(
+        "https://sendemail-479287307088.us-central1.run.app",
+        {
+          to: values.email,
+          subject: subjectLine,
+          html: text,
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      if (response.status === 200) {
+        message.success(t("EMAIL_SENT_SUCCESS"));
+        form.resetFields();
+      } else {
+        message.error(t("EMAIL_SEND_ERROR"));
+      }
+    } catch (error) {
+      message.error(`${t("EMAIL_SEND_ERROR")}: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchStations = async () => {
@@ -77,10 +138,9 @@ export const Settings = () => {
 
     fetchStations();
     fetchLocations();
-  }, []);
+  }, [t]);
 
   useEffect(() => {
-    // Create a query with sorting by name in ascending order
     const usersRef = collection(firestore, "users");
     const usersQuery = query(usersRef, orderBy("name", "asc"));
 
@@ -89,21 +149,21 @@ export const Settings = () => {
       (snapshot) => {
         const userData = snapshot.docs.map((doc) => ({
           id: doc.id,
-          name: doc.data().name || "Unknown", // Fallback for missing name
-          email: doc.data().email || "Unknown", // Fallback for missing email
+          name: doc.data().name || "Unknown",
+          email: doc.data().email || "Unknown",
           permissions:
             doc.data().permissions && typeof doc.data().permissions === "object"
               ? doc.data().permissions
-              : {}, // Ensure permissions is an object
+              : {},
         }));
         setUsers(userData);
       },
       (error) => {
-        console.error("Error fetching users:", error); // Basic error handling
+        console.error("Error fetching users:", error);
       }
     );
 
-    return () => unsubscribe(); // Cleanup on unmount
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -112,7 +172,7 @@ export const Settings = () => {
       usersData.forEach((user) => {
         Object.keys(user.permissions).forEach((key) => allKeys.add(key));
       });
-      setPermissionKeys(Array.from(allKeys).sort()); // Sort alphabetically
+      setPermissionKeys(Array.from(allKeys).sort());
     };
     extractPermissionKeys(users);
   }, [users]);
@@ -120,11 +180,11 @@ export const Settings = () => {
   const handlePermissionChange = async (userId, permissionKey, newValue) => {
     try {
       const userRef = doc(firestore, "users", userId);
-      const updatedTimestamp = Timestamp.now(); // Capture timestamp once
+      const updatedTimestamp = Timestamp.now();
 
       await updateDoc(userRef, {
         [`permissions.${permissionKey}`]: newValue,
-        updated: updatedTimestamp, // Update specific field
+        updated: updatedTimestamp,
       });
 
       console.log(
@@ -168,7 +228,7 @@ export const Settings = () => {
     try {
       const maxTimeDocReference = doc(firestore, "stats", stationId);
       await updateDoc(maxTimeDocReference, { max_waiting_time: value });
-      console.log(`Updated waitingtime for:`, stationId);
+      console.log(`Updated waiting time for:`, stationId);
     } catch (error) {
       console.error(`Error updating waiting_time:`, error);
     }
@@ -207,7 +267,7 @@ export const Settings = () => {
 
       {stations.map((station) => (
         <Row key={station.id} align="middle" style={{ marginBottom: "16px" }}>
-          <Col span={6}>&nbsp;</Col>
+          <Col span={6}></Col>
           <Col span={3}>
             <Text style={{ fontSize: "16px" }}>{station.name}</Text>
           </Col>
@@ -258,24 +318,25 @@ export const Settings = () => {
               }
             />
           </Col>
-
           <Col span={12}>
-            <LocationPicker
-              currentLocation={{
-                lat: location.latitude,
-                lng: location.longitude,
-              }}
-              onLocationSelect={(lat, lng) => {
-                console.log("boom");
-                handleLocationUpdate(location.id, "latitude", lat);
-                handleLocationUpdate(location.id, "longitude", lng);
-              }}
-            />
+            <ErrorBoundary>
+              <Suspense fallback={<div>Loading Location Picker...</div>}>
+                <LocationPicker
+                  currentLocation={{
+                    lat: location.latitude,
+                    lng: location.longitude,
+                  }}
+                  onLocationSelect={(lat, lng) => {
+                    handleLocationUpdate(location.id, "latitude", lat);
+                    handleLocationUpdate(location.id, "longitude", lng);
+                  }}
+                />
+              </Suspense>
+            </ErrorBoundary>
           </Col>
-
           <Col span={24}>
             <div>
-              <br></br>
+              <br />
             </div>
             <Select
               mode="multiple"
@@ -314,7 +375,6 @@ export const Settings = () => {
             dataIndex: "email",
             key: "email",
           },
-
           ...(Array.isArray(permissionKeys) ? permissionKeys : []).map(
             (key) => ({
               title: key,
@@ -322,11 +382,10 @@ export const Settings = () => {
               key: key,
               render: (_, record) => {
                 try {
-                  // Convert array of objects into a lookup object
                   const permissionsMap =
                     typeof record.permissions === "object" &&
                     record.permissions !== null
-                      ? { ...record.permissions } // Ensure it's copied properly
+                      ? { ...record.permissions }
                       : {};
                   return (
                     <Switch
@@ -338,13 +397,38 @@ export const Settings = () => {
                   );
                 } catch (innerError) {
                   console.error("Error inside render function:", innerError);
-                  return <span>Error</span>; // Prevent crash
+                  return <span>Error</span>;
                 }
               },
             })
           ),
         ]}
       />
+
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={sendEmail}
+        style={{ maxWidth: 400 }}
+      >
+        <Form.Item
+          name="email"
+          label={t("SEND_INVITE_EMAIL")}
+          rules={[
+            { required: true, message: t("PLEASE_ENTER_EMAIL") },
+            { type: "email", message: t("PLEASE_ENTER_VALID_EMAIL") },
+          ]}
+        >
+          <Input placeholder={"eMail"} />
+        </Form.Item>
+        <Form.Item>
+          <Button type="primary" htmlType="submit" loading={loading}>
+            {t("SEND")}
+          </Button>
+        </Form.Item>
+      </Form>
     </div>
   );
 };
+
+export default Settings;

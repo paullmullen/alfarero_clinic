@@ -27,8 +27,6 @@ const LocationPicker = ({ currentLocation, onLocationSelect }) => {
       click: (e) => {
         const { lat, lng } = e.latlng;
         setPosition({ lat, lng });
-
-        // Update location only if the mouse is currently hovering over the map
         if (hovering) {
           onLocationSelect(lat, lng);
         }
@@ -45,7 +43,7 @@ const LocationPicker = ({ currentLocation, onLocationSelect }) => {
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
       <Marker position={position} draggable ref={markerRef} />
       <MapEvents />
@@ -61,4 +59,4 @@ LocationPicker.propTypes = {
   onLocationSelect: PropTypes.func.isRequired,
 };
 
-export { LocationPicker };
+export default LocationPicker;

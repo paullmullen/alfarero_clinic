@@ -143,9 +143,8 @@ const Location = lazy(() =>
 const Survey = lazy(() =>
   import("./Survey").then((module) => ({ default: module.Survey }))
 );
-const Settings = lazy(() =>
-  import("./Settings").then((module) => ({ default: module.Settings }))
-);
+const Settings = lazy(() => import("./Settings"));
+
 const Stats = lazy(() => import("./Stats"));
 const Anfitrion = lazy(() =>
   import("./Anfitrion").then((module) => ({ default: module.Anfitrion }))
