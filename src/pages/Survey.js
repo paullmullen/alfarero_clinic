@@ -90,9 +90,9 @@ export const Survey = () => {
           date: new Date(),
         });
         // Redirect to "/Anfitrion" after successful Firestore write
-        history.push("/Anfitrion");
+        history("/Anfitrion");
       } else {
-        history.push("/Anfitrion");
+        history("/Anfitrion");
       }
     } catch (error) {
       console.error("Error saving to Firestore:", error);

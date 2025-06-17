@@ -131,15 +131,15 @@ const Turno = lazy(() =>
 const Escritorio = lazy(() =>
   import("./Escritorio").then((module) => ({ default: module.Escritorio }))
 );
-const Member = lazy(() =>
-  import("./Member").then((module) => ({ default: module.Member }))
-);
+// const Member = lazy(() =>
+//   import("./Member").then((module) => ({ default: module.Member }))
+// );
 const IngresarHost = lazy(() =>
   import("./IngresarHost").then((module) => ({ default: module.IngresarHost }))
 );
-const Location = lazy(() =>
-  import("./Location").then((module) => ({ default: module.Location }))
-);
+// const Location = lazy(() =>
+//   import("./Location").then((module) => ({ default: module.Location }))
+// );
 const Survey = lazy(() =>
   import("./Survey").then((module) => ({ default: module.Survey }))
 );
@@ -311,24 +311,24 @@ const MainLayout = ({ ocultarMenu, t, permissions, children }) => {
       label: <Link to="/escritorio">{t("desk")}</Link>,
       disabled: !permissions?.basic,
     },
-    {
-      key: "6",
-      icon: <IdcardOutlined />,
-      label: <Link to="/member">{t("MEMBERSHIP")}</Link>,
-      disabled: !permissions?.basic,
-    },
+    // {
+    //   key: "6",
+    //   icon: <IdcardOutlined />,
+    //   label: <Link to="/member">{t("MEMBERSHIP")}</Link>,
+    //   disabled: !permissions?.basic,
+    // },
     {
       key: "7",
       icon: <BarChartOutlined />,
       label: <Link to="/estadisticas">{t("statistics")}</Link>,
       disabled: !permissions?.stats,
     },
-    {
-      key: "8",
-      icon: <CompassOutlined />,
-      label: <Link to="/location">{t("LOCATION")}</Link>,
-      disabled: !permissions?.basic,
-    },
+    // {
+    //   key: "8",
+    //   icon: <CompassOutlined />,
+    //   label: <Link to="/location">{t("LOCATION")}</Link>,
+    //   disabled: !permissions?.basic,
+    // },
     {
       key: "9",
       icon: <SettingOutlined />,
@@ -455,14 +455,14 @@ export const RouterPage = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
+            {/* <Route
               path="/member"
               element={
                 <ProtectedRoute requiredPermission="basic">
                   <Member />
                 </ProtectedRoute>
               }
-            />
+            /> */}
             <Route
               path="/ingresar-host"
               element={
@@ -471,14 +471,14 @@ export const RouterPage = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
+            {/* <Route
               path="/location"
               element={
                 <ProtectedRoute requiredPermission="basic">
                   <Location />
                 </ProtectedRoute>
               }
-            />
+            /> */}
             <Route
               path="/survey"
               element={

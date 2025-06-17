@@ -78,7 +78,7 @@ export const handleStatusChange = async (
   }
 };
 
-export const handleDelete = async (hoveredRowKey, history) => {
+export const handleDelete = async (hoveredRowKey, navigate) => {
   try {
     const docPatientRef = doc(firestore, "patients", hoveredRowKey);
 
@@ -98,7 +98,7 @@ export const handleDelete = async (hoveredRowKey, history) => {
       gender: patData.gender,
     };
 
-    history.push({ pathname: "/survey", state: result });
+    navigate("/Survey", { state: result });
   } catch (error) {
     console.error("Error deleting patient:", error);
   }

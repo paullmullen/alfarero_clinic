@@ -40,7 +40,7 @@ export const Anfitrion = () => {
 
   const [t] = useTranslation("global");
 
-  const history = useNavigate();
+  const navigate = useNavigate();
 
   const handleMouseEnter = (record) => {
     setHoveredRowKey(record.pt_no);
@@ -597,7 +597,7 @@ export const Anfitrion = () => {
           dataSource.length >= 1 ? (
             <Popconfirm
               title={t("areYouSure")}
-              onConfirm={() => handleDelete(hoveredRowKey, history)}
+              onConfirm={() => handleDelete(hoveredRowKey, navigate)}
             >
               <Image
                 src={fin}
