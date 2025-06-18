@@ -23,7 +23,7 @@ import complete from "../img/complete.svg";
 import fin from "../img/fin.png";
 import pay from "../img/pay.svg";
 
-export const Turno = () => {
+const Turno = () => {
   useHideMenu(true);
   const [data, setData] = useState([]);
   const [t] = useTranslation("global");
@@ -376,3 +376,5 @@ export const Turno = () => {
     </div>
   );
 };
+
+export default Turno;

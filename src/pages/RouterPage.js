@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import React, {
   useContext,
   useEffect,
@@ -28,7 +30,7 @@ import {
   SettingOutlined,
   CompassOutlined,
 } from "@ant-design/icons";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link, BrowserRouter as Router } from "react-router-dom";
 import { firestore, auth } from "./../helpers/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import {
@@ -122,36 +124,17 @@ export const usePermissions = () => {
   return useContext(PermissionsContext);
 };
 
-const Registro = lazy(() =>
-  import("./Registro").then((module) => ({ default: module.Registro }))
-);
-const Turno = lazy(() =>
-  import("./Turno").then((module) => ({ default: module.Turno }))
-);
-const Escritorio = lazy(() =>
-  import("./Escritorio").then((module) => ({ default: module.Escritorio }))
-);
-// const Member = lazy(() =>
-//   import("./Member").then((module) => ({ default: module.Member }))
-// );
-const IngresarHost = lazy(() =>
-  import("./IngresarHost").then((module) => ({ default: module.IngresarHost }))
-);
-// const Location = lazy(() =>
-//   import("./Location").then((module) => ({ default: module.Location }))
-// );
-const Survey = lazy(() =>
-  import("./Survey").then((module) => ({ default: module.Survey }))
-);
+const Registro = lazy(() => import("./Registro"));
+const Turno = lazy(() => import("./Turno"));
+const Escritorio = lazy(() => import("./Escritorio"));
+const Member = lazy(() => import("./Member"));
+const IngresarHost = lazy(() => import("./IngresarHost"));
+const Location = lazy(() => import("./Location"));
+const Survey = lazy(() => import("./Survey"));
 const Settings = lazy(() => import("./Settings"));
-
 const Stats = lazy(() => import("./Stats"));
-const Anfitrion = lazy(() =>
-  import("./Anfitrion").then((module) => ({ default: module.Anfitrion }))
-);
-const LoginPage = lazy(() =>
-  import("./LoginPage").then((module) => ({ default: module.LoginPage }))
-);
+const Anfitrion = lazy(() => import("./Anfitrion"));
+const LoginPage = lazy(() => import("./LoginPage"));
 
 const { Sider, Content, Header } = Layout;
 const { Title } = Typography;
@@ -350,68 +333,66 @@ const MainLayout = ({ ocultarMenu, t, permissions, children }) => {
 
   return (
     <Layout style={{ minHeight: "100vh", minWidth: "100%" }}>
-      <Router>
-        <CustomSider
-          collapsedWidth="0"
-          breakpoint="lg"
-          hidden={ocultarMenu}
-          isDev={isAlfareroDev}
+      <CustomSider
+        collapsedWidth="0"
+        breakpoint="lg"
+        hidden={ocultarMenu}
+        isDev={isAlfareroDev}
+      >
+        <Menu
+          theme="dark"
+          mode="inline"
+          defaultSelectedKeys={["1"]}
+          items={menuItems}
+        />
+      </CustomSider>
+      <Layout className="site-layout">
+        <Header
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            backgroundColor: isAlfareroDev ? "#e6e6fa" : "#fff",
+            alignItems: "center",
+          }}
         >
-          <Menu
-            theme="dark"
-            mode="inline"
-            defaultSelectedKeys={["1"]}
-            items={menuItems}
-          />
-        </CustomSider>
-        <Layout className="site-layout">
-          <Header
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              backgroundColor: isAlfareroDev ? "#e6e6fa" : "#fff",
-              alignItems: "center",
-            }}
-          >
-            <Row>
-              <Col>
-                <a href="/loginpage">
-                  <Image
-                    src={full_logo}
-                    preview={false}
-                    height={42}
-                    width={185}
-                  />
-                </a>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <Title level={4}>
-                  {formattedTime} {count !== 0 && `- ${count} ${t("patients")}`}
-                </Title>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <div onClick={handleHeaderTitleTap}>
-                  <Button className="no-border-button">
-                    <Title level={4}>{t("headerTitle")}</Title>
-                  </Button>
-                </div>
-                <Popover
-                  content={popoverContent}
-                  open={popoverOpen}
-                  onOpenChange={setPopoverOpen}
+          <Row>
+            <Col>
+              <a href="/loginpage">
+                <Image
+                  src={full_logo}
+                  preview={false}
+                  height={42}
+                  width={185}
                 />
-              </Col>
-            </Row>
-          </Header>
-          <Content style={{ margin: "24px 16px", padding: 24, minHeight: 280 }}>
-            <AlertProvider>{children}</AlertProvider>
-          </Content>
-        </Layout>
-      </Router>
+              </a>
+            </Col>
+          </Row>
+          <Row>
+            <Col>
+              <Title level={4}>
+                {formattedTime} {count !== 0 && `- ${count} ${t("patients")}`}
+              </Title>
+            </Col>
+          </Row>
+          <Row>
+            <Col>
+              <div onClick={handleHeaderTitleTap}>
+                <Button className="no-border-button">
+                  <Title level={4}>{t("headerTitle")}</Title>
+                </Button>
+              </div>
+              <Popover
+                content={popoverContent}
+                open={popoverOpen}
+                onOpenChange={setPopoverOpen}
+              />
+            </Col>
+          </Row>
+        </Header>
+        <Content style={{ margin: "24px 16px", padding: 24, minHeight: 280 }}>
+          <AlertProvider>{children}</AlertProvider>
+        </Content>
+      </Layout>
     </Layout>
   );
 };
@@ -429,15 +410,13 @@ export const RouterPage = () => {
   const { permissions, user, loading } = usePermissions();
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <MainLayout ocultarMenu={ocultarMenu} t={t} permissions={permissions}>
-        {loading ? (
-          <div>Loading...</div>
-        ) : !user ? (
-          <LoginPage />
-        ) : (
+    <Router>
+      <Suspense fallback={<div>Loading...</div>}>
+        <MainLayout ocultarMenu={ocultarMenu} t={t} permissions={permissions}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/loginpage" element={<LoginPage />} />
+            <Route path="/" element={<LoginPage />} />
             <Route
               path="/registro"
               element={
@@ -511,12 +490,10 @@ export const RouterPage = () => {
                 </ProtectedRoute>
               }
             />
-            <Route path="/loginpage" element={<LoginPage />} />{" "}
-            <Route path="/" element={<LoginPage />} />
             <Route path="*" element={<div>404 - Page Not Found</div>} />
           </Routes>
-        )}
-      </MainLayout>
-    </Suspense>
+        </MainLayout>
+      </Suspense>
+    </Router>
   );
 };

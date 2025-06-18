@@ -632,3 +632,5 @@ export const Registro = () => {
     </Row>
   );
 };
+
+export default Registro;

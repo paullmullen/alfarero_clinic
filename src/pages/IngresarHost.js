@@ -40,7 +40,7 @@ const tailLayout = {
   wrapperCol: { offset: 8, span: 14 },
 };
 
-export const IngresarHost = () => {
+const IngresarHost = () => {
   const history = useNavigate();
   const { showAlert } = useAlert();
   const [form] = Form.useForm();
@@ -194,3 +194,5 @@ export const IngresarHost = () => {
     </Row>
   );
 };
+
+export default IngresarHost;

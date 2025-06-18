@@ -36,7 +36,7 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { todayTimestamp, tomorrowTimestamp } = getTodayAndTomorrowTimestamps();
 
-export const Escritorio = () => {
+const Escritorio = () => {
   const [usuario] = useState(getUsuarioStorage());
   const history = useNavigate();
   const [patientsChanged, setPatientsChanged] = useState(true); // for a firestore listener that triggers a useEffect to reload the anfi table.
@@ -313,3 +313,5 @@ export const Escritorio = () => {
     </>
   );
 };
+
+export default Escritorio;

@@ -62,6 +62,12 @@ const Settings = () => {
   const [permissionKeys, setPermissionKeys] = useState({});
   const [loading, setLoading] = useState(false);
 
+  const renderFooter = () => (
+    <div style={{ fontSize: "12px", color: "#666", textAlign: "left" }}>
+      {t("MANAGER_DESCRIPTION")}
+    </div>
+  );
+
   const sendEmail = async (values) => {
     setLoading(true);
     try {
@@ -264,7 +270,6 @@ const Settings = () => {
           <Text>{t("ENTER_WAITING_TIMES")}</Text>
         </div>
       </Divider>
-
       {stations.map((station) => (
         <Row key={station.id} align="middle" style={{ marginBottom: "16px" }}>
           <Col span={6}></Col>
@@ -282,14 +287,12 @@ const Settings = () => {
           <Col span={8}>{(station.max_waiting_time / 60).toFixed(1)} min</Col>
         </Row>
       ))}
-
       <Divider orientation="left">
         <div style={{ textAlign: "left" }}>
           <Title level={2}>{t("LOCATIONS")}</Title>
           <Text>{t("MANAGE_LOCATIONS")}</Text>
         </div>
       </Divider>
-
       {locations.map((location) => (
         <Row
           key={location.id}
@@ -363,6 +366,7 @@ const Settings = () => {
       </Divider>
       <Table
         dataSource={users}
+        footer={renderFooter}
         rowKey="id"
         columns={[
           {
@@ -404,7 +408,6 @@ const Settings = () => {
           ),
         ]}
       />
-
       <Form
         form={form}
         layout="vertical"

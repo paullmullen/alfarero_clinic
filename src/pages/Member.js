@@ -22,7 +22,7 @@ import { CardPrint } from "../helpers/CardPrint";
 import full_logo from "../img/full_logo.png";
 import { collection, query, orderBy, getDocs } from "firebase/firestore"; // Import necessary methods
 
-export const Member = () => {
+const Member = () => {
   const [form] = Form.useForm();
   const [qrCodeData, setQrCodeData] = useState("Clinica");
   const [membershipTypes, setMembershipTypes] = useState([]);
@@ -191,3 +191,5 @@ export const Member = () => {
     </Row>
   );
 };
+
+export default Member;

@@ -29,7 +29,7 @@ import edit from "../img/edit.svg";
 import EditPatientData from "../components/EditPatientData.js";
 import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
 
-export const Anfitrion = () => {
+const Anfitrion = () => {
   useHideMenu(true);
   const [data, setData] = useState([]);
   const [statsData, setStatsData] = useState([]);
@@ -732,3 +732,5 @@ export const Anfitrion = () => {
     </>
   );
 };
+
+export default Anfitrion;
