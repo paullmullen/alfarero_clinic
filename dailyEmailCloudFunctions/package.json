@@ -1,0 +1,15 @@
+{
+  "name": "daily-email-sender",
+  "version": "1.0.0",
+  "description": "Sends daily emails to users with dailyEmail permission",
+  "main": "index.js",
+  "engines": {
+    "node": "18"
+  },
+  "dependencies": {
+    "firebase-admin": "^11.10.1",
+    "firebase-functions": "^4.4.1",
+    "node-fetch": "^2.6.9",
+    "axios": "^1.4.0"
+  }
+}
