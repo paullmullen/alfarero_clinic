@@ -20,12 +20,6 @@ const firebaseConfig = {
   tenantId: process.env.REACT_APP_FIREBASE_TENANT_ID,
 };
 
-// Log config for debugging
-console.log("Firebase Config:", {
-  ...firebaseConfig,
-  apiKey: firebaseConfig.apiKey ? "[REDACTED]" : undefined,
-});
-
 let firebaseApp;
 let firestore;
 let auth;

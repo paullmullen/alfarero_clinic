@@ -9,7 +9,7 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "**/functions/**"
+      "**/dailyEmailCloudFunctions/**"
     ],
     "rewrites": [
       {
@@ -18,7 +18,9 @@
       }
     ]
   },
-
+  "functions": {
+    "source": "dailyEmailCloudFunctions"
+  },
   "emulators": {
     "firestore": {
       "port": 8080

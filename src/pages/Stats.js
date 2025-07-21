@@ -649,6 +649,12 @@ const Stats = () => {
           >
             {t("LAST_60_DAYS")}
           </Button>
+          <Button
+            onClick={() => setLastDaysRange(0)}
+            style={{ whiteSpace: "nowrap" }}
+          >
+            {t("TODAY")}
+          </Button>
         </div>
       </Form>
 
