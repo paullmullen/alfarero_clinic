@@ -184,42 +184,47 @@ const Stats = () => {
   const handleDateChange = (values) => {
     let startDate, endDate;
 
-    // Check the type of values[0] and values[1]
+    // Normalize input to JavaScript Date
     if (values[0] instanceof Timestamp) {
-      // Firestore Timestamp
-      startDate = values[0].toDate(); // Convert Firestore Timestamp to JavaScript Date
+      startDate = values[0].toDate();
       endDate = values[1].toDate();
     } else if (dayjs(values[0]).isValid()) {
-      // dayjs object
-      startDate = dayjs(values[0]).toDate(); // Convert dayjs to JavaScript Date
+      startDate = dayjs(values[0]).toDate();
       endDate = dayjs(values[1]).toDate();
     } else if (values[0] instanceof Date) {
-      // JavaScript Date object
       startDate = values[0];
       endDate = values[1];
     } else {
       console.error("Invalid date type");
-      return; // Exit early if the date type is unrecognized
+      return;
     }
-    startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(23, 23, 59, 99);
-    // Log to see the values after conversion
 
-    // Store Firestore Timestamp
-    setDateRange([
-      Timestamp.fromDate(startDate), // Start of the selected day as a Firestore Timestamp
-      Timestamp.fromDate(endDate), // End of the selected day as a Firestore Timestamp
-    ]);
+    // Round start to beginning of day and end to end of day
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    // Calculate difference in days
+    const diffInMs = endDate - startDate;
+    const maxRangeInMs = 90 * 24 * 60 * 60 * 1000; // 90 days in ms
+
+    if (diffInMs > maxRangeInMs) {
+      alert(t("ONLY90"));
+      return; // Do not continue if over limit
+    }
+
+    // Proceed with updates
+    const firestoreStart = Timestamp.fromDate(startDate);
+    const firestoreEnd = Timestamp.fromDate(endDate);
+
+    setDateRange([firestoreStart, firestoreEnd]);
 
     const runAggregationRef = doc(firestore, "run_aggregation", "timestamp");
     updateDoc(runAggregationRef, {
-      range_start: Timestamp.fromDate(startDate),
-      range_end: Timestamp.fromDate(endDate),
+      range_start: firestoreStart,
+      range_end: firestoreEnd,
     });
 
     setColumnChanger(!columnChanger);
-
-    // Set the picker range as dayjs objects (for displaying in the picker)
     setPickerRange(dayjs(startDate), dayjs(endDate));
   };
 

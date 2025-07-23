@@ -5,6 +5,7 @@
 /functions/node_modules
 /.pnp
 .pnp.js
+/dailyEmailCloudFunctions/node_modules
 
 # testing
 /coverage
