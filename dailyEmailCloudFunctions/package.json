@@ -4,12 +4,15 @@
   "description": "Sends daily emails to users with dailyEmail permission",
   "main": "index.js",
   "engines": {
-    "node": "18"
+    "node": "20"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.x.x",
     "axios": "^1.4.0",
     "canvas": "^3.1.2",
     "chart.js": "^4.5.0",
+    "chartjs-chart-matrix": "^3.0.0",
+    "chartjs-plugin-datalabels": "^2.2.0",
     "firebase-admin": "^11.10.1",
     "firebase-functions": "^4.4.1",
     "node-fetch": "^2.6.9"
