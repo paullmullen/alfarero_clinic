@@ -124,6 +124,10 @@ function generateWaitingHeatmapChart(patientsSnapshot) {
     })
   );
 
+  const labeledStations = stations.map(
+    (s) => `${s} [${(thresholds[s] / 60).toFixed(0)} mins]`
+  );
+
   new Chart(ctx, {
     type: "matrix",
     data: {
@@ -133,28 +137,40 @@ function generateWaitingHeatmapChart(patientsSnapshot) {
           data: dataMatrix.flatMap((row, i) =>
             row.map((value, j) => ({
               x: `${hours[j]}:00`,
-              y: stations[i],
+              y: labeledStations[i],
               v: value,
             }))
           ),
           backgroundColor: function (ctx) {
             const dataPoint = ctx?.dataset?.data?.[ctx.dataIndex];
             const value = dataPoint?.v ?? 0;
-            const station = dataPoint?.y;
-            const maxValue = thresholds[station] ?? 900; // fallback si no hay umbral
+
+            // Extract base station name from label like "lab [15]"
+            const stationLabel = dataPoint?.y ?? "";
+            const station = stationLabel.split(" [")[0]; // gets "lab" from "lab [15]"
+
+            const maxValue = thresholds[station] ?? 900;
 
             if (value === 0) return "rgba(255,255,255,1)";
-            const ratio = Math.min(1, (value / maxValue) * 60);
-            const red = Math.floor(255 * ratio);
-            const green = Math.floor(255 * (1 - ratio));
-            return `rgba(${red}, ${green}, 0, 0.8)`;
+
+            if (value * 60 <= maxValue) {
+              const ratio = (value * 60) / maxValue;
+              const green = Math.floor(200 + 55 * ratio);
+              const red = Math.floor(100 * (1 - ratio));
+              return `rgba(${red}, ${green}, 0, 0.8)`;
+            } else {
+              const ratio = Math.min(1, (value * 60 - maxValue) / maxValue);
+              const red = Math.floor(200 + 55 * ratio);
+              const green = Math.floor(100 * (1 - ratio));
+              return `rgba(${red}, ${green}, 0, 0.8)`;
+            }
           },
 
-          borderColor: function (ctx) {
-            const dataPoint = ctx?.dataset?.data?.[ctx.dataIndex];
-            const value = dataPoint?.v ?? 0;
-            return value === 0 ? "rgba(255,255,255,0)" : "black";
-          },
+          borderColor: "black",
+          borderWidth: 1,
+
+          barPercentage: 1.0,
+          categoryPercentage: 1.0,
 
           width: function (ctx) {
             const chartArea = ctx.chart.chartArea;
@@ -202,21 +218,28 @@ function generateWaitingHeatmapChart(patientsSnapshot) {
         x: {
           type: "category",
           labels: hours.map((h) => `${h}:00`),
-          title: { display: true, text: "Hora del día" },
-
-          padding: {
-            top: 20,
-            bottom: 20,
+          title: {
+            display: true,
+            text: "Hora del día",
+            padding: { top: 20 },
+          },
+          ticks: {
+            padding: 10, // Adds space between labels and chart
+            autoSkip: false, // Ensures all labels are shown
+            maxRotation: 0, // Keeps labels horizontal
+            minRotation: 0,
           },
         },
         y: {
           type: "category",
-          labels: stations,
-          title: { display: true, text: "Servicio" },
-
-          padding: {
-            top: 20,
-            bottom: 10,
+          labels: labeledStations,
+          title: {
+            display: true,
+            text: "Servicio",
+            padding: { top: 20 },
+          },
+          ticks: {
+            padding: 10, // Adds space between labels and chart
           },
         },
       },
@@ -586,6 +609,8 @@ async function sendDailyEmails() {
     "en-US"
   )}</strong> pacientes para el <strong>${projectedDateStr}</strong>.</p>
 <p>¡Cristo Vive!<br/><br/>Josué Rivas,<br/>Gerente</p>
+
+
 
   `;
 
