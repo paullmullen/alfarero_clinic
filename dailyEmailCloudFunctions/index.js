@@ -26,6 +26,72 @@ async function getStationThresholds() {
   return thresholds;
 }
 
+const { createCanvas } = require("canvas");
+const Chart = require("chart.js/auto");
+
+function generatePatientSummaryChart(todayCounts, avgCounts) {
+  const canvas = createCanvas(800, 400);
+  const ctx = canvas.getContext("2d");
+
+  const labels = [
+    "Total",
+    "Pediatría",
+    "Clínica General",
+    "Fisioterapia",
+    "Odontología",
+    "Laboratorio",
+  ];
+
+  const todayData = labels.map((key) => todayCounts[key]);
+  const avgData = labels.map((key) => avgCounts[key]);
+
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Pacientes Hoy",
+          data: todayData,
+          backgroundColor: "#009688",
+        },
+        {
+          label: "Promedio Diario (últimos 30 días)",
+          data: avgData,
+          backgroundColor: "#FF7043",
+        },
+      ],
+    },
+    options: {
+      responsive: false,
+      plugins: {
+        legend: { display: true },
+        title: {
+          display: true,
+          text: "Resumen de Pacientes por Servicio",
+        },
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: "Servicio",
+          },
+        },
+        y: {
+          title: {
+            display: true,
+            text: "Número de pacientes",
+          },
+          beginAtZero: true,
+        },
+      },
+    },
+  });
+
+  return canvas.toDataURL(); // returns base64 image string
+}
+
 function generateArrivalChart(hourlyCounts) {
   const { createCanvas } = require("canvas");
   const Chart = require("chart.js/auto");
@@ -525,8 +591,13 @@ async function sendDailyEmails() {
 
   const insights = await getPatientInsights();
 
+  const patientSummaryChart = generatePatientSummaryChart(
+    insights.todayCounts,
+    insights.avgCounts
+  );
+
   const totalPatientsSnapshot = await db.collection("patients").count().get();
-  const totalPatients = totalPatientsSnapshot.data().count;
+  const totalPatients = totalPatientsSnapshot.data().count + 4074; //4074 is the number of patients that were served prior to the opening of the current record keeping system
 
   const { nextMilestone, projectedDateStr } = getMilestoneProjection(
     totalPatients,
@@ -592,7 +663,12 @@ async function sendDailyEmails() {
   </tbody>
 
 </table>
+
 <p>Tenga en cuenta que el total no equivale a la suma de los servicios. Farmacia, nutrición y otros servicios se incluyen en el total, pero no se reportan en columnas separadas.</p>
+<br/><br/>
+  <img src="${patientSummaryChart}" alt="Pacientes por hora (hoy)" />
+<br/><br/>
+
 <br/><br/>
   <img src="${arrivalChart}" alt="Pacientes por hora (hoy)" />
 <br/><br/>

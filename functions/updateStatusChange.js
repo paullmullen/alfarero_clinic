@@ -14,7 +14,7 @@ exports.updateStatusChange = onRequest(
     cors: [
       /localhost(:\d+)?$/,
       "https://multimedica.org",
-      "https://alfarero-478ad--testing-nc9ftcse.web.app",
+      "https://alfarero-478ad--testing-lurci61f.web.app/",
     ],
     methods: ["GET", "POST", "OPTIONS"], // Allowed methods
   },
@@ -157,39 +157,40 @@ exports.updateStatusChange = onRequest(
       updatedPlanOfCare[carePlanEntryIndex] = updatedEntry;
 
       // if the change is from anything to "complete", update the next eligible station to "waiting"
-      if (newStatus === "complete") {
-        let updated = false; // Track if we've already updated an eligible station
-        let updatedIndex = -1; // Track the index of the updated station
 
-        //but first, make sure no other station is already in "waiting" or "in_process"
+      // if the change is from anything to "complete", update the next eligible station to "waiting"
+      // but DO NOT auto-start if the next eligible station is "pha" or "lab"
+      if (newStatus === "complete") {
+        const EXCLUDED_STATIONS = new Set(["pha", "lab"]); // stations to skip
+        const ELIGIBLE_STATUSES = new Set(["2", "3", "4", "5", "6", "7"]); // can be auto-started
+
+        // First, ensure no station is already active (waiting or in_process)
         const alreadyWaitingOrInProcess = updatedPlanOfCare.some((s) =>
           ["waiting", "in_process"].includes(s.status)
         );
 
         if (!alreadyWaitingOrInProcess) {
-          const tempPlanOfCare = updatedPlanOfCare.map((station, index) => {
-            if (
-              !updated &&
-              ["2", "3", "4", "5", "6", "7"].includes(station.status)
-            ) {
-              updated = true; // Mark the first eligible station for update
-              updatedIndex = index; // Save the index of the updated station
-              return {
-                ...station,
-                status: "waiting",
-                waiting_start: now,
-                lastUpdate: now,
-              };
-            }
-            return station;
+          // Find the first station whose status is one of 2..7 AND whose station is not excluded
+          const nextIndex = updatedPlanOfCare.findIndex((station) => {
+            const stationCode = (station.station || "").toLowerCase();
+            return (
+              ELIGIBLE_STATUSES.has(station.status) &&
+              !EXCLUDED_STATIONS.has(stationCode)
+            );
           });
 
-          // Update the plan of care with the modified station
-          if (updatedIndex !== -1) {
-            updatedPlanOfCare[updatedIndex] = tempPlanOfCare[updatedIndex];
+          // If found, flip it to waiting and stamp times
+          if (nextIndex !== -1) {
+            updatedPlanOfCare[nextIndex] = {
+              ...updatedPlanOfCare[nextIndex],
+              status: "waiting",
+              waiting_start: now,
+              lastUpdate: now,
+            };
           }
         }
       }
+
       // Commit the updated array back to Firestore
       await patientRef.update({ plan_of_care: updatedPlanOfCare });
 
