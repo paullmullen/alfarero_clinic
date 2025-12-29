@@ -549,7 +549,7 @@ async function sendDailyEmails() {
     .where("start_time", "<", startOfTomorrow)
     .get();
 
-  if (todaySnapshot.count == 0) {
+  if (todaySnapshot.empty) {
     return [];
   }
 

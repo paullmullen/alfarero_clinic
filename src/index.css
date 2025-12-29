@@ -130,3 +130,22 @@ h5 {
   background-color: #f5f5f5; /* Replace with your desired color */
 }
 
+
+/* Minimum recommended touch target (Material = 48px, iOS = 44px) */
+.touch-target {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;       /* or 44px for iOS baseline */
+  height: 48px;
+  cursor: pointer;
+  /* Optional: increase hit area without shifting layout */
+  /* If your cell is tight, you can use extra padding instead of fixed size,
+     but fixed width/height keeps it consistent */
+}
+
+.touch-target:focus {
+  outline: 2px solid #1677ff; /* Ant Design blue */
+  outline-offset: 2px;
+  border-radius: 8px;
+}
