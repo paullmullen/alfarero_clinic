@@ -72,24 +72,16 @@ function generatePatientSummaryChart(todayCounts, avgCounts) {
         },
       },
       scales: {
-        x: {
-          title: {
-            display: true,
-            text: "Servicio",
-          },
-        },
+        x: { title: { display: true, text: "Servicio" } },
         y: {
-          title: {
-            display: true,
-            text: "Número de pacientes",
-          },
+          title: { display: true, text: "Número de pacientes" },
           beginAtZero: true,
         },
       },
     },
   });
 
-  return canvas.toDataURL(); // returns base64 image string
+  return canvas.toDataURL(); // base64 image string
 }
 
 function generateArrivalChart(hourlyCounts) {
@@ -133,13 +125,12 @@ function generateArrivalChart(hourlyCounts) {
     },
   });
 
-  return canvas.toDataURL(); // returns base64 image string
+  return canvas.toDataURL(); // base64 image string
 }
 
 function generateWaitingHeatmapChart(patientsSnapshot) {
   const { createCanvas } = require("canvas");
   const Chart = require("chart.js/auto");
-
   const ChartDataLabels = require("chartjs-plugin-datalabels");
   Chart.register(ChartDataLabels);
 
@@ -156,7 +147,7 @@ function generateWaitingHeatmapChart(patientsSnapshot) {
 
   patientsSnapshot.forEach((doc) => {
     const data = doc.data();
-    const plan = data.plan_of_care || [];
+    const plan = data.plan_of_care ?? [];
     for (const step of plan) {
       if (
         step.status === "complete" &&
@@ -178,10 +169,11 @@ function generateWaitingHeatmapChart(patientsSnapshot) {
 
   const stations = Array.from(stationLabels).sort();
   const hours = Array.from(hourLabels).sort((a, b) => a - b);
+
   dataMatrix = stations.map((station) =>
     hours.map((hour) => {
       const key = `${station}_${hour}`;
-      const times = stationHourMap[key] || [];
+      const times = stationHourMap[key] ?? [];
       return times.length > 0
         ? parseFloat(
             (times.reduce((a, b) => a + b, 0) / times.length).toFixed(0)
@@ -210,15 +202,11 @@ function generateWaitingHeatmapChart(patientsSnapshot) {
           backgroundColor: function (ctx) {
             const dataPoint = ctx?.dataset?.data?.[ctx.dataIndex];
             const value = dataPoint?.v ?? 0;
-
             // Extract base station name from label like "lab [15]"
             const stationLabel = dataPoint?.y ?? "";
             const station = stationLabel.split(" [")[0]; // gets "lab" from "lab [15]"
-
             const maxValue = thresholds[station] ?? 900;
-
             if (value === 0) return "rgba(255,255,255,1)";
-
             if (value * 60 <= maxValue) {
               const ratio = (value * 60) / maxValue;
               const green = Math.floor(200 + 55 * ratio);
@@ -231,13 +219,10 @@ function generateWaitingHeatmapChart(patientsSnapshot) {
               return `rgba(${red}, ${green}, 0, 0.8)`;
             }
           },
-
           borderColor: "black",
           borderWidth: 1,
-
           barPercentage: 1.0,
           categoryPercentage: 1.0,
-
           width: function (ctx) {
             const chartArea = ctx.chart.chartArea;
             if (!chartArea) {
@@ -261,20 +246,15 @@ function generateWaitingHeatmapChart(patientsSnapshot) {
         title: {
           display: true,
           text: "Mapa de calor de tiempo de espera por servicio y hora",
-
           padding: {
             top: 20,
             bottom: 20,
           },
         },
         legend: { display: false },
-
         datalabels: {
           color: "black",
-          font: {
-            weight: "bold",
-            size: 10,
-          },
+          font: { weight: "bold", size: 10 },
           formatter: (value) => {
             return value.v > 0 ? value.v.toFixed(0) : ""; // solo mostrar si > 0
           },
@@ -284,35 +264,25 @@ function generateWaitingHeatmapChart(patientsSnapshot) {
         x: {
           type: "category",
           labels: hours.map((h) => `${h}:00`),
-          title: {
-            display: true,
-            text: "Hora del día",
-            padding: { top: 20 },
-          },
+          title: { display: true, text: "Hora del día", padding: { top: 20 } },
           ticks: {
-            padding: 10, // Adds space between labels and chart
-            autoSkip: false, // Ensures all labels are shown
-            maxRotation: 0, // Keeps labels horizontal
+            padding: 10,
+            autoSkip: false,
+            maxRotation: 0,
             minRotation: 0,
           },
         },
         y: {
           type: "category",
           labels: labeledStations,
-          title: {
-            display: true,
-            text: "Servicio",
-            padding: { top: 20 },
-          },
-          ticks: {
-            padding: 10, // Adds space between labels and chart
-          },
+          title: { display: true, text: "Servicio", padding: { top: 20 } },
+          ticks: { padding: 10 },
         },
       },
     },
   });
 
-  return canvas.toDataURL(); // returns base64 image string
+  return canvas.toDataURL(); // base64 image string
 }
 
 function generateWaitingTimeChart(patientsSnapshot) {
@@ -326,7 +296,7 @@ function generateWaitingTimeChart(patientsSnapshot) {
 
   patientsSnapshot.forEach((doc) => {
     const data = doc.data();
-    const plan = data.plan_of_care || [];
+    const plan = data.plan_of_care ?? [];
     for (const step of plan) {
       if (step.status === "complete" && typeof step.waiting_time === "number") {
         const station = step.station;
@@ -376,12 +346,11 @@ function generateWaitingTimeChart(patientsSnapshot) {
     },
   });
 
-  return canvas.toDataURL(); // returns base64 image string
+  return canvas.toDataURL(); // base64 image string
 }
 
 function getLocalDayRangeTimestamps() {
   const now = new Date();
-
   const startOfTodayLocal = new Date(
     now.getFullYear(),
     now.getMonth(),
@@ -390,13 +359,11 @@ function getLocalDayRangeTimestamps() {
   const startOfTodayUTC = new Date(
     startOfTodayLocal.getTime() + TIMEZONE_OFFSET_MINUTES * 60 * 1000
   );
-
   const startOfTomorrowLocal = new Date(startOfTodayLocal);
   startOfTomorrowLocal.setDate(startOfTomorrowLocal.getDate() + 1);
   const startOfTomorrowUTC = new Date(
     startOfTomorrowLocal.getTime() + TIMEZONE_OFFSET_MINUTES * 60 * 1000
   );
-
   return {
     startOfToday: Timestamp.fromDate(startOfTodayUTC),
     startOfTomorrow: Timestamp.fromDate(startOfTomorrowUTC),
@@ -405,11 +372,9 @@ function getLocalDayRangeTimestamps() {
 
 function classifyServices(planOfCare) {
   const services = new Set();
-
-  for (const entry of planOfCare || []) {
+  for (const entry of planOfCare ?? []) {
     const { station, status } = entry;
     if (!station || status === "pending" || station === "reg") continue;
-
     switch (station) {
       case "ped":
         services.add("pediatria");
@@ -429,14 +394,12 @@ function classifyServices(planOfCare) {
         break;
     }
   }
-
   return services;
 }
 
 async function getPatientInsights() {
   const now = new Date();
   const { startOfToday, startOfTomorrow } = getLocalDayRangeTimestamps();
-
   const startOf30DaysAgoLocal = new Date(
     now.getFullYear(),
     now.getMonth(),
@@ -491,13 +454,11 @@ async function getPatientInsights() {
   last30DaysSnapshot.forEach((doc) => {
     const data = doc.data();
     if (!data.start_time) return;
-
     const localDate = new Date(
       data.start_time.toDate().getTime() - TIMEZONE_OFFSET_MINUTES * 60 * 1000
     );
     const dateKey = localDate.toISOString().split("T")[0];
     uniqueDateSet.add(dateKey);
-
     last30DaysCounts.total += 1;
     const services = classifyServices(data.plan_of_care);
     for (const service of services) {
@@ -506,17 +467,152 @@ async function getPatientInsights() {
   });
 
   const daysWithPatients = uniqueDateSet.size || 1;
-
   const avgCounts = {};
   for (const key in last30DaysCounts) {
     avgCounts[key] = last30DaysCounts[key] / daysWithPatients;
   }
 
-  return {
-    todayCounts,
-    avgCounts,
-  };
+  return { todayCounts, avgCounts };
 }
+
+/* ========= NUEVO: métricas y gráfica por type_of_visit ========= */
+
+function getVisitTypeMetrics(todaySnapshot, last30DaysSnapshot) {
+  // Contadores de hoy
+  const todayCounts = {};
+  todaySnapshot.forEach((doc) => {
+    const data = doc.data();
+    const vtype = (data.type_of_visit ?? "desconocido").toString();
+    todayCounts[vtype] = (todayCounts[vtype] ?? 0) + 1;
+  });
+
+  // Contadores de últimos 30 días + días únicos con pacientes
+  const lastCounts = {};
+  const uniqueDateSet = new Set();
+  if (last30DaysSnapshot) {
+    last30DaysSnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (!data.start_time) return;
+      const localDate = new Date(
+        data.start_time.toDate().getTime() - TIMEZONE_OFFSET_MINUTES * 60 * 1000
+      );
+      const dateKey = localDate.toISOString().split("T")[0];
+      uniqueDateSet.add(dateKey);
+
+      const vtype = (data.type_of_visit ?? "desconocido").toString();
+      lastCounts[vtype] = (lastCounts[vtype] ?? 0) + 1;
+    });
+  }
+
+  const daysWithPatients = uniqueDateSet.size || 1;
+  const avg30Counts = {};
+  for (const key of Object.keys(lastCounts)) {
+    avg30Counts[key] = lastCounts[key] / daysWithPatients;
+  }
+
+  // Orden por volumen Hoy (desc), si no existe Hoy, usa Promedio 30d
+  const allKeys = Array.from(
+    new Set([...Object.keys(todayCounts), ...Object.keys(avg30Counts)])
+  );
+  allKeys.sort((a, b) => {
+    const av = todayCounts[a] ?? avg30Counts[a] ?? 0;
+    const bv = todayCounts[b] ?? avg30Counts[b] ?? 0;
+    return bv - av;
+  });
+
+  return { todayCounts, avg30Counts, orderedKeys: allKeys };
+}
+
+async function getVisitTypeLabelMap() {
+  const snapshot = await db.collection("visit_types").get();
+  const labelMap = {};
+  snapshot.forEach((doc) => {
+    const data = doc.data() ?? {};
+    const code = (data.name ?? "").toString().trim();
+    const label = (data.visit_type ?? code).toString().trim(); // fallback al código si falta la descripción
+    if (code) labelMap[code] = label;
+  });
+  return labelMap;
+}
+
+function generateVisitTypeChart(
+  todayCounts,
+  avgCounts,
+  orderedKeys,
+  labelMap = {}
+) {
+  const { createCanvas } = require("canvas");
+  const Chart = require("chart.js/auto");
+
+  const height = Math.max(400, 40 * (orderedKeys?.length ?? 0) + 120);
+  const canvas = createCanvas(800, height);
+  const ctx = canvas.getContext("2d");
+
+  // Mapear códigos (orderedKeys) a descripciones legibles usando Firestore
+  const labels = (orderedKeys ?? []).map((code) => labelMap[code] ?? code);
+
+  const todayData = labels.map((_, i) => {
+    const k = orderedKeys[i]; // mantener métricas por el código original
+    return todayCounts[k] ?? 0;
+  });
+  const avgData = labels.map((_, i) => {
+    const k = orderedKeys[i];
+    return avgCounts[k] ?? 0;
+  });
+
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label: "Visitas Hoy", data: todayData, backgroundColor: "#3367D6" },
+        {
+          label: "Promedio Diario (últimos 30 días)",
+          data: avgData,
+          backgroundColor: "#FF7043",
+        },
+      ],
+    },
+    options: {
+      responsive: false,
+      indexAxis: "y",
+      plugins: {
+        legend: { display: true },
+        title: {
+          display: true,
+          text: "Visitas por Tipo (Hoy vs Promedio 30 días)",
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const v = ctx.parsed.x ?? 0;
+              // (Opcional) mostrar el código original junto con la etiqueta humana:
+              // const code = orderedKeys[ctx.dataIndex];
+              // return `${ctx.dataset.label}: ${v.toLocaleString("en-US")} (${code})`;
+              return `${ctx.dataset.label}: ${v.toLocaleString("en-US")}`;
+            },
+          },
+        },
+        datalabels: { display: false },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: "Número de visitas" },
+          beginAtZero: true,
+        },
+        y: {
+          title: { display: true, text: "Tipo de visita" },
+          ticks: { autoSkip: false },
+        },
+      },
+    },
+  });
+
+  return canvas.toDataURL();
+}
+``;
+
+/* ========= FIN NUEVO ========= */
 
 function getMilestoneProjection(totalPatients, avgDailyPatients) {
   const milestoneStep = 5000;
@@ -532,6 +628,7 @@ function getMilestoneProjection(totalPatients, avgDailyPatients) {
   projectedDate.setDate(
     projectedDate.getDate() + Math.round(calendarDaysNeeded)
   );
+
   const projectedDateStr = projectedDate.toLocaleDateString("es-ES", {
     day: "2-digit",
     month: "long",
@@ -543,6 +640,7 @@ function getMilestoneProjection(totalPatients, avgDailyPatients) {
 
 async function sendDailyEmails() {
   const { startOfToday, startOfTomorrow } = getLocalDayRangeTimestamps();
+
   const todaySnapshot = await db
     .collection("patients")
     .where("start_time", ">=", startOfToday)
@@ -553,11 +651,11 @@ async function sendDailyEmails() {
     return [];
   }
 
+  // Conteo por hora (hoy)
   const hourlyCounts = {};
   for (let hour = 7; hour <= 17; hour++) {
     hourlyCounts[hour] = 0;
   }
-
   todaySnapshot.forEach((doc) => {
     const data = doc.data();
     if (data.start_time) {
@@ -571,14 +669,32 @@ async function sendDailyEmails() {
     }
   });
 
+  // Obtener snapshot de últimos 30 días (para promedios por type_of_visit)
+  const now = new Date();
+  const startOf30DaysAgoLocal = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
+  startOf30DaysAgoLocal.setDate(startOf30DaysAgoLocal.getDate() - 30);
+  const startOf30DaysAgoUTC = new Date(
+    startOf30DaysAgoLocal.getTime() + TIMEZONE_OFFSET_MINUTES * 60 * 1000
+  );
+  const startOf30DaysAgoTimestamp = Timestamp.fromDate(startOf30DaysAgoUTC);
+
+  const last30DaysSnapshot = await db
+    .collection("patients")
+    .where("start_time", ">=", startOf30DaysAgoTimestamp)
+    .get();
+
+  // Destinatarios
   const usersSnapshot = await db.collection("users").get();
   const recipients = [];
-
   usersSnapshot.forEach((doc) => {
     const data = doc.data();
     if (data?.permissions?.dailyEmail === true && data.email) {
       recipients.push({
-        name: data.name || "Compañero",
+        name: data.name ?? "Compañero",
         email: data.email,
       });
     }
@@ -590,14 +706,30 @@ async function sendDailyEmails() {
   }
 
   const insights = await getPatientInsights();
-
   const patientSummaryChart = generatePatientSummaryChart(
     insights.todayCounts,
     insights.avgCounts
   );
 
+  // NUEVO: métricas y gráfica por type_of_visit
+
+  const {
+    todayCounts: visitTodayCounts,
+    avg30Counts: visitAvgCounts,
+    orderedKeys,
+  } = getVisitTypeMetrics(todaySnapshot, last30DaysSnapshot);
+
+  const visitTypeLabelMap = await getVisitTypeLabelMap(); // ← function call; variable holds the result
+
+  const visitTypeChart = generateVisitTypeChart(
+    visitTodayCounts,
+    visitAvgCounts,
+    orderedKeys,
+    visitTypeLabelMap
+  );
+
   const totalPatientsSnapshot = await db.collection("patients").count().get();
-  const totalPatients = totalPatientsSnapshot.data().count + 4074; //4074 is the number of patients that were served prior to the opening of the current record keeping system
+  const totalPatients = totalPatientsSnapshot.data().count + 4074; // pacientes pre-sistema
 
   const { nextMilestone, projectedDateStr } = getMilestoneProjection(
     totalPatients,
@@ -610,14 +742,10 @@ async function sendDailyEmails() {
   const waitingHeatmap = generateWaitingHeatmapChart(todaySnapshot);
 
   const html = `
-
-  
-
-  <div style="text-align: center; margin-bottom: 20px;">
-    <img src="https://firebasestorage.googleapis.com/v0/b/alfarero-478ad.appspot.com/o/full_logo.png?alt=media&token=11098abc-ae65-440e-8bfd-b345f65be332" alt="El Alfarero Multimédica" style="max-width: 200px;" />
-  </div>
-
-    <p>Estimado Compañero,</p>
+<div style="text-align: center; margin-bottom: 20px;">
+  <img src="https://firebasestorage.googleapis.com/v0/b/alfarero-478ad.appspot.com/o/full_logo.png?alt=media&token=11098abc-ae65-440e-8bfd-b345f65be332" />
+</div>
+<p>Estimado Compañero,</p>
 <p>A continuación se presenta un resumen de los servicios brindados hoy y el promedio diario de los últimos 30 días:</p>
 <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse;">
   <thead>
@@ -661,22 +789,21 @@ async function sendDailyEmails() {
         .toLocaleString("en-US")}</td>
     </tr>
   </tbody>
-
 </table>
-
 <p>Tenga en cuenta que el total no equivale a la suma de los servicios. Farmacia, nutrición y otros servicios se incluyen en el total, pero no se reportan en columnas separadas.</p>
-<br/><br/>
-  <img src="${patientSummaryChart}" alt="Pacientes por hora (hoy)" />
-<br/><br/>
 
 <br/><br/>
-  <img src="${arrivalChart}" alt="Pacientes por hora (hoy)" />
+<img src="${patientSummaryChart}" />
+
 <br/><br/>
-  <img src="${waitingChart}" alt="Pacientes por hora (hoy)" />
-  <br/><br/>
-    <img src="${waitingHeatmap}" alt="Pacientes por hora (hoy)" />
+<img src="${visitTypeChart}" />
 
-
+<br/><br/>
+<img src="${arrivalChart}" />
+<br/><br/>
+<img src="${waitingChart}" />
+<br/><br/>
+<img src="${waitingHeatmap}" />
 
 <p>Hasta la fecha se han atendido <strong>${totalPatients.toLocaleString(
     "en-US"
@@ -685,13 +812,9 @@ async function sendDailyEmails() {
     "en-US"
   )}</strong> pacientes para el <strong>${projectedDateStr}</strong>.</p>
 <p>¡Cristo Vive!<br/><br/>Josué Rivas,<br/>Gerente</p>
-
-
-
   `;
 
   const results = [];
-
   for (const { name, email } of recipients) {
     try {
       await axios.post(SEND_EMAIL_URL, {
@@ -702,13 +825,12 @@ async function sendDailyEmails() {
       console.log(`Email sent to ${email}`);
       results.push({ email, status: "sent" });
     } catch (error) {
-      const status = error.response?.status || "unknown";
-      const msg = error.response?.statusText || error.message;
+      const status = error.response?.status ?? "unknown";
+      const msg = error.response?.statusText ?? error.message;
       console.error(`Failed to send email to ${email}: [${status}] ${msg}`);
       results.push({ email, status: "failed", error: msg });
     }
   }
-
   return results;
 }
 
