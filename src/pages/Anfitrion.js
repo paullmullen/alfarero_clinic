@@ -1,6 +1,6 @@
-// Anfitrion.js (Step 2 with stable station order via statsData.sort_order)
+// Anfitrion.js (Step 2 + stateless renderStatusIcon + stable order + display filter + exclude complete)
 import React, { useEffect, useState, useMemo } from "react";
-import { Table, Image, Space, Popover, Popconfirm } from "antd";
+import { Table, Space, Popover, Popconfirm } from "antd";
 import {
   collection,
   query,
@@ -39,27 +39,19 @@ const Anfitrion = () => {
   useHideMenu(true);
 
   const [rowsRaw, setRowsRaw] = useState([]); // snapshot docs for today's patients
-  const [statsData, setStatsData] = useState([]); // station metrics (includes sort_order)
-  const [hoveredRowKey, setHoveredRowKey] = useState(null);
-  const [station, setStation] = useState("");
+  const [statsData, setStatsData] = useState([]); // station metrics (includes sort_order, display)
   const [t] = useTranslation("global");
   const navigate = useNavigate();
 
-  const handleMouseEnter = (record) => setHoveredRowKey(record.pt_no);
-  const handleMouseLeave = () => setHoveredRowKey(null);
-  const onSave = () => {
-    console.log("Patient data saved");
-  };
-
   const { todayTimestamp, tomorrowTimestamp } = getTodayAndTomorrowTimestamps();
 
-  // 🔴 Filtered real-time listener for today's patients
+  // 🔴 Filtered real-time listener for today's patients, excluding completed
   useEffect(() => {
     const q = query(
       collection(firestore, "patients"),
       where("start_time", ">=", todayTimestamp),
       where("start_time", "<", tomorrowTimestamp),
-      where("complete", "==", false)
+      where("complete", "==", false) // exclude completed patients
     );
 
     const unsubscribePatients = onSnapshot(q, (snapshot) => {
@@ -89,7 +81,7 @@ const Anfitrion = () => {
   }, [todayTimestamp, tomorrowTimestamp, setStatsData]);
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // STEP 2: Memoized helpers and derived data (with stable station order)
+  // STEP 2: Memoized helpers and derived data (stable order + display filter)
   // ─────────────────────────────────────────────────────────────────────────────
 
   // Station metrics map for O(1) lookup in column titles
@@ -101,11 +93,12 @@ const Anfitrion = () => {
     return map;
   }, [statsData]);
 
-  // List of station names sorted by statsData.sort_order (ascending, tie-break alphabetically)
+  /**
+   * Station names sorted by statsData.sort_order (ascending),
+   * filtered to only include stations with display === true (or missing -> treated as true).
+   */
   const stationNames = useMemo(() => {
-    // Keep only stations with a station_type
     const stations = statsData
-
       .filter(
         (s) =>
           !!s.station_type && (s.display === undefined || s.display === true)
@@ -118,7 +111,7 @@ const Anfitrion = () => {
             : Number.POSITIVE_INFINITY,
       }));
 
-    // Deduplicate by name, taking the lowest sort_order if duplicates exist
+    // Deduplicate by name and pick lowest sort_order
     const orderMap = new Map();
     stations.forEach(({ name, order }) => {
       if (!orderMap.has(name)) {
@@ -128,8 +121,7 @@ const Anfitrion = () => {
       }
     });
 
-    // Build array and sort by sort_order asc; tie-break alphabetically
-    const sortedNames = Array.from(orderMap.entries())
+    return Array.from(orderMap.entries())
       .sort((a, b) => {
         const [nameA, orderA] = a;
         const [nameB, orderB] = b;
@@ -137,8 +129,6 @@ const Anfitrion = () => {
         return String(nameA).localeCompare(String(nameB));
       })
       .map(([name]) => name);
-
-    return sortedNames;
   }, [statsData]);
 
   // Compute table rows once (sorted), including wtg_time and per-station statuses
@@ -208,131 +198,93 @@ const Anfitrion = () => {
     });
   }, [rowsRaw, t]);
 
-  // Memoized status icon popover content (uses hoveredRowKey + station from hover)
-  const iconScale = 1.5;
-  const editStatusContent = (
-    <Space wrap>
-      <Image
-        src={not_planned}
-        width={IconSizes.width * iconScale}
-        height={IconSizes.height * iconScale}
-        preview={false}
-        onClick={() =>
-          handleStatusChange("pending", hoveredRowKey, station, t("CHECKOUT"))
-        }
-      />
-      <Image
-        src={in_process}
-        width={IconSizes.width * iconScale}
-        height={IconSizes.height * iconScale}
-        preview={false}
-        onClick={() =>
-          handleStatusChange(
-            "in_process",
-            hoveredRowKey,
-            station,
-            t("CHECKOUT")
-          )
-        }
-      />
-      <Image
-        src={waiting}
-        width={IconSizes.width * iconScale}
-        height={IconSizes.height * iconScale}
-        preview={false}
-        onClick={() =>
-          handleStatusChange("waiting", hoveredRowKey, station, t("CHECKOUT"))
-        }
-      />
-      <Image
-        src={eye}
-        height={IconSizes.height * iconScale}
-        preview={false}
-        onClick={() =>
-          handleStatusChange("obs", hoveredRowKey, station, t("CHECKOUT"))
-        }
-      />
-      <Image
-        src={complete}
-        width={IconSizes.width * iconScale}
-        height={IconSizes.height * iconScale}
-        preview={false}
-        onClick={() =>
-          handleStatusChange("complete", hoveredRowKey, station, t("CHECKOUT"))
-        }
-      />
-      {[
-        ["2", two],
-        ["3", three],
-        ["4", four],
-        ["5", five],
-        ["6", six],
-        ["7", seven],
-      ].map(([val, img]) => (
-        <Image
-          key={val}
-          src={img}
-          width={IconSizes.width * iconScale}
-          height={IconSizes.height * iconScale}
-          preview={false}
-          onClick={() =>
-            handleStatusChange(val, hoveredRowKey, station, t("CHECKOUT"))
-          }
-        />
-      ))}
-    </Space>
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 3) Stateless & cheap renderStatusIcon
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // Icon sources
+  const iconMap = useMemo(
+    () => ({
+      pending: not_planned,
+      in_process,
+      waiting,
+      obs: eye,
+      complete,
+      2: two,
+      3: three,
+      4: four,
+      5: five,
+      6: six,
+      7: seven,
+      fin,
+    }),
+    []
   );
 
-  // Stateless renderer for a single status icon (keeps your existing hover behavior)
-  const renderStatusIcon = (status, stationName) => {
-    const commonProps = {
-      width: IconSizes.height,
-      height: IconSizes.height,
-      preview: false,
-      onMouseEnter: () => setStation(stationName),
-    };
+  // All possible status transitions to show in the popover
+  const STATUS_CHOICES = useMemo(
+    () => [
+      ["pending", not_planned],
+      ["in_process", in_process],
+      ["waiting", waiting],
+      ["obs", eye],
+      ["complete", complete],
+      ["2", two],
+      ["3", three],
+      ["4", four],
+      ["5", five],
+      ["6", six],
+      ["7", seven],
+    ],
+    []
+  );
 
-    const wrap = (src) => (
-      <Popover
-        content={editStatusContent}
-        title={t("modifyStatus")}
-        trigger="hover"
-      >
-        <Image src={src} {...commonProps} />
-      </Popover>
+  /**
+   * Stateless icon renderer:
+   * - Receives status, station, and the *row's* pt_no.
+   * - No state writes on hover.
+   * - Uses lightweight <img> tags with lazy loading.
+   */
+  const renderStatusIcon = (status, stationName, pt_no) => {
+    const src = iconMap[status];
+    if (!src) return null;
+
+    const iconScale = 1.5;
+    const popContent = (
+      <Space wrap>
+        {STATUS_CHOICES.map(([nextStatus, imgSrc]) => (
+          <img
+            key={nextStatus}
+            src={imgSrc}
+            width={IconSizes.width * iconScale}
+            height={IconSizes.height * iconScale}
+            loading="lazy"
+            decoding="async"
+            alt=""
+            style={{ cursor: "pointer" }}
+            onClick={() =>
+              handleStatusChange(nextStatus, pt_no, stationName, t("CHECKOUT"))
+            }
+          />
+        ))}
+      </Space>
     );
 
-    switch (status) {
-      case "pending":
-        return wrap(not_planned);
-      case "in_process":
-        return wrap(in_process);
-      case "waiting":
-        return wrap(waiting);
-      case "obs":
-        return wrap(eye);
-      case "complete":
-        return wrap(complete);
-      case "2":
-        return wrap(two);
-      case "3":
-        return wrap(three);
-      case "4":
-        return wrap(four);
-      case "5":
-        return wrap(five);
-      case "6":
-        return wrap(six);
-      case "7":
-        return wrap(seven);
-      case "fin":
-        return wrap(fin);
-      default:
-        return null;
-    }
+    return (
+      <Popover content={popContent} title={t("modifyStatus")} trigger="hover">
+        <img
+          src={src}
+          width={IconSizes.height}
+          height={IconSizes.height}
+          loading="lazy"
+          decoding="async"
+          alt=""
+        />
+      </Popover>
+    );
   };
 
-  // 🧱 Memoized columns (stable reference for Table), using stationNames sorted by sort_order
+  // 🧱 Memoized columns (stable reference for Table), using stationNames sorted by sort_order and filtered by display
   const columns = useMemo(() => {
     // Patient base column
     const patientCol = {
@@ -359,19 +311,22 @@ const Anfitrion = () => {
                         paciente: String(name).split("\n")[0],
                         tel: String(name).split("\n")[3],
                         motivo: String(name).split("\n")[1],
-                        pt_no: record.pt_no,
+                        pt_no: record.pt_no, // use row pt_no, not hover state
                       }}
-                      onSave={onSave}
+                      onSave={() => console.log("Patient data saved")}
                     />
                   }
                   title={t("EDITPATIENTDATA")}
                   trigger="click"
                 >
-                  <Image
+                  <img
                     src={edit}
                     width={IconSizes.height}
                     height={IconSizes.height}
-                    preview={false}
+                    loading="lazy"
+                    decoding="async"
+                    alt=""
+                    style={{ cursor: "pointer" }}
                   />
                 </Popover>
               </td>
@@ -381,7 +336,7 @@ const Anfitrion = () => {
       ),
     };
 
-    // Station columns from statsData (stable, sorted by sort_order asc)
+    // Station columns from statsData (stable, sorted by sort_order asc, filtered by display)
     const stationCols = stationNames.map((stationName) => {
       const metrics = stationMetrics.get(stationName) || {};
       const avgMs = metrics.avg_waiting_time ?? 0; // milliseconds
@@ -406,7 +361,9 @@ const Anfitrion = () => {
             </div>
           </div>
         ),
-        render: (status) => renderStatusIcon(status, stationName),
+        // Pass the row's pt_no so actions always target the correct patient
+        render: (status, row) =>
+          renderStatusIcon(status, stationName, row.pt_no),
         width: IconSizes.width,
         align: "center",
       };
@@ -446,20 +403,23 @@ const Anfitrion = () => {
           title={t("areYouSure")}
           onConfirm={() => handleDelete(record.pt_no, navigate)}
         >
-          <Image
+          <img
             src={fin}
             width={IconSizes.height}
             height={IconSizes.height}
-            preview={false}
+            loading="lazy"
+            decoding="async"
+            alt=""
+            style={{ cursor: "pointer" }}
           />
         </Popconfirm>
       ),
     };
 
     return [patientCol, ...stationCols, waitingCol, actionCol];
-  }, [t, stationNames, stationMetrics, navigate]);
+  }, [t, stationNames, stationMetrics, navigate, renderStatusIcon]);
 
-  // Row class based on all station statuses (uses memoized stationNames)
+  // Row class based on all (displayed) station statuses
   const getRowClassName = (record, index) => {
     const allPendingOrComplete = stationNames.every((st) => {
       const status = record[st];
@@ -490,10 +450,6 @@ const Anfitrion = () => {
         scroll={{ y: 850 }}
         sticky={{ offsetHeader: 0 }}
         rowClassName={getRowClassName}
-        onRow={(record) => ({
-          onMouseEnter: () => handleMouseEnter(record),
-          onMouseLeave: () => handleMouseLeave(),
-        })}
       />
     </>
   );
