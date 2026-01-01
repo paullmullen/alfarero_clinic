@@ -1,5 +1,5 @@
 // Anfitrion.js (Step 2 + stateless renderStatusIcon + stable order + display filter + exclude complete)
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, lazy, Suspense } from "react";
 import { Table, Space, Popover, Popconfirm } from "antd";
 import {
   collection,
@@ -32,8 +32,9 @@ import complete from "../img/complete.svg";
 import fin from "../img/fin.png";
 import eye from "../img/eye.svg";
 import edit from "../img/edit.svg";
-import EditPatientData from "../components/EditPatientData.js";
 import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
+
+const EditPatientData = lazy(() => import("../components/EditPatientData.js"));
 
 const Anfitrion = () => {
   useHideMenu(true);
@@ -306,15 +307,19 @@ const Anfitrion = () => {
               <td align="right">
                 <Popover
                   content={
-                    <EditPatientData
-                      initialValues={{
-                        paciente: String(name).split("\n")[0],
-                        tel: String(name).split("\n")[3],
-                        motivo: String(name).split("\n")[1],
-                        pt_no: record.pt_no, // use row pt_no, not hover state
-                      }}
-                      onSave={() => console.log("Patient data saved")}
-                    />
+                    <Suspense
+                      fallback={<div style={{ padding: 8 }}>Cargando…</div>}
+                    >
+                      <EditPatientData
+                        initialValues={{
+                          paciente: String(name).split("\n")[0],
+                          tel: String(name).split("\n")[3],
+                          motivo: String(name).split("\n")[1],
+                          pt_no: record.pt_no,
+                        }}
+                        onSave={() => console.log("Patient data saved")}
+                      />
+                    </Suspense>
                   }
                   title={t("EDITPATIENTDATA")}
                   trigger="click"
