@@ -1,10 +1,11 @@
+// src/hooks/useDaysAgoData.js
 import { useCallback } from "react";
 import { fetchDaysAgoData } from "../helpers/fetchDaysAgo";
 import { calculateRollingAverage } from "../utils/calculateRollingAverage";
 
 /**
- * Loads N days of historical patient counts and optionally
- * computes the rolling average (15-day default window).
+ * Loads N days of historical patient counts and computes a rolling average
+ * using the provided window (default 15).
  *
  * Returns:
  *   {
@@ -13,15 +14,17 @@ import { calculateRollingAverage } from "../utils/calculateRollingAverage";
  *   }
  */
 export function useDaysAgoData() {
-  const loadDaysAgo = useCallback(async (days) => {
-    // fetch raw historical data
+  const loadDaysAgo = useCallback(async (days, rollingWindow = 15) => {
     const data = await fetchDaysAgoData(
       process.env.REACT_APP_FIREBASE_DB,
       days
     );
 
-    // rolling averages only available if dataset is large enough
-    const rolling = data.length > 15 ? calculateRollingAverage(data) : [];
+    // Compute rolling regardless of length; let the helper handle partial windows.
+    const rolling =
+      Array.isArray(data) && data.length > 0
+        ? calculateRollingAverage(data, rollingWindow)
+        : [];
 
     return { data, rolling };
   }, []);

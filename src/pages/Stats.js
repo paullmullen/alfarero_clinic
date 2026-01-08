@@ -308,7 +308,7 @@ export default function Stats() {
             />
           </Form.Item>
 
-          <Form.Item label={t("DAYS_WINDOW")} style={{ margin: 0 }}>
+          <Form.Item label={t("TRENDDAYS")} style={{ margin: 0 }}>
             <InputNumber
               min={7}
               max={365}

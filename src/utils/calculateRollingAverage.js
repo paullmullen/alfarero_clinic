@@ -1,17 +1,14 @@
 // src/utils/calculateRollingAverage.js
-export const calculateRollingAverage = (data, windowSize = 15) => {
-  const rollingAverages = [];
+export function calculateRollingAverage(data, window = 15) {
+  // Expect data: [{ date, count }, ...]
+  // Output: [{ date, count, average }, ...]
+  const out = [];
+  const nums = data.map((d) => Number(d.count));
   for (let i = 0; i < data.length; i++) {
-    const windowData = data.slice(Math.max(0, i - windowSize + 1), i + 1);
-    const average =
-      windowData.reduce((sum, point) => sum + point.count, 0) /
-      windowData.length;
-
-    rollingAverages.push({
-      date: data[i].date,
-      count: data[i].count,
-      average,
-    });
+    const start = Math.max(0, i - window + 1);
+    const slice = nums.slice(start, i + 1);
+    const avg = slice.reduce((a, b) => a + b, 0) / slice.length;
+    out.push({ ...data[i], average: Number.isFinite(avg) ? avg : null });
   }
-  return rollingAverages;
-};
+  return out;
+}
