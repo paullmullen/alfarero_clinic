@@ -17,70 +17,51 @@ const EditPatientData = ({ initialValues, onSave }) => {
   };
 
   return (
-    <Form
-      form={form}
-      name="editPatient"
-      initialValues={initialValues}
-      onFinish={onFinish}
-    >
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={24}>
-          <Form.Item
-            label={t("name")}
-            name="paciente"
-            rules={[{ required: true, message: t("name") }]}
-          >
-            <Input />
-          </Form.Item>
-        </Col>
-      </Row>
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={24}>
-          <Form.Item
-            label={t("tel")}
-            name="tel"
-            rules={[
-              {
-                validator: (_, value) => {
-                  if (value === undefined || value === "") {
-                    return Promise.resolve();
-                  }
-                  if (
-                    /^(\+\d{1,3}[-  *])?\(?([0-9]{3,4})\)?[-.●  *]?([0-9]{3,4})[-.●  *]?([0-9]{3,4})?$/.test(
-                      value
-                    )
-                  ) {
-                    return Promise.resolve();
-                  }
-                  return Promise.reject(new Error(t("enterValidPhoneNumber")));
-                },
-              },
-            ]}
-          >
-            <Input type="tel" />
-          </Form.Item>
-        </Col>
-      </Row>
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={24}>
-          <Form.Item
-            label={t("reasonForVisit")}
-            name="motivo"
-            rules={[{ required: true, message: t("reasonForVisit") }]}
-          >
-            <Input />
-          </Form.Item>
-        </Col>
-      </Row>
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={24}>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" shape="round" name="save">
-              {t("SAVE")}
-            </Button>
-          </Form.Item>
-        </Col>
-      </Row>
+    <Form form={form} layout="vertical">
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          flexWrap: "wrap",
+        }}
+      >
+        <Form.Item label={t("DATE_RANGE")} style={{ margin: 0 }}>
+          <RangePicker
+            format="DD-MMM-YYYY"
+            value={pickerRange}
+            onChange={(v) => handleDateChange(v, t)}
+            locale={i18n.language === "es" ? es_ES : en_US}
+            style={{ width: "50%" }}
+          />
+        </Form.Item>
+
+        <Form.Item label={t("DAYS_WINDOW")} style={{ margin: 0 }}>
+          <InputNumber
+            min={7}
+            max={365}
+            step={1}
+            value={daysCount}
+            onChange={(val) =>
+              handleDaysCountChange({ target: { value: val } })
+            }
+            style={{ width: 120 }}
+          />
+        </Form.Item>
+      </div>
+
+      {/* NEW centered row for the button */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          marginTop: 12,
+        }}
+      >
+        <Button type="primary" onClick={triggerEmail} loading={emailLoading}>
+          {t("DAILY_EMAIL")}
+        </Button>
+      </div>
     </Form>
   );
 };

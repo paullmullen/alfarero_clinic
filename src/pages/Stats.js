@@ -1,452 +1,223 @@
-/* eslint-disable no-unused-vars */
-import React, { useEffect, useState, useMemo, useCallback } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  ReferenceLine,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  Cell,
-  ResponsiveContainer,
-  Label,
-  Line,
-  ComposedChart,
-} from "recharts";
+// src/pages/Stats.js
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { Divider, Button, Form, DatePicker, InputNumber } from "antd";
 import { useTranslation } from "react-i18next";
-import {
-  Divider,
-  Input,
-  Table,
-  Row,
-  Col,
-  Image,
-  Button,
-  Form,
-  DatePicker,
-  Typography,
-} from "antd";
-import { firestore } from "./../helpers/firebaseConfig";
-import dayjs from "dayjs";
-import {
-  Timestamp,
-  collection,
-  getDocs,
-  updateDoc,
-  doc,
-  getDoc,
-} from "firebase/firestore";
-import { fetchSurveyData } from "../helpers/fetchSurveyData";
-import { fetchPatientsData } from "../helpers/fetchPatientsData";
-import { fetchWaitingTimeData } from "../helpers/fetchWaitingTimeData";
-import { fetchDaysAgoData } from "../helpers/fetchDaysAgo";
-import { satIcon } from "../helpers/satIcon";
+import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
 import ExcelExport from "../helpers/Export";
-import { handleReadmitClick } from "../helpers/updateStationStatus";
+
+// Hooks barrel
+import {
+  useEmailTrigger,
+  useDateRange,
+  useStationsData,
+  usePatientsData,
+  useSurveyData,
+  useDaysAgoData,
+} from "../hooks";
+
+// Components barrel
+import { PatientsTable, SurveysTable, LegendTitle } from "../components/stats";
+
+import {
+  StationBarChart,
+  SatScoreChart,
+  ArrivalChart,
+  WaitingTimeChart,
+  ProcedureTimeChart,
+  DemographicsChart,
+  RollingAverageChart,
+} from "../components/stats/StatCharts";
+
 import es_ES from "antd/es/date-picker/locale/es_ES";
 import en_US from "antd/es/date-picker/locale/en_US";
-import enter from "../img/enter.png";
-import CustomTick from "../helpers/CustomTick"; // define propiedades de ticks
-import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
-// import { CatchingPokemonSharp } from "@mui/icons-material"; // <-- eliminar import no usado
 
 const { RangePicker } = DatePicker;
-const { Text } = Typography;
 
-const datePickerLocales = {
-  en: en_US,
-  es: es_ES,
-};
+export default function Stats() {
+  const { todayTimestamp, tomorrowTimestamp } = getTodayAndTomorrowTimestamps();
+  const { t, i18n } = useTranslation("global");
+  const [form] = Form.useForm();
 
-const Stats = () => {
+  // 📅 Date range
+  const { dateRange, pickerRange, handleDateChange } = useDateRange(
+    todayTimestamp,
+    tomorrowTimestamp
+  );
+
+  // 🔄 Data hooks
+  const loadStations = useStationsData();
+  const loadPatients = usePatientsData(t);
+  const loadSurveys = useSurveyData();
+  const loadDaysAgo = useDaysAgoData();
+  const { triggerEmail, loading: emailLoading } = useEmailTrigger();
+
+  // 📊 Local state
   const [statsData, setStatsData] = useState([]);
-  const [waitingData, setWaitingData] = useState([]); // (parece no usado; mantener si se usa en otra parte)
-  const [arrivalTimeData, setArrivalTimeData] = useState([]);
   const [patients, setPatients] = useState([]);
+  const [arrivalTimeData, setArrivalTimeData] = useState([]);
   const [surveys, setSurveys] = useState([]);
   const [satScore, setSatScore] = useState([]);
   const [ageGender, setAgeGender] = useState([]);
-  const [daysAgo, setDaysAgo] = useState({});
+  const [daysAgo, setDaysAgo] = useState([]); // used in trends export
   const [rollingAverages, setRollingAverages] = useState([]);
+  const [daysCount, setDaysCount] = useState(60);
   const [columnChanger, setColumnChanger] = useState(false);
 
-  const { todayTimestamp, tomorrowTimestamp } = getTodayAndTomorrowTimestamps();
-  const [dateRange, setDateRange] = useState([]);
-  const [pickerRange, setPickerRange] = useState([
-    dayjs(todayTimestamp.toDate()),
-    dayjs(tomorrowTimestamp.toDate()),
+  // 🧩 Patients columns (define early and memoize)
+  const patientsColumns = useMemo(
+    () => [
+      {
+        title: t("patient"),
+        dataIndex: "patient_name",
+        key: "patient_name",
+        fixed: "left",
+        width: 80,
+      },
+      {
+        title: t("age"),
+        dataIndex: "age_group",
+        key: "age",
+        fixed: "left",
+        width: 40,
+        render: (v) => t(v),
+      },
+      {
+        title: t("gender"),
+        dataIndex: "gender",
+        key: "gender",
+        fixed: "left",
+        width: 60,
+        render: (v) => t(v),
+      },
+      {
+        title: t("type_of_visit"),
+        dataIndex: "type_of_visit",
+        key: "type_of_visit",
+        width: 80,
+        render: (v) => t(v),
+      },
+      {
+        title: t("services"),
+        dataIndex: "servicesString",
+        key: "servicesString",
+        width: 120,
+      },
+    ],
+    [t]
+  );
+
+  // 📊 Survey columns (define early and memoize)
+  const surveyColumns = useMemo(
+    () => [
+      {
+        title: t("sat"),
+        dataIndex: "satisfaction",
+        key: "satisfaction",
+        width: 40,
+      },
+      {
+        title: t("prayer_request"),
+        dataIndex: "prayer_request",
+        key: "prayer_request",
+        width: 180,
+      },
+      {
+        title: t("gender"),
+        dataIndex: "gender",
+        key: "gender",
+        width: 60,
+        render: t,
+      },
+      {
+        title: t("age"),
+        dataIndex: "age_group",
+        key: "age_group",
+        width: 60,
+        render: t,
+      },
+    ],
+    [t]
+  );
+
+  // ⭐ Legend
+  const renderLegendStations = useCallback(
+    (which) => {
+      const center = { textAlign: "center" };
+      const textMap = {
+        1: t("patientsPerService"),
+        2: t("satscores"),
+        3: t("ARRIVAL_TIME"),
+        4: t("WAITING_TIME"),
+        5: t("DEMOGRAPHICS"),
+        6: `${t("LAST")} ${daysCount} ${t("DAYS")}`,
+        7: t("PROCEDURE_TIME"),
+      };
+      return <LegendTitle title={textMap[which]} style={center} />;
+    },
+    [t, daysCount]
+  );
+
+  // ⭐ Date formatting for display
+  const formatDate = useCallback(
+    (timestamp) => {
+      if (!timestamp) return "Loading...";
+      return timestamp.toDate().toLocaleDateString(i18n.language, {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    },
+    [i18n.language]
+  );
+
+  // 📁 Safe date string for filenames (YYYY-MM-DD)
+  const formatDateForFile = useCallback((timestamp) => {
+    if (!timestamp) return "unknown";
+    const d = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return Number.isNaN(d.getTime()) ? "unknown" : d.toISOString().slice(0, 10);
+  }, []);
+
+  // 🚀 Load everything when dateRange or columnChanger changes
+  useEffect(() => {
+    const loadAll = async () => {
+      const stations = await loadStations();
+      setStatsData(stations);
+
+      const { processed, arrival } = await loadPatients(dateRange);
+      setPatients(processed);
+      setArrivalTimeData(arrival);
+
+      const { surveys: sData, satScore: sSat } = await loadSurveys(dateRange);
+      setSurveys(sData);
+      setSatScore(sSat);
+
+      const { data: daysData, rolling } = await loadDaysAgo(daysCount);
+      setDaysAgo(daysData);
+      setRollingAverages(rolling);
+    };
+    loadAll();
+  }, [
+    loadStations,
+    loadPatients,
+    loadSurveys,
+    loadDaysAgo,
+    dateRange,
+    daysCount,
+    columnChanger,
   ]);
 
-  const [daysCount, setDaysCount] = useState(60);
-
-  const [t, i18n] = useTranslation("global");
-  const [form] = Form.useForm();
-
-  // --- Helpers y cálculos ---
-
-  const calculateRollingAverage = (data, windowSize = 15) => {
-    const rollingAverages = [];
-    for (let i = 0; i < data.length; i++) {
-      const windowData = data.slice(Math.max(0, i - windowSize + 1), i + 1);
-      const average =
-        windowData.reduce((sum, point) => sum + point.count, 0) /
-        windowData.length;
-      rollingAverages.push({
-        date: data[i].date,
-        count: data[i].count,
-        average,
-      });
-    }
-    return rollingAverages;
-  };
-
-  const handleDaysCountChange = (e) => {
-    const value = e.target.value;
-    const parsedValue = value === "" ? "" : parseInt(value, 10);
-    if (value === "") {
-      setDaysCount("");
-      return;
-    }
-    if (!isNaN(parsedValue) && parsedValue > 0) {
-      setDaysCount(parsedValue);
-      getAgoData(parsedValue); // usar el parámetro
-    }
-  };
-
-  const handleTableChange = (pagination, filters, sorter) => {
-    // mantener registro del sorter si lo necesitas
-    // setSortInfo(sorter);
-  };
-
-  const renderLegendStations = (which) => {
-    switch (which) {
-      case 1:
-        return (
-          <div style={{ textAlign: "center" }}>
-            <h2>{t("patientsPerService")}</h2>
-          </div>
-        );
-      case 2:
-        return (
-          <div style={{ textAlign: "center" }}>
-            <h2>{t("satscores")}</h2>
-          </div>
-        );
-      case 3:
-        return (
-          <div style={{ textAlign: "center" }}>
-            <h2>{t("ARRIVAL_TIME")}</h2>
-          </div>
-        );
-      case 4:
-        return (
-          <div style={{ textAlign: "center" }}>
-            <h2>{t("WAITING_TIME")}</h2>
-          </div>
-        );
-      case 5:
-        return (
-          <div style={{ textAlign: "center" }}>
-            <h2>{t("DEMOGRAPHICS")}</h2>
-          </div>
-        );
-      case 6:
-        return (
-          <div style={{ textAlign: "center" }}>
-            <h2>
-              {t("LAST")} {daysCount} {t("DAYS")}
-            </h2>
-          </div>
-        );
-      case 7:
-        return (
-          <div style={{ textAlign: "center" }}>
-            <h2>{t("PROCEDURE_TIME")}</h2>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const handleDateChange = (values) => {
-    let startDate, endDate;
-    // Normalizar
-    if (values[0] instanceof Timestamp) {
-      startDate = values[0].toDate();
-      endDate = values[1].toDate();
-    } else if (dayjs(values[0]).isValid()) {
-      startDate = dayjs(values[0]).toDate();
-      endDate = dayjs(values[1]).toDate();
-    } else if (values[0] instanceof Date) {
-      startDate = values[0];
-      endDate = values[1];
-    } else {
-      console.error("Invalid date type");
-      return;
-    }
-    // Redondear
-    startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(23, 59, 59, 999);
-
-    // Limitar a 90 días
-    const diffInMs = endDate - startDate;
-    const maxRangeInMs = 90 * 24 * 60 * 60 * 1000;
-    if (diffInMs > maxRangeInMs) {
-      alert(t("ONLY90"));
-      return;
-    }
-
-    // Actualizar estados
-    const firestoreStart = Timestamp.fromDate(startDate);
-    const firestoreEnd = Timestamp.fromDate(endDate);
-    setDateRange([firestoreStart, firestoreEnd]);
-
-    // Actualizar doc de rango (si es necesario para tu backend)
-    const runAggregationRef = doc(firestore, "run_aggregation", "timestamp");
-    updateDoc(runAggregationRef, {
-      range_start: firestoreStart,
-      range_end: firestoreEnd,
-    });
-
-    // Fijar RangePicker
-    setPickerRange([dayjs(startDate), dayjs(endDate)]);
-    // Ya NO togglear columnChanger aquí; el cambio de dateRange disparará el efecto
-  };
-
-  const surveyData = async () => {
-    const data = await fetchSurveyData(dateRange);
-    setSurveys(data);
-    const satScore = await surveySummary(data);
-    setSatScore(satScore);
-  };
-
-  const getAgoData = async (nDays = daysCount) => {
-    const data = await fetchDaysAgoData(
-      process.env.REACT_APP_FIREBASE_DB,
-      nDays
-    );
-    setDaysAgo(data);
-    if (data.length > 15) {
-      setRollingAverages(calculateRollingAverage(data));
-    } else {
-      setRollingAverages([]);
-    }
-  };
-
-  const surveySummary = async (surveys) => {
-    const histogram = [0, 0, 0, 0, 0]; // índices 0..4 (vamos a usar 1..5 abajo)
-    for (let i = 0; i < surveys.length; i++) {
-      const score = surveys[i].satisfaction; // 1..5
-      if (histogram[score]) {
-        histogram[score]++;
-      } else {
-        histogram[score] = 1;
-      }
-    }
-    return [
-      { level: "1", count: histogram[1] },
-      { level: "2", count: histogram[2] },
-      { level: "3", count: histogram[3] },
-      { level: "4", count: histogram[4] },
-      { level: "5", count: histogram[5] },
-    ];
-  };
-
-  const patientsData = async () => {
-    const data = await fetchPatientsData(
-      dateRange,
-      process.env.REACT_APP_FIREBASE_DB,
-      "both"
-    );
-
-    let hoursArray = new Array(24).fill(0);
-
-    const processedPatients = data.map((s) => {
-      const date = new Date(s.start_time);
-      const hour = date.getHours();
-      hoursArray[hour]++;
-
-      return {
-        ...s,
-        station_type: t(s.station_type),
-      };
-    });
-
-    const arrivalData = hoursArray.map((count, index) => ({
-      hour: index,
-      count,
-    }));
-
-    // Construir servicesString y totalWaitingTime
-    const formattedPatients = processedPatients.map((patient) => ({
-      ...patient,
-      servicesString: Array.isArray(patient.plan_of_care)
-        ? patient.plan_of_care
-            .filter((s) => s.status !== "pending")
-            .map((s) => s.station)
-            .join(", ") || t("NO_SERVICE")
-        : patient.complete
-        ? t("NO_SERVICE")
-        : "",
-      totalWaitingTime: Array.isArray(patient.plan_of_care)
-        ? patient.plan_of_care.reduce((total, station) => {
-            if (station.waiting_start && station.waiting_end) {
-              const timeDifference = Math.round(
-                (station.waiting_end._seconds -
-                  station.waiting_start._seconds) /
-                  60
-              );
-              return total + timeDifference;
-            } else {
-              return total;
-            }
-          }, 0)
-        : 0,
-    }));
-
-    setPatients(formattedPatients);
-    setArrivalTimeData(arrivalData);
-  };
-
-  const setLastDaysRange = (days) => {
-    const endDate = dayjs();
-    const startDate = endDate.subtract(days, "day");
-    form.setFieldsValue({ dateRange: [startDate, endDate] });
-    handleDateChange([startDate, endDate]);
-  };
-
-  const stationsData = async () => {
-    try {
-      const statsCollection = await getDocs(collection(firestore, "stats"));
-      const stats = statsCollection.docs.map((docSnap) => {
-        const data = docSnap.data();
-        return {
-          count: data.count,
-          range_count: data.range_count,
-          adult_feminine: data.adult_feminine,
-          range_adult_feminine: data.range_adult_feminine,
-          adult_masculine: data.adult_masculine,
-          range_adult_masculine: data.range_adult_masculine,
-          child_feminine: data.child_feminine,
-          range_child_feminine: data.range_child_feminine,
-          child_masculine: data.child_masculine,
-          range_child_masculine: data.range_child_masculine,
-          avg_waiting_time: data.avg_waiting_time,
-          range_avg_waiting_time: data.range_avg_waiting_time,
-          avg_procedure_time: data.avg_procedure_time,
-          range_avg_procedure_time: data.range_avg_procedure_time,
-          station_type: data.station_type,
-        };
-      });
-      setStatsData(stats);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  };
-
-  const getBarColors = () => {
-    const uniqueStationTypes = [
-      ...new Set(statsData.map((entry) => entry.station_type)),
-    ];
-    const colors = [
-      "#8884d8",
-      "#82ca9d",
-      "#ffc658",
-      "#FFC0CB",
-      "#22CC55",
-      "#2255CC",
-    ];
-    const barColors = {};
-    uniqueStationTypes.forEach((stationType, index) => {
-      barColors[stationType] = colors[index % colors.length];
-    });
-    return barColors;
-  };
-
-  const fetchTimestamps = async () => {
-    try {
-      const docRef = doc(firestore, "run_aggregation", "timestamp");
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setDateRange([data.range_start, data.range_end]);
-      } else {
-        console.log("No such document!");
-      }
-    } catch (error) {
-      console.error("Error fetching timestamps:", error);
-    }
-  };
-
-  // --- Memo: colores y transformaciones ---
-  const barColors = useMemo(() => getBarColors(), [statsData]);
-
-  const waitingStatsInMinutes = useMemo(
-    () =>
-      statsData.map((d) => ({
-        ...d,
-        range_avg_waiting_time: d.range_avg_waiting_time / 60000,
-      })),
-    [statsData]
-  );
-
-  const procedureStatsInMinutes = useMemo(
-    () =>
-      statsData.map((d) => ({
-        ...d,
-        range_avg_procedure_time: d.range_avg_procedure_time / 60000,
-      })),
-    [statsData]
-  );
-
-  const satColors = useMemo(
-    () => ({
-      1: "#d73027",
-      2: "#fc8d59",
-      3: "#fee08b",
-      4: "#91bfdb",
-      5: "#4575b4",
-    }),
-    []
-  );
-
-  // Efecto principal: primero rango, luego cargas paralelas
-  useEffect(() => {
-    const load = async () => {
-      await fetchTimestamps();
-      await Promise.all([
-        patientsData(),
-        stationsData(),
-        surveyData(),
-        getAgoData(60),
-      ]);
-    };
-    load();
-  }, [columnChanger, dateRange]);
-
-  // Demografía: depende de pacientes
+  // 🧮 Recompute demographics
   useEffect(() => {
     const sums = patients.reduce(
-      (acc, patient) => {
+      (acc, p) => {
         acc.adult_masculine +=
-          patient.gender === "masculine" && patient.age_group === "adult"
-            ? 1
-            : 0;
+          p.gender === "masculine" && p.age_group === "adult" ? 1 : 0;
         acc.adult_feminine +=
-          patient.gender === "feminine" && patient.age_group === "adult"
-            ? 1
-            : 0;
+          p.gender === "feminine" && p.age_group === "adult" ? 1 : 0;
         acc.child_masculine +=
-          patient.gender === "masculine" && patient.age_group === "child"
-            ? 1
-            : 0;
+          p.gender === "masculine" && p.age_group === "child" ? 1 : 0;
         acc.child_feminine +=
-          patient.gender === "feminine" && patient.age_group === "child"
-            ? 1
-            : 0;
+          p.gender === "feminine" && p.age_group === "child" ? 1 : 0;
         return acc;
       },
       {
@@ -456,442 +227,249 @@ const Stats = () => {
         child_feminine: 0,
       }
     );
-    const formattedData = [
+    setAgeGender([
       { group: "ADULT_MASCULINE", count: sums.adult_masculine },
       { group: "ADULT_FEMININE", count: sums.adult_feminine },
       { group: "CHILD_MASCULINE", count: sums.child_masculine },
       { group: "CHILD_FEMININE", count: sums.child_feminine },
-    ];
-    setAgeGender(formattedData);
+    ]);
   }, [patients]);
 
-  // Memo: acceso O(1) por pt_no y handler estable
-  const patientsByPtNo = useMemo(() => {
-    const m = new Map();
-    for (const p of patients) m.set(p.pt_no, p);
-    return m;
-  }, [patients]);
+  // 🎨 Chart color selection
+  const barColorsMemo = useMemo(() => {
+    const { getBarColors } = require("../utils/getBarColors"); // avoid circular
+    return getBarColors(statsData);
+  }, [statsData]);
 
-  const onReadmit = useCallback((ptNo) => {
-    handleReadmitClick(ptNo);
-    setColumnChanger((c) => !c);
+  // 🔢 Change trend window (wired to InputNumber)
+  const handleDaysCountChange = useCallback((e) => {
+    const parsed = parseInt(e?.target?.value, 10);
+    if (!isNaN(parsed) && parsed > 0) setDaysCount(parsed);
   }, []);
 
-  // Columnas memoizadas
-  const patientsColumns = useMemo(
-    () => [
-      {
-        title: t("patient"),
-        dataIndex: "patient_name",
-        key: "patient_name",
-        width: 50,
-        fixed: "left",
-        sorter: (a, b) => a.patient_name.localeCompare(b.patient_name),
-        render: (name) => <div>{name}</div>,
-      },
-      {
-        title: t("age"),
-        dataIndex: "age_group",
-        key: "age_group",
-        width: 25,
-        fixed: "left",
-        sorter: (a, b) => a.age_group.localeCompare(b.age_group),
-        render: (name) => <div>{t(name)}</div>,
-      },
-      {
-        title: t("gender"),
-        dataIndex: "gender",
-        key: "gender",
-        width: 30,
-        fixed: "left",
-        sorter: (a, b) => a.gender.localeCompare(b.gender),
-        render: (name) => <div>{t(name)}</div>,
-      },
-      {
-        title: t("type_of_visit"),
-        dataIndex: "type_of_visit",
-        key: "type",
-        width: 50,
-        fixed: "left",
-        sorter: (a, b) => a.type_of_visit.localeCompare(b.type_of_visit),
-        render: (type) => <div>{t(type)}</div>,
-      },
-      {
-        title: t("TOTALWAIT"),
-        dataIndex: "totalWaitingTime",
-        key: "totalWaitingTime",
-        width: 25,
-        fixed: "left",
-        render: (total) => <div>{t(total)} min</div>,
-      },
-      {
-        title: t("start_time"),
-        dataIndex: "start_time",
-        key: "start_time",
-        width: 30,
-        fixed: "left",
-        defaultSortOrder: "ascend",
-        sorter: (a, b) => a.start_time.localeCompare(b.start_time),
-        render: (start_time) =>
-          start_time
-            ? new Date(start_time).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              })
-            : "",
-      },
-      {
-        title: t("services"),
-        dataIndex: "servicesString",
-        key: "servicesString",
-        width: 50,
-        fixed: "left",
-        wordWrap: true,
-        render: (servicesString) => <div>{servicesString}</div>,
-      },
-      {
-        title: t("READMIT"),
-        dataIndex: "pt_no",
-        key: "estado",
-        width: 10,
-        fixed: "left",
-        render: (ptNo) => {
-          const patient = patientsByPtNo.get(ptNo);
-          const isDisabled = !patient?.complete;
-          return (
-            <Button
-              type="text"
-              hidden={isDisabled}
-              onClick={() => onReadmit(ptNo)}
-              style={{ padding: 0 }}
-            >
-              <Image src={enter} width={20} height={20} preview={false} />
-            </Button>
-          );
-        },
-      },
-    ],
-    [patientsByPtNo, onReadmit, i18n.language, t]
-  );
+  // 📈 Build unified trend rows (Days Ago + Rolling Averages)
+  const buildTrendRows = useCallback(() => {
+    const byDay = new Map();
 
-  const surveyColumns = useMemo(
-    () => [
-      {
-        title: t("sat"),
-        dataIndex: "satisfaction",
-        key: "satisfaction",
-        width: 50,
-        fixed: "left",
-        render: (name) => <div>{satIcon(name)}</div>,
-      },
-      {
-        title: t("prayer_request"),
-        dataIndex: "prayer_request",
-        key: "prayer_request",
-        width: 250,
-        fixed: "left",
-        render: (name) => <div>{name}</div>,
-      },
-      {
-        title: t("gender"),
-        dataIndex: "gender",
-        key: "gender",
-        width: 50,
-        fixed: "left",
-        render: (name) => <div>{t(name)}</div>,
-      },
-      {
-        title: t("age"),
-        dataIndex: "age_group",
-        key: "age_group",
-        width: 50,
-        fixed: "left",
-        render: (name) => <div>{t(name)}</div>,
-      },
-    ],
-    [i18n.language, t]
-  );
-
-  const formatDate = (timestamp) => {
-    if (!timestamp) return "Loading...";
-    const locale = i18n.language;
-    return timestamp.toDate().toLocaleDateString(locale, {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
+    (daysAgo || []).forEach((d) => {
+      const key = d.day ?? d.date ?? d.timestamp;
+      if (!key) return;
+      if (!byDay.has(key)) byDay.set(key, { day: key });
+      byDay.get(key).count = d.count ?? d.value ?? d.total ?? d.count;
     });
-  };
 
-  // --- Render ---
+    (rollingAverages || []).forEach((d) => {
+      const key = d.day ?? d.date ?? d.timestamp;
+      if (!key) return;
+      if (!byDay.has(key)) byDay.set(key, { day: key });
+      byDay.get(key).rollingAvg = d.rollingAvg ?? d.avg ?? d.value;
+    });
+
+    return Array.from(byDay.values()).sort((a, b) =>
+      String(a.day).localeCompare(String(b.day))
+    );
+  }, [daysAgo, rollingAverages]);
+
   return (
     <div>
-      {/* Segmento 1: filtros y resumen */}
+      {/* Filters */}
+
       <Form form={form} layout="vertical">
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <Form.Item
-            name="dateRange"
-            label={t("DATE_RANGE")}
-            style={{ margin: 0 }}
-          >
+        {/* NEW centered row for the button */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginTop: 12,
+          }}
+        >
+          <Button type="primary" onClick={triggerEmail} loading={emailLoading}>
+            {t("DAILY_EMAIL")}
+          </Button>
+        </div>
+        <br /> <br />
+        <hr></hr>
+        <br />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: 16,
+            flexWrap: "wrap",
+          }}
+        >
+          <Form.Item label={t("DATE_RANGE")} style={{ margin: 0 }}>
             <RangePicker
               format="DD-MMM-YYYY"
               value={pickerRange}
-              locale={
-                i18n.language === "es"
-                  ? datePickerLocales.es
-                  : datePickerLocales.en
-              }
-              onChange={handleDateChange}
+              onChange={(v) => handleDateChange(v, t)}
+              locale={i18n.language === "es" ? es_ES : en_US}
               style={{ width: "50%" }}
             />
           </Form.Item>
 
-          <Button
-            onClick={() => setLastDaysRange(30)}
-            style={{ whiteSpace: "nowrap" }}
-          >
-            {t("LAST_30_DAYS")}
-          </Button>
-          <Button
-            onClick={() => setLastDaysRange(60)}
-            style={{ whiteSpace: "nowrap" }}
-          >
-            {t("LAST_60_DAYS")}
-          </Button>
-          <Button
-            onClick={() => setLastDaysRange(0)}
-            style={{ whiteSpace: "nowrap" }}
-          >
-            {t("TODAY")}
-          </Button>
+          <Form.Item label={t("DAYS_WINDOW")} style={{ margin: 0 }}>
+            <InputNumber
+              min={7}
+              max={365}
+              step={1}
+              value={daysCount}
+              onChange={(val) =>
+                handleDaysCountChange({ target: { value: val } })
+              }
+              style={{ width: 120 }}
+            />
+          </Form.Item>
         </div>
       </Form>
 
       <Divider />
+      <h1 style={{ textAlign: "center" }}>
+        {t("STATSFOR")} {formatDate(dateRange[0])} {t("TO")}{" "}
+        {formatDate(dateRange[1])}
+      </h1>
+      <Divider />
 
-      <Row>
-        <Col span={24} type="flex" align="middle">
-          <h1>
-            {t("STATSFOR")} {formatDate(dateRange[0])} {t("TO")}{" "}
-            {formatDate(dateRange[1])}
-          </h1>
-          <Divider />
-        </Col>
-      </Row>
+      {/* ======================= CHARTS ======================= */}
+      <StationBarChart
+        data={statsData}
+        colors={barColorsMemo}
+        titleRenderer={() => renderLegendStations(1)}
+      />
 
-      <div className="stats-container">
-        <div className="charts-container">
-          <div style={{ display: "flex", width: "100%", height: "100%" }}>
-            {/* station count */}
-            <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-              <BarChart data={statsData} label="station">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="station_type" />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Legend content={() => renderLegendStations(1)} />
-                <Bar dataKey="range_count">
-                  {statsData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={barColors[entry.station_type]}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+      <SatScoreChart
+        data={satScore}
+        colors={{
+          1: "#d73027",
+          2: "#fc8d59",
+          3: "#fee08b",
+          4: "#91bfdb",
+          5: "#4575b4",
+        }}
+        titleRenderer={() => renderLegendStations(2)}
+      />
 
-            {/* sat score */}
-            <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-              {satScore.length > 0 ? (
-                <BarChart data={satScore}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="level" tick={<CustomTick />} />
-                  <YAxis dataKey="count" allowDecimals={false} />
-                  <Tooltip />
-                  <Legend content={() => renderLegendStations(2)} />
-                  <Bar dataKey="count">
-                    {satScore.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={satColors[Number(entry.level)]}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              ) : (
-                <div>Loading...</div>
-              )}
-            </ResponsiveContainer>
-          </div>
-        </div>
+      <ArrivalChart
+        data={arrivalTimeData}
+        t={t}
+        titleRenderer={() => renderLegendStations(3)}
+      />
 
-        {/* arrival time */}
-        <div className="charts-container">
-          <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-            <BarChart data={arrivalTimeData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="hour" />
-              <YAxis allowDecimals={false}>
-                <Label value={t("NUM_PTS")} angle="-90" />
-              </YAxis>
-              <Tooltip />
-              <Legend content={() => renderLegendStations(3)} />
-              <Bar dataKey="count" fill="#8884d8" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+      <WaitingTimeChart
+        data={statsData.map((d) => ({
+          ...d,
+          range_avg_waiting_time: d.range_avg_waiting_time / 60000,
+        }))}
+        t={t}
+        titleRenderer={() => renderLegendStations(4)}
+      />
 
-        <div>{t("PRE_MARCH_MESSAGE")}</div>
+      <ProcedureTimeChart
+        data={statsData.map((d) => ({
+          ...d,
+          range_avg_procedure_time: d.range_avg_procedure_time / 60000,
+        }))}
+        t={t}
+        titleRenderer={() => renderLegendStations(7)}
+      />
 
-        {/* avg waiting time */}
-        <div className="charts-container">
-          <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-            <BarChart data={waitingStatsInMinutes}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="station_type" />
-              <YAxis allowDecimals={false}>
-                <Label value={t("MINUTES")} angle="-90" />
-              </YAxis>
-              <Tooltip />
-              <Legend content={() => renderLegendStations(4)} />
-              <Bar dataKey="range_avg_waiting_time" fill="#22CC55" />
-            </BarChart>
-          </ResponsiveContainer>
+      <DemographicsChart
+        data={ageGender.map((d) => ({ ...d, translatedGroup: t(d.group) }))}
+        titleRenderer={() => renderLegendStations(5)}
+      />
 
-          {/* avg procedure time */}
-          <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-            <BarChart data={procedureStatsInMinutes}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="station_type" />
-              <YAxis allowDecimals={false}>
-                <Label value={t("MINUTES")} angle="-90" />
-              </YAxis>
-              <Tooltip />
-              <Legend content={() => renderLegendStations(7)} />
-              <Bar dataKey="range_avg_procedure_time" fill="#2255CC" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* demographics */}
-        <div className="charts-container">
-          <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-            <BarChart
-              data={ageGender.map((d) => ({
-                ...d,
-                translatedGroup: t(d.group),
-              }))}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="translatedGroup" />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Legend content={() => renderLegendStations(5)} />
-              <Bar dataKey="count">
-                {ageGender.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={
-                      entry.group.includes("FEMININE") ? "#FF69B4" : "#1E90FF"
-                    }
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-
-          {/* total patients trend */}
-          <ResponsiveContainer width="50%" height="100%" minHeight="300px">
-            <ComposedChart data={rollingAverages}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis>
-                <Label value={t("COUNT")} angle="-90" />
-              </YAxis>
-              <Tooltip />
-              <Legend content={() => renderLegendStations(6)} />
-              <ReferenceLine y={70} stroke="red" label={t("GOAL")} />
-              <Bar dataKey="count" fill="#2255CC" />
-              <Line
-                type="monotone"
-                dataKey="average"
-                stroke="cyan"
-                strokeWidth={4}
-                dot={false}
-                connectNulls={true}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
+      {/* Trends export button near rolling average chart */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          marginTop: 8,
+          marginBottom: 8,
+        }}
+      >
+        <ExcelExport
+          data={buildTrendRows()}
+          reportName="EXPORT_TRENDS"
+          fileName={`trends_last_${daysCount}_days.xlsx`}
+        />
       </div>
 
-      <Row>
-        <Col span={12}></Col>
-        <Col span={12} alignItems={"center"} type="flex" align="middle">
-          <Text strong>{t("TRENDDAYS")} </Text>
-          <Input
-            id="daysInput"
-            type="number"
-            value={daysCount}
-            onChange={(e) => setDaysCount(e.target.value)}
-            onBlur={handleDaysCountChange}
-            onPressEnter={handleDaysCountChange}
-            min="0"
-            style={{ width: "60px" }}
-          />
-        </Col>
-      </Row>
+      <RollingAverageChart
+        data={rollingAverages}
+        t={t}
+        goal={70}
+        titleRenderer={() => renderLegendStations(6)}
+      />
 
+      {/* ======================= TABLES ======================= */}
       <Divider />
-
-      {/* Segmento 2: descargas */}
-      <Row>
-        <Col span={24} type="flex" align="middle">
-          <br />
-          <br />
-          <h2>{t("DOWNLOAD")}</h2>
-          <ExcelExport data={patients} reportName="TODAYSPATIENTS" />
-          <ExcelExport data={surveys} reportName="todaysSurveys" />
-          <ExcelExport data={daysAgo} reportName="DAYSAGO" />
-          <br />
-          <br />
-          <br />
-        </Col>
-      </Row>
-
-      <Divider />
-
-      {/* Segmento 3: tablas */}
-      <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+      <h2 style={{ textAlign: "center" }}>
         {t("todaysComplete")} ({patients.length})
       </h2>
-      <Table
-        rowKey={"pt_no"}
+
+      {/* Patients export */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: 8,
+          flexWrap: "wrap",
+          marginBottom: 8,
+        }}
+      >
+        <ExcelExport
+          data={patients.map((p) => ({
+            pt_no: p.pt_no,
+            patient_name: p.patient_name,
+            age_group: p.age_group,
+            gender: p.gender,
+            type_of_visit: p.type_of_visit,
+            services: p.servicesString,
+          }))}
+          reportName="EXPORT_PATIENTS"
+          fileName={`patients_${formatDateForFile(
+            dateRange[0]
+          )}_to_${formatDateForFile(dateRange[1])}.xlsx`}
+        />
+      </div>
+
+      <PatientsTable
+        patients={patients}
+        patientsByPtNo={new Map(patients.map((p) => [p.pt_no, p]))}
+        onReadmit={() => setColumnChanger((c) => !c)}
         columns={patientsColumns}
-        dataSource={patients.some((d) => d === undefined) ? [] : patients}
-        scroll={{ x: 410, y: 800 }}
-        sticky
-        pagination={{ pageSize: 50 }}
-        onChange={handleTableChange}
       />
 
       <Divider />
-
-      <h2 style={{ textAlign: "center", marginBottom: "10px" }}>
+      <h2 style={{ textAlign: "center" }}>
         {t("todaysSurveys")} ({surveys.length})
       </h2>
-      <Table
-        rowKey={"inx"}
-        columns={surveyColumns}
-        dataSource={surveys.some((d) => d === undefined) ? [] : surveys}
-        scroll={{ x: 580, y: 800 }}
-        sticky
-        pagination={{ pageSize: 50 }}
-      />
+
+      {/* Surveys export */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: 8,
+          flexWrap: "wrap",
+          marginBottom: 8,
+        }}
+      >
+        <ExcelExport
+          data={surveys.map((s) => ({
+            satisfaction: s.satisfaction,
+            prayer_request: s.prayer_request,
+            gender: s.gender,
+            age_group: s.age_group,
+          }))}
+          reportName="EXPORT_SURVEYS"
+          fileName={`surveys_${formatDateForFile(
+            dateRange[0]
+          )}_to_${formatDateForFile(dateRange[1])}.xlsx`}
+        />
+      </div>
+
+      <SurveysTable surveys={surveys} columns={surveyColumns} />
     </div>
   );
-};
-
-export default Stats;
+}

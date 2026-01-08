@@ -4,6 +4,17 @@ const { initializeApp, applicationDefault } = require("firebase-admin/app");
 const { getFirestore, Timestamp } = require("firebase-admin/firestore");
 const axios = require("axios");
 
+// --- CORS helper ---
+function applyCors(req, res) {
+  // Allow your site; during dev you can use '*', but in prod prefer a specific origin.
+  const origin = req.headers.origin || "*";
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Vary", "Origin"); // so caches don't mix origins
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Max-Age", "3600"); // cache preflight for 1h
+}
+
 // Initialize Firebase Admin SDK
 initializeApp({ credential: applicationDefault() });
 const db = getFirestore();
@@ -832,6 +843,13 @@ async function sendDailyEmails() {
 exports.manualDailyEmail = onRequest(
   { timeoutSeconds: 60 },
   async (req, res) => {
+    // CORS
+    applyCors(req, res);
+    if (req.method === "OPTIONS") {
+      // Quick response for preflight
+      return res.status(204).send("");
+    }
+
     try {
       const results = await sendDailyEmails();
       res
@@ -846,16 +864,16 @@ exports.manualDailyEmail = onRequest(
 
 exports.scheduledDailyEmail = onSchedule(
   {
-    schedule: "0 18 * * *",
+    schedule: "0 17 * * *",
     timeZone: "America/Guatemala",
     timeoutSeconds: 60,
   },
   async () => {
-    console.log("Scheduled daily email triggered.");
+    console.log("Exito.");
     try {
       await sendDailyEmails();
     } catch (err) {
-      console.error("Scheduled function failed:", err);
+      console.error("Error:", err);
     }
   }
 );
