@@ -274,7 +274,7 @@ export default function Stats() {
     <div>
       {/* Filters */}
 
-      <Form form={form} layout="vertical">
+      <Form form={form} layout="horizontal">
         {/* NEW centered row for the button */}
         <div
           style={{
@@ -307,19 +307,6 @@ export default function Stats() {
               style={{ width: "50%" }}
             />
           </Form.Item>
-
-          <Form.Item label={t("TRENDDAYS")} style={{ margin: 0 }}>
-            <InputNumber
-              min={7}
-              max={365}
-              step={1}
-              value={daysCount}
-              onChange={(val) =>
-                handleDaysCountChange({ target: { value: val } })
-              }
-              style={{ width: 120 }}
-            />
-          </Form.Item>
         </div>
       </Form>
 
@@ -336,7 +323,10 @@ export default function Stats() {
         colors={barColorsMemo}
         titleRenderer={() => renderLegendStations(1)}
       />
-
+      <br />
+      <br />
+      <br />
+      <br />
       <SatScoreChart
         data={satScore}
         colors={{
@@ -348,13 +338,19 @@ export default function Stats() {
         }}
         titleRenderer={() => renderLegendStations(2)}
       />
-
+      <br />
+      <br />
+      <br />
+      <br />
       <ArrivalChart
         data={arrivalTimeData}
         t={t}
         titleRenderer={() => renderLegendStations(3)}
       />
-
+      <br />
+      <br />
+      <br />
+      <br />
       <WaitingTimeChart
         data={statsData.map((d) => ({
           ...d,
@@ -363,7 +359,10 @@ export default function Stats() {
         t={t}
         titleRenderer={() => renderLegendStations(4)}
       />
-
+      <br />
+      <br />
+      <br />
+      <br />
       <ProcedureTimeChart
         data={statsData.map((d) => ({
           ...d,
@@ -372,12 +371,62 @@ export default function Stats() {
         t={t}
         titleRenderer={() => renderLegendStations(7)}
       />
-
+      <br />
+      <br />
+      <br />
+      <br />
       <DemographicsChart
         data={ageGender.map((d) => ({ ...d, translatedGroup: t(d.group) }))}
         titleRenderer={() => renderLegendStations(5)}
       />
+      <br />
+      <br />
+      <br />
+      <br />
+      <Form form={form} layout="horizontal">
+        {/* NEW centered row for the button */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginTop: 12,
+          }}
+        >
+          <Form.Item
+            name="daysCount"
+            label={t("TRENDDAYS")}
+            rules={[{ type: "number", min: 7, max: 365 }]}
+            style={{ margin: 0 }}
+          >
+            <InputNumber
+              min={7}
+              max={365}
+              step={1}
+              style={{ width: 120 }}
+              onBlur={() => {
+                const val = form.getFieldValue("daysCount");
+                if (val != null) {
+                  handleDaysCountChange({ target: { value: val } });
+                }
+              }}
+              onPressEnter={(e) => {
+                e.preventDefault(); // prevent submit/reset
+                const val = form.getFieldValue("daysCount");
+                if (val != null) {
+                  handleDaysCountChange({ target: { value: val } });
+                }
+              }}
+            />
+          </Form.Item>
+        </div>
+      </Form>
 
+      <RollingAverageChart
+        data={rollingAverages}
+        t={t}
+        goal={70}
+        titleRenderer={() => renderLegendStations(6)}
+      />
       {/* Trends export button near rolling average chart */}
       <div
         style={{
@@ -393,13 +442,6 @@ export default function Stats() {
           fileName={`trends_last_${daysCount}_days.xlsx`}
         />
       </div>
-
-      <RollingAverageChart
-        data={rollingAverages}
-        t={t}
-        goal={70}
-        titleRenderer={() => renderLegendStations(6)}
-      />
 
       {/* ======================= TABLES ======================= */}
       <Divider />
