@@ -1,6 +1,6 @@
 // src/pages/Stats.js
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { Divider, Button, Form, DatePicker, InputNumber } from "antd";
+import { Divider, Button, Form, DatePicker, InputNumber, Spin } from "antd";
 import { useTranslation } from "react-i18next";
 import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
 import ExcelExport from "../helpers/Export";
@@ -60,6 +60,7 @@ export default function Stats() {
   const [ageGender, setAgeGender] = useState([]);
   const [daysAgo, setDaysAgo] = useState([]); // used in trends export
   const [rollingAverages, setRollingAverages] = useState([]);
+  const [rollingLoading, setRollingLoading] = useState(false);
   const [daysCount, setDaysCount] = useState(60);
   const [columnChanger, setColumnChanger] = useState(false);
 
@@ -157,18 +158,8 @@ export default function Stats() {
     [t, daysCount]
   );
 
-  // ⭐ Date formatting for display
-  const formatDate = useCallback(
-    (timestamp) => {
-      if (!timestamp) return "Loading...";
-      return timestamp.toDate().toLocaleDateString(i18n.language, {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
-    },
-    [i18n.language]
-  );
+  [i18n.language];
+  // );
 
   // 📁 Safe date string for filenames (YYYY-MM-DD)
   const formatDateForFile = useCallback((timestamp) => {
@@ -180,7 +171,7 @@ export default function Stats() {
   // 🚀 Load everything when dateRange or columnChanger changes
   useEffect(() => {
     const loadAll = async () => {
-      const stations = await loadStations();
+      const stations = await loadStations(dateRange);
       setStatsData(stations);
 
       const { processed, arrival } = await loadPatients(dateRange);
@@ -191,9 +182,14 @@ export default function Stats() {
       setSurveys(sData);
       setSatScore(sSat);
 
+      // Show loading while we fetch rolling averages
+      setRollingLoading(true);
+
       const { data: daysData, rolling } = await loadDaysAgo(daysCount);
       setDaysAgo(daysData);
       setRollingAverages(rolling);
+
+      setRollingLoading(false);
     };
     loadAll();
   }, [
@@ -304,19 +300,17 @@ export default function Stats() {
               value={pickerRange}
               onChange={(v) => handleDateChange(v, t)}
               locale={i18n.language === "es" ? es_ES : en_US}
-              style={{ width: "50%" }}
+              style={{ width: "100%" }}
             />
           </Form.Item>
         </div>
       </Form>
-
-      <Divider />
-      <h1 style={{ textAlign: "center" }}>
-        {t("STATSFOR")} {formatDate(dateRange[0])} {t("TO")}{" "}
-        {formatDate(dateRange[1])}
-      </h1>
-      <Divider />
-
+      <br />
+      <br />
+      <br />
+      <br />
+      <br />
+      <br />
       {/* ======================= CHARTS ======================= */}
       <StationBarChart
         data={statsData}
@@ -421,12 +415,25 @@ export default function Stats() {
         </div>
       </Form>
 
-      <RollingAverageChart
-        data={rollingAverages}
-        t={t}
-        goal={70}
-        titleRenderer={() => renderLegendStations(6)}
-      />
+      {rollingLoading ? (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            margin: "24px 0",
+          }}
+        >
+          <Spin tip={t("LOADING") || "Loading…"} />
+        </div>
+      ) : (
+        <RollingAverageChart
+          data={rollingAverages}
+          t={t}
+          goal={70}
+          titleRenderer={() => renderLegendStations(6)}
+        />
+      )}
+
       {/* Trends export button near rolling average chart */}
       <div
         style={{
