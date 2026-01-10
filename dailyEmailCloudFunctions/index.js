@@ -134,12 +134,26 @@ function generateArrivalChart(hourlyCounts) {
   return canvas.toDataURL(); // base64 image string
 }
 
-function generateWaitingHeatmapChart(patientsSnapshot) {
+function generateWaitingHeatmapChart(
+  patientsSnapshot,
+  {
+    // === Diagnostics & behavior flags ===
+    debug = false, // Turn on verbose diagnostics in logs
+    includeInProgress = false, // Include non-complete steps ("in_progress"/"queued")
+    // === Day range (optional; used only for diagnostics + step-level filtering) ===
+    startOfToday = null, // Timestamp|Date; if provided, filters steps by waiting_start
+    startOfTomorrow = null, // Timestamp|Date; exclusive upper bound
+    // === Time conversion ===
+    timezoneOffsetMinutes = TIMEZONE_OFFSET_MINUTES, // Keep consistent with your app (e.g., UTC-6)
+    // === Presentation ===
+    topN = 10, // How many buckets to list in diagnostics
+    showDecimalMinutes = true, // Show averages with 1 decimal (true) or as integers (false)
+  } = {}
+) {
   const { createCanvas } = require("canvas");
   const Chart = require("chart.js/auto");
   const ChartDataLabels = require("chartjs-plugin-datalabels");
   Chart.register(ChartDataLabels);
-
   const { MatrixController, MatrixElement } = require("chartjs-chart-matrix");
   const { CategoryScale, LinearScale } = require("chart.js");
   Chart.register(MatrixController, MatrixElement, CategoryScale, LinearScale);
@@ -147,58 +161,204 @@ function generateWaitingHeatmapChart(patientsSnapshot) {
   const canvas = createCanvas(800, 400);
   const ctx = canvas.getContext("2d");
 
-  const stationHourMap = {};
+  // --- Core accumulators used to build the chart ---
+  const stationHourMap = {}; // key: `${station}_${hour}` -> [minutes, minutes, ...]
   const stationLabels = new Set();
   const hourLabels = new Set();
 
+  // --- Diagnostics counters ---
+  let totalSteps = 0;
+  let included = 0;
+  let noTimestamp = 0;
+  let noWaitingTime = 0;
+  let badStatus = 0;
+  let outOfRange = 0;
+
+  // Which statuses are allowed?
+  const validStatus = includeInProgress
+    ? new Set(["complete", "in_progress", "queued"])
+    : new Set(["complete"]);
+
+  // Normalize date range to JS Date if provided
+  const start = startOfToday
+    ? startOfToday.toDate
+      ? startOfToday.toDate()
+      : startOfToday
+    : null;
+  const end = startOfTomorrow
+    ? startOfTomorrow.toDate
+      ? startOfTomorrow.toDate()
+      : startOfTomorrow
+    : null;
+
+  // --- Iterate over all steps in all patients ---
   patientsSnapshot.forEach((doc) => {
     const data = doc.data();
     const plan = data.plan_of_care ?? [];
+
     for (const step of plan) {
-      if (
-        step.status === "complete" &&
-        typeof step.waiting_time === "number" &&
-        step.waiting_start?.toDate
-      ) {
-        const station = step.station;
-        const hour = (step.waiting_start.toDate().getUTCHours() - 6 + 24) % 24;
-        const key = `${station}_${hour}`;
-        if (!stationHourMap[key]) {
-          stationHourMap[key] = [];
-        }
-        stationHourMap[key].push(step.waiting_time / 60); // convert sec to minutes
-        stationLabels.add(station);
-        hourLabels.add(hour);
+      totalSteps++;
+
+      // Must have a waiting_start timestamp
+      const hasTimestamp = !!step?.waiting_start?.toDate;
+      if (!hasTimestamp) {
+        noTimestamp++;
+        continue;
       }
+      const ws = step.waiting_start.toDate();
+
+      // Must have a numeric waiting_time (assumed to be MINUTES now; no extra /60)
+      const hasTime =
+        typeof step?.waiting_time === "number" &&
+        !Number.isNaN(step.waiting_time);
+      if (!hasTime) {
+        noWaitingTime++;
+        continue;
+      }
+
+      // Must have an allowed status
+      if (!validStatus.has(step?.status)) {
+        badStatus++;
+        continue;
+      }
+
+      // Optional: filter by the "today" window at step level using waiting_start
+      if (start && end && !(ws >= start && ws < end)) {
+        outOfRange++;
+        continue;
+      }
+
+      // --- Determine hour bucket (local) ---
+      // Keep consistent with the rest of your file: subtract offset in ms to get local time
+      const localStart = new Date(
+        ws.getTime() - timezoneOffsetMinutes * 60 * 1000
+      );
+      const hour = localStart.getHours();
+
+      // --- Accumulate waiting time in minutes into the (station, hour) bucket ---
+      const station = step.station ?? "unknown";
+      const key = `${station}_${hour}`;
+      if (!stationHourMap[key]) stationHourMap[key] = [];
+
+      // IMPORTANT: keep minutes consistently (do NOT divide by 60 again)
+      const minutes = step.waiting_time;
+      stationHourMap[key].push(minutes);
+
+      stationLabels.add(station);
+      hourLabels.add(hour);
+      included++;
     }
   });
 
+  // --- Build axes ---
   const stations = Array.from(stationLabels).sort();
   const hours = Array.from(hourLabels).sort((a, b) => a - b);
 
-  dataMatrix = stations.map((station) =>
+  // --- Compute the matrix (average minutes per cell) ---
+  const dataMatrixLocal = stations.map((station) =>
     hours.map((hour) => {
       const key = `${station}_${hour}`;
       const times = stationHourMap[key] ?? [];
-      return times.length > 0
-        ? parseFloat(
-            (times.reduce((a, b) => a + b, 0) / times.length).toFixed(0)
-          )
-        : 0;
+      if (times.length === 0) return 0;
+
+      const avg = times.reduce((a, b) => a + b, 0) / times.length; // minutes
+      return showDecimalMinutes
+        ? parseFloat(avg.toFixed(1)) // keep 1 decimal
+        : Math.round(avg); // integer minutes
     })
   );
 
   const labeledStations = stations.map(
-    (s) => `${s} [${(thresholds[s] / 60).toFixed(0)} mins]`
+    (s) => `${s} [${((thresholds?.[s] ?? 900) / 60).toFixed(0)} mins]`
   );
 
+  // --- Diagnostics output ---
+  if (debug) {
+    const header = "[WaitingHeatmap Diagnostics]";
+    console.log(`${header} Steps (total=${totalSteps})`);
+    console.log(
+      `${header} Included=${included}, Excluded: ` +
+        `noTimestamp=${noTimestamp}, noWaitingTime=${noWaitingTime}, ` +
+        `badStatus=${badStatus}, outOfRange=${outOfRange}`
+    );
+
+    if (start && end) {
+      console.log(
+        `${header} Day window (local): start=${start.toISOString()}  end=${end.toISOString()} (exclusive)`
+      );
+    } else {
+      console.log(`${header} Day window not applied at step level`);
+    }
+
+    console.log(
+      `${header} Distinct stations: ${stations.length} -> [${stations.join(
+        ", "
+      )}]`
+    );
+    console.log(
+      `${header} Distinct hours: ${hours.length} -> [${hours.join(", ")}]`
+    );
+
+    // Summarize top buckets by COUNT and by AVG (count>=2)
+    const bucketArr = [];
+    for (const [key, list] of Object.entries(stationHourMap)) {
+      const [st, h] = key.split("_");
+      const avg = list.reduce((a, b) => a + b, 0) / list.length;
+      bucketArr.push({
+        station: st,
+        hour: Number(h),
+        count: list.length,
+        avgMin: avg,
+      });
+    }
+
+    const topByCount = [...bucketArr]
+      .sort(
+        (a, b) =>
+          b.count - a.count ||
+          a.station.localeCompare(b.station) ||
+          a.hour - b.hour
+      )
+      .slice(0, topN);
+
+    const topByAvg = [...bucketArr]
+      .filter((b) => b.count >= 2)
+      .sort((a, b) => b.avgMin - a.avgMin || b.count - a.count)
+      .slice(0, topN);
+
+    console.log(`${header} Top ${topN} buckets by COUNT:`);
+    for (const b of topByCount) {
+      console.log(
+        `${header}  - ${b.station} @ ${String(b.hour).padStart(2, "0")}:00  ` +
+          `count=${b.count}, avg=${b.avgMin.toFixed(2)} min`
+      );
+    }
+
+    if (topByAvg.length > 0) {
+      console.log(`${header} Top ${topN} buckets by AVERAGE (count>=2):`);
+      for (const b of topByAvg) {
+        console.log(
+          `${header}  - ${b.station} @ ${String(b.hour).padStart(
+            2,
+            "0"
+          )}:00  ` + `avg=${b.avgMin.toFixed(2)} min, count=${b.count}`
+        );
+      }
+    } else {
+      console.log(
+        `${header} Top-by-average list is empty (insufficient data).`
+      );
+    }
+  }
+
+  // --- Build the Chart.js matrix dataset and render ---
   new Chart(ctx, {
     type: "matrix",
     data: {
       datasets: [
         {
           label: "Tiempo de espera",
-          data: dataMatrix.flatMap((row, i) =>
+          data: dataMatrixLocal.flatMap((row, i) =>
             row.map((value, j) => ({
               x: `${hours[j]}:00`,
               y: labeledStations[i],
@@ -207,12 +367,14 @@ function generateWaitingHeatmapChart(patientsSnapshot) {
           ),
           backgroundColor: function (ctx) {
             const dataPoint = ctx?.dataset?.data?.[ctx.dataIndex];
-            const value = dataPoint?.v ?? 0;
-            // Extract base station name from label like "lab [15]"
+            const value = dataPoint?.v ?? 0; // minutes
             const stationLabel = dataPoint?.y ?? "";
-            const station = stationLabel.split(" [")[0]; // gets "lab" from "lab [15]"
-            const maxValue = thresholds[station] ?? 900;
+            const station = stationLabel.split(" [")[0];
+            const maxValue = thresholds?.[station] ?? 900; // seconds
+
             if (value === 0) return "rgba(255,255,255,1)";
+
+            // Green → within threshold; Red → beyond threshold
             if (value * 60 <= maxValue) {
               const ratio = (value * 60) / maxValue;
               const green = Math.floor(200 + 55 * ratio);
@@ -231,38 +393,38 @@ function generateWaitingHeatmapChart(patientsSnapshot) {
           categoryPercentage: 1.0,
           width: function (ctx) {
             const chartArea = ctx.chart.chartArea;
-            if (!chartArea) {
-              return 0; // or some safe default until chartArea is computed
-            }
+            if (!chartArea) return 0;
             return chartArea.width / hours.length;
           },
           height: function (ctx) {
             const chartArea = ctx.chart.chartArea;
-            if (!chartArea) {
-              return 0;
-            }
-            return chartArea.height / stations.length;
+            if (!chartArea) return 0;
+            // Small buffer to avoid overlapping the bottom X-axis
+            return chartArea.height / stations.length - 2; // 2px buffer
           },
         },
       ],
     },
     options: {
       responsive: false,
+      // Reserve space at the bottom for X-axis ticks/labels
+      layout: {
+        padding: { top: 10, right: 10, bottom: 24, left: 10 },
+      },
       plugins: {
         title: {
           display: true,
           text: "Mapa de calor de tiempo de espera por servicio y hora",
-          padding: {
-            top: 20,
-            bottom: 20,
-          },
+          padding: { top: 20, bottom: 20 },
         },
         legend: { display: false },
         datalabels: {
           color: "black",
           font: { weight: "bold", size: 10 },
           formatter: (value) => {
-            return value.v > 0 ? value.v.toFixed(0) : ""; // solo mostrar si > 0
+            const v = value.v;
+            if (v <= 0) return "";
+            return showDecimalMinutes ? v.toFixed(1) : Math.round(v).toString();
           },
         },
       },
@@ -270,6 +432,8 @@ function generateWaitingHeatmapChart(patientsSnapshot) {
         x: {
           type: "category",
           labels: hours.map((h) => `${h}:00`),
+          position: "bottom",
+          offset: true, // center categories between grid lines
           title: { display: true, text: "Hora del día", padding: { top: 20 } },
           ticks: {
             padding: 10,
@@ -277,12 +441,15 @@ function generateWaitingHeatmapChart(patientsSnapshot) {
             maxRotation: 0,
             minRotation: 0,
           },
+          grid: { drawTicks: true },
         },
         y: {
           type: "category",
           labels: labeledStations,
+          offset: true, // center categories between grid lines
           title: { display: true, text: "Servicio", padding: { top: 20 } },
           ticks: { padding: 10 },
+          grid: { drawTicks: true },
         },
       },
     },
