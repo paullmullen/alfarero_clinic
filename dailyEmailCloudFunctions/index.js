@@ -3,6 +3,13 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { initializeApp, applicationDefault } = require("firebase-admin/app");
 const { getFirestore, Timestamp } = require("firebase-admin/firestore");
 const axios = require("axios");
+const {
+  detectWaitTimeAnomalies,
+  computeHistoricalHourlyAverages,
+  detectArrivalSurges,
+  detectFlowBottlenecks,
+  renderInsightsHTML,
+} = require("./insights");
 
 // --- CORS helper ---
 function applyCors(req, res) {
@@ -263,7 +270,7 @@ function generateWaitingHeatmapChart(
 
       const avg = times.reduce((a, b) => a + b, 0) / times.length; // minutes
       return showDecimalMinutes
-        ? parseFloat(avg.toFixed(1)) // keep 1 decimal
+        ? parseFloat(avg.toFixed(0)) // integer
         : Math.round(avg); // integer minutes
     })
   );
@@ -914,6 +921,18 @@ async function sendDailyEmails() {
   const waitingChart = generateWaitingTimeChart(todaySnapshot);
   const waitingHeatmap = generateWaitingHeatmapChart(todaySnapshot);
 
+  // new insights calcs
+  const historicalHourlyAvg =
+    computeHistoricalHourlyAverages(last30DaysSnapshot);
+
+  const aiInsights = [
+    ...detectWaitTimeAnomalies(todaySnapshot, last30DaysSnapshot, thresholds),
+    ...detectArrivalSurges(hourlyCounts, historicalHourlyAvg),
+    ...detectFlowBottlenecks(todaySnapshot),
+  ];
+
+  const insightsHTML = renderInsightsHTML(aiInsights);
+
   const html = `
 <div style="text-align: center; margin-bottom: 20px;">
   <img src="https://firebasestorage.googleapis.com/v0/b/alfarero-478ad.appspot.com/o/full_logo.png?alt=media&token=11098abc-ae65-440e-8bfd-b345f65be332" />
@@ -977,7 +996,9 @@ async function sendDailyEmails() {
 <img src="${waitingChart}" />
 <br/><br/>
 <img src="${waitingHeatmap}" />
-
+<br/><br/>
+${insightsHTML}
+<br/><br/>
 <p>Hasta la fecha se han atendido <strong>${totalPatients.toLocaleString(
     "en-US"
   )}</strong> pacientes.</p>
