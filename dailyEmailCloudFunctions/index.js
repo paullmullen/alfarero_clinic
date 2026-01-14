@@ -248,7 +248,7 @@ function generateWaitingHeatmapChart(
       if (!stationHourMap[key]) stationHourMap[key] = [];
 
       // IMPORTANT: keep minutes consistently (do NOT divide by 60 again)
-      const minutes = step.waiting_time;
+      const minutes = step.waiting_time / 60; // seconds → minutes
       stationHourMap[key].push(minutes);
 
       stationLabels.add(station);
@@ -377,7 +377,7 @@ function generateWaitingHeatmapChart(
             const value = dataPoint?.v ?? 0; // minutes
             const stationLabel = dataPoint?.y ?? "";
             const station = stationLabel.split(" [")[0];
-            const maxValue = thresholds?.[station] ?? 900; // seconds
+            const maxValue = thresholds?.[station] ?? 900 / 60;
 
             if (value === 0) return "rgba(255,255,255,1)";
 

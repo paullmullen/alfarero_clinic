@@ -1,5 +1,6 @@
 /* ============================================================
-   AI-DRIVEN OPERATIONAL INSIGHTS (DETERMINISTIC CORE)
+   AI-DRIVEN OPERATIONAL INSIGHTS
+   ALL DURATIONS NORMALIZED TO MINUTES
    ============================================================ */
 
 const TIMEZONE_OFFSET_MINUTES = 6 * 60;
@@ -14,17 +15,11 @@ function median(arr) {
 }
 
 function severityBadge(severity) {
-  switch (severity) {
-    case "high":
-      return "🔴";
-    case "medium":
-      return "🟠";
-    default:
-      return "🟡";
-  }
+  return severity === "high" ? "🔴" : severity === "medium" ? "🟠" : "🟡";
 }
 
 /* ---------- WAIT TIME ANOMALIES ---------- */
+/* waiting_time is STORED IN SECONDS → converted to MINUTES here */
 
 function detectWaitTimeAnomalies(
   todaySnapshot,
@@ -34,23 +29,37 @@ function detectWaitTimeAnomalies(
   const todayByStation = {};
   const historyByStation = {};
 
-  const collect = (snapshot, target) => {
+  const collectToday = (snapshot, target) => {
     snapshot.forEach((doc) => {
       for (const step of doc.data().plan_of_care ?? []) {
         if (
           step.status === "complete" &&
           typeof step.waiting_time === "number"
         ) {
+          // RAW PATIENT DATA → seconds → minutes
+          const minutes = step.waiting_time / 60;
           const station = step.station;
           target[station] ??= [];
-          target[station].push(step.waiting_time / 60); // minutes
+          target[station].push(minutes);
         }
       }
     });
   };
 
-  collect(todaySnapshot, todayByStation);
-  collect(historicalSnapshot, historyByStation);
+  const collectHistorical = (snapshot, target) => {
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      if (!data.station || typeof data.avg_waiting_time !== "number") return;
+
+      // HISTORICAL DATA → already minutes
+      const station = data.station;
+      target[station] ??= [];
+      target[station].push(data.avg_waiting_time);
+    });
+  };
+
+  collectToday(todaySnapshot, todayByStation);
+  collectHistorical(historicalSnapshot, historyByStation);
 
   const insights = [];
 
@@ -136,11 +145,12 @@ function detectArrivalSurges(hourlyCounts, historicalHourlyAvg) {
 }
 
 /* ---------- FLOW BOTTLENECKS ---------- */
+/* Durations derived from timestamps → already in minutes */
 
-function extractVisitPaths(snapshot) {
+function detectFlowBottlenecks(todaySnapshot) {
   const paths = [];
 
-  snapshot.forEach((doc) => {
+  todaySnapshot.forEach((doc) => {
     const data = doc.data();
     if (!data.start_time || !data.stop_time) return;
 
@@ -156,17 +166,9 @@ function extractVisitPaths(snapshot) {
     const durationMin =
       (data.stop_time.toDate() - data.start_time.toDate()) / 60000;
 
-    paths.push({
-      path: visited.join(" → "),
-      durationMin,
-    });
+    paths.push({ path: visited.join(" → "), durationMin });
   });
 
-  return paths;
-}
-
-function detectFlowBottlenecks(todaySnapshot) {
-  const paths = extractVisitPaths(todaySnapshot);
   if (paths.length < 5) return [];
 
   const overallAvg =
@@ -221,15 +223,12 @@ function renderInsightsHTML(insights) {
           ${severityBadge(i.severity)}
           <strong>${i.title}</strong><br/>
           ${i.explanation}
-        </li>
-      `
+        </li>`
         )
         .join("")}
     </ul>
   `;
 }
-
-/* ---------- EXPORT ---------- */
 
 module.exports = {
   detectWaitTimeAnomalies,
