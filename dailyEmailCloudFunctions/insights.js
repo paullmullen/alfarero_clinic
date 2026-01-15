@@ -1,11 +1,15 @@
 /* ============================================================
-   AI-DRIVEN OPERATIONAL INSIGHTS
-   ALL DURATIONS NORMALIZED TO MINUTES
+   OPERATIONAL INSIGHTS ENGINE (Cloud Functions Safe)
+   ============================================================
+   TIME UNIT CONTRACT:
+   - patient.plan_of_care.waiting_time  -> seconds (raw)
+   - analytics / insights               -> minutes
+   - thresholds                         -> seconds (converted here)
    ============================================================ */
 
-const TIMEZONE_OFFSET_MINUTES = 6 * 60;
-
-/* ---------- Helpers ---------- */
+/* ============================================================
+   HELPERS
+   ============================================================ */
 
 function median(arr) {
   if (!arr.length) return 0;
@@ -18,8 +22,45 @@ function severityBadge(severity) {
   return severity === "high" ? "🔴" : severity === "medium" ? "🟠" : "🟡";
 }
 
-/* ---------- WAIT TIME ANOMALIES ---------- */
-/* waiting_time is STORED IN SECONDS → converted to MINUTES here */
+/**
+ * Normalize clinicDate to "YYYY-MM-DD"
+ * Accepts:
+ *  - "YYYY-MM-DD"
+ *  - ISO strings
+ *  - Date
+ *  - Firestore Timestamp (has toDate())
+ */
+function normalizeClinicDateToYMD(clinicDate) {
+  if (typeof clinicDate === "string") {
+    const ymd = clinicDate.slice(0, 10);
+    const [y, m, d] = ymd.split("-").map(Number);
+    if (y && m && d) return ymd;
+    throw new Error(`normalizeClinicDateToYMD: invalid string "${clinicDate}"`);
+  }
+
+  if (clinicDate && typeof clinicDate.toDate === "function") {
+    const d = clinicDate.toDate();
+    if (Number.isNaN(d.getTime())) {
+      throw new Error("normalizeClinicDateToYMD: Timestamp.toDate() invalid");
+    }
+    return d.toISOString().slice(0, 10);
+  }
+
+  if (clinicDate instanceof Date) {
+    if (Number.isNaN(clinicDate.getTime())) {
+      throw new Error("normalizeClinicDateToYMD: Date is invalid");
+    }
+    return clinicDate.toISOString().slice(0, 10);
+  }
+
+  throw new Error(
+    `normalizeClinicDateToYMD: unsupported type (${typeof clinicDate})`
+  );
+}
+
+/* ============================================================
+   WAIT TIME ANOMALIES
+   ============================================================ */
 
 function detectWaitTimeAnomalies(
   todaySnapshot,
@@ -29,53 +70,49 @@ function detectWaitTimeAnomalies(
   const todayByStation = {};
   const historyByStation = {};
 
-  const collectToday = (snapshot, target) => {
-    snapshot.forEach((doc) => {
-      for (const step of doc.data().plan_of_care ?? []) {
-        if (
-          step.status === "complete" &&
-          typeof step.waiting_time === "number"
-        ) {
-          // RAW PATIENT DATA → seconds → minutes
-          const minutes = step.waiting_time / 60;
-          const station = step.station;
-          target[station] ??= [];
-          target[station].push(minutes);
-        }
+  // TODAY (patients collection)
+  todaySnapshot.forEach((doc) => {
+    const plan = doc.data().plan_of_care ?? [];
+    for (const step of plan) {
+      if (step.status === "complete" && typeof step.waiting_time === "number") {
+        const station = step.station;
+        const minutes = step.waiting_time / 60; // seconds → minutes
+        todayByStation[station] ??= [];
+        todayByStation[station].push(minutes);
       }
-    });
-  };
+    }
+  });
 
-  const collectHistorical = (snapshot, target) => {
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      if (!data.station || typeof data.avg_waiting_time !== "number") return;
-
-      // HISTORICAL DATA → already minutes
-      const station = data.station;
-      target[station] ??= [];
-      target[station].push(data.avg_waiting_time);
-    });
-  };
-
-  collectToday(todaySnapshot, todayByStation);
-  collectHistorical(historicalSnapshot, historyByStation);
+  // HISTORICAL (patients collection)
+  historicalSnapshot.forEach((doc) => {
+    const plan = doc.data().plan_of_care ?? [];
+    for (const step of plan) {
+      if (step.status === "complete" && typeof step.waiting_time === "number") {
+        const station = step.station;
+        const minutes = step.waiting_time / 60; // seconds → minutes
+        historyByStation[station] ??= [];
+        historyByStation[station].push(minutes);
+      }
+    }
+  });
 
   const insights = [];
 
   for (const station of Object.keys(todayByStation)) {
-    if (!historyByStation[station]) continue;
+    if (!historyByStation[station]?.length) continue;
 
     const todayAvg =
       todayByStation[station].reduce((a, b) => a + b, 0) /
       todayByStation[station].length;
 
     const baseline = median(historyByStation[station]);
+
+    // thresholds stored in seconds → minutes
     const thresholdMin = (thresholds?.[station] ?? 900) / 60;
 
     if (todayAvg > baseline * 1.5 && todayAvg > thresholdMin) {
       insights.push({
-        type: "anomaly",
+        type: "wait_anomaly",
         severity: todayAvg > baseline * 2 ? "high" : "medium",
         title: `Tiempo de espera elevado en ${station.toUpperCase()}`,
         explanation: `Promedio hoy: ${todayAvg.toFixed(
@@ -89,22 +126,56 @@ function detectWaitTimeAnomalies(
   return insights;
 }
 
-/* ---------- ARRIVAL SURGES ---------- */
+/* ============================================================
+   ARRIVAL SURGES
+   ============================================================ */
 
-function computeHistoricalHourlyAverages(last30DaysSnapshot) {
+/**
+ * Computes historical hourly average arrivals.
+ * Safe defaults + guards:
+ * - timezoneOffsetMinutes defaults to 0 if missing
+ * - ignores docs with missing/invalid start_time
+ */
+function computeHistoricalHourlyAverages(
+  last30DaysSnapshot,
+  timezoneOffsetMinutes
+) {
+  const tz =
+    typeof timezoneOffsetMinutes === "number" &&
+    Number.isFinite(timezoneOffsetMinutes)
+      ? timezoneOffsetMinutes
+      : 0;
+
+  if (tz === 0 && timezoneOffsetMinutes !== 0) {
+    // Helps catch the exact issue you're seeing without crashing
+    console.warn(
+      "computeHistoricalHourlyAverages: timezoneOffsetMinutes missing/invalid; defaulting to 0. Received:",
+      timezoneOffsetMinutes
+    );
+  }
+
   const hourTotals = {};
   const hourDays = {};
 
   last30DaysSnapshot.forEach((doc) => {
     const data = doc.data();
-    if (!data.start_time) return;
 
-    const local = new Date(
-      data.start_time.toDate().getTime() - TIMEZONE_OFFSET_MINUTES * 60 * 1000
-    );
+    // Guard: start_time must be a Firestore Timestamp-like
+    if (!data.start_time || typeof data.start_time.toDate !== "function")
+      return;
+
+    const startDate = data.start_time.toDate();
+    if (!(startDate instanceof Date) || Number.isNaN(startDate.getTime()))
+      return;
+
+    const local = new Date(startDate.getTime() - tz * 60 * 1000);
+    if (Number.isNaN(local.getTime())) return;
 
     const hour = local.getHours();
-    const dayKey = local.toISOString().split("T")[0];
+
+    // Avoid toISOString on invalid dates (already guarded, but keep safe)
+    const iso = local.toISOString(); // safe now
+    const dayKey = iso.split("T")[0];
 
     hourTotals[hour] = (hourTotals[hour] ?? 0) + 1;
     hourDays[hour] ??= new Set();
@@ -125,18 +196,17 @@ function detectArrivalSurges(hourlyCounts, historicalHourlyAvg) {
   for (const hour of Object.keys(hourlyCounts)) {
     const today = hourlyCounts[hour];
     const baseline = historicalHourlyAvg[hour];
-
     if (!baseline || baseline < 1) continue;
 
     if (today > baseline * 1.4) {
       insights.push({
-        type: "anomaly",
+        type: "arrival_surge",
         severity: today > baseline * 1.8 ? "high" : "medium",
         title: `Afluencia inusual a las ${hour}:00`,
         explanation: `Llegaron ${today} pacientes vs promedio histórico de ${baseline.toFixed(
           1
         )}.`,
-        metrics: { hour, today, baseline },
+        metrics: { hour: Number(hour), today, baseline },
       });
     }
   }
@@ -144,8 +214,9 @@ function detectArrivalSurges(hourlyCounts, historicalHourlyAvg) {
   return insights;
 }
 
-/* ---------- FLOW BOTTLENECKS ---------- */
-/* Durations derived from timestamps → already in minutes */
+/* ============================================================
+   FLOW BOTTLENECKS
+   ============================================================ */
 
 function detectFlowBottlenecks(todaySnapshot) {
   const paths = [];
@@ -153,6 +224,12 @@ function detectFlowBottlenecks(todaySnapshot) {
   todaySnapshot.forEach((doc) => {
     const data = doc.data();
     if (!data.start_time || !data.stop_time) return;
+    if (typeof data.start_time.toDate !== "function") return;
+    if (typeof data.stop_time.toDate !== "function") return;
+
+    const start = data.start_time.toDate();
+    const stop = data.stop_time.toDate();
+    if (Number.isNaN(start.getTime()) || Number.isNaN(stop.getTime())) return;
 
     const visited = (data.plan_of_care ?? [])
       .filter(
@@ -163,9 +240,7 @@ function detectFlowBottlenecks(todaySnapshot) {
 
     if (visited.length < 2) return;
 
-    const durationMin =
-      (data.stop_time.toDate() - data.start_time.toDate()) / 60000;
-
+    const durationMin = (stop - start) / 60000;
     paths.push({ path: visited.join(" → "), durationMin });
   });
 
@@ -181,15 +256,13 @@ function detectFlowBottlenecks(todaySnapshot) {
   }
 
   const insights = [];
-
   for (const [path, durations] of Object.entries(byPath)) {
     if (durations.length < 3) continue;
 
     const avg = durations.reduce((a, b) => a + b, 0) / durations.length;
-
     if (avg > overallAvg * 1.25) {
       insights.push({
-        type: "opportunity",
+        type: "flow_bottleneck",
         severity: avg > overallAvg * 1.5 ? "high" : "medium",
         title: "Recorrido con duración elevada",
         explanation: `Ruta ${path}: ${avg.toFixed(
@@ -203,7 +276,9 @@ function detectFlowBottlenecks(todaySnapshot) {
   return insights;
 }
 
-/* ---------- HTML RENDER ---------- */
+/* ============================================================
+   HTML RENDERING
+   ============================================================ */
 
 function renderInsightsHTML(insights) {
   if (!insights.length) {
@@ -230,10 +305,72 @@ function renderInsightsHTML(insights) {
   `;
 }
 
+/* ============================================================
+   PERSISTENCE (OPTION A, IDEMPOTENT)
+   ============================================================ */
+
+async function persistInsights({ db, Timestamp }, insights, clinicDate) {
+  if (!insights.length) {
+    console.log("No operational insights detected for", clinicDate);
+    return;
+  }
+
+  const clinicYMD = normalizeClinicDateToYMD(clinicDate);
+
+  const [y, m, d] = clinicYMD.split("-").map(Number);
+  const dayStartUtc = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
+  if (Number.isNaN(dayStartUtc.getTime())) {
+    throw new Error(
+      `persistInsights: failed to build Date from clinicYMD="${clinicYMD}"`
+    );
+  }
+
+  const collection = db.collection("operational_insights");
+
+  for (const insight of insights) {
+    const stationKey = insight.metrics?.station?.toUpperCase() ?? "GLOBAL";
+    const docId = `${clinicYMD}__${insight.type.toUpperCase()}__${stationKey}`;
+    const ref = collection.doc(docId);
+
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+
+      const basePayload = {
+        date: Timestamp.fromDate(dayStartUtc),
+        clinic_date: clinicYMD,
+        type: insight.type,
+        station: insight.metrics?.station ?? null,
+        severity: insight.severity,
+        metrics: insight.metrics ?? {},
+        title: insight.title,
+        explanation: insight.explanation,
+        detected_at: Timestamp.now(),
+        version: 1,
+      };
+
+      if (!snap.exists) {
+        tx.set(ref, {
+          ...basePayload,
+          resolved_at: null,
+          resolution: { acknowledged: false, notes: null, by: null },
+        });
+      } else {
+        // Update analytics only; preserve resolution fields
+        tx.update(ref, basePayload);
+      }
+    });
+  }
+}
+
+/* ============================================================
+   EXPORTS
+   ============================================================ */
+
 module.exports = {
   detectWaitTimeAnomalies,
   computeHistoricalHourlyAverages,
   detectArrivalSurges,
   detectFlowBottlenecks,
   renderInsightsHTML,
+  persistInsights,
 };

@@ -9,6 +9,7 @@ const {
   detectArrivalSurges,
   detectFlowBottlenecks,
   renderInsightsHTML,
+  persistInsights,
 } = require("./insights");
 
 // --- CORS helper ---
@@ -31,6 +32,15 @@ let dataMatrix = null;
 const SEND_EMAIL_URL = "https://sendemail-479287307088.us-central1.run.app";
 const TIMEZONE_OFFSET_MINUTES = 6 * 60; // UTC-6
 let thresholds = null;
+
+// Define clinic day (local to clinic timezone)
+const now = new Date();
+const clinicLocal = new Date(
+  now.getTime() - TIMEZONE_OFFSET_MINUTES * 60 * 1000
+);
+const clinicDate = new Date(Date.now() - TIMEZONE_OFFSET_MINUTES * 60 * 1000)
+  .toISOString()
+  .split("T")[0];
 
 async function getStationThresholds() {
   const snapshot = await db.collection("stats").get();
@@ -922,14 +932,21 @@ async function sendDailyEmails() {
   const waitingHeatmap = generateWaitingHeatmapChart(todaySnapshot);
 
   // new insights calcs
-  const historicalHourlyAvg =
-    computeHistoricalHourlyAverages(last30DaysSnapshot);
+  const historicalHourlyAvg = computeHistoricalHourlyAverages(
+    last30DaysSnapshot,
+    TIMEZONE_OFFSET_MINUTES
+  );
 
   const aiInsights = [
     ...detectWaitTimeAnomalies(todaySnapshot, last30DaysSnapshot, thresholds),
     ...detectArrivalSurges(hourlyCounts, historicalHourlyAvg),
     ...detectFlowBottlenecks(todaySnapshot),
   ];
+  const clinicDate = new Date(Date.now() - TIMEZONE_OFFSET_MINUTES * 60 * 1000)
+    .toISOString()
+    .slice(0, 10); // "YYYY-MM-DD"
+
+  await persistInsights({ db, Timestamp }, aiInsights, clinicDate);
 
   const insightsHTML = renderInsightsHTML(aiInsights);
 
