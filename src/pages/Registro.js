@@ -200,7 +200,7 @@ export const Registro = () => {
       try {
         const visitTypeRef = query(
           collection(firestore, "visit_types"),
-          orderBy("order")
+          orderBy("order"),
         );
         const visitTypeSnapshot = await getDocs(visitTypeRef); // Use getDocs to fetch data
         const visitRecipes = visitTypeSnapshot.docs.map((doc) => {
@@ -314,7 +314,7 @@ export const Registro = () => {
   const encryptData = (text) => {
     const data = CryptoJS.AES.encrypt(
       JSON.stringify(text),
-      secretPass
+      secretPass,
     ).toString();
 
     return data;
@@ -328,6 +328,14 @@ export const Registro = () => {
 
   const onFinish = async (patient) => {
     setDisabledButton(true);
+
+    // Pull national_id_number from form values
+
+    // Always store ONLY digits (no spaces or formatting)
+    const nationalId = patient.national_id_number
+      ? patient.national_id_number.replace(/\D/g, "") // strips spaces and any non-digits
+      : null;
+
     const formattedPatient = {
       complete: false,
       last_update: Timestamp.now(),
@@ -342,46 +350,60 @@ export const Registro = () => {
       type_of_visit: patient.tipo,
       gender: patient.gender,
       age_group: patient.age_group !== undefined ? patient.age_group : null,
+      // NEW: store the national ID in the patient document
+      nationalId: nationalId,
     };
 
     try {
-      // Use addDoc to add a new patient document
+      // 1) Create the patient document
       const patientRef = await addDoc(
         collection(firestore, "patients"),
-        formattedPatient
+        formattedPatient,
       );
-
-      // Get the patient ID (doc id) after adding the document
       const ptNo = patientRef.id;
 
-      // Prepare the updated patient data including the patient ID (pt_no)
+      // 2) Update with its doc id (pt_no) for convenience
       const updatedPatient = { ...formattedPatient, pt_no: ptNo };
-
-      // Use updateDoc to update the newly created patient document with pt_no
       await updateDoc(doc(firestore, "patients", ptNo), updatedPatient);
 
-      // Actualizar el número de pacientes del mes actual en la colección "stats"
-      const selectedStations = patientPlanOfCare.map((visit) => {
-        return {
-          station: visit.station,
-          status: visit.status,
-        };
-      });
-
+      // 3) Maintain stats for each scheduled (non-pending) station
+      const selectedStations = patientPlanOfCare.map((visit) => ({
+        station: visit.station,
+        status: visit.status,
+      }));
       selectedStations.forEach((station) => {
-        // only count scheduled stations... pending is not a planned station.
         if (station.status !== "pending") {
           updateStatsCollection(station.station);
         }
       });
 
-      const fooJson = {
-        n: "Paul Mullen",
-        t: "Lawrence",
-      };
-      const fooString = JSON.stringify(fooJson);
+      // 4) Maintain the known_patients collection keyed by national_id_number
+      if (nationalId) {
+        const kpRef = doc(firestore, "known_patients", nationalId);
+        const kpSnap = await getDoc(kpRef);
 
-      const foo = encryptData(fooString);
+        if (!kpSnap.exists()) {
+          // Create a new record for first-time national ID
+          await setDoc(kpRef, {
+            national_id_number: nationalId,
+            patient_name: patient.paciente || null,
+            is_new: true,
+            created_at: Timestamp.now(),
+            last_seen_at: Timestamp.now(),
+            // Optional: you can store the last patient doc id for quick traceability
+            last_patient_doc_id: ptNo,
+          });
+        } else {
+          // Optionally keep a last_seen timestamp and last patient doc written
+          // (we don't flip is_new here—leave it as originally set)
+          await updateDoc(kpRef, {
+            patient_name:
+              patient.paciente || kpSnap.data().patient_name || null,
+            last_seen_at: Timestamp.now(),
+            last_patient_doc_id: ptNo,
+          });
+        }
+      }
 
       showAlert("Success", t("patientWasCreated"), "success");
       handleReset();
@@ -441,7 +463,69 @@ export const Registro = () => {
                   </Form.Item>
                 </Col>
               </Row>
+              {/* National ID Number */}
+              <Row style={{ display: "contents" }} gutter={24}>
+                <Col xs={24} sm={24}>
+                  <Form.Item
+                    label={t("NATIONAL_ID_NUMBER") || "National ID Number"}
+                    name="national_id_number"
+                    rules={[
+                      {
+                        required: true,
+                        message:
+                          t("enterNationalId") ||
+                          "Please enter the national ID number",
+                      },
+                      {
+                        validator: (_, value) => {
+                          if (!value) return Promise.resolve();
+                          const raw = value.replace(/\D/g, "");
+                          if (raw.length === 13) return Promise.resolve();
+                          return Promise.reject(
+                            new Error(
+                              t("enterValidNationalId") ||
+                                "National ID must be 13 digits",
+                            ),
+                          );
+                        },
+                      },
+                    ]}
+                  >
+                    <Input
+                      maxLength={17} // 4 + 1 + 5 + 1 + 4
+                      onChange={(e) => {
+                        let v = e.target.value || "";
 
+                        // Remove all non-digits
+                        v = v.replace(/\D/g, "");
+
+                        // Keep only the first 13 digits
+                        v = v.slice(0, 13);
+
+                        // Apply formatting: 4 digits + space + 5 digits + space + 4 digits
+                        let formatted = v;
+
+                        if (v.length > 4) {
+                          formatted = v.slice(0, 4) + " " + v.slice(4);
+                        }
+                        if (v.length > 9) {
+                          formatted =
+                            v.slice(0, 4) +
+                            " " +
+                            v.slice(4, 9) +
+                            " " +
+                            v.slice(9, 13);
+                        }
+
+                        form.setFieldsValue({
+                          national_id_number: formatted,
+                        });
+                      }}
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+              ``
               <Row>
                 <Col xs={8} sm={8}></Col>
                 <Col xs={7} sm={7}>
@@ -511,7 +595,6 @@ export const Registro = () => {
                   </Form.Item>
                 </Col>
               </Row>
-
               <Row style={{ display: "contents" }} gutter={24}>
                 <Col xs={24} sm={24}>
                   <Form.Item
@@ -525,13 +608,13 @@ export const Registro = () => {
                           }
                           if (
                             /^(\+\d{1,3}[-  *])?\(?([0-9]{3,4})\)?[-.●  *]?([0-9]{3,4})[-.●  *]?([0-9]{3,4})?$/.test(
-                              value
+                              value,
                             )
                           ) {
                             return Promise.resolve();
                           }
                           return Promise.reject(
-                            new Error(t("enterValidPhoneNumber"))
+                            new Error(t("enterValidPhoneNumber")),
                           );
                         },
                       },
@@ -552,7 +635,6 @@ export const Registro = () => {
                   </Form.Item>
                 </Col>
               </Row>
-
               <Row gutter={24}>
                 <Col xs={24} sm={24}>
                   <Form.Item
@@ -584,7 +666,6 @@ export const Registro = () => {
                   </Form.Item>
                 </Col>
               </Row>
-
               {/* <Row gutter={24}>
             <Col xs={24} sm={24}>
               <Form.Item
