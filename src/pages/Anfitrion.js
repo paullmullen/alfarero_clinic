@@ -46,13 +46,13 @@ const Anfitrion = () => {
 
   const { todayTimestamp, tomorrowTimestamp } = getTodayAndTomorrowTimestamps();
 
-  // 🔴 Filtered real-time listener for today's patients, excluding completed
+  // Filtered real-time listener for today's patients, excluding completed
   useEffect(() => {
     const q = query(
       collection(firestore, "patients"),
       where("start_time", ">=", todayTimestamp),
       where("start_time", "<", tomorrowTimestamp),
-      where("complete", "==", false) // exclude completed patients
+      where("complete", "==", false), // exclude completed patients
     );
 
     const unsubscribePatients = onSnapshot(q, (snapshot) => {
@@ -102,7 +102,7 @@ const Anfitrion = () => {
     const stations = statsData
       .filter(
         (s) =>
-          !!s.station_type && (s.display === undefined || s.display === true)
+          !!s.station_type && (s.display === undefined || s.display === true),
       )
       .map((s) => ({
         name: s.station_type,
@@ -147,7 +147,7 @@ const Anfitrion = () => {
 
     // Sort by start_time asc
     const sorted = [...rowsRaw].sort(
-      (a, b) => toMs(a?.start_time) - toMs(b?.start_time)
+      (a, b) => toMs(a?.start_time) - toMs(b?.start_time),
     );
 
     return sorted.map((item) => {
@@ -163,14 +163,14 @@ const Anfitrion = () => {
           plan.waiting_start instanceof Timestamp
         ) {
           elapsedMinsCandidates.push(
-            Math.floor((nowMs - plan.waiting_start.toMillis()) / 60000)
+            Math.floor((nowMs - plan.waiting_start.toMillis()) / 60000),
           );
         } else if (
           plan.status === "in_process" &&
           plan.in_process_start instanceof Timestamp
         ) {
           elapsedMinsCandidates.push(
-            Math.floor((nowMs - plan.in_process_start.toMillis()) / 60000)
+            Math.floor((nowMs - plan.in_process_start.toMillis()) / 60000),
           );
         }
       });
@@ -180,7 +180,7 @@ const Anfitrion = () => {
         : 0;
 
       const minutesSinceStart = Math.round(
-        (nowMs - toMs(item.start_time)) / 60000
+        (nowMs - toMs(item.start_time)) / 60000,
       );
 
       return {
@@ -219,7 +219,7 @@ const Anfitrion = () => {
       7: seven,
       fin,
     }),
-    []
+    [],
   );
 
   // All possible status transitions to show in the popover
@@ -237,7 +237,7 @@ const Anfitrion = () => {
       ["6", six],
       ["7", seven],
     ],
-    []
+    [],
   );
 
   /**
@@ -434,8 +434,8 @@ const Anfitrion = () => {
     return allPendingOrComplete
       ? "highlight-row"
       : index % 2 === 0
-      ? "even-row"
-      : "odd-row";
+        ? "even-row"
+        : "odd-row";
   };
 
   // ─────────────────────────────────────────────────────────────────────────────

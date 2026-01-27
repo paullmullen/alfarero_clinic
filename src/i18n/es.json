@@ -39,6 +39,7 @@
   "NOT_AUTHORIZED": "No autorizado.",
   "NOT_AUTHD_MESSAGE": "Contacte a su gerente para acceder a esta página.",
   "NUM_PTS": "Cantidad de Pacients",
+  "OVERWRITES_DATA": "Esta importación actualiza la base de datos de DPI para esta aplicación.",
   "PLEASE_ENTER_EMAIL": "Favor de entrar email.",
   "PLEASE_ENTER_VALID_EMAIL": "Favor de entrar dirección de email valido.",
   "PRE_MARCH_MESSAGE": "Los datos de procedimientos y tiempos de espera anteriores al 1 de marzo de 2025 no son confiables.",
@@ -57,6 +58,8 @@
   "TODAYSPATIENTS": "Reporte de Pacientes",
   "TOTALWAIT": "Espera",
   "UNKNOWN_ERROR": "Error Desonocido",
+  "UPLOAD": "Subir",
+
   "USER_PERMISSIONS": "Permisos de Usuarios",
   "WAITING_TIME": "Promedio: Espera",
   "WELCOME_MESSAGE": "autorizado por credenciales de Casa del Alfarero - Asociación.",

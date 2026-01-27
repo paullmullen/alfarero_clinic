@@ -522,10 +522,7 @@ export const Registro = () => {
                 name="national_id_number"
                 rules={[
                   {
-                    required: true,
-                    message:
-                      t("enterNationalId") ||
-                      "Please enter the national ID number",
+                    required: false,
                   },
                   {
                     validator: (_, value) => {
