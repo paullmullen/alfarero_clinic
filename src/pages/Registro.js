@@ -45,6 +45,14 @@ const tailLayout = {
 export const Registro = () => {
   const { showAlert } = useAlert();
   const [form] = Form.useForm();
+
+  const ageGroup = Form.useWatch("age_group", form);
+  const nationalIdValue = Form.useWatch("national_id_number", form);
+
+  const showChildDpiWarning =
+    ageGroup === "child" &&
+    (nationalIdValue || "").replace(/\D/g, "").length > 0;
+
   const [patientPlanOfCare, setPatientPlanOfCare] = useState([]);
   const [recipes, setRecipes] = useState([]);
   // const [selectedRecipeStations, setRecipeStations] = useState([]);
@@ -530,10 +538,7 @@ export const Registro = () => {
                       const raw = (value || "").replace(/\D/g, "");
                       if (raw.length === 13) return Promise.resolve();
                       return Promise.reject(
-                        new Error(
-                          t("enterValidNationalId") ||
-                            "National ID must be 13 digits",
-                        ),
+                        new Error(t("ENTER_VALID_NATIONAL_ID")),
                       );
                     },
                   },
@@ -597,6 +602,13 @@ export const Registro = () => {
                   }}
                 />
               </Form.Item>
+              {showChildDpiWarning && (
+                <Text type="warning">
+                  {t("CHILD_DPI_WARNING") ||
+                    "Child selected: if this is the parent’s National ID, leave this blank or enter the child’s ID."}
+                  <br />
+                </Text>
+              )}
 
               {/* Inline feedback for auto-fill */}
               {kpLookup.status === "loading" && (
