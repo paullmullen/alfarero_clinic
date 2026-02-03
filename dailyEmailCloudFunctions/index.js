@@ -23,6 +23,59 @@ function applyCors(req, res) {
   res.setHeader("Access-Control-Max-Age", "3600"); // cache preflight for 1h
 }
 
+function generateNewVsRepeatPieChart(todaySnapshot) {
+  const { createCanvas } = require("canvas");
+  const Chart = require("chart.js/auto");
+
+  let newCount = 0;
+  let repeatCount = 0;
+
+  todaySnapshot.forEach((doc) => {
+    const data = doc.data() ?? {};
+    // Treat ONLY strict true as "new". Everything else (false/null/missing) becomes "repeat".
+    if (data.new_patient === true) newCount++;
+    else repeatCount++;
+  });
+
+  const canvas = createCanvas(600, 350);
+  const ctx = canvas.getContext("2d");
+
+  new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels: ["Nuevos", "Repetidos"],
+      datasets: [
+        {
+          data: [newCount, repeatCount],
+          backgroundColor: ["#3367D6", "#FF7043"],
+        },
+      ],
+    },
+    options: {
+      responsive: false,
+      plugins: {
+        title: {
+          display: true,
+          text: "Pacientes: Nuevos vs Repetidos (Hoy)",
+        },
+        legend: { display: true, position: "right" },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const value = ctx.parsed ?? 0;
+              const total = newCount + repeatCount || 1;
+              const pct = ((value / total) * 100).toFixed(1);
+              return `${ctx.label}: ${value} (${pct}%)`;
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return canvas.toDataURL();
+}
+
 // Initialize Firebase Admin SDK
 initializeApp({ credential: applicationDefault() });
 const db = getFirestore();
@@ -36,7 +89,7 @@ let thresholds = null;
 // Define clinic day (local to clinic timezone)
 const now = new Date();
 const clinicLocal = new Date(
-  now.getTime() - TIMEZONE_OFFSET_MINUTES * 60 * 1000
+  now.getTime() - TIMEZONE_OFFSET_MINUTES * 60 * 1000,
 );
 const clinicDate = new Date(Date.now() - TIMEZONE_OFFSET_MINUTES * 60 * 1000)
   .toISOString()
@@ -165,7 +218,7 @@ function generateWaitingHeatmapChart(
     // === Presentation ===
     topN = 10, // How many buckets to list in diagnostics
     showDecimalMinutes = true, // Show averages with 1 decimal (true) or as integers (false)
-  } = {}
+  } = {},
 ) {
   const { createCanvas } = require("canvas");
   const Chart = require("chart.js/auto");
@@ -248,7 +301,7 @@ function generateWaitingHeatmapChart(
       // --- Determine hour bucket (local) ---
       // Keep consistent with the rest of your file: subtract offset in ms to get local time
       const localStart = new Date(
-        ws.getTime() - timezoneOffsetMinutes * 60 * 1000
+        ws.getTime() - timezoneOffsetMinutes * 60 * 1000,
       );
       const hour = localStart.getHours();
 
@@ -282,11 +335,11 @@ function generateWaitingHeatmapChart(
       return showDecimalMinutes
         ? parseFloat(avg.toFixed(0)) // integer
         : Math.round(avg); // integer minutes
-    })
+    }),
   );
 
   const labeledStations = stations.map(
-    (s) => `${s} [${((thresholds?.[s] ?? 900) / 60).toFixed(0)} mins]`
+    (s) => `${s} [${((thresholds?.[s] ?? 900) / 60).toFixed(0)} mins]`,
   );
 
   // --- Diagnostics output ---
@@ -296,12 +349,12 @@ function generateWaitingHeatmapChart(
     console.log(
       `${header} Included=${included}, Excluded: ` +
         `noTimestamp=${noTimestamp}, noWaitingTime=${noWaitingTime}, ` +
-        `badStatus=${badStatus}, outOfRange=${outOfRange}`
+        `badStatus=${badStatus}, outOfRange=${outOfRange}`,
     );
 
     if (start && end) {
       console.log(
-        `${header} Day window (local): start=${start.toISOString()}  end=${end.toISOString()} (exclusive)`
+        `${header} Day window (local): start=${start.toISOString()}  end=${end.toISOString()} (exclusive)`,
       );
     } else {
       console.log(`${header} Day window not applied at step level`);
@@ -309,11 +362,11 @@ function generateWaitingHeatmapChart(
 
     console.log(
       `${header} Distinct stations: ${stations.length} -> [${stations.join(
-        ", "
-      )}]`
+        ", ",
+      )}]`,
     );
     console.log(
-      `${header} Distinct hours: ${hours.length} -> [${hours.join(", ")}]`
+      `${header} Distinct hours: ${hours.length} -> [${hours.join(", ")}]`,
     );
 
     // Summarize top buckets by COUNT and by AVG (count>=2)
@@ -334,7 +387,7 @@ function generateWaitingHeatmapChart(
         (a, b) =>
           b.count - a.count ||
           a.station.localeCompare(b.station) ||
-          a.hour - b.hour
+          a.hour - b.hour,
       )
       .slice(0, topN);
 
@@ -347,7 +400,7 @@ function generateWaitingHeatmapChart(
     for (const b of topByCount) {
       console.log(
         `${header}  - ${b.station} @ ${String(b.hour).padStart(2, "0")}:00  ` +
-          `count=${b.count}, avg=${b.avgMin.toFixed(2)} min`
+          `count=${b.count}, avg=${b.avgMin.toFixed(2)} min`,
       );
     }
 
@@ -357,13 +410,13 @@ function generateWaitingHeatmapChart(
         console.log(
           `${header}  - ${b.station} @ ${String(b.hour).padStart(
             2,
-            "0"
-          )}:00  ` + `avg=${b.avgMin.toFixed(2)} min, count=${b.count}`
+            "0",
+          )}:00  ` + `avg=${b.avgMin.toFixed(2)} min, count=${b.count}`,
         );
       }
     } else {
       console.log(
-        `${header} Top-by-average list is empty (insufficient data).`
+        `${header} Top-by-average list is empty (insufficient data).`,
       );
     }
   }
@@ -380,7 +433,7 @@ function generateWaitingHeatmapChart(
               x: `${hours[j]}:00`,
               y: labeledStations[i],
               v: value,
-            }))
+            })),
           ),
           backgroundColor: function (ctx) {
             const dataPoint = ctx?.dataset?.data?.[ctx.dataIndex];
@@ -502,7 +555,7 @@ function generateWaitingTimeChart(patientsSnapshot) {
 
   const labels = Object.keys(stationTotals);
   const data = labels.map(
-    (station) => +(stationTotals[station] / stationCounts[station]).toFixed(2)
+    (station) => +(stationTotals[station] / stationCounts[station]).toFixed(2),
   );
 
   new Chart(ctx, {
@@ -544,15 +597,15 @@ function getLocalDayRangeTimestamps() {
   const startOfTodayLocal = new Date(
     now.getFullYear(),
     now.getMonth(),
-    now.getDate() - 1
+    now.getDate() - 1,
   );
   const startOfTodayUTC = new Date(
-    startOfTodayLocal.getTime() + TIMEZONE_OFFSET_MINUTES * 60 * 1000
+    startOfTodayLocal.getTime() + TIMEZONE_OFFSET_MINUTES * 60 * 1000,
   );
   const startOfTomorrowLocal = new Date(startOfTodayLocal);
   startOfTomorrowLocal.setDate(startOfTomorrowLocal.getDate() + 1);
   const startOfTomorrowUTC = new Date(
-    startOfTomorrowLocal.getTime() + TIMEZONE_OFFSET_MINUTES * 60 * 1000
+    startOfTomorrowLocal.getTime() + TIMEZONE_OFFSET_MINUTES * 60 * 1000,
   );
   return {
     startOfToday: Timestamp.fromDate(startOfTodayUTC),
@@ -593,11 +646,11 @@ async function getPatientInsights() {
   const startOf30DaysAgoLocal = new Date(
     now.getFullYear(),
     now.getMonth(),
-    now.getDate()
+    now.getDate(),
   );
   startOf30DaysAgoLocal.setDate(startOf30DaysAgoLocal.getDate() - 30);
   const startOf30DaysAgoUTC = new Date(
-    startOf30DaysAgoLocal.getTime() + TIMEZONE_OFFSET_MINUTES * 60 * 1000
+    startOf30DaysAgoLocal.getTime() + TIMEZONE_OFFSET_MINUTES * 60 * 1000,
   );
   const startOf30DaysAgoTimestamp = Timestamp.fromDate(startOf30DaysAgoUTC);
 
@@ -645,7 +698,7 @@ async function getPatientInsights() {
     const data = doc.data();
     if (!data.start_time) return;
     const localDate = new Date(
-      data.start_time.toDate().getTime() - TIMEZONE_OFFSET_MINUTES * 60 * 1000
+      data.start_time.toDate().getTime() - TIMEZONE_OFFSET_MINUTES * 60 * 1000,
     );
     const dateKey = localDate.toISOString().split("T")[0];
     uniqueDateSet.add(dateKey);
@@ -684,7 +737,8 @@ function getVisitTypeMetrics(todaySnapshot, last30DaysSnapshot) {
       const data = doc.data();
       if (!data.start_time) return;
       const localDate = new Date(
-        data.start_time.toDate().getTime() - TIMEZONE_OFFSET_MINUTES * 60 * 1000
+        data.start_time.toDate().getTime() -
+          TIMEZONE_OFFSET_MINUTES * 60 * 1000,
       );
       const dateKey = localDate.toISOString().split("T")[0];
       uniqueDateSet.add(dateKey);
@@ -702,7 +756,7 @@ function getVisitTypeMetrics(todaySnapshot, last30DaysSnapshot) {
 
   // Orden por volumen Hoy (desc), si no existe Hoy, usa Promedio 30d
   const allKeys = Array.from(
-    new Set([...Object.keys(todayCounts), ...Object.keys(avg30Counts)])
+    new Set([...Object.keys(todayCounts), ...Object.keys(avg30Counts)]),
   );
   allKeys.sort((a, b) => {
     const av = todayCounts[a] ?? avg30Counts[a] ?? 0;
@@ -729,7 +783,7 @@ function generateVisitTypeChart(
   todayCounts,
   avgCounts,
   orderedKeys,
-  labelMap = {}
+  labelMap = {},
 ) {
   const { createCanvas } = require("canvas");
   const Chart = require("chart.js/auto");
@@ -816,7 +870,7 @@ function getMilestoneProjection(totalPatients, avgDailyPatients) {
 
   const projectedDate = new Date();
   projectedDate.setDate(
-    projectedDate.getDate() + Math.round(calendarDaysNeeded)
+    projectedDate.getDate() + Math.round(calendarDaysNeeded),
   );
 
   const projectedDateStr = projectedDate.toLocaleDateString("es-ES", {
@@ -850,7 +904,8 @@ async function sendDailyEmails() {
     const data = doc.data();
     if (data.start_time) {
       const localDate = new Date(
-        data.start_time.toDate().getTime() - TIMEZONE_OFFSET_MINUTES * 60 * 1000
+        data.start_time.toDate().getTime() -
+          TIMEZONE_OFFSET_MINUTES * 60 * 1000,
       );
       const hour = localDate.getHours();
       if (hour in hourlyCounts) {
@@ -864,11 +919,11 @@ async function sendDailyEmails() {
   const startOf30DaysAgoLocal = new Date(
     now.getFullYear(),
     now.getMonth(),
-    now.getDate()
+    now.getDate(),
   );
   startOf30DaysAgoLocal.setDate(startOf30DaysAgoLocal.getDate() - 30);
   const startOf30DaysAgoUTC = new Date(
-    startOf30DaysAgoLocal.getTime() + TIMEZONE_OFFSET_MINUTES * 60 * 1000
+    startOf30DaysAgoLocal.getTime() + TIMEZONE_OFFSET_MINUTES * 60 * 1000,
   );
   const startOf30DaysAgoTimestamp = Timestamp.fromDate(startOf30DaysAgoUTC);
 
@@ -898,10 +953,10 @@ async function sendDailyEmails() {
   const insights = await getPatientInsights();
   const patientSummaryChart = generatePatientSummaryChart(
     insights.todayCounts,
-    insights.avgCounts
+    insights.avgCounts,
   );
 
-  // NUEVO: métricas y gráfica por type_of_visit
+  const newVsRepeatChart = generateNewVsRepeatPieChart(todaySnapshot);
 
   const {
     todayCounts: visitTodayCounts,
@@ -915,7 +970,7 @@ async function sendDailyEmails() {
     visitTodayCounts,
     visitAvgCounts,
     orderedKeys,
-    visitTypeLabelMap
+    visitTypeLabelMap,
   );
 
   const totalPatientsSnapshot = await db.collection("patients").count().get();
@@ -923,7 +978,7 @@ async function sendDailyEmails() {
 
   const { nextMilestone, projectedDateStr } = getMilestoneProjection(
     totalPatients,
-    insights.avgCounts.total
+    insights.avgCounts.total,
   );
 
   thresholds = await getStationThresholds();
@@ -934,7 +989,7 @@ async function sendDailyEmails() {
   // new insights calcs
   const historicalHourlyAvg = computeHistoricalHourlyAverages(
     last30DaysSnapshot,
-    TIMEZONE_OFFSET_MINUTES
+    TIMEZONE_OFFSET_MINUTES,
   );
 
   const aiInsights = [
@@ -1003,6 +1058,8 @@ async function sendDailyEmails() {
 
 <br/><br/>
 <img src="${patientSummaryChart}" />
+<br/><br/>
+<img src="${newVsRepeatChart}" />
 
 <br/><br/>
 <img src="${visitTypeChart}" />
@@ -1017,10 +1074,10 @@ async function sendDailyEmails() {
 ${insightsHTML}
 <br/><br/>
 <p>Hasta la fecha se han atendido <strong>${totalPatients.toLocaleString(
-    "en-US"
+    "en-US",
   )}</strong> pacientes.</p>
 <p>A este ritmo, habrán atendido a <strong>${nextMilestone.toLocaleString(
-    "en-US"
+    "en-US",
   )}</strong> pacientes para el <strong>${projectedDateStr}</strong>.</p>
 <p>¡Cristo Vive!<br/><br/>Josué Rivas,<br/>Gerente</p>
   `;
@@ -1064,7 +1121,7 @@ exports.manualDailyEmail = onRequest(
       console.error("Unhandled error:", err);
       res.status(500).json({ error: err.message });
     }
-  }
+  },
 );
 
 exports.scheduledDailyEmail = onSchedule(
@@ -1080,5 +1137,5 @@ exports.scheduledDailyEmail = onSchedule(
     } catch (err) {
       console.error("Error:", err);
     }
-  }
+  },
 );
