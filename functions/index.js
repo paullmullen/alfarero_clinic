@@ -4,18 +4,19 @@
 //***************************************************************** */
 
 const admin = require("firebase-admin");
-const functions = require("firebase-functions");
 
-// Import your functions from their respective files
-// const { aggregateTimes } = require("./aggregateTimes");
+// Import functions
 const { getPatientCount } = require("./getPatientCount");
 const { updateStatusChange } = require("./updateStatusChange");
 const { getPatientsData } = require("./getPatientsData");
+// const { aggregateTimes } = require("./aggregateTimes"); // uncomment only if used
 
-admin.initializeApp();
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
-// Export the functions to Firebase
-exports.aggregateTimes = aggregateTimes;
+// Export functions
 exports.getPatientCount = getPatientCount;
 exports.updateStatusChange = updateStatusChange;
-exports.getPatientsData = this.getPatientsData;
+exports.getPatientsData = getPatientsData;
+// exports.aggregateTimes = aggregateTimes;

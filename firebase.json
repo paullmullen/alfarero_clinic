@@ -18,9 +18,16 @@
       }
     ]
   },
-  "functions": {
-    "source": "dailyEmailCloudFunctions"
-  },
+  "functions": [
+    {
+      "source": "dailyEmailCloudFunctions",
+      "codebase": "daily"
+    },
+    {
+      "source": "functions",
+      "codebase": "api"
+    }
+  ],
   "emulators": {
     "firestore": {
       "port": 8080

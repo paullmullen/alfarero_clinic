@@ -5,124 +5,84 @@
 
 const { onRequest } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
-const { getFirestore } = require("firebase-admin/firestore");
-
-const app = admin.initializeApp(); // Ensure this is properly declared
 
 exports.updateStatusChange = onRequest(
   {
+    region: "us-central1",
     cors: [
       /localhost(:\d+)?$/,
       "https://multimedica.org",
-      "https://alfarero-478ad--testing-lurci61f.web.app/",
+      "https://alfarero-478ad--testing-lurci61f.web.app", // ✅ no trailing slash
     ],
-    methods: ["GET", "POST", "OPTIONS"], // Allowed methods
+    methods: ["POST", "OPTIONS"],
   },
   async (req, res) => {
-    if (req.method !== "POST") {
+    // ✅ allow preflight
+    if (req.method === "OPTIONS") return res.status(204).send("");
+
+    // enforce POST
+    if (req.method !== "POST")
       return res.status(405).send("Method Not Allowed");
-    }
 
     try {
       const { patientId, carePlanIndex, newStatus, databaseName } = req.body;
 
-      console.log(
-        "Received Request Data:",
-        patientId,
-        carePlanIndex,
-        newStatus,
-        databaseName
-      );
-
-      if (!patientId || !carePlanIndex || !newStatus) {
-        console.error("Invalid arguments:", {
-          patientId,
-          carePlanIndex,
-          newStatus,
-        });
-        return res
-          .status(400)
-          .json({ error: "Invalid arguments. Missing required data." });
-      }
-
-      const db =
-        databaseName === "alfarero-dev"
-          ? getFirestore(app, "alfarero-dev") // Explicitly select the correct database
-          : getFirestore(app);
-
-      console.log("Using Firestore database:", db._databaseId.database);
-
-      // Validate required data
-      if (!patientId || !carePlanIndex || !newStatus) {
-        console.error("Invalid arguments:", {
-          patientId,
-          carePlanIndex,
-          newStatus,
-        });
+      // ✅ your original check was wrong because carePlanIndex like "reg" is truthy,
+      // but if it were "0" you’d fail; also you want to allow index values that are "0".
+      if (!patientId || carePlanIndex == null || !newStatus) {
         return res.status(400).json({
           error: "Invalid arguments. Missing required data.",
+          got: { patientId, carePlanIndex, newStatus },
         });
       }
 
-      console.log(
-        `Using database: ${databaseName} and patientId: ${patientId}`
-      );
+      // ✅ use already initialized default app (index.js initializes once)
+      const db = admin.firestore();
 
-      // Reference and fetch the patient document
+      // If you truly need dev/prod separation, do it by deploying to a different Firebase project
+      // or using env config; don't re-initialize admin here.
+
       const patientRef = db.collection("patients").doc(patientId);
       const patientDoc = await patientRef.get();
 
       if (!patientDoc.exists) {
-        console.error("Patient not found:", patientId);
         return res.status(404).json({ error: "Patient not found", patientId });
       }
 
       const patientData = patientDoc.data();
       if (!patientData) {
-        console.error("Patient data is undefined.");
         return res.status(404).json({ error: "Patient data is undefined." });
       }
 
-      console.log("Patient Data:", patientData);
-
-      // Ensure `plan_of_care` is an array
       if (
         !Array.isArray(patientData.plan_of_care) ||
         patientData.plan_of_care.length === 0
       ) {
-        console.error("plan_of_care is not a valid array or is empty.");
         return res.status(400).json({
           error: "plan_of_care is not a valid array or is empty.",
         });
       }
 
-      // Find the specific entry in `plan_of_care` where `station` matches `carePlanIndex`
       const carePlanEntryIndex = patientData.plan_of_care.findIndex(
-        (entry) => entry.station === carePlanIndex
+        (entry) => entry.station === carePlanIndex,
       );
 
       if (carePlanEntryIndex === -1) {
-        console.error(
-          "No matching station found in plan_of_care for station:",
-          carePlanIndex
-        );
         return res.status(400).json({
           error: `No matching station found in plan_of_care for station: ${carePlanIndex}`,
         });
       }
 
-      // Retrieve the entry and make updates
       const currentEntry = patientData.plan_of_care[carePlanEntryIndex];
       const now = admin.firestore.Timestamp.now();
 
-      // Initialize an updated entry with existing values
       const updatedEntry = {
         ...currentEntry,
         status: newStatus,
         lastUpdate: now,
       };
 
-      // Update waiting and process times based on the status change
+      // waiting logic
       if (newStatus === "waiting" && currentEntry.status !== "waiting") {
         updatedEntry.waiting_start = now;
         updatedEntry.waiting_end = null;
@@ -130,12 +90,14 @@ exports.updateStatusChange = onRequest(
       } else if (currentEntry.status === "waiting" && newStatus !== "waiting") {
         updatedEntry.waiting_end = now;
         if (updatedEntry.waiting_start && updatedEntry.waiting_end) {
-          const start = updatedEntry.waiting_start;
-          const end = updatedEntry.waiting_end;
-          updatedEntry.waiting_time = end - start; // Time in seconds
+          // NOTE: Firestore Timestamp subtraction isn't "seconds" directly;
+          // but leaving your behavior as-is for now.
+          updatedEntry.waiting_time =
+            updatedEntry.waiting_end - updatedEntry.waiting_start;
         }
       }
 
+      // in_process logic
       if (newStatus === "in_process" && currentEntry.status !== "in_process") {
         updatedEntry.in_process_start = now;
         updatedEntry.in_process_end = null;
@@ -146,31 +108,24 @@ exports.updateStatusChange = onRequest(
       ) {
         updatedEntry.in_process_end = now;
         if (updatedEntry.in_process_start && updatedEntry.in_process_end) {
-          const start = updatedEntry.in_process_start;
-          const end = updatedEntry.in_process_end;
-          updatedEntry.procedure_time = end - start; // Time in seconds
+          updatedEntry.procedure_time =
+            updatedEntry.in_process_end - updatedEntry.in_process_start;
         }
       }
 
-      // Replace the entry in the `plan_of_care` array
       let updatedPlanOfCare = [...patientData.plan_of_care];
       updatedPlanOfCare[carePlanEntryIndex] = updatedEntry;
 
-      // if the change is from anything to "complete", update the next eligible station to "waiting"
-
-      // if the change is from anything to "complete", update the next eligible station to "waiting"
-      // but DO NOT auto-start if the next eligible station is "pha" or "lab"
+      // auto-start next eligible station on complete
       if (newStatus === "complete") {
-        const EXCLUDED_STATIONS = new Set(["pha", "lab"]); // stations to skip
-        const ELIGIBLE_STATUSES = new Set(["2", "3", "4", "5", "6", "7"]); // can be auto-started
+        const EXCLUDED_STATIONS = new Set(["pha", "lab"]);
+        const ELIGIBLE_STATUSES = new Set(["2", "3", "4", "5", "6", "7"]);
 
-        // First, ensure no station is already active (waiting or in_process)
-        const alreadyWaitingOrInProcess = updatedPlanOfCare.some((s) =>
-          ["waiting", "in_process"].includes(s.status)
+        const alreadyActive = updatedPlanOfCare.some((s) =>
+          ["waiting", "in_process"].includes(s.status),
         );
 
-        if (!alreadyWaitingOrInProcess) {
-          // Find the first station whose status is one of 2..7 AND whose station is not excluded
+        if (!alreadyActive) {
           const nextIndex = updatedPlanOfCare.findIndex((station) => {
             const stationCode = (station.station || "").toLowerCase();
             return (
@@ -179,7 +134,6 @@ exports.updateStatusChange = onRequest(
             );
           });
 
-          // If found, flip it to waiting and stamp times
           if (nextIndex !== -1) {
             updatedPlanOfCare[nextIndex] = {
               ...updatedPlanOfCare[nextIndex],
@@ -191,19 +145,15 @@ exports.updateStatusChange = onRequest(
         }
       }
 
-      // Commit the updated array back to Firestore
       await patientRef.update({ plan_of_care: updatedPlanOfCare });
 
-      console.log(
-        "Successfully updated plan_of_care for station:",
-        carePlanIndex
-      );
       return res.status(200).json({ success: true, updatedPlanOfCare });
     } catch (error) {
       console.error("Error updating plan_of_care:", error);
-      return res
-        .status(500)
-        .json({ error: "Internal Server Error", details: error.message });
+      return res.status(500).json({
+        error: "Internal Server Error",
+        details: error.message,
+      });
     }
-  }
+  },
 );

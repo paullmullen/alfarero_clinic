@@ -12,5 +12,6 @@
 # below:
 .git
 .gitignore
+.serviceAccount.json
 
 node_modules
