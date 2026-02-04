@@ -438,8 +438,7 @@ export const Registro = () => {
             age_group: patient.age_group ?? null,
             is_new: true,
             created_at: Timestamp.now(),
-            telephone_number:
-              normalizedTel ?? kpSnap.data().telephone_number ?? null,
+            tel: normalizedTel ?? kpSnap.data().telephone_number ?? null,
             last_seen_at: Timestamp.now(),
             last_patient_doc_id: ptNo,
           });

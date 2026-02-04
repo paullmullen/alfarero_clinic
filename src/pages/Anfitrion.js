@@ -46,6 +46,13 @@ const Anfitrion = () => {
 
   const { todayTimestamp, tomorrowTimestamp } = getTodayAndTomorrowTimestamps();
 
+  const formatNationalId = (rawDigits) => {
+    const v = (rawDigits || "").replace(/\D/g, "").slice(0, 13);
+    if (v.length <= 4) return v;
+    if (v.length <= 9) return `${v.slice(0, 4)} ${v.slice(4)}`;
+    return `${v.slice(0, 4)} ${v.slice(4, 9)} ${v.slice(9, 13)}`;
+  };
+
   // Filtered real-time listener for today's patients, excluding completed
   useEffect(() => {
     const q = query(
@@ -188,6 +195,8 @@ const Anfitrion = () => {
         patient_name:
           (item.patient_name ?? "") +
           "\n" +
+          (item.national_id_number ?? "") +
+          "\n" +
           (item.reason_for_visit ?? "") +
           "\n" +
           t(item.type_of_visit) +
@@ -299,10 +308,12 @@ const Anfitrion = () => {
             <tr>
               <td>
                 <b> {String(name).split("\n")[0]} </b>
-                <br /> {String(name).split("\n")[1]} <br />
-                <i>{String(name).split("\n")[2]} </i>
+                <br /> {t("NATIONAL_ID_NUMBER")}:{" "}
+                {formatNationalId(String(name).split("\n")[1])}
+                <br /> {String(name).split("\n")[2]} <br />
+                <i>{String(name).split("\n")[3]} </i>
                 <br />
-                {String(name).split("\n")[3]}{" "}
+                Tel: {String(name).split("\n")[4]}{" "}
               </td>
               <td align="right">
                 <Popover
@@ -313,8 +324,9 @@ const Anfitrion = () => {
                       <EditPatientData
                         initialValues={{
                           paciente: String(name).split("\n")[0],
-                          tel: String(name).split("\n")[3],
-                          motivo: String(name).split("\n")[1],
+                          national_id_number: String(name).split("\n")[1],
+                          tel: String(name).split("\n")[4],
+                          motivo: String(name).split("\n")[2],
                           pt_no: record.pt_no,
                         }}
                         onSave={() => console.log("Patient data saved")}
