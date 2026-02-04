@@ -8,7 +8,13 @@ import React, {
   lazy,
   createContext,
 } from "react";
-import { Timestamp } from "firebase/firestore";
+import {
+  Timestamp,
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+} from "firebase/firestore";
 import {
   Layout,
   Menu,
@@ -18,6 +24,7 @@ import {
   Col,
   Button,
   Popover,
+  Select,
 } from "antd";
 import {
   UserOutlined,
@@ -57,6 +64,79 @@ const PermissionsContext = createContext({
   setUserPermissions: () => {},
 });
 
+// ServiceLocationContext
+const ServiceLocationContext = createContext({
+  locations: [],
+  locationId: null,
+  setLocationId: () => {},
+  loading: true,
+});
+
+export const ServiceLocationProvider = ({ children }) => {
+  const [locations, setLocations] = useState([]);
+  const [locationId, setLocationIdState] = useState(
+    () => localStorage.getItem("service_location_id") || null,
+  );
+  const [loading, setLoading] = useState(true);
+
+  // Keep localStorage in sync
+  const setLocationId = (id) => {
+    setLocationIdState(id || null);
+    if (id) localStorage.setItem("service_location_id", id);
+    else localStorage.removeItem("service_location_id");
+  };
+
+  useEffect(() => {
+    // Listen to locations, sorted by name
+    const q = query(collection(firestore, "locations"), orderBy("name", "asc"));
+
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const rows = snap.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        }));
+
+        setLocations(rows);
+        setLoading(false);
+
+        // If the currently selected location is missing, reset it
+        if (locationId && !rows.some((r) => r.id === locationId)) {
+          setLocationId(null);
+        }
+
+        // If nothing selected yet, auto-select the first location (optional)
+        if (!locationId && rows.length > 0) {
+          setLocationId(rows[0].id);
+        }
+      },
+      (err) => {
+        console.error("Error loading locations:", err);
+        setLocations([]);
+        setLoading(false);
+      },
+    );
+
+    return () => unsub();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <ServiceLocationContext.Provider
+      value={{ locations, locationId, setLocationId, loading }}
+    >
+      {children}
+    </ServiceLocationContext.Provider>
+  );
+};
+
+ServiceLocationProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
+export const useServiceLocation = () => useContext(ServiceLocationContext);
+
 export const PermissionsProvider = ({ children }) => {
   const [permissions, setPermissions] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -83,7 +163,7 @@ export const PermissionsProvider = ({ children }) => {
               };
               console.warn(
                 "Converting array-based permissions to object:",
-                perms
+                perms,
               );
             }
             setPermissions(perms);
@@ -166,6 +246,12 @@ const MainLayout = ({ ocultarMenu, t, permissions, children }) => {
   const [tapCount, setTapCount] = useState(0);
   const [count, setCount] = useState(0);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const {
+    locations,
+    locationId,
+    setLocationId,
+    loading: locationsLoading,
+  } = useServiceLocation();
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -245,7 +331,7 @@ const MainLayout = ({ ocultarMenu, t, permissions, children }) => {
               startTimestamp: todayTimestamp,
               endTimestamp: tomorrowTimestamp,
             }),
-          }
+          },
         );
         if (!response.ok) {
           throw new Error("Network response was not ok");
@@ -345,6 +431,23 @@ const MainLayout = ({ ocultarMenu, t, permissions, children }) => {
           defaultSelectedKeys={["1"]}
           items={menuItems}
         />
+        <div style={{ padding: 12 }}>
+          <Typography.Text style={{ color: "rgba(255,255,255,0.75)" }}>
+            {t("SERVICE_LOCATION") || "Service Location"}
+          </Typography.Text>
+
+          <Select
+            style={{ width: "100%", marginTop: 8 }}
+            value={locationId}
+            loading={locationsLoading}
+            placeholder={t("SELECT_LOCATION") || "Select location"}
+            onChange={(val) => setLocationId(val)}
+            options={locations.map((loc) => ({
+              value: loc.id,
+              label: loc.name,
+            }))}
+          />
+        </div>
       </CustomSider>
       <Layout className="site-layout">
         <Header
@@ -411,30 +514,31 @@ export const RouterPage = () => {
 
   return (
     <Router>
-      <Suspense fallback={<div>Loading...</div>}>
-        <MainLayout ocultarMenu={ocultarMenu} t={t} permissions={permissions}>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/loginpage" element={<LoginPage />} />
-            <Route path="/" element={<LoginPage />} />
-            <Route
-              path="/registro"
-              element={
-                <ProtectedRoute requiredPermission="host">
-                  <Registro />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/turnos" element={<Turno />} />
-            <Route
-              path="/escritorio"
-              element={
-                <ProtectedRoute requiredPermission="basic">
-                  <Escritorio />
-                </ProtectedRoute>
-              }
-            />
-            {/* <Route
+      <ServiceLocationProvider>
+        <Suspense fallback={<div>Loading...</div>}>
+          <MainLayout ocultarMenu={ocultarMenu} t={t} permissions={permissions}>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/loginpage" element={<LoginPage />} />
+              <Route path="/" element={<LoginPage />} />
+              <Route
+                path="/registro"
+                element={
+                  <ProtectedRoute requiredPermission="host">
+                    <Registro />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/turnos" element={<Turno />} />
+              <Route
+                path="/escritorio"
+                element={
+                  <ProtectedRoute requiredPermission="basic">
+                    <Escritorio />
+                  </ProtectedRoute>
+                }
+              />
+              {/* <Route
               path="/member"
               element={
                 <ProtectedRoute requiredPermission="basic">
@@ -442,15 +546,15 @@ export const RouterPage = () => {
                 </ProtectedRoute>
               }
             /> */}
-            <Route
-              path="/ingresar-host"
-              element={
-                <ProtectedRoute requiredPermission="basic">
-                  <IngresarHost />
-                </ProtectedRoute>
-              }
-            />
-            {/* <Route
+              <Route
+                path="/ingresar-host"
+                element={
+                  <ProtectedRoute requiredPermission="basic">
+                    <IngresarHost />
+                  </ProtectedRoute>
+                }
+              />
+              {/* <Route
               path="/location"
               element={
                 <ProtectedRoute requiredPermission="basic">
@@ -458,42 +562,43 @@ export const RouterPage = () => {
                 </ProtectedRoute>
               }
             /> */}
-            <Route
-              path="/survey"
-              element={
-                <ProtectedRoute requiredPermission="basic">
-                  <Survey />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/estadisticas"
-              element={
-                <ProtectedRoute requiredPermission="stats">
-                  <Stats />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute requiredPermission="settings">
-                  <Settings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/anfitrion"
-              element={
-                <ProtectedRoute requiredPermission="host">
-                  <Anfitrion />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="*" element={<div>404 - Page Not Found</div>} />
-          </Routes>
-        </MainLayout>
-      </Suspense>
+              <Route
+                path="/survey"
+                element={
+                  <ProtectedRoute requiredPermission="basic">
+                    <Survey />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/estadisticas"
+                element={
+                  <ProtectedRoute requiredPermission="stats">
+                    <Stats />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute requiredPermission="settings">
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/anfitrion"
+                element={
+                  <ProtectedRoute requiredPermission="host">
+                    <Anfitrion />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="*" element={<div>404 - Page Not Found</div>} />
+            </Routes>
+          </MainLayout>
+        </Suspense>
+      </ServiceLocationProvider>
     </Router>
   );
 };

@@ -1,10 +1,10 @@
 {
-	"folders": [
-		{
-			"path": "."
-		}
-	],
-	"settings": {
-		"firestore-explorer.serviceAccountKeyPath": ".vscode/firebase/serviceAccount.json"
-	}
+  "folders": [
+    {
+      "path": ".",
+    },
+  ],
+  "settings": {
+    "firestore-explorer.serviceAccountKeyPath": "\"C:\\Users\\paull\\OneDrive\\Documents\\Potters House\\alfarero_clinic\\.vscode\\firebase\\serviceAccount.json\"",
+  },
 }
