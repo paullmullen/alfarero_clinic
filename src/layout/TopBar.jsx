@@ -3,12 +3,19 @@ import PropTypes from "prop-types";
 import { Button, Col, Image, Popover, Row, Typography } from "antd";
 import full_logo from "../img/full_logo.png";
 import { cleanPaulTests } from "../helpers/updateStationStatus";
+import { useServiceLocation } from "../providers/ServiceLocationProvider";
 
 const { Title } = Typography;
 
 export default function TopBar({ t, isDev, formattedTime, count }) {
   const [tapCount, setTapCount] = useState(0);
   const [popoverOpen, setPopoverOpen] = useState(false);
+
+  const { locations, locationId } = useServiceLocation();
+
+  const locationName = React.useMemo(() => {
+    return locations.find((l) => l.id === locationId)?.name || "";
+  }, [locations, locationId]);
 
   const handleHeaderTitleTap = () => {
     setTapCount((prev) => prev + 1);
@@ -56,7 +63,19 @@ export default function TopBar({ t, isDev, formattedTime, count }) {
       <Row>
         <Col>
           <Title level={4}>
-            {formattedTime} {count !== 0 && `- ${count} ${t("patients")}`}
+            {locationName && (
+              <>
+                {locationName}
+                {" - "}
+              </>
+            )}
+            {formattedTime}
+            {count !== 0 && (
+              <>
+                {" – "}
+                {count} {t("patients")}
+              </>
+            )}
           </Title>
         </Col>
       </Row>

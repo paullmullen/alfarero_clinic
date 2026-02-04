@@ -68,10 +68,6 @@ export default function SideNav({ t, permissions }) {
       icon: <LoginOutlined />,
       label: <Link to="/loginpage">{t("Login")}</Link>,
     },
-    {
-      key: "11",
-      label: t("version"),
-    },
   ];
 
   const menuItems = rawMenuItems.filter((item) => !item.hidden);
@@ -86,6 +82,7 @@ export default function SideNav({ t, permissions }) {
       />
 
       <div style={{ padding: 12 }}>
+        <br />
         <Typography.Text style={{ color: "rgba(255,255,255,0.75)" }}>
           {t("SERVICE_LOCATION") || "Service Location"}
         </Typography.Text>
@@ -101,6 +98,7 @@ export default function SideNav({ t, permissions }) {
             label: loc.name,
           }))}
         />
+        <br />
       </div>
     </>
   );
