@@ -14,7 +14,7 @@
     "chartjs-chart-matrix": "^3.0.0",
     "chartjs-plugin-datalabels": "^2.2.0",
     "firebase-admin": "^11.10.1",
-    "firebase-functions": "^4.4.1",
+    "firebase-functions": "^7.0.5",
     "node-fetch": "^2.6.9"
   }
 }
