@@ -2,62 +2,68 @@
 "use strict";
 
 /**
- * Time helpers for the clinic day.
- * NOTE: This keeps your existing behavior exactly (your "today" window is based on localDate - 1).
+ * Time helpers for clinic-local day boundaries.
+ * This avoids server-timezone bugs by deriving the YYYY-MM-DD in a real IANA timezone,
+ * then converting clinic-midnight to UTC using the offset.
+ *
+ * Assumptions:
+ * - Clinic timezone is UTC-6 (Guatemala) and does not observe DST.
+ * - Schedule is set to America/Guatemala already.
  */
 
-function getLocalDayRangeTimestamps(Timestamp, timezoneOffsetMinutes) {
-  const now = new Date();
+const CLINIC_TIMEZONE = "America/Guatemala";
+const TIMEZONE_OFFSET_MINUTES = 6 * 60; // UTC-6
 
-  // Kept IDENTICAL to your existing logic:
-  // startOfTodayLocal uses (today - 1)
-  const startOfTodayLocal = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate() - 1,
+function getClinicYMD(timeZone = CLINIC_TIMEZONE) {
+  // "en-CA" yields YYYY-MM-DD ordering
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const y = parts.find((p) => p.type === "year")?.value;
+  const m = parts.find((p) => p.type === "month")?.value;
+  const d = parts.find((p) => p.type === "day")?.value;
+
+  return `${y}-${m}-${d}`; // YYYY-MM-DD
+}
+
+function getLocalDayRangeTimestamps(Timestamp) {
+  const clinicYMD = getClinicYMD(CLINIC_TIMEZONE);
+  const [y, m, d] = clinicYMD.split("-").map(Number);
+
+  // Clinic midnight (UTC-6) expressed in UTC = UTC midnight + 6 hours
+  const startUtc = new Date(
+    Date.UTC(y, m - 1, d, 0, 0, 0) + TIMEZONE_OFFSET_MINUTES * 60 * 1000,
   );
-
-  const startOfTodayUTC = new Date(
-    startOfTodayLocal.getTime() + timezoneOffsetMinutes * 60 * 1000,
-  );
-
-  const startOfTomorrowLocal = new Date(startOfTodayLocal);
-  startOfTomorrowLocal.setDate(startOfTomorrowLocal.getDate() + 1);
-
-  const startOfTomorrowUTC = new Date(
-    startOfTomorrowLocal.getTime() + timezoneOffsetMinutes * 60 * 1000,
-  );
+  const endUtc = new Date(startUtc.getTime() + 24 * 60 * 60 * 1000);
 
   return {
-    startOfToday: Timestamp.fromDate(startOfTodayUTC),
-    startOfTomorrow: Timestamp.fromDate(startOfTomorrowUTC),
+    startOfToday: Timestamp.fromDate(startUtc),
+    startOfTomorrow: Timestamp.fromDate(endUtc),
   };
 }
 
-function getStartOf30DaysAgoTimestamp(Timestamp, timezoneOffsetMinutes) {
-  const now = new Date();
-  const startOf30DaysAgoLocal = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-  );
-  startOf30DaysAgoLocal.setDate(startOf30DaysAgoLocal.getDate() - 30);
+function getStartOf30DaysAgoTimestamp(Timestamp) {
+  const clinicYMD = getClinicYMD(CLINIC_TIMEZONE);
+  const [y, m, d] = clinicYMD.split("-").map(Number);
 
-  const startOf30DaysAgoUTC = new Date(
-    startOf30DaysAgoLocal.getTime() + timezoneOffsetMinutes * 60 * 1000,
+  const startTodayUtc = new Date(
+    Date.UTC(y, m - 1, d, 0, 0, 0) + TIMEZONE_OFFSET_MINUTES * 60 * 1000,
+  );
+  const start30DaysAgoUtc = new Date(
+    startTodayUtc.getTime() - 30 * 24 * 60 * 60 * 1000,
   );
 
-  return Timestamp.fromDate(startOf30DaysAgoUTC);
-}
-
-function getClinicYMD(timezoneOffsetMinutes) {
-  return new Date(Date.now() - timezoneOffsetMinutes * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
+  return Timestamp.fromDate(start30DaysAgoUtc);
 }
 
 module.exports = {
+  CLINIC_TIMEZONE,
+  TIMEZONE_OFFSET_MINUTES,
+  getClinicYMD,
   getLocalDayRangeTimestamps,
   getStartOf30DaysAgoTimestamp,
-  getClinicYMD,
 };

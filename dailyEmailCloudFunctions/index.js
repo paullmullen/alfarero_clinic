@@ -24,7 +24,7 @@ function applyCors(req, res) {
 }
 
 // Initialize Firebase Admin SDK (unchanged behavior)
-initializeApp({ credential: applicationDefault() });
+initializeApp();
 const db = getFirestore();
 
 // Inject deps once

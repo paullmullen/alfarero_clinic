@@ -42,7 +42,7 @@ const generateNewVsRepeatPieChart = require("../charts/newVsRepeatPie");
 const generateArrivalChart = require("../charts/arrivalsByHour");
 const generateWaitingTimeChart = require("../charts/waitingByStation");
 const generateWaitingHeatmapChart = require("../charts/waitingHeatmap");
-const generateVisitTypeChart = require("../charts/visitTypeChart"); // <-- If you DON'T have this file yet, see note below
+const generateVisitTypeChart = require("../charts/visitTypeChart");
 
 // Constants (kept identical)
 const SEND_EMAIL_URL = "https://sendemail-479287307088.us-central1.run.app";
@@ -68,11 +68,9 @@ async function sendDailyEmails() {
     );
   }
 
-  // --- Clinic day window (kept identical behavior) ---
-  const { startOfToday, startOfTomorrow } = getLocalDayRangeTimestamps(
-    Timestamp,
-    TIMEZONE_OFFSET_MINUTES,
-  );
+  // --- Clinic day window ---
+  const { startOfToday, startOfTomorrow } =
+    getLocalDayRangeTimestamps(Timestamp);
 
   // --- Pull snapshots ---
   const todaySnapshot = await fetchTodayPatients({
@@ -85,10 +83,7 @@ async function sendDailyEmails() {
     return [];
   }
 
-  const startOf30DaysAgoTimestamp = getStartOf30DaysAgoTimestamp(
-    Timestamp,
-    TIMEZONE_OFFSET_MINUTES,
-  );
+  const startOf30DaysAgoTimestamp = getStartOf30DaysAgoTimestamp(Timestamp);
 
   const last30DaysSnapshot = await fetchLast30DaysPatients({
     db,
@@ -188,7 +183,7 @@ async function sendDailyEmails() {
     ...detectFlowBottlenecks(todaySnapshot),
   ];
 
-  const clinicDate = getClinicYMD(TIMEZONE_OFFSET_MINUTES);
+  const clinicDate = getClinicYMD();
   await persistInsights({ db, Timestamp }, aiInsights, clinicDate);
 
   const insightsHTML = renderInsightsHTML(aiInsights);

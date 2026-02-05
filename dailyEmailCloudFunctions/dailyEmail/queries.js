@@ -4,6 +4,7 @@
 async function fetchTodayPatients({ db, startOfToday, startOfTomorrow }) {
   return await db
     .collection("patients")
+    .where("complete", "==", true)
     .where("start_time", ">=", startOfToday)
     .where("start_time", "<", startOfTomorrow)
     .get();
