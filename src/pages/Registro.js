@@ -32,6 +32,7 @@ import moment from "moment";
 import { useTranslation } from "react-i18next";
 // import { QrReader } from "react-qr-reader";
 import CryptoJS from "crypto-js";
+import { useServiceLocation } from "../providers/ServiceLocationProvider";
 
 const { Title, Text } = Typography;
 
@@ -124,6 +125,12 @@ export const Registro = () => {
       </div>
     );
   };
+
+  const { locations, locationId } = useServiceLocation();
+
+  const locationName = React.useMemo(() => {
+    return locations.find((l) => l.id === locationId)?.name || null;
+  }, [locations, locationId]);
 
   useHideMenu(false);
 
@@ -399,6 +406,8 @@ export const Registro = () => {
       age_group: patient.age_group !== undefined ? patient.age_group : null,
       national_id_number: nationalId,
       new_patient: isNewPatient,
+      location_id: locationId || null,
+      location_name: locationName || null,
     };
 
     try {

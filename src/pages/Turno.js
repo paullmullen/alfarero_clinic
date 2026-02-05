@@ -7,6 +7,7 @@ import { useHideMenu } from "../hooks/useHideMenu";
 import { AlertInfo } from "../components/AlertInfo";
 import { useTranslation } from "react-i18next";
 import { fetchData } from "../helpers/fetchData";
+import { useServiceLocation } from "../providers/ServiceLocationProvider";
 
 import IconSizes from "../helpers/iconSizes";
 import one from "../img/1.svg";
@@ -24,6 +25,7 @@ import fin from "../img/fin.png";
 import pay from "../img/pay.svg";
 
 const Turno = () => {
+  const { locationId } = useServiceLocation();
   useHideMenu(true);
   const [data, setData] = useState([]);
   const [t] = useTranslation("global");
@@ -279,7 +281,7 @@ const Turno = () => {
     0,
     0,
     0,
-    0
+    0,
   );
   const tomorrow = new Date(
     now.getFullYear(),
@@ -288,7 +290,7 @@ const Turno = () => {
     0,
     0,
     0,
-    0
+    0,
   );
 
   // Convert to Firestore Timestamp
@@ -301,7 +303,7 @@ const Turno = () => {
       () => {
         // Whenever there's a change in the 'patients' collection, update the state
         setPatientsChanged(true);
-      }
+      },
     );
 
     // Cleanup listener on unmount
@@ -323,6 +325,7 @@ const Turno = () => {
         setPatientsChanged,
         setStatsData,
         isMounted,
+        locationId,
       });
 
       return () => {

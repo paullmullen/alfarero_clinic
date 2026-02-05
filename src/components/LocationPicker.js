@@ -27,7 +27,9 @@ const LocationPicker = ({ currentLocation, onLocationSelect }) => {
       click: (e) => {
         const { lat, lng } = e.latlng;
         setPosition({ lat, lng });
-        if (hovering) {
+
+        // Only notify parent if callback provided (and you keep your hover behavior)
+        if (hovering && typeof onLocationSelect === "function") {
           onLocationSelect(lat, lng);
         }
       },
@@ -56,7 +58,11 @@ LocationPicker.propTypes = {
     lat: PropTypes.number,
     lng: PropTypes.number,
   }),
-  onLocationSelect: PropTypes.func.isRequired,
+  onLocationSelect: PropTypes.func, // no longer required
+};
+
+LocationPicker.defaultProps = {
+  onLocationSelect: undefined,
 };
 
 export default LocationPicker;

@@ -1,5 +1,12 @@
 // Anfitrion.js (Step 2 + stateless renderStatusIcon + stable order + display filter + exclude complete)
-import React, { useEffect, useState, useMemo, lazy, Suspense } from "react";
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  lazy,
+  Suspense,
+  useCallback,
+} from "react";
 import { Table, Space, Popover, Popconfirm } from "antd";
 import {
   collection,
@@ -33,6 +40,7 @@ import fin from "../img/fin.png";
 import eye from "../img/eye.svg";
 import edit from "../img/edit.svg";
 import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
+import { useServiceLocation } from "../providers/ServiceLocationProvider";
 
 const EditPatientData = lazy(() => import("../components/EditPatientData.js"));
 
@@ -44,7 +52,10 @@ const Anfitrion = () => {
   const [t] = useTranslation("global");
   const navigate = useNavigate();
 
-  const { todayTimestamp, tomorrowTimestamp } = getTodayAndTomorrowTimestamps();
+  const { todayTimestamp, tomorrowTimestamp } = useMemo(
+    () => getTodayAndTomorrowTimestamps(),
+    [],
+  );
 
   const formatNationalId = (rawDigits) => {
     const v = (rawDigits || "").replace(/\D/g, "").slice(0, 13);
@@ -53,13 +64,16 @@ const Anfitrion = () => {
     return `${v.slice(0, 4)} ${v.slice(4, 9)} ${v.slice(9, 13)}`;
   };
 
+  const { locationId } = useServiceLocation();
+
   // Filtered real-time listener for today's patients, excluding completed
   useEffect(() => {
     const q = query(
       collection(firestore, "patients"),
       where("start_time", ">=", todayTimestamp),
       where("start_time", "<", tomorrowTimestamp),
-      where("complete", "==", false), // exclude completed patients
+      where("complete", "==", false),
+      where("location_id", "==", locationId),
     );
 
     const unsubscribePatients = onSnapshot(q, (snapshot) => {
@@ -68,7 +82,7 @@ const Anfitrion = () => {
     });
 
     return () => unsubscribePatients();
-  }, [todayTimestamp, tomorrowTimestamp]);
+  }, [todayTimestamp, tomorrowTimestamp, locationId]);
 
   // Load only station stats (keeps Step-1 behavior but avoids reloading patient rows)
   useEffect(() => {
@@ -255,44 +269,52 @@ const Anfitrion = () => {
    * - No state writes on hover.
    * - Uses lightweight <img> tags with lazy loading.
    */
-  const renderStatusIcon = (status, stationName, pt_no) => {
-    const src = iconMap[status];
-    if (!src) return null;
+  const renderStatusIcon = useCallback(
+    (status, stationName, pt_no) => {
+      const src = iconMap[status];
+      if (!src) return null;
 
-    const iconScale = 1.5;
-    const popContent = (
-      <Space wrap>
-        {STATUS_CHOICES.map(([nextStatus, imgSrc]) => (
+      const iconScale = 1.5;
+      const popContent = (
+        <Space wrap>
+          {STATUS_CHOICES.map(([nextStatus, imgSrc]) => (
+            <img
+              key={nextStatus}
+              src={imgSrc}
+              width={IconSizes.width * iconScale}
+              height={IconSizes.height * iconScale}
+              loading="lazy"
+              decoding="async"
+              alt=""
+              style={{ cursor: "pointer" }}
+              onClick={() =>
+                handleStatusChange(
+                  nextStatus,
+                  pt_no,
+                  stationName,
+                  t("CHECKOUT"),
+                )
+              }
+            />
+          ))}
+        </Space>
+      );
+
+      return (
+        <Popover content={popContent} title={t("modifyStatus")} trigger="hover">
           <img
-            key={nextStatus}
-            src={imgSrc}
-            width={IconSizes.width * iconScale}
-            height={IconSizes.height * iconScale}
+            src={src}
+            width={IconSizes.height}
+            height={IconSizes.height}
             loading="lazy"
             decoding="async"
             alt=""
-            style={{ cursor: "pointer" }}
-            onClick={() =>
-              handleStatusChange(nextStatus, pt_no, stationName, t("CHECKOUT"))
-            }
           />
-        ))}
-      </Space>
-    );
-
-    return (
-      <Popover content={popContent} title={t("modifyStatus")} trigger="hover">
-        <img
-          src={src}
-          width={IconSizes.height}
-          height={IconSizes.height}
-          loading="lazy"
-          decoding="async"
-          alt=""
-        />
-      </Popover>
-    );
-  };
+        </Popover>
+      );
+    },
+    [STATUS_CHOICES, t, iconMap],
+  );
 
   // 🧱 Memoized columns (stable reference for Table), using stationNames sorted by sort_order and filtered by display
   const columns = useMemo(() => {

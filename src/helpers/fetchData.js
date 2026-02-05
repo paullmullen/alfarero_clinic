@@ -1,6 +1,6 @@
 import { collection, getDocs } from "firebase/firestore";
-import { fetchPatientsData } from "./fetchPatientsData"; // Adjust the path as needed
-import { firestore } from "../helpers/firebaseConfig"; // Adjust if needed
+import { fetchPatientsData } from "./fetchPatientsData";
+import { firestore } from "../helpers/firebaseConfig";
 
 export const fetchData = async ({
   dateRange,
@@ -8,13 +8,15 @@ export const fetchData = async ({
   setPatientsChanged,
   setStatsData,
   isMounted,
+  locationId,
 }) => {
   try {
     // Fetch patients data
     const initialData = await fetchPatientsData(
       dateRange,
       process.env.REACT_APP_FIREBASE_DB,
-      "active" // Do not fetch completed patients... other options are "complete" and "both"
+      "active",
+      locationId,
     );
     if (isMounted) {
       setData(initialData);

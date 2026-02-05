@@ -1,7 +1,12 @@
 import { getDoc, doc } from "firebase/firestore";
 import { firestore } from "../helpers/firebaseConfig";
 
-const fetchPatientsData = async (dateRange, database, include_completed) => {
+const fetchPatientsData = async (
+  dateRange,
+  database,
+  include_completed,
+  locationId,
+) => {
   if (!dateRange || dateRange.length !== 2) {
     const docRef = doc(firestore, "run_aggregation", "timestamp");
     const docSnap = await getDoc(docRef);
@@ -24,10 +29,11 @@ const fetchPatientsData = async (dateRange, database, include_completed) => {
         },
         body: JSON.stringify({
           dateRange,
-          database: database,
-          include_completed: include_completed,
+          database,
+          include_completed,
+          location_id: locationId || null,
         }),
-      }
+      },
     );
 
     if (!response.ok) {

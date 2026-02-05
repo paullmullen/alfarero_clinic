@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import { Row, Col, Typography, Input, Select, Space, Button } from "antd";
 import { HexColorPicker } from "react-colorful";
 import LocationPicker from "../../../components/LocationPicker";
@@ -12,6 +12,26 @@ export default function LocationsManager({
   stations,
   t,
 }) {
+  const [draftNames, setDraftNames] = useState({});
+
+  // Keep drafts in sync if locations change (snapshot updates, etc.)
+  useEffect(() => {
+    setDraftNames((prev) => {
+      const next = { ...prev };
+      for (const loc of locations) {
+        if (next[loc.id] === undefined) next[loc.id] = loc.name || "";
+      }
+      return next;
+    });
+  }, [locations]);
+
+  const commitName = (location) => {
+    const draft = (draftNames[location.id] ?? "").trimEnd(); // optional
+    const current = location.name || "";
+    if (draft !== current) {
+      onUpdate(location.id, "name", draft);
+    }
+  };
   return (
     <>
       <Title level={3}>{t("LOCATIONS") || "Locations"}</Title>
@@ -40,15 +60,22 @@ export default function LocationsManager({
                   <Text strong>{t("NAME") || "Name"}</Text>
                   <Input
                     style={{ marginTop: 6 }}
-                    value={location.name}
+                    value={draftNames[location.id] ?? location.name ?? ""}
                     onChange={(e) =>
-                      onUpdate(location.id, "name", e.target.value)
+                      setDraftNames((prev) => ({
+                        ...prev,
+                        [location.id]: e.target.value,
+                      }))
                     }
+                    onBlur={() => commitName(location)}
+                    onPressEnter={() => commitName(location)}
                   />
                 </div>
 
                 <div>
-                  <Text strong>{t("BACKGROUND_COLOR") || "Background Color"}</Text>
+                  <Text strong>
+                    {t("BACKGROUND_COLOR") || "Background Color"}
+                  </Text>
                   <div style={{ marginTop: 6, display: "flex", gap: 8 }}>
                     <HexColorPicker
                       color={location.background_color}
@@ -62,7 +89,7 @@ export default function LocationsManager({
                         onUpdate(
                           location.id,
                           "background_color",
-                          e.target.value
+                          e.target.value,
                         )
                       }
                       style={{ width: 140 }}
@@ -73,7 +100,9 @@ export default function LocationsManager({
                 <div>
                   <Text strong>{t("COORDINATES") || "Coordinates"}</Text>
                   <div style={{ marginTop: 6 }}>
-                    <Suspense fallback={<Text>Loading Location Picker...</Text>}>
+                    <Suspense
+                      fallback={<Text>Loading Location Picker...</Text>}
+                    >
                       <LocationPicker
                         latitude={location.latitude}
                         longitude={location.longitude}
@@ -91,9 +120,7 @@ export default function LocationsManager({
                   <Select
                     mode="multiple"
                     value={location.stations}
-                    onChange={(arr) =>
-                      onUpdate(location.id, "stations", arr)
-                    }
+                    onChange={(arr) => onUpdate(location.id, "stations", arr)}
                     style={{ width: "100%", marginTop: 8 }}
                     placeholder={t("ADD_STATIONS") || "Add stations"}
                     options={stations.map((s) => ({
@@ -108,11 +135,7 @@ export default function LocationsManager({
         ))}
       </Row>
 
-      <Button
-        type="dashed"
-        onClick={onAddLocation}
-        style={{ marginTop: 16 }}
-      >
+      <Button type="dashed" onClick={onAddLocation} style={{ marginTop: 16 }}>
         {t("ADD_LOCATION") || "Add Location"}
       </Button>
     </>
