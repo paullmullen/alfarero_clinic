@@ -1,32 +1,50 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import PropTypes from "prop-types";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { firestore } from "../helpers/firebaseConfig";
 
-// ServiceLocationContext
+const ALL_LOCATIONS_ID = "__ALL__";
+const ALL_LOCATIONS_OPTION = {
+  id: ALL_LOCATIONS_ID,
+  name: "All Locations",
+  // Choose a sensible default highlight color for "All"
+  background_color: "#1890ff",
+};
+
 const ServiceLocationContext = createContext({
   locations: [],
   locationId: null,
   setLocationId: () => {},
   loading: true,
+  ALL_LOCATIONS_ID,
 });
 
 export const ServiceLocationProvider = ({ children }) => {
-  const [locations, setLocations] = useState([]);
+  const [rawLocations, setRawLocations] = useState([]);
   const [locationId, setLocationIdState] = useState(
     () => localStorage.getItem("service_location_id") || null,
   );
   const [loading, setLoading] = useState(true);
 
-  // Keep localStorage in sync
+  const locations = useMemo(() => {
+    // Always present "All Locations" at top
+    return [ALL_LOCATIONS_OPTION, ...rawLocations];
+  }, [rawLocations]);
+
   const setLocationId = (id) => {
-    setLocationIdState(id || null);
-    if (id) localStorage.setItem("service_location_id", id);
+    const next = id || null;
+    setLocationIdState(next);
+    if (next) localStorage.setItem("service_location_id", next);
     else localStorage.removeItem("service_location_id");
   };
 
   useEffect(() => {
-    // Listen to locations, sorted by name
     const q = query(collection(firestore, "locations"), orderBy("name", "asc"));
 
     const unsub = onSnapshot(
@@ -37,23 +55,30 @@ export const ServiceLocationProvider = ({ children }) => {
           ...d.data(),
         }));
 
-        setLocations(rows);
+        setRawLocations(rows);
         setLoading(false);
 
-        // If the currently selected location is missing, reset it
-        if (locationId && !rows.some((r) => r.id === locationId)) {
-          setLocationId(null);
+        // If the selected id is not ALL and no longer exists, reset to ALL
+        if (
+          locationId &&
+          locationId !== ALL_LOCATIONS_ID &&
+          !rows.some((r) => r.id === locationId)
+        ) {
+          setLocationId(ALL_LOCATIONS_ID);
         }
 
-        // If nothing selected yet, auto-select the first location (optional)
-        if (!locationId && rows.length > 0) {
-          setLocationId(rows[0].id);
+        // If nothing selected yet, default to ALL (view mode)
+        if (!locationId) {
+          setLocationId(ALL_LOCATIONS_ID);
         }
       },
       (err) => {
         console.error("Error loading locations:", err);
-        setLocations([]);
+        setRawLocations([]);
         setLoading(false);
+
+        // Still ensure we have something selected
+        if (!locationId) setLocationId(ALL_LOCATIONS_ID);
       },
     );
 
@@ -63,7 +88,13 @@ export const ServiceLocationProvider = ({ children }) => {
 
   return (
     <ServiceLocationContext.Provider
-      value={{ locations, locationId, setLocationId, loading }}
+      value={{
+        locations,
+        locationId,
+        setLocationId,
+        loading,
+        ALL_LOCATIONS_ID,
+      }}
     >
       {children}
     </ServiceLocationContext.Provider>
@@ -75,3 +106,4 @@ ServiceLocationProvider.propTypes = {
 };
 
 export const useServiceLocation = () => useContext(ServiceLocationContext);
+export { ALL_LOCATIONS_ID };

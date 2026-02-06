@@ -9,7 +9,7 @@ exports.getPatientsData = onRequest(
     cors: [
       /localhost(:\d+)?$/,
       "https://multimedica.org",
-      "https://alfarero-478ad--testing-nc9ftcse.web.app",
+      "https://alfarero-478ad--test-fad5m1j4.web.app",
     ],
     methods: ["POST", "OPTIONS"],
   },

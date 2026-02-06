@@ -9,6 +9,7 @@ import {
   Row,
   Col,
   Radio,
+  Select,
 } from "antd";
 import { SaveFilled } from "@ant-design/icons";
 import { useHideMenu } from "../hooks/useHideMenu";
@@ -46,7 +47,27 @@ const tailLayout = {
 export const Registro = () => {
   const { showAlert } = useAlert();
   const [form] = Form.useForm();
+  const [t] = useTranslation("global");
 
+  // ---- Global Service Location (from left menu) ----
+  const { locations, locationId } = useServiceLocation();
+
+  // Only used when global location is "__ALL__"
+  const [registroLocationId, setRegistroLocationId] = useState(null);
+
+  const needsClinicPick = locationId === "__ALL__";
+  const effectiveLocationId = needsClinicPick ? registroLocationId : locationId;
+
+  const effectiveLocationName = React.useMemo(() => {
+    if (!effectiveLocationId || effectiveLocationId === "__ALL__") return null;
+    return locations.find((l) => l.id === effectiveLocationId)?.name || null;
+  }, [locations, effectiveLocationId]);
+
+  const canSubmit =
+    !needsClinicPick ||
+    (effectiveLocationId && effectiveLocationId !== "__ALL__");
+
+  // ---- Form watchers ----
   const ageGroup = Form.useWatch("age_group", form);
   const nationalIdValue = Form.useWatch("national_id_number", form);
 
@@ -56,9 +77,7 @@ export const Registro = () => {
 
   const [patientPlanOfCare, setPatientPlanOfCare] = useState([]);
   const [recipes, setRecipes] = useState([]);
-  // const [selectedRecipeStations, setRecipeStations] = useState([]);
   const [disabledButton, setDisabledButton] = useState(false);
-  const [t] = useTranslation("global");
 
   // ------- QR (kept, still hidden/commented) -------
   const [scannerVisible, setScannerVisible] = useState(false);
@@ -72,16 +91,14 @@ export const Registro = () => {
     setScannerVisible(!scannerVisible);
   };
 
-  // Simple phone normalizer (keeps consistent with Settings.js import behavior)
+  // Simple phone normalizer
   const normalizePhone = (raw) => {
     const digits = (raw ?? "").toString().replace(/\D/g, "");
     if (!digits) return null;
     if (digits.length === 8) return `502${digits}`; // local -> add country code
     if (digits.length === 11 && digits.startsWith("502")) {
-      // already prefixed
       return digits;
     }
-    // Otherwise keep cleaned digits (avoid guessing formats)
     return digits;
   };
 
@@ -126,12 +143,6 @@ export const Registro = () => {
     );
   };
 
-  const { locations, locationId } = useServiceLocation();
-
-  const locationName = React.useMemo(() => {
-    return locations.find((l) => l.id === locationId)?.name || null;
-  }, [locations, locationId]);
-
   useHideMenu(false);
 
   const statusList = [
@@ -154,12 +165,10 @@ export const Registro = () => {
     "7",
   ];
 
-  // Make all unused stations equal to pending. This ensures that the pending stations
-  // exists so that they could be changed by the host.
+  // Make all unused stations equal to pending.
   const fillMissingStations = (stationsList, visits) => {
     const result = [];
     const visitsSet = new Set(visits);
-    // The fixed order of stations
     const stationOrder = [
       "reg",
       "nur",
@@ -175,7 +184,6 @@ export const Registro = () => {
       "ora",
     ];
     let order = 0;
-    // Iterate through the fixed order of stations
     stationOrder.forEach((stationValue) => {
       const station = stationsList.find((s) => s.value === stationValue);
       if (station) {
@@ -205,139 +213,6 @@ export const Registro = () => {
     setPatientPlanOfCare(filledStations);
   };
 
-  // Reset the form after successful entry to make room for the next new patient.
-  const handleReset = () => {
-    form.setFieldsValue({ stations: [] });
-    form.resetFields();
-    setDisabledButton(false);
-    setKpLookup({ status: "idle", lastId: null }); // reset auto-fill note
-  };
-
-  useEffect(() => {
-    let unsubscribe;
-    const fetchData = async () => {
-      try {
-        const visitTypeRef = query(
-          collection(firestore, "visit_types"),
-          orderBy("order"),
-        );
-        const visitTypeSnapshot = await getDocs(visitTypeRef); // Use getDocs to fetch data
-        const visitRecipes = visitTypeSnapshot.docs.map((doc) => {
-          return doc.data();
-        });
-        let recipes = [];
-        visitRecipes.forEach((item) => {
-          recipes.push({
-            value: item.name,
-            label: t(item.name),
-            stations: item.plan_of_care,
-          });
-        });
-        // ---- sets up the options for the form ----
-        setRecipes(recipes);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchData();
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
-  }, [t]);
-
-  const updateStatsCollection = async (station) => {
-    const currentDate = moment();
-    const currentMonth = currentDate.month() + 1; // Get the current month number
-    const currentYear = currentDate.year();
-    const currentDay = currentDate.toDate().getDate();
-    const currentMonthDayYear = `${currentMonth}/${currentDay}/${currentYear}`;
-    const statsRef = doc(firestore, "stats", station); // Use doc for referencing the stats document
-    try {
-      // Get the stats document from Firestore
-      const statsDoc = await getDoc(statsRef);
-      if (statsDoc.exists()) {
-        const statsData = statsDoc.data();
-        if (statsData.date !== currentMonthDayYear) {
-          // If the date is different, reset the stats for all stations
-          const statsCollectionRef = collection(firestore, "stats");
-          const querySnapshot = await getDocs(statsCollectionRef);
-          // Reset stats for all stations
-          querySnapshot.forEach(async (doc) => {
-            await updateDoc(doc.ref, {
-              date: currentMonthDayYear,
-              number_of_patients: 0,
-              procedure_time_data: [],
-              waiting_time_data: [],
-              avg_procedure_time: 0,
-              avg_waiting_time: 0,
-            });
-          });
-        } else if (station === statsData.station_type) {
-          // If the date is the same, update the number of patients for the current day
-          const currentDayPatients = statsData.number_of_patients || 0;
-          await updateDoc(statsRef, {
-            number_of_patients: currentDayPatients + 1,
-          });
-        }
-      } else {
-        // If the stats document does not exist, create it with the number of patients for the current day
-        const statsData = {
-          station_type: station,
-          number_of_patients: 1,
-          date: currentMonthDayYear,
-        };
-        await setDoc(statsRef, statsData);
-      }
-    } catch (error) {
-      console.log("Error updating stats collection:", error);
-    }
-  };
-
-  // const handleChange = (selectedOption) => {
-  //   generateVisits(selectedOption);
-  // };
-
-  const updateStations = (changedValues) => {
-    let recipeOptions = [];
-    if (Object.keys(changedValues)[0] === "tipo") {
-      // only do this update if the type of visit value in the form changed
-      let whichRecipe = null;
-      recipes.forEach((element, index) => {
-        if (element.value === changedValues.tipo) {
-          whichRecipe = index;
-        }
-      });
-      recipes[whichRecipe].stations.forEach((item) => {
-        recipeOptions.push({ value: item, label: t(item) });
-      });
-      form.setFieldsValue({ estaciones: recipeOptions });
-      let updateArray = [];
-      recipeOptions.forEach((e) => {
-        updateArray.push(e.value);
-      });
-      generateVisits(updateArray);
-    }
-  };
-
-  const secretPass = "XkhZG4fW2t2W";
-  const encryptData = (text) => {
-    const data = CryptoJS.AES.encrypt(
-      JSON.stringify(text),
-      secretPass,
-    ).toString();
-    return data;
-  };
-  const decryptData = (text) => {
-    const bytes = CryptoJS.AES.decrypt(text, secretPass);
-    const data = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-    return data;
-  };
-
-  // ----------------------------
-  // Auto-fill from known_patients by DPI
-  // ----------------------------
   const [kpLookup, setKpLookup] = useState({ status: "idle", lastId: null });
   const dpiDebounceRef = useRef(null);
   const toRawDpi = (val) =>
@@ -375,19 +250,146 @@ export const Registro = () => {
     }
   };
 
+  // Reset the form after successful entry to make room for the next new patient.
+  const handleReset = () => {
+    form.setFieldsValue({ stations: [] });
+    form.resetFields();
+    setDisabledButton(false);
+    setKpLookup({ status: "idle", lastId: null }); // reset auto-fill note
+    setRegistroLocationId(null); // reset clinic selection when in "__ALL__"
+  };
+
+  useEffect(() => {
+    let unsubscribe;
+    const fetchData = async () => {
+      try {
+        const visitTypeRef = query(
+          collection(firestore, "visit_types"),
+          orderBy("order"),
+        );
+        const visitTypeSnapshot = await getDocs(visitTypeRef);
+        const visitRecipes = visitTypeSnapshot.docs.map((docu) => {
+          return docu.data();
+        });
+        const next = [];
+        visitRecipes.forEach((item) => {
+          next.push({
+            value: item.name,
+            label: t(item.name),
+            stations: item.plan_of_care,
+          });
+        });
+        setRecipes(next);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchData();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [t]);
+
+  const updateStatsCollection = async (station) => {
+    const currentDate = moment();
+    const currentMonth = currentDate.month() + 1;
+    const currentYear = currentDate.year();
+    const currentDay = currentDate.toDate().getDate();
+    const currentMonthDayYear = `${currentMonth}/${currentDay}/${currentYear}`;
+    const statsRef = doc(firestore, "stats", station);
+    try {
+      const statsDoc = await getDoc(statsRef);
+      if (statsDoc.exists()) {
+        const statsData = statsDoc.data();
+        if (statsData.date !== currentMonthDayYear) {
+          const statsCollectionRef = collection(firestore, "stats");
+          const querySnapshot = await getDocs(statsCollectionRef);
+          querySnapshot.forEach(async (docu) => {
+            await updateDoc(docu.ref, {
+              date: currentMonthDayYear,
+              number_of_patients: 0,
+              procedure_time_data: [],
+              waiting_time_data: [],
+              avg_procedure_time: 0,
+              avg_waiting_time: 0,
+            });
+          });
+        } else if (station === statsData.station_type) {
+          const currentDayPatients = statsData.number_of_patients || 0;
+          await updateDoc(statsRef, {
+            number_of_patients: currentDayPatients + 1,
+          });
+        }
+      } else {
+        const statsData = {
+          station_type: station,
+          number_of_patients: 1,
+          date: currentMonthDayYear,
+        };
+        await setDoc(statsRef, statsData);
+      }
+    } catch (error) {
+      console.log("Error updating stats collection:", error);
+    }
+  };
+
+  const updateStations = (changedValues) => {
+    let recipeOptions = [];
+    if (Object.keys(changedValues)[0] === "tipo") {
+      let whichRecipe = null;
+      recipes.forEach((element, index) => {
+        if (element.value === changedValues.tipo) {
+          whichRecipe = index;
+        }
+      });
+      if (whichRecipe === null) return;
+
+      recipes[whichRecipe].stations.forEach((item) => {
+        recipeOptions.push({ value: item, label: t(item) });
+      });
+
+      form.setFieldsValue({ estaciones: recipeOptions });
+
+      let updateArray = [];
+      recipeOptions.forEach((e) => updateArray.push(e.value));
+      generateVisits(updateArray);
+    }
+  };
+
+  const secretPass = "XkhZG4fW2t2W";
+  const encryptData = (text) => {
+    const data = CryptoJS.AES.encrypt(
+      JSON.stringify(text),
+      secretPass,
+    ).toString();
+    return data;
+  };
+  const decryptData = (text) => {
+    const bytes = CryptoJS.AES.decrypt(text, secretPass);
+    const data = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+    return data;
+  };
+
   const onFinish = async (patient) => {
     setDisabledButton(true);
 
-    // Always store ONLY digits (no spaces)
+    // Block submission when viewing all locations but no clinic chosen
+    if (!effectiveLocationId || effectiveLocationId === "__ALL__") {
+      showAlert(
+        "Error",
+        t("SELECT_LOCATION_FIRST") || "Please select a clinic first.",
+        "error",
+      );
+      setDisabledButton(false);
+      return;
+    }
+
     const nationalId = patient.national_id_number
       ? patient.national_id_number.replace(/\D/g, "")
       : null;
 
     const normalizedTel = normalizePhone(patient.tel);
 
-    // Determine if this is a new patient based on the last DPI lookup result
-    // If lookup found a match => new_patient = false; else true
-    // When no DPI is provided, treat as new (true).
     const isNewPatient = kpLookup?.status === "found" ? false : true;
 
     const formattedPatient = {
@@ -406,23 +408,22 @@ export const Registro = () => {
       age_group: patient.age_group !== undefined ? patient.age_group : null,
       national_id_number: nationalId,
       new_patient: isNewPatient,
-      location_id: locationId || null,
-      location_name: locationName || null,
+
+      // ✅ Always store a real clinic (never "__ALL__" and never null)
+      location_id: effectiveLocationId,
+      location_name: effectiveLocationName || null,
     };
 
     try {
-      // 1) Create the patient document
       const patientRef = await addDoc(
         collection(firestore, "patients"),
         formattedPatient,
       );
       const ptNo = patientRef.id;
 
-      // 2) Update with its doc id (pt_no)
       const updatedPatient = { ...formattedPatient, pt_no: ptNo };
       await updateDoc(doc(firestore, "patients", ptNo), updatedPatient);
 
-      // 3) Maintain stats for each scheduled (non-pending) station
       const selectedStations = patientPlanOfCare.map((visit) => ({
         station: visit.station,
         status: visit.status,
@@ -433,13 +434,11 @@ export const Registro = () => {
         }
       });
 
-      // 4) Maintain the known_patients collection keyed by national_id_number
       if (nationalId) {
         const kpRef = doc(firestore, "known_patients", nationalId);
         const kpSnap = await getDoc(kpRef);
 
         if (!kpSnap.exists()) {
-          // Create a new record for first-time national ID
           await setDoc(kpRef, {
             national_id_number: nationalId,
             patient_name: patient.paciente || null,
@@ -447,36 +446,28 @@ export const Registro = () => {
             age_group: patient.age_group ?? null,
             is_new: true,
             created_at: Timestamp.now(),
-            tel: normalizedTel ?? kpSnap.data().telephone_number ?? null,
+            tel: normalizedTel ?? null,
             last_seen_at: Timestamp.now(),
             last_patient_doc_id: ptNo,
           });
         } else {
-          // Update last_seen (do not overwrite is_new intentionally)
+          const existing = kpSnap.data() || {};
           await updateDoc(kpRef, {
-            patient_name:
-              patient.paciente || kpSnap.data().patient_name || null,
-            gender: patient.gender ?? kpSnap.data().gender ?? null,
-            age_group: patient.age_group ?? kpSnap.data().age_group ?? null,
+            patient_name: patient.paciente || existing.patient_name || null,
+            gender: patient.gender ?? existing.gender ?? null,
+            age_group: patient.age_group ?? existing.age_group ?? null,
             last_seen_at: Timestamp.now(),
             last_patient_doc_id: ptNo,
           });
         }
       }
 
-      // demo crypto (kept from your code)
-      const fooJson = {
-        n: "Paul Mullen",
-        t: "Lawrence",
-      };
-      const fooString = JSON.stringify(fooJson);
-      const foo = encryptData(fooString);
-
       showAlert("Success", t("patientWasCreated"), "success");
       handleReset();
     } catch (error) {
       console.log("Error creating/updating patient: ", error);
       showAlert("Error", t("somethingWentWrong"), "error");
+      setDisabledButton(false);
     }
   };
 
@@ -484,7 +475,6 @@ export const Registro = () => {
     console.log("Form incomplete:", errorInfo);
   };
 
-  // Renders the visible screen
   return (
     <Row gutter={24} style={{ display: "contents" }}>
       <Col xs={24} sm={24}>
@@ -517,6 +507,33 @@ export const Registro = () => {
             </Col>
           </Row>
 
+          <Row>
+            <Col xs={24} sm={24}>
+              {needsClinicPick && (
+                <Form.Item
+                  label={t("SERVICE_LOCATION") || "Service Location"}
+                  required
+                  help={
+                    !registroLocationId
+                      ? t("SELECT_LOCATION_FIRST") ||
+                        "Select a clinic to register this patient."
+                      : null
+                  }
+                  validateStatus={!registroLocationId ? "error" : ""}
+                >
+                  <Select
+                    placeholder={t("SELECT_LOCATION") || "Select clinic"}
+                    value={registroLocationId}
+                    onChange={setRegistroLocationId}
+                    options={locations
+                      .filter((l) => l.id !== "__ALL__")
+                      .map((l) => ({ value: l.id, label: l.name }))}
+                  />
+                </Form.Item>
+              )}
+            </Col>
+          </Row>
+
           {/* Patient Name */}
           <Row>
             <Col xs={24} sm={24}>
@@ -537,9 +554,7 @@ export const Registro = () => {
                 label={t("NATIONAL_ID_NUMBER") || "National ID Number"}
                 name="national_id_number"
                 rules={[
-                  {
-                    required: false,
-                  },
+                  { required: false },
                   {
                     validator: (_, value) => {
                       if (!value) return Promise.resolve();
@@ -553,12 +568,10 @@ export const Registro = () => {
                 ]}
               >
                 <Input
-                  maxLength={17} // 4 + 1 + 5 + 1 + 4
+                  maxLength={17}
                   onChange={(e) => {
                     let v = e.target.value || "";
-                    // Remove non-digits, cap at 13
                     v = v.replace(/\D/g, "").slice(0, 13);
-                    // Apply #### ##### ####
                     let formatted = v;
                     if (v.length > 4) {
                       formatted = v.slice(0, 4) + " " + v.slice(4);
@@ -573,11 +586,9 @@ export const Registro = () => {
                     }
                     form.setFieldsValue({ national_id_number: formatted });
 
-                    // Trigger auto-fill if 13 digits
                     const raw = toRawDpi(formatted);
                     maybeAutofillFromDpi(raw);
 
-                    // Keep caret at end (helps on paste/typing)
                     setTimeout(() => {
                       const el = e.target;
                       if (el && typeof el.setSelectionRange === "function") {
@@ -610,6 +621,7 @@ export const Registro = () => {
                   }}
                 />
               </Form.Item>
+
               {showChildDpiWarning && (
                 <Text type="warning">
                   {t("CHILD_DPI_WARNING") ||
@@ -618,7 +630,6 @@ export const Registro = () => {
                 </Text>
               )}
 
-              {/* Inline feedback for auto-fill */}
               {kpLookup.status === "loading" && (
                 <Text type="secondary">{t("searching") || "Searching..."}</Text>
               )}
@@ -800,7 +811,7 @@ export const Registro = () => {
                   htmlType="submit"
                   shape="round"
                   name="register"
-                  disabled={disabledButton}
+                  disabled={disabledButton || !canSubmit}
                 >
                   <SaveFilled />
                   {t("register")}

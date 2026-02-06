@@ -69,6 +69,11 @@ export const Survey = () => {
 
   const location = useLocation();
 
+  const handleSkip = () => {
+    // do NOT write to Firestore
+    history("/Anfitrion");
+  };
+
   // eslint-disable-next-line no-unused-vars
   const onFinish = async (values) => {
     try {
@@ -254,7 +259,6 @@ export const Survey = () => {
                   </Form.Item>
                 </Col>
               </Row> */}
-
             <Row>
               <Col xs={24} sm={24} offset={6}>
                 <Space wrap>
@@ -265,6 +269,10 @@ export const Survey = () => {
                     name="register"
                   >
                     {t("done")}
+                  </Button>
+
+                  <Button htmlType="button" shape="round" onClick={handleSkip}>
+                    {t("SKIP") || "Skip"}
                   </Button>
                 </Space>
               </Col>

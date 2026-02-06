@@ -4,25 +4,33 @@
 //***************************************************************** */
 
 const { onRequest } = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
-const { getFirestore } = require("firebase-admin/firestore");
+const cors = require("cors");
 
-// Initialize the default Firestore instance
-const app = admin.initializeApp();
+const { initializeApp, getApps } = require("firebase-admin/app");
+const { getFirestore, Timestamp } = require("firebase-admin/firestore");
 
-exports.fetchPatientsData = onRequest(
-  {
-    cors: [
-      /localhost(:\d+)?$/,
-      "https://multimedica.org",
-      "https://alfarero-478ad--testing-nc9ftcse.web.app",
-    ],
-    methods: ["GET", "POST", "OPTIONS"],
-  },
-  async (req, res) => {
-    if (req.method === "OPTIONS") {
-      return res.status(204).send("");
-    }
+// Initialize Admin safely (avoid duplicate init during cold starts / emulator reloads)
+if (!getApps().length) {
+  initializeApp();
+}
+
+const corsHandler = cors({
+  origin: [
+    /^http:\/\/localhost(:\d+)?$/,
+    /^https:\/\/localhost(:\d+)?$/,
+    "https://multimedica.org",
+    "https://alfarero-478ad--test-fad5m1j4.web.app",
+  ],
+  methods: ["POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: false,
+  maxAge: 3600,
+});
+
+exports.fetchPatientsData = onRequest(async (req, res) => {
+  corsHandler(req, res, async () => {
+    if (req.method === "OPTIONS") return res.status(204).send("");
+
     if (req.method !== "POST") {
       return res.status(405).send("Method Not Allowed");
     }
@@ -30,46 +38,35 @@ exports.fetchPatientsData = onRequest(
     try {
       const { dateRange, database, include_completed } = req.body;
 
-      // ✅ optional; supports old clients
+      // optional; supports old clients
       const locationId = req.body?.location_id || null;
-
-      console.log("Received Request Data:", {
-        dateRange,
-        database,
-        include_completed,
-        locationId,
-      });
 
       const db =
         database === "alfarero-dev"
-          ? getFirestore(app, "alfarero-dev")
-          : getFirestore(app);
-
-      console.log("Using Firestore database:", db._databaseId.database);
+          ? getFirestore(undefined, "alfarero-dev")
+          : getFirestore();
 
       const patientsCollection = db.collection("patients");
 
       // Build timestamps safely from your JSON {seconds, ...}
-      const startTs = new admin.firestore.Timestamp(dateRange[0].seconds, 0);
-      const endTs = new admin.firestore.Timestamp(dateRange[1].seconds, 0);
+      const startTs = Timestamp.fromMillis(dateRange[0].seconds * 1000);
+      const endTs = Timestamp.fromMillis(dateRange[1].seconds * 1000);
 
       let q = patientsCollection
         .where("start_time", ">=", startTs)
         .where("start_time", "<=", endTs);
 
-      // ✅ add location filter ONLY when provided
+      // add location filter ONLY when provided
       if (locationId) {
         q = q.where("location_id", "==", locationId);
       }
 
       // complete filter branches
-      if (include_completed === "both") {
-        // no extra complete filter
-      } else if (include_completed === "active") {
+      if (include_completed === "active") {
         q = q.where("complete", "==", false);
-      } else {
+      } else if (include_completed === "complete") {
         q = q.where("complete", "==", true);
-      }
+      } // "both" => no filter
 
       const snapshot = await q.get();
 
@@ -88,8 +85,6 @@ exports.fetchPatientsData = onRequest(
           tel: d.tel,
           type_of_visit: d.type_of_visit,
           waiting_time: d.waiting_time,
-
-          // optional (handy for debugging / later use)
           location_id: d.location_id || null,
           location_name: d.location_name || null,
         };
@@ -100,5 +95,5 @@ exports.fetchPatientsData = onRequest(
       console.error("Error fetching patients data:", error);
       return res.status(500).send("Internal Server Error");
     }
-  },
-);
+  });
+});
