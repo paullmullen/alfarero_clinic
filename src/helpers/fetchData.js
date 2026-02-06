@@ -11,13 +11,17 @@ export const fetchData = async ({
   locationId,
 }) => {
   try {
+    // Treat "__ALL__" as no filter (backward-compatible)
+    const locationFilterId = locationId === "__ALL__" ? null : locationId;
+
     // Fetch patients data
     const initialData = await fetchPatientsData(
       dateRange,
       process.env.REACT_APP_FIREBASE_DB,
       "active",
-      locationId,
+      locationFilterId,
     );
+
     if (isMounted) {
       setData(initialData);
     }

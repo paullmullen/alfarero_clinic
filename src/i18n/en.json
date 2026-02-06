@@ -53,6 +53,8 @@
   "SEND_INVITE_EMAIL": "Invite New User",
   "SEND": "Send",
   "SERVICE_LOCATION": "Service Location",
+  "SELECT_LOCATION": "Select Location",
+  "SELECT_LOCATION_FIRST": "Select a service location for this patient.",
   "SILVER": "SILVER",
   "START_DATE": "Start Date",
   "STATSFOR": "Statistics for",

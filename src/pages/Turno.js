@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import { Table, Image } from "antd";
-import { collection, onSnapshot, Timestamp } from "firebase/firestore"; // Import the necessary methods
+import { collection, onSnapshot, Timestamp } from "firebase/firestore";
 
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
@@ -26,19 +26,20 @@ import pay from "../img/pay.svg";
 
 const Turno = () => {
   const { locationId } = useServiceLocation();
+
+  // Treat "__ALL__" as "no filter"
+  const locationFilterId = locationId === "__ALL__" ? null : locationId;
+
   useHideMenu(true);
   const [data, setData] = useState([]);
   const [t] = useTranslation("global");
-  const [patientsChanged, setPatientsChanged] = useState(true); // for a firestore listener that triggers a useEffect to reload the anfi table.
+  const [patientsChanged, setPatientsChanged] = useState(true);
   // eslint-disable-next-line no-unused-vars
   const [statsData, setStatsData] = useState([]);
-  const prevPatientsChangedRef = useRef(false); // Ref to store the previous value of patientsChanged.  the initial values of patientsChanged=true and ref=false will trigger the first render.
 
   const tableRef = useRef(null);
   const scrollSpeed = 2; // Adjust scroll speed here
-  let scrolling = true;
-
-  // Shows editable icons in the patients table
+  const scrollingRef = useRef(true);
 
   const renderStatusIcon = (status) => {
     let statusIcon = null;
@@ -180,7 +181,6 @@ const Turno = () => {
     return statusIcon;
   };
 
-  // Makes render the table that changes in real time (patients and their status)
   const generateTableData = (extractedPlanOfCare) => {
     const uniqueStations = {};
     extractedPlanOfCare.sort((a, b) => {
@@ -188,8 +188,8 @@ const Turno = () => {
       const startTimeB = new Date(b.start_time);
       return startTimeA - startTimeB;
     });
+
     extractedPlanOfCare.forEach((item) => {
-      // eslint-disable-next-line no-unused-expressions
       item.plan_of_care?.forEach((plan) => {
         if (!uniqueStations[plan.station]) {
           uniqueStations[plan.station] = {
@@ -213,23 +213,8 @@ const Turno = () => {
         fixed: "left",
       },
       ...Object.values(uniqueStations),
-      // {
-      //   title: t("waitingTime"),
-      //   dataIndex: "avg_time",
-      //   key: "patient",
-      //   width: 100,
-      //   align: "center",
-      //   fixed: "right",
-      //   render: (avg_time) => {
-      //     const displayValue = isNaN(avg_time) ? 0 : avg_time;
-      //     const style = {
-      //       fontSize: "18px",
-      //       color: displayValue => 15  ? "red" : "inherit",
-      //     };
-      //     return <span style={style}>{displayValue} min</span>;
-      //   },
-      // },
     ];
+
     const dataSource = extractedPlanOfCare.map((item) => {
       const stations = {};
       item.plan_of_care.forEach((plan) => {
@@ -253,26 +238,6 @@ const Turno = () => {
 
   const { columns, dataSource } = generateTableData(data);
 
-  // eslint-disable-next-line no-unused-vars
-  const autoScroll = () => {
-    const scrollAmount = 20; // pixels
-    const scrollSpeed = 1000; // milliseconds
-    const scrollMax = 15000; // total size
-    let scrollPosition = 0;
-
-    const scrollInterval = setInterval(() => {
-      scrollPosition =
-        scrollPosition > scrollMax ? 0 : scrollPosition + scrollAmount;
-
-      const scrollContainer = document.querySelector("div.ant-table-body");
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollPosition;
-      }
-    }, scrollSpeed);
-
-    return () => clearInterval(scrollInterval); // Clean up the interval when the component unmounts
-  };
-
   const now = new Date();
   const today = new Date(
     now.getFullYear(),
@@ -293,49 +258,43 @@ const Turno = () => {
     0,
   );
 
-  // Convert to Firestore Timestamp
   const todayTimestamp = Timestamp.fromDate(today);
   const tomorrowTimestamp = Timestamp.fromDate(tomorrow);
 
   useEffect(() => {
     const unsubscribePatients = onSnapshot(
       collection(firestore, "patients"),
-      () => {
-        // Whenever there's a change in the 'patients' collection, update the state
-        setPatientsChanged(true);
-      },
+      () => setPatientsChanged(true),
     );
 
-    // Cleanup listener on unmount
-    return () => {
-      unsubscribePatients();
-    };
-  }, []); // Only set up the listener once, on mount
+    return () => unsubscribePatients();
+  }, []);
+
+  // ✅ trigger reload when clinic changes
+  useEffect(() => {
+    setPatientsChanged(true);
+  }, [locationId]);
 
   useEffect(() => {
-    if (prevPatientsChangedRef.current === false && patientsChanged === true) {
-      let isMounted = true;
-      let unsubscribe;
+    if (!patientsChanged) return;
 
-      const dateRange = [todayTimestamp, tomorrowTimestamp];
+    let isMounted = true;
 
-      fetchData({
-        dateRange,
-        setData,
-        setPatientsChanged,
-        setStatsData,
-        isMounted,
-        locationId,
-      });
+    const dateRange = [todayTimestamp, tomorrowTimestamp];
 
-      return () => {
-        if (unsubscribe) {
-          unsubscribe();
-        }
-        isMounted = false;
-      };
-    }
-  }, [patientsChanged]);
+    fetchData({
+      dateRange,
+      setData,
+      setPatientsChanged,
+      setStatsData,
+      isMounted,
+      locationId: locationFilterId, // null means "all"
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [patientsChanged, locationFilterId, todayTimestamp, tomorrowTimestamp]);
 
   const getRowClassName = (record, index) => {
     return index % 2 === 0 ? "even-row" : "odd-row";
@@ -346,13 +305,13 @@ const Turno = () => {
     if (!tableBody) return;
 
     const scrollInterval = setInterval(() => {
-      if (!scrolling) return;
+      if (!scrollingRef.current) return;
 
       if (
         tableBody.scrollTop + tableBody.clientHeight >=
         tableBody.scrollHeight
       ) {
-        tableBody.scrollTop = 0; // Reset to top
+        tableBody.scrollTop = 0;
       } else {
         tableBody.scrollTop += scrollSpeed;
       }
@@ -361,7 +320,6 @@ const Turno = () => {
     return () => clearInterval(scrollInterval);
   }, []);
 
-  // Renders the visible screen
   return (
     <div>
       <AlertInfo />
@@ -374,7 +332,6 @@ const Turno = () => {
           pagination={false}
           rowClassName={getRowClassName}
         />
-        {/* <Footer /> */}
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ const fetchPatientsData = async (
   dateRange,
   database,
   include_completed,
-  locationId,
+  locationId = null,
 ) => {
   if (!dateRange || dateRange.length !== 2) {
     const docRef = doc(firestore, "run_aggregation", "timestamp");
@@ -31,7 +31,9 @@ const fetchPatientsData = async (
           dateRange,
           database,
           include_completed,
-          location_id: locationId || null,
+          ...(locationId && locationId !== "__ALL__"
+            ? { location_id: locationId }
+            : {}),
         }),
       },
     );

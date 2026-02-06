@@ -53,6 +53,9 @@
   "SEND_INVITE_EMAIL": "Invitar a Nuevo Usuario",
   "SEND": "Enviar",
   "SERVICE_LOCATION": "Ubicación de Servicio",
+  "SELECT_LOCATION": "Seleccione Ubicación",
+  "SELECT_LOCATION_FIRST": "Selectione una ubicación de servicio para este pacient.",
+
   "SILVER": "PLATA",
   "SKIP": "Omitir Encuesta",
   "START_DATE": "Fecha Inicial",

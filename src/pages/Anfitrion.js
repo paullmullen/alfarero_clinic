@@ -66,15 +66,22 @@ const Anfitrion = () => {
 
   const { locationId } = useServiceLocation();
 
+  const locationFilterId = locationId === "__ALL__" ? null : locationId;
+
   // Filtered real-time listener for today's patients, excluding completed
   useEffect(() => {
-    const q = query(
-      collection(firestore, "patients"),
+    const baseConstraints = [
       where("start_time", ">=", todayTimestamp),
       where("start_time", "<", tomorrowTimestamp),
       where("complete", "==", false),
-      where("location_id", "==", locationId),
-    );
+    ];
+
+    // Add location constraint only when a real clinic is selected
+    const constraints = locationFilterId
+      ? [...baseConstraints, where("location_id", "==", locationFilterId)]
+      : baseConstraints;
+
+    const q = query(collection(firestore, "patients"), ...constraints);
 
     const unsubscribePatients = onSnapshot(q, (snapshot) => {
       const rows = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -82,7 +89,7 @@ const Anfitrion = () => {
     });
 
     return () => unsubscribePatients();
-  }, [todayTimestamp, tomorrowTimestamp, locationId]);
+  }, [todayTimestamp, tomorrowTimestamp, locationId, locationFilterId]);
 
   // Load only station stats (keeps Step-1 behavior but avoids reloading patient rows)
   useEffect(() => {
