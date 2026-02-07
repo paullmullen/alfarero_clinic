@@ -8,14 +8,9 @@ import React, {
 import PropTypes from "prop-types";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { firestore } from "../helpers/firebaseConfig";
+import { useTranslation } from "react-i18next";
 
 const ALL_LOCATIONS_ID = "__ALL__";
-const ALL_LOCATIONS_OPTION = {
-  id: ALL_LOCATIONS_ID,
-  name: "All Locations",
-  // Choose a sensible default highlight color for "All"
-  background_color: "#1890ff",
-};
 
 const ServiceLocationContext = createContext({
   locations: [],
@@ -26,16 +21,22 @@ const ServiceLocationContext = createContext({
 });
 
 export const ServiceLocationProvider = ({ children }) => {
+  const [t] = useTranslation("global");
+
+  const ALL_LOCATIONS_OPTION = useMemo(
+    () => ({
+      id: ALL_LOCATIONS_ID,
+      name: t("ALL_LOCATIONS"),
+      background_color: "#1890ff",
+    }),
+    [t],
+  );
+
   const [rawLocations, setRawLocations] = useState([]);
   const [locationId, setLocationIdState] = useState(
     () => localStorage.getItem("service_location_id") || null,
   );
   const [loading, setLoading] = useState(true);
-
-  const locations = useMemo(() => {
-    // Always present "All Locations" at top
-    return [ALL_LOCATIONS_OPTION, ...rawLocations];
-  }, [rawLocations]);
 
   const setLocationId = (id) => {
     const next = id || null;
@@ -43,6 +44,11 @@ export const ServiceLocationProvider = ({ children }) => {
     if (next) localStorage.setItem("service_location_id", next);
     else localStorage.removeItem("service_location_id");
   };
+
+  const locations = useMemo(() => {
+    // Always present "All Locations" at top
+    return [ALL_LOCATIONS_OPTION, ...rawLocations];
+  }, [ALL_LOCATIONS_OPTION, rawLocations]);
 
   useEffect(() => {
     const q = query(collection(firestore, "locations"), orderBy("name", "asc"));
@@ -77,12 +83,12 @@ export const ServiceLocationProvider = ({ children }) => {
         setRawLocations([]);
         setLoading(false);
 
-        // Still ensure we have something selected
         if (!locationId) setLocationId(ALL_LOCATIONS_ID);
       },
     );
 
     return () => unsub();
+    // You *can* include locationId safely, but leaving as-is matches your intent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
