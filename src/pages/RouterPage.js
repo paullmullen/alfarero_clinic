@@ -8,7 +8,7 @@ import AppShell from "../layout/AppShell";
 import { ServiceLocationProvider } from "../providers/ServiceLocationProvider";
 import { usePermissions } from "../providers/PermissionsProvider";
 
-const Registro = lazy(() => import("./Registro"));
+const Registro = lazy(() => import("./Registro/Registro"));
 const Turno = lazy(() => import("./Turno"));
 const Escritorio = lazy(() => import("./Escritorio"));
 // const Member = lazy(() => import("./Member"));
