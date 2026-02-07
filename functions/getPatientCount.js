@@ -6,6 +6,8 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
+const ALL_LOCATIONS_ID = "__ALL__";
+
 exports.getPatientCount = onRequest(
   {
     region: "us-central1",
@@ -28,30 +30,36 @@ exports.getPatientCount = onRequest(
         return res.status(405).send("Method Not Allowed");
       }
 
-      const { database, startTimestamp, endTimestamp } = req.body;
-      console.log(
-        "Received Request Data:",
+      const { database, startTimestamp, endTimestamp, locationId } = req.body;
+
+      console.log("Received Request Data:", {
         database,
         startTimestamp,
         endTimestamp,
-      );
+        locationId,
+      });
+
+      if (!startTimestamp?.seconds || !endTimestamp?.seconds) {
+        return res.status(400).send("Missing startTimestamp/endTimestamp");
+      }
 
       // use already-initialized default app
       const db = admin.firestore();
 
-      const snapshot = await db
+      const start = new admin.firestore.Timestamp(startTimestamp.seconds, 0);
+      const end = new admin.firestore.Timestamp(endTimestamp.seconds, 0);
+
+      let q = db
         .collection("patients")
-        .where(
-          "start_time",
-          ">=",
-          new admin.firestore.Timestamp(startTimestamp.seconds, 0),
-        )
-        .where(
-          "start_time",
-          "<=",
-          new admin.firestore.Timestamp(endTimestamp.seconds, 0),
-        )
-        .get();
+        .where("start_time", ">=", start)
+        .where("start_time", "<=", end);
+
+      // Optional clinic filter
+      if (locationId && locationId !== ALL_LOCATIONS_ID) {
+        q = q.where("location_id", "==", locationId);
+      }
+
+      const snapshot = await q.get();
 
       return res.status(200).json({ records: snapshot.size });
     } catch (error) {

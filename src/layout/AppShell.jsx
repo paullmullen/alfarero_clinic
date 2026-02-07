@@ -41,12 +41,16 @@ export default function AppShell({ ocultarMenu, t, permissions, children }) {
   // heartbeat (same behavior as before)
   useAggregationHeartbeat({ enabled: true, intervalMs: 60000 });
 
-  // patient count polling (same cadence)
-  const { count } = usePatientCount({ enabled: true, intervalMs: 60000 });
-
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  const { locations, locationId } = useServiceLocation();
+  const { locations, locationId, loading } = useServiceLocation();
+
+  // patient count polling (filtered by sider location)
+  const { count } = usePatientCount({
+    enabled: !loading && !!locationId, // optional but recommended
+    intervalMs: 60000,
+    locationId, // ✅ pass current selection
+  });
 
   const selectedColor = React.useMemo(() => {
     const loc = locations.find((l) => l.id === locationId);

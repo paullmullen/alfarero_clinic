@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 
+const ALL_LOCATIONS_ID = "__ALL__";
+
 export function usePatientCount({
   enabled = true,
   intervalMs = 60000,
   url = "https://us-central1-alfarero-478ad.cloudfunctions.net/getPatientCount",
   database = process.env.REACT_APP_FIREBASE_DB,
+  locationId = null, // ✅ caller passes the sider-selected value
 } = {}) {
   const [count, setCount] = useState(0);
 
-  // Stable function to compute boundaries
   const getRangePayload = useMemo(() => {
     return () => {
       const today = new Date();
@@ -17,9 +19,7 @@ export function usePatientCount({
       const tomorrow = new Date();
       tomorrow.setHours(24, 0, 0, 0);
 
-      // NOTE: you currently send timestamps as objects; keeping behavior identical.
-      // If you want a safer payload later, switch to millis.
-      return {
+      const payload = {
         database,
         startTimestamp: {
           seconds: Math.floor(today.getTime() / 1000),
@@ -30,8 +30,15 @@ export function usePatientCount({
           nanoseconds: 0,
         },
       };
+
+      // ✅ only include locationId when filtering to a specific clinic
+      if (locationId && locationId !== ALL_LOCATIONS_ID) {
+        payload.locationId = locationId;
+      }
+
+      return payload;
     };
-  }, [database]);
+  }, [database, locationId]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -58,10 +65,9 @@ export function usePatientCount({
       }
     };
 
-    // kick once immediately
     fetchPatientCount();
-
     const interval = setInterval(fetchPatientCount, intervalMs);
+
     return () => {
       isMounted = false;
       clearInterval(interval);
