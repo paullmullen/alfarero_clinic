@@ -44,7 +44,6 @@ const SiderFooter = styled.div`
   color: rgba(255, 255, 255, 0.45);
   font-size: 14px;
 
-  /* Make sure footer content can actually render */
   line-height: 1.4;
   overflow: visible;
   min-height: 44px;
@@ -52,6 +51,21 @@ const SiderFooter = styled.div`
   .ant-typography {
     color: rgba(255, 255, 255, 0.65);
   }
+`;
+
+// NEW: right-side column wrapper to make TopBar non-scrolling and Content the scroll container
+const RightColumn = styled(Layout)`
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+`;
+
+// NEW: sticky wrapper for TopBar
+const StickyTopBar = styled.div`
+  position: sticky;
+  top: 0;
+  z-index: 20;
 `;
 
 export default function AppShell({ ocultarMenu, t, permissions, children }) {
@@ -90,14 +104,18 @@ export default function AppShell({ ocultarMenu, t, permissions, children }) {
   }, [currentTime]);
 
   return (
-    <Layout style={{ minHeight: "100vh", minWidth: "100%" }}>
+    // IMPORTANT: use height (not minHeight) so we can constrain scrolling
+    <Layout style={{ height: "100vh", width: "100%" }}>
       <CustomSider
         collapsedWidth="0"
         breakpoint="lg"
         hidden={ocultarMenu}
         isDev={isAlfareroDev}
         selectedColor={menuSelectedColor}
+        // Keep the sider from participating in page scroll
+        style={{ height: "100vh", position: "sticky", top: 0 }}
       >
+        {/* Sider internal scroll (only if menu is tall) */}
         <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
           <SideNav t={t} permissions={permissions} />
         </div>
@@ -127,18 +145,29 @@ export default function AppShell({ ocultarMenu, t, permissions, children }) {
         </SiderFooter>
       </CustomSider>
 
-      <Layout className="site-layout">
-        <TopBar
-          t={t}
-          isDev={isAlfareroDev}
-          formattedTime={formattedTime}
-          count={count}
-        />
+      {/* Right side: TopBar stays fixed, only Content scrolls */}
+      <RightColumn>
+        <StickyTopBar>
+          <TopBar
+            t={t}
+            isDev={isAlfareroDev}
+            formattedTime={formattedTime}
+            count={count}
+          />
+        </StickyTopBar>
 
-        <Content style={{ margin: "24px 16px", padding: 24, minHeight: 280 }}>
+        <Content
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflow: "auto",
+            margin: "24px 16px",
+            padding: 24,
+          }}
+        >
           <AlertProvider>{children}</AlertProvider>
         </Content>
-      </Layout>
+      </RightColumn>
     </Layout>
   );
 }
