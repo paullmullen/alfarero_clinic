@@ -1,4 +1,5 @@
 {
+  "ACTIVE": "Activado",
   "ARRIVAL_TIME": "Hora de Llegada",
   "ADD_LOCATION": "Añadir Ubicación",
   "ADMIN": "Administración",
@@ -22,6 +23,7 @@
   "EXPORT_SURVEYS": "Descargar Resultados de Encuestas a Excel",
   "GOLD": "ORO",
   "Happy": "Contento",
+  "INACTIVE": "Desactivado",
   "LAB_SAMPLE": "Lab: Muestra",
   "LOGIN_PAGE_TITLE": "Login con credenciales de Microsoft",
   "LOGIN_WITH_MICROSOFT": "Login",
@@ -211,7 +213,7 @@
   "turnTable": "Sala de Espera",
   "type_of_visit": "Visita",
   "updateStatus": "Actualizar estatus",
-  "version": "2.2.0b",
+  "version": "2.2.0d",
   "visitCompleted": "Servicio Completo",
   "visitPayed": "Pagando",
   "visitTypes": "Tipo de Visita",

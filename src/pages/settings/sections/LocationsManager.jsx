@@ -1,5 +1,14 @@
 import React, { Suspense, useState, useEffect } from "react";
-import { Row, Col, Typography, Input, Select, Space, Button } from "antd";
+import {
+  Row,
+  Col,
+  Typography,
+  Input,
+  Select,
+  Space,
+  Button,
+  Switch,
+} from "antd";
 import { HexColorPicker } from "react-colorful";
 import LocationPicker from "../../../components/LocationPicker";
 
@@ -32,6 +41,12 @@ export default function LocationsManager({
       onUpdate(location.id, "name", draft);
     }
   };
+
+  const isActive = (location) => {
+    // Default to active if the field doesn't exist yet
+    return location.active !== false;
+  };
+
   return (
     <>
       <Title level={3}>{t("LOCATIONS") || "Locations"}</Title>
@@ -56,6 +71,30 @@ export default function LocationsManager({
                 style={{ width: "100%" }}
                 size="middle"
               >
+                {/* Active / Inactive */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  {/* <Text strong>{t("ACTIVE") || "Active"}</Text> */}
+                  <Space size="small">
+                    <Switch
+                      checked={isActive(location)}
+                      onChange={(checked) =>
+                        onUpdate(location.id, "active", checked)
+                      }
+                    />
+                    <Text type={isActive(location) ? "success" : "secondary"}>
+                      {isActive(location)
+                        ? t("ACTIVE") || "Active"
+                        : t("INACTIVE") || "Inactive"}
+                    </Text>
+                  </Space>
+                </div>
+
                 <div>
                   <Text strong>{t("NAME") || "Name"}</Text>
                   <Input

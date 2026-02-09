@@ -1,4 +1,5 @@
 {
+  "ACTIVE": "Active",
   "ADMINISTRATION": "Administration",
   "ADD_LOCATION": "Add Location",
   "ALL_LOCATIONS": "All Locations",
@@ -22,6 +23,7 @@
   "EXPORT_SURVEYS": "Download Surveys to Excel",
   "GOLD": "GOLD",
   "Happy": "Happy",
+  "Inactive": "Inactive",
   "KNOWNPATIENTFOUND": "Known patient selected",
   "LAB_SAMPLE": "Lab: Sample",
   "LAST_30_DAYS": "Last 30 Days",
@@ -204,7 +206,7 @@
   "turnTable": "Work roster",
   "type_of_visit": "Tipo de Visita",
   "updateStatus": "Update Status",
-  "version": "2.2.0b",
+  "version": "2.2.0d",
   "visitCompleted": "Service completed",
   "visitPayed": "Paying",
   "visitTypes": "Type of Visit",

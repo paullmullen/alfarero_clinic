@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { Menu, Select, Typography } from "antd";
 import {
@@ -20,6 +20,11 @@ export default function SideNav({ t, permissions }) {
     setLocationId,
     loading: locationsLoading,
   } = useServiceLocation();
+
+  // Only show active locations (default active if field missing)
+  const activeLocations = useMemo(() => {
+    return (locations || []).filter((loc) => loc?.active !== false);
+  }, [locations]);
 
   const rawMenuItems = [
     {
@@ -72,6 +77,14 @@ export default function SideNav({ t, permissions }) {
 
   const menuItems = rawMenuItems.filter((item) => !item.hidden);
 
+  // Optional safety: if current locationId is inactive, Select can look "blank".
+  // This keeps the Select from referencing a value not in options.
+  const safeLocationId = useMemo(() => {
+    if (!locationId) return locationId;
+    const isInActiveList = activeLocations.some((l) => l.id === locationId);
+    return isInActiveList ? locationId : undefined;
+  }, [locationId, activeLocations]);
+
   return (
     <>
       <Menu
@@ -89,11 +102,11 @@ export default function SideNav({ t, permissions }) {
 
         <Select
           style={{ width: "100%", marginTop: 8 }}
-          value={locationId}
+          value={safeLocationId}
           loading={locationsLoading}
           placeholder={t("SELECT_LOCATION") || "Select location"}
           onChange={(val) => setLocationId(val)}
-          options={locations.map((loc) => ({
+          options={activeLocations.map((loc) => ({
             value: loc.id,
             label: loc.name,
           }))}
