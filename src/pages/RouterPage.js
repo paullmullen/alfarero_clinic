@@ -3,10 +3,12 @@ import { Routes, Route, BrowserRouter as Router } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { UiContext } from "../context/UiContext";
 import { ProtectedRoute } from "../components/ProtectedRoute";
+import { Spin } from "antd";
 
 import AppShell from "../layout/AppShell";
 import { ServiceLocationProvider } from "../providers/ServiceLocationProvider";
 import { usePermissions } from "../providers/PermissionsProvider";
+const Inventory = lazy(() => import("./inventory"));
 
 const Registro = lazy(() => import("./Registro/Registro"));
 const Turno = lazy(() => import("./Turno"));
@@ -114,6 +116,23 @@ export const RouterPage = () => {
                 element={
                   <ProtectedRoute requiredPermission="host">
                     <Anfitrion />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/inventory"
+                element={
+                  <ProtectedRoute requiredPermission="basic">
+                    <Suspense
+                      fallback={
+                        <div style={{ padding: 24 }}>
+                          <Spin />
+                        </div>
+                      }
+                    >
+                      <Inventory />
+                    </Suspense>
                   </ProtectedRoute>
                 }
               />

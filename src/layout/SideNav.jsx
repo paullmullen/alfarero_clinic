@@ -9,6 +9,7 @@ import {
   CoffeeOutlined,
   OrderedListOutlined,
   SettingOutlined,
+  MedicineBoxOutlined,
 } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import { useServiceLocation } from "../providers/ServiceLocationProvider";
@@ -67,6 +68,11 @@ export default function SideNav({ t, permissions }) {
       icon: <SettingOutlined />,
       label: <Link to="/settings">{t("SETTINGS")}</Link>,
       hidden: !permissions?.settings,
+    },
+    {
+      key: "11",
+      icon: <MedicineBoxOutlined />,
+      label: <Link to="/Inventory">{t("INVENTORY")}</Link>,
     },
     {
       key: "10",

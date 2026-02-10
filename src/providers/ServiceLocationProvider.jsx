@@ -18,6 +18,8 @@ const ServiceLocationContext = createContext({
   setLocationId: () => {},
   loading: true,
   ALL_LOCATIONS_ID,
+  isAllLocations: true,
+  selectedLocation: null,
 });
 
 export const ServiceLocationProvider = ({ children }) => {
@@ -49,6 +51,13 @@ export const ServiceLocationProvider = ({ children }) => {
     // Always present "All Locations" at top
     return [ALL_LOCATIONS_OPTION, ...rawLocations];
   }, [ALL_LOCATIONS_OPTION, rawLocations]);
+
+  const isAllLocations = locationId === ALL_LOCATIONS_ID;
+
+  const selectedLocation = useMemo(() => {
+    if (!locationId || locationId === ALL_LOCATIONS_ID) return null;
+    return rawLocations.find((l) => l.id === locationId) || null;
+  }, [locationId, rawLocations]);
 
   useEffect(() => {
     const q = query(collection(firestore, "locations"), orderBy("name", "asc"));
@@ -88,7 +97,7 @@ export const ServiceLocationProvider = ({ children }) => {
     );
 
     return () => unsub();
-    // You *can* include locationId safely, but leaving as-is matches your intent.
+    // Intentionally not including locationId; matches your original intent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -100,6 +109,8 @@ export const ServiceLocationProvider = ({ children }) => {
         setLocationId,
         loading,
         ALL_LOCATIONS_ID,
+        isAllLocations,
+        selectedLocation,
       }}
     >
       {children}

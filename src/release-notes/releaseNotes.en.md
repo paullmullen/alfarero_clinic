@@ -1,13 +1,26 @@
 # Release Notes
 
-## V2.1.0c
+Releases with letter suffixes are candidate releases not pushed to production. Releases without letter suffixes are the production releases that include the candidate changes (if approved).
+
+## V2.3.0a
+
+### Minor Changes
+
+- Translated the headings for the User Permissions Page
+
+### Major Changes
+
+- Inclusion of all changes in V2.2 below
+
+## V2.2.0d
+
+- Added an enable/disable switch for each location on the Admin page.
+- Froze top bar and sider so that they do not scroll with the body of the page
+
+## V2.2.0c
 
 - New/Repeat Patients tracking and graph
 - Multi-site functionality is in place
 - Multi-site "all locations" capability added
 - Major refactoring of sendDailyEmails, Registro, and Settings (now Admin)
 - Added release notes to the left menu
-
-## V2.1.0d
-
-- Added an enable/disable switch for each location on the Admin page.
