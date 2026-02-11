@@ -11,6 +11,7 @@ Releases with letter suffixes are candidate releases not pushed to production. R
 ### Major Changes
 
 - Inclusion of all changes in V2.2 below
+- Added first draft of the inventory application
 
 ## V2.2.0d
 

@@ -1,45 +1,33 @@
 import React from "react";
 import { Typography, Form, Input, Button, message } from "antd";
-import { firestore } from "../../../helpers/firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
-import axios from "axios";
+import { useTranslation } from "react-i18next";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 const { Title } = Typography;
 
-export default function InviteEmailForm({ t }) {
+export default function InviteEmailForm() {
+  const [t] = useTranslation("global");
   const [form] = Form.useForm();
   const [loading, setLoading] = React.useState(false);
 
   const sendEmail = async (values) => {
     setLoading(true);
     try {
-      const ref = doc(firestore, "signupMessage", "email_message");
-      const snap = await getDoc(ref);
+      const functions = getFunctions(); // uses default Firebase app
+      const sendInviteEmail = httpsCallable(functions, "sendInviteEmail");
 
-      if (!snap.exists()) {
-        message.error(
-          t("EMAIL_MESSAGE_NOT_FOUND") || "Email message template not found"
-        );
-        return;
-      }
+      const res = await sendInviteEmail({ email: values.email });
 
-      const { text, subjectLine } = snap.data();
-      const res = await axios.post(
-        "https://sendemail-479287307088.us-central1.run.app",
-        { to: values.email, subject: subjectLine, html: text },
-        { headers: { "Content-Type": "application/json" } }
-      );
-
-      if (res.status === 200) {
+      if (res?.data?.ok) {
         message.success(t("EMAIL_SENT_SUCCESS") || "Email sent");
         form.resetFields();
       } else {
         message.error(t("EMAIL_SEND_ERROR") || "Error sending email");
       }
     } catch (err) {
-      message.error(
-        `${t("EMAIL_SEND_ERROR") || "Error sending email"}: ${err.message}`
-      );
+      const msg =
+        err?.message || t("EMAIL_SEND_ERROR") || "Error sending email";
+      message.error(msg);
     } finally {
       setLoading(false);
     }

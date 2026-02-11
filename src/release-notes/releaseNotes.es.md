@@ -11,6 +11,7 @@ Las versiones con sufijos de letras son versiones candidatas que no se han imple
 ### Cambios Grandes
 
 - Inclusión de los cambios de V2.2.0
+- Se agregó el primer borrador de la aplicación de inventario.
 
 ## V2.2.0d
 

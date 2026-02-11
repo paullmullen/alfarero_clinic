@@ -5,18 +5,30 @@
 
 const admin = require("firebase-admin");
 
-// Import functions
+// Import functions (existing)
 const { getPatientCount } = require("./getPatientCount");
 const { updateStatusChange } = require("./updateStatusChange");
 const { getPatientsData } = require("./getPatientsData");
 // const { aggregateTimes } = require("./aggregateTimes"); // uncomment only if used
 
+// New: callable invite email (client calls this)
+const { sendInviteEmail } = require("./sendInviteEmail");
+
+// Future: Firestore trigger for inventory report emails
+// const { inventoryReportEmail } = require("./inventoryReportEmail");
+
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-// Export functions
+// Export functions (existing)
 exports.getPatientCount = getPatientCount;
 exports.updateStatusChange = updateStatusChange;
 exports.getPatientsData = getPatientsData;
 // exports.aggregateTimes = aggregateTimes;
+
+// Export functions (new)
+exports.sendInviteEmail = sendInviteEmail;
+
+// Future export
+// exports.inventoryReportEmail = inventoryReportEmail;
