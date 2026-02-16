@@ -24,6 +24,10 @@
   "CHILD_FEMININE": "Niña Feminina",
   "CHILD_MASCULINE": "Niño Masculino",
   "CLICKORDRAGFILE": "Haga clic o arrastre el archivo aquí.",
+  "common": {
+    "cancel": "Cancelar",
+    "remove": "Eliminar"
+  },
   "consped": "Consulta Pediátrica",
   "consulta": "Consulta Adultos",
   "COUNT": "Cantidad",
@@ -85,11 +89,14 @@
     "current": "Actual",
     "editItems": "Editar Articulos y Pars",
     "editor": {
+      "confirmRemove": "Eliminar esta cosa?",
+
       "title": "Editar Artículos y Pars",
       "newCategory": "Nueva Categoría",
       "newName": "Nombre",
       "newUnits": "Unidades",
-      "noLocation": "No location eligida."
+      "noLocation": "No location eligida.",
+      "remove": "Eliminar"
     },
     "editorNameCategoryRequired": "Nombre y Categoría Son Obligatorios",
     "editorAddFailed": "No se pudo añadir el artículo.",
@@ -266,7 +273,7 @@
   "UPLOAD": "Subir",
   "UPLOAD_KNOWN_PATIENTS": "Subir Pacientes Conocidos desde Medicabe (xlsx)",
   "USER_PERMISSIONS": "Permisos de Usuarios",
-  "version": "2.3.0b",
+  "version": "2.3.0c",
   "visitCompleted": "Servicio Completo",
   "visitPayed": "Pagando",
   "visitTypes": "Tipo de Visita",

@@ -23,6 +23,10 @@
   "CHILD_FEMININE": "Child Feminine",
   "CHILD_MASCULINE": "Child Masculine",
   "CLICKORDRAGFILE": "Click or drag file here.",
+  "common": {
+    "cancel": "Cancel",
+    "remove": "Remove"
+  },
   "consped": "Pediatrics",
   "consulta": "Adult Clinic",
   "COUNT": "Count",
@@ -84,11 +88,13 @@
     "current": "Current",
     "editItems": "Edit Items",
     "editor": {
+      "confirmRemove": "Remove this item?",
       "title": "Edit Inventory Items and Pars",
       "newCategory": "New Category",
       "newName": "Name",
       "newUnits": "Units",
-      "noLocation": "No location selected."
+      "noLocation": "No location selected.",
+      "remove": "Remove"
     },
     "editorNameCategoryRequired": "Name and Category Are Required",
     "editorAddFailed": "Failed to add item",
@@ -263,7 +269,7 @@
   "UPLOAD": "Upload",
   "UPLOAD_KNOWN_PATIENTS": "Upload Known Patients from Medicabe  (xlsx)",
   "USER_PERMISSIONS": "User Permissions",
-  "version": "2.3.0b",
+  "version": "2.3.0c",
   "visitCompleted": "Service completed",
   "visitPayed": "Paying",
   "visitTypes": "Type of Visit",
