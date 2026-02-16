@@ -25,9 +25,10 @@ export default function InviteEmailForm() {
         message.error(t("EMAIL_SEND_ERROR") || "Error sending email");
       }
     } catch (err) {
-      const msg =
-        err?.message || t("EMAIL_SEND_ERROR") || "Error sending email";
-      message.error(msg);
+      const code = err?.code ? ` (${err.code})` : "";
+      message.error(
+        `${t("EMAIL_SEND_ERROR") || "Error sending email"}${code}: ${err?.message || ""}`,
+      );
     } finally {
       setLoading(false);
     }

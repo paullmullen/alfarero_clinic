@@ -5,30 +5,25 @@
 
 const admin = require("firebase-admin");
 
-// Import functions (existing)
 const { getPatientCount } = require("./getPatientCount");
 const { updateStatusChange } = require("./updateStatusChange");
 const { getPatientsData } = require("./getPatientsData");
-// const { aggregateTimes } = require("./aggregateTimes"); // uncomment only if used
-
-// New: callable invite email (client calls this)
 const { sendInviteEmail } = require("./sendInviteEmail");
+const { sendInventoryReport } = require("./sendInventoryReport");
 
-// Future: Firestore trigger for inventory report emails
-// const { inventoryReportEmail } = require("./inventoryReportEmail");
+// ✅ NEW: sendemail (Gen-2, Cloud Run)
+const { sendemail } = require("./email/sendemail");
 
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-// Export functions (existing)
 exports.getPatientCount = getPatientCount;
 exports.updateStatusChange = updateStatusChange;
 exports.getPatientsData = getPatientsData;
-// exports.aggregateTimes = aggregateTimes;
 
-// Export functions (new)
 exports.sendInviteEmail = sendInviteEmail;
+exports.sendInventoryReport = sendInventoryReport;
 
-// Future export
-// exports.inventoryReportEmail = inventoryReportEmail;
+// ✅ Export sendemail endpoint
+exports.sendemail = sendemail;

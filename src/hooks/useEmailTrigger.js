@@ -17,6 +17,7 @@ export function useEmailTrigger() {
 
   const triggerEmail = useCallback(async () => {
     setLoading(true);
+    console.log("sending email");
     try {
       const res = await fetch(
         "https://manualdailyemail-3tomq62xlq-uc.a.run.app",
@@ -25,7 +26,7 @@ export function useEmailTrigger() {
           mode: "cors",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({}),
-        }
+        },
       );
 
       if (!res.ok) {
@@ -36,7 +37,7 @@ export function useEmailTrigger() {
     } catch (err) {
       console.error("Email trigger failed:", err);
       message.error(
-        `${t("EMAIL_SEND_ERROR")}: ${err?.message ?? t("UNKNOWN_ERROR")}`
+        `${t("EMAIL_SEND_ERROR")}: ${err?.message ?? t("UNKNOWN_ERROR")}`,
       );
     } finally {
       setLoading(false);

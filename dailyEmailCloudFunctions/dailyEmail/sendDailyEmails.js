@@ -95,6 +95,8 @@ async function sendDailyEmails() {
   if (recipients.length === 0) {
     console.log("No users with dailyEmail permission found.");
     return [];
+  } else {
+    console.log("Number of email recipients", recipients.length);
   }
 
   // --- Hourly counts (hoy) ---

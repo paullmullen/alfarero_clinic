@@ -4,7 +4,7 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 
-const { initializeApp, applicationDefault } = require("firebase-admin/app");
+const { initializeApp } = require("firebase-admin/app");
 const { getFirestore, Timestamp } = require("firebase-admin/firestore");
 
 const { runDailyEmailPipeline } = require("./dailyEmail/pipeline");
@@ -13,7 +13,6 @@ const {
   sendDailyEmails,
 } = require("./dailyEmail/sendDailyEmails");
 
-// --- CORS helper (unchanged) ---
 function applyCors(req, res) {
   const origin = req.headers.origin || "*";
   res.setHeader("Access-Control-Allow-Origin", origin);
@@ -23,11 +22,9 @@ function applyCors(req, res) {
   res.setHeader("Access-Control-Max-Age", "3600");
 }
 
-// Initialize Firebase Admin SDK (unchanged behavior)
 initializeApp();
 const db = getFirestore();
 
-// Inject deps once
 initDailyEmailDeps({ db, Timestamp });
 
 exports.manualDailyEmail = onRequest(
@@ -38,12 +35,19 @@ exports.manualDailyEmail = onRequest(
 
     try {
       const results = await runDailyEmailPipeline({ sendDailyEmails });
-      res
-        .status(200)
-        .json({ message: `Sent ${results.length} emails.`, results });
+
+      console.log("Daily Email Results:", {
+        count: Array.isArray(results) ? results.length : null,
+        sample: Array.isArray(results) ? results.slice(0, 3) : results,
+      });
+
+      return res.status(200).json({
+        message: `Sent ${Array.isArray(results) ? results.length : 0} emails.`,
+        results,
+      });
     } catch (err) {
       console.error("Unhandled error:", err);
-      res.status(500).json({ error: err.message });
+      return res.status(500).json({ error: err.message });
     }
   },
 );
@@ -56,10 +60,6 @@ exports.scheduledDailyEmail = onSchedule(
   },
   async () => {
     console.log("Exito.");
-    try {
-      await runDailyEmailPipeline({ sendDailyEmails });
-    } catch (err) {
-      console.error("Error:", err);
-    }
+    await runDailyEmailPipeline({ sendDailyEmails });
   },
 );
