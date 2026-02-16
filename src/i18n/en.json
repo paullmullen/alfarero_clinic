@@ -263,7 +263,7 @@
   "UPLOAD": "Upload",
   "UPLOAD_KNOWN_PATIENTS": "Upload Known Patients from Medicabe  (xlsx)",
   "USER_PERMISSIONS": "User Permissions",
-  "version": "2.2.0d",
+  "version": "2.3.0b",
   "visitCompleted": "Service completed",
   "visitPayed": "Paying",
   "visitTypes": "Type of Visit",

@@ -2,6 +2,11 @@
 
 Releases with letter suffixes are candidate releases not pushed to production. Releases without letter suffixes are the production releases that include the candidate changes (if approved).
 
+## V2.3.0b
+
+- Significant update in security of the mailer
+- Added and excel attachment to the sent email with the inventory current/par by site
+
 ## V2.3.0a
 
 ### Minor Changes

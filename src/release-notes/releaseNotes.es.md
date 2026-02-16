@@ -2,6 +2,11 @@
 
 Las versiones con sufijos de letras son versiones candidatas que no se han implementado en producción. Las versiones sin sufijos de letras son las versiones de producción que incluyen los cambios de las versiones candidatas (si han sido aprobados).
 
+## V2.3.0b
+
+- Actualización importante en la seguridad del correo
+- Se agregó un archivo adjunto de Excel al correo electrónico enviado con el inventario actual/par por sitio
+
 ## V2.3.0a
 
 ### Cambios Pequeños

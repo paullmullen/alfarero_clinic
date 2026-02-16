@@ -32,7 +32,7 @@ function getTransporter() {
   });
 }
 
-async function sendEmail({ to, subject, html }) {
+async function sendEmail({ to, subject, html, attachments }) {
   if (!to || !subject || !html) {
     throw new Error("sendEmail missing required fields: to, subject, html");
   }
@@ -43,6 +43,7 @@ async function sendEmail({ to, subject, html }) {
     to,
     subject,
     html,
+    attachments,
   });
 }
 
