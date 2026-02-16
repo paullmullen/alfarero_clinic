@@ -1,18 +1,22 @@
 "use strict";
 
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const { getFirestore } = require("firebase-admin/firestore");
-const { sendEmail } = require("./email/sendemail");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { logger } = require("firebase-functions");
+
+const { sendEmail } = require("./email/mailer");
 
 if (!admin.apps.length) admin.initializeApp();
 const db = getFirestore();
 
 /**
- * Configure recipients via env var (fast + simple):
- *   INVENTORY_MANAGER_EMAILS="a@x.com,b@y.com"
+ * Firestore trigger:
+ *   - UI creates a doc in inventory_reports
+ *   - This function triggers, builds the report, emails it, and updates the doc.
  *
- * Later we can load recipients from Firestore users/permissions if you want.
+ * Recipient rule:
+ *   users where permissions.inventory_edit == true
  */
 
 function escapeHtml(s) {
@@ -24,14 +28,20 @@ function escapeHtml(s) {
     .replaceAll("'", "&#039;");
 }
 
-async function getUserByAuthUid(uid) {
+async function getInventoryRecipientsFromUsers() {
   const snap = await db
     .collection("users")
-    .where("uid", "==", uid)
-    .limit(1)
+    .where("permissions.inventory_edit", "==", true)
     .get();
-  const doc = snap.docs[0];
-  return doc ? { id: doc.id, ...doc.data() } : null;
+
+  const emails = [];
+  snap.forEach((d) => {
+    const u = d.data() || {};
+    if (u.email) emails.push(String(u.email).trim());
+  });
+
+  // De-dupe + strip empties
+  return [...new Set(emails)].filter(Boolean);
 }
 
 function buildHtml({ locations, items, countsByLocationId }) {
@@ -49,7 +59,9 @@ function buildHtml({ locations, items, countsByLocationId }) {
     locations
       .map(
         (loc) =>
-          `<th style="${thStyle};text-align:center;" colspan="2">${escapeHtml(loc.name)}</th>`,
+          `<th style="${thStyle};text-align:center;" colspan="2">${escapeHtml(
+            loc.name,
+          )}</th>`,
       )
       .join("") +
     `<th style="${thStyle};text-align:center;" colspan="2">Total</th>` +
@@ -123,7 +135,10 @@ function buildHtml({ locations, items, countsByLocationId }) {
             ${headerRow2}
           </thead>
           <tbody>
-            ${bodyRows || `<tr><td style="${tdStyle}" colspan="${1 + locations.length * 2 + 2}"><i>No inventory rows to display.</i></td></tr>`}
+            ${
+              bodyRows ||
+              `<tr><td style="${tdStyle}" colspan="${1 + locations.length * 2 + 2}"><i>No inventory rows to display.</i></td></tr>`
+            }
           </tbody>
         </table>
       </div>
@@ -134,104 +149,132 @@ function buildHtml({ locations, items, countsByLocationId }) {
   `;
 }
 
-exports.sendInventoryReport = onCall(
+exports.sendInventoryReport = onDocumentCreated(
   {
+    document: "inventory_reports/{reportId}",
     region: "us-central1",
     timeoutSeconds: 120,
     secrets: ["GMAIL_USER", "GMAIL_APP_PASSWORD"],
   },
-  async (request) => {
-    // 1) Auth required
-    if (!request.auth?.uid) {
-      throw new HttpsError("unauthenticated", "You must be signed in.");
-    }
+  async (event) => {
+    const snap = event.data;
+    if (!snap) return;
 
-    // 2) Permission required
-    const user = await getUserByAuthUid(request.auth.uid);
+    const reportId = event.params.reportId;
+    const report = snap.data() || {};
 
-    // Allow any of these until your new permission column exists everywhere
-    const canSend =
-      !!user?.permissions?.settings ||
-      !!user?.permissions?.inventory_edit ||
-      !!user?.permissions?.inventory_send;
+    logger.info("[sendInventoryReport] triggered", {
+      reportId,
+      project: process.env.GCLOUD_PROJECT,
+    });
 
-    if (!canSend) {
-      throw new HttpsError(
-        "permission-denied",
-        "Missing permission to send inventory report.",
-      );
-    }
-
-    // 3) Recipients
-    const recipients = (process.env.INVENTORY_MANAGER_EMAILS || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    if (!recipients.length) {
-      throw new HttpsError(
-        "failed-precondition",
-        "INVENTORY_MANAGER_EMAILS is not configured.",
-      );
-    }
-
-    // 4) Load ACTIVE locations
-    const locSnap = await db
-      .collection("locations")
-      .where("active", "==", true)
-      .get();
-    const locations = locSnap.docs
-      .map((d) => ({ id: d.id, ...d.data() }))
-      .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
-
-    if (!locations.length) {
-      throw new HttpsError("failed-precondition", "No active locations found.");
-    }
-
-    // 5) Load ACTIVE inventory items (catalog)
-    const itemsSnap = await db
-      .collection("inventory_items")
-      .where("isActive", "==", true)
-      .get();
-    const items = itemsSnap.docs
-      .map((d) => ({ id: d.id, ...d.data() }))
-      .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
-
-    // 6) Load counts for each active location in parallel
-    const countsByLocationId = new Map(); // locationId -> Map(itemId -> counts)
-    await Promise.all(
-      locations.map(async (loc) => {
-        const countsSnap = await db
-          .collection("locations")
-          .doc(loc.id)
-          .collection("inventory_counts")
-          .get();
-        const m = new Map();
-        countsSnap.docs.forEach((d) => m.set(d.id, d.data()));
-        countsByLocationId.set(loc.id, m);
-      }),
+    // Mark processing early so you can see it in Firestore
+    await snap.ref.set(
+      {
+        emailStatus: "processing",
+        emailStartedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
     );
 
-    // 7) Build email HTML
-    const html = buildHtml({ locations, items, countsByLocationId });
+    try {
+      // 1) Recipients (permissions.inventory_edit == true)
+      const recipients = await getInventoryRecipientsFromUsers();
+      if (!recipients.length) {
+        throw new Error(
+          "No recipients found: users.permissions.inventory_edit == true",
+        );
+      }
 
-    // 8) Send
-    await sendEmail({
-      to: recipients.join(","),
-      subject: "Inventory Report — All Active Locations",
-      html,
-    });
+      // 2) Load ACTIVE locations
+      const locSnap = await db
+        .collection("locations")
+        .where("active", "==", true)
+        .get();
 
-    // 9) Optional: log an audit record (nice to have)
-    await db.collection("inventory_reports").add({
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      createdBy: user?.name || user?.email || request.auth.uid,
-      type: "ALL_ACTIVE_LOCATIONS",
-      recipients,
-      activeLocationCount: locations.length,
-      activeItemCount: items.length,
-    });
+      const locations = locSnap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) =>
+          String(a.name || "").localeCompare(String(b.name || "")),
+        );
 
-    return { ok: true };
+      if (!locations.length) {
+        throw new Error("No active locations found.");
+      }
+
+      // 3) Load ACTIVE inventory items (catalog)
+      const itemsSnap = await db
+        .collection("inventory_items")
+        .where("isActive", "==", true)
+        .get();
+
+      const items = itemsSnap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) =>
+          String(a.name || "").localeCompare(String(b.name || "")),
+        );
+
+      // 4) Load counts for each active location in parallel
+      const countsByLocationId = new Map(); // locationId -> Map(itemId -> counts)
+      await Promise.all(
+        locations.map(async (loc) => {
+          const countsSnap = await db
+            .collection("locations")
+            .doc(loc.id)
+            .collection("inventory_counts")
+            .get();
+
+          const m = new Map();
+          countsSnap.docs.forEach((d) => m.set(d.id, d.data()));
+          countsByLocationId.set(loc.id, m);
+        }),
+      );
+
+      // 5) Build email HTML (your exact logic)
+      const html = buildHtml({ locations, items, countsByLocationId });
+
+      // Optional: include note/location in subject/body if you want
+      // (Your current report is "All Active Locations" regardless)
+      const subject = "Inventory Report — All Active Locations";
+
+      logger.info("[sendInventoryReport] sending email", {
+        reportId,
+        recipientCount: recipients.length,
+      });
+
+      // 6) Send
+      const emailResult = await sendEmail({
+        to: recipients.join(","),
+        subject,
+        html,
+      });
+
+      // 7) Update the SAME report doc with results
+      await snap.ref.set(
+        {
+          emailStatus: "sent",
+          emailFinishedAt: admin.firestore.FieldValue.serverTimestamp(),
+          recipients,
+          emailResult: emailResult ?? null,
+          // Preserve whatever the UI wrote (createdAt, createdBy, note, locationId, etc.)
+        },
+        { merge: true },
+      );
+
+      logger.info("[sendInventoryReport] sent OK", { reportId });
+    } catch (err) {
+      logger.error("[sendInventoryReport] FAILED", { reportId, err });
+
+      await snap.ref.set(
+        {
+          emailStatus: "failed",
+          emailFinishedAt: admin.firestore.FieldValue.serverTimestamp(),
+          emailError: err?.message || String(err),
+        },
+        { merge: true },
+      );
+
+      throw err;
+    }
   },
 );
