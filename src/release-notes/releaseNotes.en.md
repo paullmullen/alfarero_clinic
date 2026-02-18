@@ -5,6 +5,7 @@ Releases with letter suffixes are candidate releases not pushed to production. R
 ## V2.3.0d
 
 - Updated some basic page architecture for the waiting room that might be a problem in the future.
+- Waiting room icons changed. Now pulsing when in "waiting" or "in_process" status.
 
 ## V2.3.0c
 

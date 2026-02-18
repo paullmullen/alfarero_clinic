@@ -79,53 +79,63 @@ const Page = styled.div`
     display: inline-block;
   }
 
-  /* Let the pulse extend outside AntD cells */
-  .ant-table-cell {
-    overflow: visible !important;
-  }
-
-  /* ---- Station Icon wrapper ---- */
   .stationIcon {
     position: relative;
     display: inline-block;
     width: ${(p) => p.$iconSize}px;
     height: ${(p) => p.$iconSize}px;
-    overflow: visible;
+    overflow: hidden; /* prevents scroll jitter */
+    border-radius: 999px; /* clean clipping */
   }
 
-  /* Pulse ring element (behind icon) */
+  /* Pulse ring ON TOP of icon */
   .pulseRing {
     position: absolute;
-    inset: -8px;
+    inset: 0px;
     border-radius: 999px;
-    border: 4px solid rgba(255, 255, 255, 0.9);
+    box-sizing: border-box;
+
+    border: 6px solid var(--pulse-color, rgba(59, 130, 246, 0.95));
+    opacity: 0.95;
+
     animation: turnoPulse 1.6s ease-out infinite;
     pointer-events: none;
-    z-index: 0;
+    z-index: 2;
   }
 
+  .pulseRing.waiting {
+    --pulse-color: rgba(245, 255, 255, 0.95); /* amber */
+    animation-duration: 2.2s;
+  }
+
+  .pulseRing.in_process {
+    --pulse-color: rgba(245, 255, 255, 0.95); /* calm blue */
+    animation-duration: 0.5s;
+  }
+
+  /* IMPORTANT: keyframes must exist */
   @keyframes turnoPulse {
     0% {
       transform: scale(1);
       opacity: 0.95;
     }
     70% {
-      transform: scale(1.25);
+      transform: scale(1.22);
       opacity: 0;
     }
     100% {
-      transform: scale(1.25);
+      transform: scale(1.22);
       opacity: 0;
     }
   }
 
-  /* Keep icon above the ring */
+  /* Icon layer below pulse */
   .stationIcon .ant-image {
     position: relative;
     z-index: 1;
   }
 
-  /* ---- Completed badge (above everything) ---- */
+  /* Completed badge above pulse */
   .doneBadge {
     position: absolute;
     right: -6px;
@@ -138,7 +148,7 @@ const Page = styled.div`
     display: grid;
     place-items: center;
     pointer-events: none;
-    z-index: 2;
+    z-index: 3; /* above pulse */
   }
 
   .doneBadge svg {
@@ -303,20 +313,22 @@ export default function Turno() {
   // Render a station cell using station icon + status styling
   const renderStationCell = useCallback(
     ({ station, status }) => {
-      // Unscheduled / not planned: blank
-      // per your spec: "pending" means not planned for this patient
-      if (!status || status === "pending") return null;
+      const norm = String(status || "")
+        .trim()
+        .toLowerCase();
+
+      // not planned / unscheduled
+      if (!norm || norm === "pending") return null;
 
       const src = getStationIconSrc(station);
       if (!src) return null;
 
-      const showPulse = status === "in_process";
-      const showCheck = status === "complete";
+      const showPulse = norm === "waiting" || norm === "in_process";
+      const showCheck = norm === "complete";
 
-      // waiting / "2" / "3" / "4" / etc => icon only
       return (
         <span className="stationIcon">
-          {showPulse ? <span className="pulseRing" /> : null}
+          {showPulse ? <span className={`pulseRing ${norm}`} /> : null}
           <Image src={src} width={iconSize} height={iconSize} preview={false} />
           {showCheck ? <CheckBadge /> : null}
         </span>

@@ -5,6 +5,7 @@ Las versiones con sufijos de letras son versiones candidatas que no se han imple
 ## V2.3.0d
 
 - Se actualizaron algunos elementos arquitectural de sala de espera que podrían ser un problema en el futuro.
+- Se cambiaron los íconos de la sala de espera. Ahora parpadean cuando están en estado "en espera" o "en proceso".
 
 ## V2.3.0c
 
