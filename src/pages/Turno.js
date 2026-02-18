@@ -15,6 +15,9 @@ import {
   where,
   orderBy,
 } from "firebase/firestore";
+import { keyframes } from "styled-components";
+
+import TopBar from "../layout/TopBar";
 
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
@@ -68,98 +71,104 @@ function getDayWindow() {
   };
 }
 
+/**
+ * Wrapper styling updated to match the mock:
+ * - deep blue page background
+ * - centered, rounded white card
+ * - generous padding/margins
+ *
+ * NOTE: the Table itself (columns/data/renderers) is unchanged.
+ */
+
+const turnoPulse = keyframes`
+  0%   { transform: scale(1);    opacity: 0.95; }
+  70%  { transform: scale(1.22); opacity: 0; }
+  100% { transform: scale(1.22); opacity: 0; }
+`;
+
 const Page = styled.div`
-  .turnoTableWrap {
-    height: 600px;
+  min-height: 100vh;
+  background: #2b2f87; /* deep blue */
+  display: flex;
+  flex-direction: column;
+`;
+
+/* Teal header band (public page style) */
+const TopHero = styled.div`
+  background: #1db7a6; /* teal */
+  padding: 24px 40px 48px;
+  border-bottom-left-radius: 40px;
+  border-bottom-right-radius: 40px;
+
+  /* Make the inner header content centered */
+  .heroInner {
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+`;
+
+/* White rounded card */
+const TurnoCardWrapper = styled.div`
+  margin-top: 26px; /* pulls card up into teal */
+  padding: 0 34px 60px;
+
+  .turnoOuter {
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+
+  .patientName {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .turnoCard {
+    background: #ffffff;
+    border-radius: 34px;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
     overflow: hidden;
   }
 
-  .ant-image {
-    display: inline-block;
+  .turnoTableWrap {
+    height: 600px;
+    overflow: visible;
   }
 
-  .stationIcon {
-    position: relative;
-    display: inline-block;
-    width: ${(p) => p.$iconSize}px;
-    height: ${(p) => p.$iconSize}px;
-    overflow: visible; /* prevents scroll jitter */
-    border-radius: 999px; /* clean clipping */
-  }
-
-  /* Pulse ring ON TOP of icon */
-  .pulseRing {
-    position: absolute;
-    inset: 0px;
-    border-radius: 999px;
-    box-sizing: border-box;
-
-    border: 6px solid var(--pulse-color, rgba(59, 130, 246, 0.95));
-    opacity: 0.95;
-
-    animation: turnoPulse 1.6s ease-out infinite;
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  .pulseRing.waiting {
-    --pulse-color: rgba(245, 255, 255, 0.95); /* amber */
-    animation-duration: 2.2s;
-  }
-
-  .pulseRing.in_process {
-    --pulse-color: rgba(245, 255, 255, 0.95); /* calm blue */
-    animation-duration: 0.5s;
-  }
-
-  /* IMPORTANT: keyframes must exist */
-  @keyframes turnoPulse {
-    0% {
-      transform: scale(1);
-      opacity: 0.95;
-    }
-    70% {
-      transform: scale(1.22);
-      opacity: 0;
-    }
-    100% {
-      transform: scale(1.22);
-      opacity: 0;
-    }
-  }
-
-  /* Icon layer below pulse */
-  .stationIcon .ant-image {
-    position: relative;
-    z-index: 1;
-  }
-
-  /* Completed badge above pulse */
   .doneBadge {
     position: absolute;
-    right: -6px;
-    bottom: -6px;
-    width: ${(p) => Math.round(p.$iconSize * 0.44)}px;
-    height: ${(p) => Math.round(p.$iconSize * 0.44)}px;
+    right: -8px;
+    bottom: -8px;
+
+    width: 24px;
+    height: 24px;
+
     border-radius: 999px;
     background: #fff;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
     display: grid;
     place-items: center;
     pointer-events: none;
-    z-index: 3; /* above pulse */
+    z-index: 3;
+  }
+
+  .patientCell {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .progressDots {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 14px; /* ensures they occupy space */
+    margin-top: 2px; /* keeps off the very top edge */
   }
 
   .doneBadge svg {
     width: 65%;
     height: 65%;
-  }
-
-  /* ---- Progress dots ---- */
-  .progressDots {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
   }
 
   .dot {
@@ -178,16 +187,69 @@ const Page = styled.div`
     border: 2px solid rgba(15, 23, 42, 0.28);
   }
 
-  .patientCell {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+  .progressDots {
+    position: relative;
+    z-index: 2;
   }
 
-  .patientName {
-    font-size: 18px;
+  .stationIcon {
+    position: relative;
+    display: inline-block;
+    overflow: visible; /* IMPORTANT: pulse can expand */
+    border-radius: 999px;
+  }
+
+  .pulseRing {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    box-sizing: border-box;
+    border: 6px solid var(--pulse-color, rgba(255, 255, 255, 0.95));
+    opacity: 0.95;
+    pointer-events: none;
+    z-index: 2;
+
+    animation: ${turnoPulse} 1.6s ease-out infinite;
+  }
+
+  .pulseRing.waiting {
+    --pulse-color: rgba(255, 255, 255, 0.95);
+    animation-duration: 2.2s;
+  }
+
+  .pulseRing.in_process {
+    --pulse-color: rgba(255, 255, 255, 0.95);
+    animation-duration: 0.5s;
+  }
+
+  /* Ensure icon image is below the ring */
+  .stationIcon .ant-image {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== TABLE HEADER STYLING ===== */
+
+  .ant-table-thead > tr > th {
+    background: #f47b20 !important; /* <-- replace with exact orange */
+    color: #ffffff !important;
     font-weight: 600;
-    line-height: 1.1;
+    font-size: 16px;
+    border-bottom: none !important;
+  }
+
+  /* Remove default grey separator line */
+  .ant-table-thead > tr > th::before {
+    display: none !important;
+  }
+
+  /* Optional: soften header corners inside white card */
+  .ant-table-thead > tr > th:first-child {
+    border-top-left-radius: 24px;
+  }
+
+  .ant-table-thead > tr > th:last-child {
+    border-top-right-radius: 24px;
   }
 `;
 
@@ -428,21 +490,35 @@ export default function Turno() {
       }
     }, 50);
 
-    return () => clearInterval(scrollInterval);
+    return () => clearTimeout(scrollInterval);
   }, [scrollSpeed]);
 
   return (
-    <Page $iconSize={iconSize}>
-      <div className="turnoTableWrap" ref={tableRef}>
-        <Table
-          rowKey="pt_no"
-          columns={columns}
-          dataSource={dataSource}
-          scroll={{ y: 600 }}
-          pagination={false}
-          rowClassName={getRowClassName}
-        />
-      </div>
+    <Page>
+      {/* Teal public header */}
+      <TopHero>
+        <div className="heroInner">
+          <TopBar t={t} />
+        </div>
+      </TopHero>
+
+      {/* White card */}
+      <TurnoCardWrapper $iconSize={iconSize}>
+        <div className="turnoOuter">
+          <div className="turnoCard">
+            <div className="turnoTableWrap" ref={tableRef}>
+              <Table
+                rowKey="pt_no"
+                columns={columns}
+                dataSource={dataSource}
+                scroll={{ y: 600 }}
+                pagination={false}
+                rowClassName={getRowClassName}
+              />
+            </div>
+          </div>
+        </div>
+      </TurnoCardWrapper>
     </Page>
   );
 }
