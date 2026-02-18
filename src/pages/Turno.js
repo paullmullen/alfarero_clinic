@@ -18,7 +18,6 @@ import {
 
 import { firestore } from "./../helpers/firebaseConfig";
 import { useHideMenu } from "../hooks/useHideMenu";
-import { AlertInfo } from "../components/AlertInfo";
 import { useTranslation } from "react-i18next";
 import { useServiceLocation } from "../providers/ServiceLocationProvider";
 
@@ -84,7 +83,7 @@ const Page = styled.div`
     display: inline-block;
     width: ${(p) => p.$iconSize}px;
     height: ${(p) => p.$iconSize}px;
-    overflow: hidden; /* prevents scroll jitter */
+    overflow: visible; /* prevents scroll jitter */
     border-radius: 999px; /* clean clipping */
   }
 
@@ -434,7 +433,6 @@ export default function Turno() {
 
   return (
     <Page $iconSize={iconSize}>
-      <AlertInfo />
       <div className="turnoTableWrap" ref={tableRef}>
         <Table
           rowKey="pt_no"
