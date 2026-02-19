@@ -109,12 +109,22 @@ const TopHero = styled.div`
 
 /* White rounded card */
 const TurnoCardWrapper = styled.div`
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   margin-top: 26px; /* pulls card up into teal */
   padding: 0 34px 60px;
 
   .turnoOuter {
-    max-width: 1500px;
+    width: 100%;
+    max-width: clamp(900px, 92vw, 1200px);
     margin: 0 auto;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .patientName {
@@ -128,11 +138,18 @@ const TurnoCardWrapper = styled.div`
     border-radius: 34px;
     box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
     overflow: hidden;
+
+    flex: 0 0 auto;
+    min-height: 0;
+    display: flex;
+    max-height: calc(100vh - 220px);
+    flex-direction: column;
   }
 
   .turnoTableWrap {
-    height: 600px;
-    overflow: visible;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .doneBadge {
@@ -376,6 +393,27 @@ export default function Turno() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const locationFilterId = locationId === "__ALL__" ? null : locationId;
+  const [tableScrollY, setTableScrollY] = React.useState(0);
+
+  React.useLayoutEffect(() => {
+    const el = tableRef.current;
+    if (!el) return;
+
+    const ro = new ResizeObserver(() => {
+      const wrapH = el.getBoundingClientRect().height;
+
+      const thead = el.querySelector(".ant-table-thead");
+      const headH = thead ? thead.getBoundingClientRect().height : 0;
+
+      const FUDGE = 20; // <-- make 28 if you still want more breathing room
+
+      const y = Math.max(200, Math.floor(wrapH - headH - FUDGE));
+      setTableScrollY(y);
+    });
+
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -572,18 +610,19 @@ export default function Turno() {
     const scrollInterval = setInterval(() => {
       if (!scrollingRef.current) return;
 
-      if (
+      const atBottom =
         tableBody.scrollTop + tableBody.clientHeight >=
-        tableBody.scrollHeight
-      ) {
+        tableBody.scrollHeight - 2;
+
+      if (atBottom) {
         tableBody.scrollTop = 0;
       } else {
         tableBody.scrollTop += scrollSpeed;
       }
     }, 50);
 
-    return () => clearTimeout(scrollInterval);
-  }, [scrollSpeed]);
+    return () => clearInterval(scrollInterval);
+  }, [scrollSpeed, dataSource]); // or [scrollSpeed, dataSource.length]
 
   return (
     <Page>
@@ -623,7 +662,7 @@ export default function Turno() {
                 rowKey="pt_no"
                 columns={columns}
                 dataSource={dataSource}
-                scroll={{ y: "100%" }}
+                scroll={{ y: tableScrollY }}
                 pagination={false}
                 rowClassName={getRowClassName}
               />

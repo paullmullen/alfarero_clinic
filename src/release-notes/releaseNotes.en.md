@@ -2,6 +2,10 @@
 
 Releases with letter suffixes are candidate releases not pushed to production. Releases without letter suffixes are the production releases that include the candidate changes (if approved).
 
+## v2.3.0f
+
+- Fixed a scrolling problem on the waiting room page.
+
 ## V2.3.0e
 
 - Finalized colors

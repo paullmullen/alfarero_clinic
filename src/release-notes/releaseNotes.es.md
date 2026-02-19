@@ -2,6 +2,10 @@
 
 Las versiones con sufijos de letras son versiones candidatas que no se han implementado en producción. Las versiones sin sufijos de letras son las versiones de producción que incluyen los cambios de las versiones candidatas (si han sido aprobados).
 
+## v2.3.0e
+
+- Se solucionó un problema de desplazamiento en la página de la sala de espera.
+
 ## v2.3.0d
 
 - Colores finales de página
