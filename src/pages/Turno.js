@@ -219,7 +219,7 @@ const TurnoCardWrapper = styled.div`
 
   .pulseRing.in_process {
     --pulse-color: rgba(255, 255, 255, 0.95);
-    animation-duration: 0.5s;
+    animation-duration: 1.5s;
   }
 
   /* Ensure icon image is below the ring */
@@ -250,6 +250,32 @@ const TurnoCardWrapper = styled.div`
 
   .ant-table-thead > tr > th:last-child {
     border-top-right-radius: 24px;
+  }
+
+  .waitingBadge {
+    position: absolute;
+    left: 44px;
+    bottom: -6px;
+
+    width: 24px;
+    height: 24px;
+
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    display: grid;
+    place-items: center;
+
+    pointer-events: none;
+    z-index: 3;
+
+    /* icon color */
+    color: #0f172a;
+  }
+
+  .waitingBadge svg {
+    width: 85%;
+    height: 85%;
   }
 `;
 
@@ -301,9 +327,67 @@ function getProgressCounts(patient) {
   return { total, completeCount };
 }
 
+function WaitingBadge() {
+  // simple "stopwatch/clock" glyph (inline SVG), no extra deps
+  return (
+    <span className="waitingBadge" aria-label="Waiting">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        {/* top button */}
+        <path
+          d="M9 2h6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+        {/* body circle */}
+        <circle
+          cx="12"
+          cy="13"
+          r="7"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+        />
+        {/* hand */}
+        <path
+          d="M12 13V9.6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+        {/* small hand */}
+        <path
+          d="M12 13l2.6 1.6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
+  );
+}
+
 export default function Turno() {
   const { locationId } = useServiceLocation();
+  const [currentTime, setCurrentTime] = useState(new Date());
+
   const locationFilterId = locationId === "__ALL__" ? null : locationId;
+
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(new Date()), 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+  const formattedTime = useMemo(() => {
+    return currentTime.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }, [currentTime]);
 
   useHideMenu(true);
   const [t] = useTranslation("global");
@@ -312,7 +396,7 @@ export default function Turno() {
   const [dayWindow, setDayWindow] = useState(() => getDayWindow());
 
   const tableRef = useRef(null);
-  const scrollSpeed = 2;
+  const scrollSpeed = 1;
   const scrollingRef = useRef(true);
 
   const iconSize = IconSizes?.width ?? 44;
@@ -384,13 +468,21 @@ export default function Turno() {
       const src = getStationIconSrc(station);
       if (!src) return null;
 
-      const showPulse = norm === "waiting" || norm === "in_process";
+      const showPulse = norm === "in_process"; // keep pulse capability, but waiting no longer pulses
+      const showWaiting = norm === "waiting";
       const showCheck = norm === "complete";
 
       return (
         <span className="stationIcon">
+          {/* Keep pulse element available for future, but only show for in_process */}
           {showPulse ? <span className={`pulseRing ${norm}`} /> : null}
+
           <Image src={src} width={iconSize} height={iconSize} preview={false} />
+
+          {/* Waiting indicator overlay (replaces pulse for waiting) */}
+          {showWaiting ? <WaitingBadge /> : null}
+
+          {/* Completed indicator */}
           {showCheck ? <CheckBadge /> : null}
         </span>
       );
@@ -498,20 +590,40 @@ export default function Turno() {
       {/* Teal public header */}
       <TopHero>
         <div className="heroInner">
-          <TopBar t={t} />
+          <TopBar
+            t={t}
+            transparent
+            formattedTime={formattedTime}
+            isDev={false}
+          />
         </div>
       </TopHero>
 
       {/* White card */}
-      <TurnoCardWrapper $iconSize={iconSize}>
-        <div className="turnoOuter">
-          <div className="turnoCard">
-            <div className="turnoTableWrap" ref={tableRef}>
+      <TurnoCardWrapper $iconSize={iconSize} style={{ flex: 1, minHeight: 0 }}>
+        <div
+          className="turnoOuter"
+          style={{ flex: 1, minHeight: 0, display: "flex" }}
+        >
+          <div
+            className="turnoCard"
+            style={{
+              flex: 1,
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div
+              className="turnoTableWrap"
+              ref={tableRef}
+              style={{ flex: 1, minHeight: 0 }}
+            >
               <Table
                 rowKey="pt_no"
                 columns={columns}
                 dataSource={dataSource}
-                scroll={{ y: 600 }}
+                scroll={{ y: "100%" }}
                 pagination={false}
                 rowClassName={getRowClassName}
               />

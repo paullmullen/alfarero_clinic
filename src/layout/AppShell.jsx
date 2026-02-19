@@ -9,6 +9,7 @@ import { useAggregationHeartbeat } from "../hooks/useAggregationHeartbeat";
 import { usePatientCount } from "../hooks/usePatientCount";
 import { useServiceLocation } from "../providers/ServiceLocationProvider";
 import ReleaseNotesModal from "../components/ReleaseNotesModal";
+import { useLocation } from "react-router-dom";
 
 const { Sider, Content } = Layout;
 
@@ -90,9 +91,12 @@ export default function AppShell({ ocultarMenu, t, permissions, children }) {
 
   const fallbackSelectedColor = isAlfareroDev ? "#52c41a" : "#1890ff";
   const menuSelectedColor = selectedColor || fallbackSelectedColor;
+  const location = useLocation();
+  const isTurnoPage = location.pathname.startsWith("/turno");
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 60000);
+
     return () => clearInterval(interval);
   }, []);
 
@@ -148,12 +152,14 @@ export default function AppShell({ ocultarMenu, t, permissions, children }) {
       {/* Right side: TopBar stays fixed, only Content scrolls */}
       <RightColumn>
         <StickyTopBar>
-          <TopBar
-            t={t}
-            isDev={isAlfareroDev}
-            formattedTime={formattedTime}
-            count={count}
-          />
+          {!isTurnoPage && (
+            <TopBar
+              t={t}
+              isDev={isAlfareroDev}
+              formattedTime={formattedTime}
+              count={count}
+            />
+          )}
         </StickyTopBar>
 
         <Content

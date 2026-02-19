@@ -2,14 +2,22 @@ import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Button, Image, Popover, Typography } from "antd";
 import full_logo from "../img/full_logo.png";
+import white_logo from "../img/white_logo.png";
 import { cleanPaulTests } from "../helpers/updateStationStatus";
 import { useServiceLocation } from "../providers/ServiceLocationProvider";
 
 const { Title } = Typography;
 
-export default function TopBar({ t, isDev, formattedTime, count }) {
+export default function TopBar({
+  t,
+  isDev,
+  formattedTime,
+  count,
+  transparent,
+}) {
   const [tapCount, setTapCount] = useState(0);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const logoSrc = transparent ? white_logo : full_logo;
 
   const { locations, locationId } = useServiceLocation();
 
@@ -17,10 +25,10 @@ export default function TopBar({ t, isDev, formattedTime, count }) {
     return locations.find((l) => l.id === locationId)?.name || "";
   }, [locations, locationId]);
 
+  const textColor = transparent ? "#fff" : undefined;
+
   const handleHeaderTitleTap = () => {
     setTapCount((prev) => prev + 1);
-
-    // open popover on 5 taps within 1 second window
     if (tapCount + 1 === 5) setPopoverOpen(true);
 
     setTimeout(() => {
@@ -45,23 +53,28 @@ export default function TopBar({ t, isDev, formattedTime, count }) {
     <div
       style={{
         display: "flex",
-        alignItems: "center",
-        backgroundColor: isDev ? "#e6e6fa" : "#fff",
+        alignItems: "flex-start",
+        paddingTop: 14,
+        backgroundColor: transparent
+          ? "transparent"
+          : isDev
+            ? "#e6e6fa"
+            : "#fff",
         padding: "0 16px",
-        height: 64,
+        height: 32,
         gap: 12,
-        minWidth: 0, // important so flex children are allowed to shrink
+        minWidth: 0,
         overflow: "visible",
       }}
     >
       {/* Left */}
       <div style={{ flex: "0 0 auto" }}>
         <a href="/loginpage">
-          <Image src={full_logo} preview={false} height={42} width={185} />
+          <Image src={logoSrc} preview={false} height={42} width={185} />
         </a>
       </div>
 
-      {/* Center (this is the one that must be allowed to shrink) */}
+      {/* Center */}
       <div
         style={{
           flex: "1 1 auto",
@@ -77,6 +90,7 @@ export default function TopBar({ t, isDev, formattedTime, count }) {
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
+            color: textColor,
           }}
         >
           {locationName && (
@@ -86,7 +100,9 @@ export default function TopBar({ t, isDev, formattedTime, count }) {
             </>
           )}
           {formattedTime}
-          {count !== 0 && (
+
+          {/* Only show patients section if count was passed */}
+          {typeof count === "number" && (
             <>
               {" – "}
               {count} {t("patients")}
@@ -95,8 +111,7 @@ export default function TopBar({ t, isDev, formattedTime, count }) {
         </Title>
       </div>
 
-      {/* Right (do NOT allow shrinking) */}
-      {/* Right (never shrink) */}
+      {/* Right */}
       <div
         style={{
           flexShrink: 0,
@@ -111,14 +126,25 @@ export default function TopBar({ t, isDev, formattedTime, count }) {
           <Button
             className="no-border-button"
             style={{
+              background: "transparent",
+              border: "none",
+              boxShadow: "none",
               display: "inline-flex",
               alignItems: "center",
               padding: 0,
               overflow: "visible",
               flexShrink: 0,
+              color: textColor,
             }}
           >
-            <Title level={4} style={{ margin: 0, whiteSpace: "nowrap" }}>
+            <Title
+              level={4}
+              style={{
+                margin: 0,
+                whiteSpace: "nowrap",
+                color: textColor,
+              }}
+            >
               {t("headerTitle")}
             </Title>
           </Button>
@@ -138,5 +164,6 @@ TopBar.propTypes = {
   t: PropTypes.func.isRequired,
   isDev: PropTypes.bool.isRequired,
   formattedTime: PropTypes.string.isRequired,
-  count: PropTypes.number.isRequired,
+  count: PropTypes.number, // no longer required
+  transparent: PropTypes.bool,
 };
