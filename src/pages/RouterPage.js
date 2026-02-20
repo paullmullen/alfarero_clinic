@@ -11,7 +11,7 @@ import { usePermissions } from "../providers/PermissionsProvider";
 const Inventory = lazy(() => import("./inventory"));
 
 const Registro = lazy(() => import("./Registro/Registro"));
-const Turno = lazy(() => import("./Turno"));
+const Turno = lazy(() => import("./Turno/Turno"));
 const Escritorio = lazy(() => import("./Escritorio"));
 // const Member = lazy(() => import("./Member"));
 const IngresarHost = lazy(() => import("./IngresarHost"));
