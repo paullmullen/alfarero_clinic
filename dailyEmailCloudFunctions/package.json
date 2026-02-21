@@ -4,7 +4,7 @@
   "description": "Sends daily emails to users with dailyEmail permission",
   "main": "index.js",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "dependencies": {
     "@google/generative-ai": "^0.x.x",
