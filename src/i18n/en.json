@@ -108,6 +108,7 @@
     "reportQueued": "Inventory report queued for delivery.",
     "reportFailed": "Failed to queue inventory report.",
     "saving": "Saving...",
+    "shelf": "Shelf",
     "uncategorized": "Uncategorized",
     "title": "Inventory",
     "units": "units"
@@ -269,7 +270,7 @@
   "UPLOAD": "Upload",
   "UPLOAD_KNOWN_PATIENTS": "Upload Known Patients from Medicabe  (xlsx)",
   "USER_PERMISSIONS": "User Permissions",
-  "version": "2.3.0f",
+  "version": "2.3.0g",
   "visitCompleted": "Service completed",
   "visitPayed": "Paying",
   "visitTypes": "Type of Visit",

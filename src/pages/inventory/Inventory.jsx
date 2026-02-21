@@ -237,6 +237,7 @@ export default function Inventory() {
         name: it.name ?? "",
         category: it.category ?? "",
         units: it.units ?? "",
+        shelf: c?.shelf ?? "",
         par,
         current,
       };
@@ -372,6 +373,13 @@ export default function Inventory() {
             </span>
           );
         },
+      },
+      {
+        title: safeT(t, "inventory.shelf", "Shelf"),
+        dataIndex: "shelf",
+        key: "shelf",
+        width: 160,
+        render: (v) => v || "",
       },
       {
         title: safeT(t, "inventory.par", "Par"),

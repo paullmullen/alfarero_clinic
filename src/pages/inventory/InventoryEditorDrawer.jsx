@@ -79,7 +79,7 @@ export default function InventoryEditorDrawer({
     return () => unsub();
   }, [open, t]);
 
-  // --- Live location counts (par/current live under locations/{locationId}/inventory_counts/{itemId}) ---
+  // --- Live location counts (par/current/shelf live under locations/{locationId}/inventory_counts/{itemId}) ---
   useEffect(() => {
     if (!open) return;
 
@@ -151,6 +151,24 @@ export default function InventoryEditorDrawer({
       doc(firestore, "locations", locationId, "inventory_counts", itemId),
       {
         par,
+        updatedAt: serverTimestamp(),
+        updatedBy: userLabel ?? "unknown",
+      },
+      { merge: true },
+    );
+  };
+
+  // --- Location shelf updates ---
+  const updateLocationShelf = async (itemId, shelf) => {
+    if (!locationId) {
+      message.error(safeT(t, "inventory.noLocation", "No location selected."));
+      return;
+    }
+
+    await setDoc(
+      doc(firestore, "locations", locationId, "inventory_counts", itemId),
+      {
+        shelf: (shelf ?? "").toString(),
         updatedAt: serverTimestamp(),
         updatedBy: userLabel ?? "unknown",
       },
@@ -251,6 +269,44 @@ export default function InventoryEditorDrawer({
         ),
       },
       {
+        title: safeT(t, "inventory.editor.shelf", "Shelf"),
+        key: "shelf",
+        width: 220,
+        render: (_, row) => {
+          const shelf = (countsByItemId.get(row.id)?.shelf ?? "").toString();
+
+          return (
+            <Input
+              value={shelf}
+              disabled={!locationId}
+              placeholder={safeT(
+                t,
+                "inventory.editor.shelfPlaceholder",
+                "e.g., A-3",
+              )}
+              onChange={(e) => {
+                const next = e.target.value ?? "";
+                setCountsByItemId((prev) => {
+                  const m = new Map(prev);
+                  const cur = m.get(row.id) ?? {};
+                  m.set(row.id, { ...cur, shelf: next });
+                  return m;
+                });
+              }}
+              onBlur={(e) => {
+                const next = e.target.value ?? "";
+                updateLocationShelf(row.id, next).catch((err) => {
+                  console.error("update shelf error:", err);
+                  message.error(
+                    safeT(t, "inventory.editorUpdateFailed", "Update failed."),
+                  );
+                });
+              }}
+            />
+          );
+        },
+      },
+      {
         title: safeT(t, "inventory.editor.par", "Par"),
         key: "par",
         width: 140,
@@ -319,9 +375,11 @@ export default function InventoryEditorDrawer({
 
   return (
     <Drawer
-      title={`${safeT(t, "inventory.editor.title", "Edit inventory items & pars")}${
-        locationName ? ` — ${locationName}` : ""
-      }`}
+      title={`${safeT(
+        t,
+        "inventory.editor.title",
+        "Edit inventory items & pars",
+      )}${locationName ? ` — ${locationName}` : ""}`}
       width={980}
       open={open}
       onClose={onClose}
