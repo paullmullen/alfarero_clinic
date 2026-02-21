@@ -54,7 +54,7 @@ function normalizeClinicDateToYMD(clinicDate) {
   }
 
   throw new Error(
-    `normalizeClinicDateToYMD: unsupported type (${typeof clinicDate})`
+    `normalizeClinicDateToYMD: unsupported type (${typeof clinicDate})`,
   );
 }
 
@@ -65,7 +65,7 @@ function normalizeClinicDateToYMD(clinicDate) {
 function detectWaitTimeAnomalies(
   todaySnapshot,
   historicalSnapshot,
-  thresholds
+  thresholds,
 ) {
   const todayByStation = {};
   const historyByStation = {};
@@ -116,7 +116,7 @@ function detectWaitTimeAnomalies(
         severity: todayAvg > baseline * 2 ? "high" : "medium",
         title: `Tiempo de espera elevado en ${station.toUpperCase()}`,
         explanation: `Promedio hoy: ${todayAvg.toFixed(
-          1
+          1,
         )} min vs histórico ${baseline.toFixed(1)} min.`,
         metrics: { station, todayAvg, baseline },
       });
@@ -138,7 +138,7 @@ function detectWaitTimeAnomalies(
  */
 function computeHistoricalHourlyAverages(
   last30DaysSnapshot,
-  timezoneOffsetMinutes
+  timezoneOffsetMinutes,
 ) {
   const tz =
     typeof timezoneOffsetMinutes === "number" &&
@@ -150,7 +150,7 @@ function computeHistoricalHourlyAverages(
     // Helps catch the exact issue you're seeing without crashing
     console.warn(
       "computeHistoricalHourlyAverages: timezoneOffsetMinutes missing/invalid; defaulting to 0. Received:",
-      timezoneOffsetMinutes
+      timezoneOffsetMinutes,
     );
   }
 
@@ -204,7 +204,7 @@ function detectArrivalSurges(hourlyCounts, historicalHourlyAvg) {
         severity: today > baseline * 1.8 ? "high" : "medium",
         title: `Afluencia inusual a las ${hour}:00`,
         explanation: `Llegaron ${today} pacientes vs promedio histórico de ${baseline.toFixed(
-          1
+          1,
         )}.`,
         metrics: { hour: Number(hour), today, baseline },
       });
@@ -233,7 +233,7 @@ function detectFlowBottlenecks(todaySnapshot) {
 
     const visited = (data.plan_of_care ?? [])
       .filter(
-        (s) => s.status === "complete" && s.station && s.station !== "reg"
+        (s) => s.status === "complete" && s.station && s.station !== "reg",
       )
       .sort((a, b) => a.order - b.order)
       .map((s) => s.station);
@@ -266,11 +266,87 @@ function detectFlowBottlenecks(todaySnapshot) {
         severity: avg > overallAvg * 1.5 ? "high" : "medium",
         title: "Recorrido con duración elevada",
         explanation: `Ruta ${path}: ${avg.toFixed(
-          1
+          1,
         )} min vs promedio general ${overallAvg.toFixed(1)} min.`,
         metrics: { path, avg, overallAvg },
       });
     }
+  }
+
+  return insights;
+}
+/* ============================================================
+   NEW PATIENT RATIO INSIGHTS
+   ============================================================ */
+
+function detectNewPatientTrends(todaySnapshot, historicalSnapshot) {
+  const insights = [];
+
+  let todayTotal = 0;
+  let todayNew = 0;
+
+  todaySnapshot.forEach((doc) => {
+    const data = doc.data() ?? {};
+    todayTotal++;
+    if (data.new_patient === true) todayNew++;
+  });
+
+  if (todayTotal === 0) return [];
+
+  const todayRatio = todayNew / todayTotal;
+
+  // HISTORICAL BASELINE (last 30 days)
+  let histTotal = 0;
+  let histNew = 0;
+
+  historicalSnapshot.forEach((doc) => {
+    const data = doc.data() ?? {};
+    histTotal++;
+    if (data.new_patient === true) histNew++;
+  });
+
+  if (histTotal < 20) return []; // not enough history for meaningful baseline
+
+  const baselineRatio = histNew / histTotal;
+
+  // ---- HIGH NEW PATIENT SURGE ----
+  if (todayRatio > baselineRatio * 1.5 && todayNew >= 5) {
+    insights.push({
+      type: "new_patient_surge",
+      severity: todayRatio > baselineRatio * 2 ? "high" : "medium",
+      title: "Alta proporción de pacientes nuevos",
+      explanation: `Hoy ${todayNew} de ${todayTotal} pacientes (${(
+        todayRatio * 100
+      ).toFixed(1)}%) son nuevos vs promedio histórico ${(
+        baselineRatio * 100
+      ).toFixed(1)}%.`,
+      metrics: {
+        todayNew,
+        todayTotal,
+        todayRatio,
+        baselineRatio,
+      },
+    });
+  }
+
+  // ---- UNUSUALLY LOW NEW PATIENT RATE ----
+  if (todayRatio < baselineRatio * 0.5 && todayTotal >= 10) {
+    insights.push({
+      type: "low_new_patient_rate",
+      severity: "medium",
+      title: "Baja llegada de pacientes nuevos",
+      explanation: `Solo ${(todayRatio * 100).toFixed(
+        1,
+      )}% de pacientes son nuevos vs promedio histórico ${(
+        baselineRatio * 100
+      ).toFixed(1)}%.`,
+      metrics: {
+        todayNew,
+        todayTotal,
+        todayRatio,
+        baselineRatio,
+      },
+    });
   }
 
   return insights;
@@ -298,7 +374,7 @@ function renderInsightsHTML(insights) {
           ${severityBadge(i.severity)}
           <strong>${i.title}</strong><br/>
           ${i.explanation}
-        </li>`
+        </li>`,
         )
         .join("")}
     </ul>
@@ -321,7 +397,7 @@ async function persistInsights({ db, Timestamp }, insights, clinicDate) {
   const dayStartUtc = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
   if (Number.isNaN(dayStartUtc.getTime())) {
     throw new Error(
-      `persistInsights: failed to build Date from clinicYMD="${clinicYMD}"`
+      `persistInsights: failed to build Date from clinicYMD="${clinicYMD}"`,
     );
   }
 
@@ -371,6 +447,7 @@ module.exports = {
   computeHistoricalHourlyAverages,
   detectArrivalSurges,
   detectFlowBottlenecks,
+  detectNewPatientTrends,
   renderInsightsHTML,
   persistInsights,
 };

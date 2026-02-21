@@ -10,6 +10,7 @@ const {
   computeHistoricalHourlyAverages,
   detectArrivalSurges,
   detectFlowBottlenecks,
+  detectNewPatientTrends,
   renderInsightsHTML,
   persistInsights,
 } = require("../insights");
@@ -183,6 +184,7 @@ async function sendDailyEmails() {
     ...detectWaitTimeAnomalies(todaySnapshot, last30DaysSnapshot, thresholds),
     ...detectArrivalSurges(hourlyCounts, historicalHourlyAvg),
     ...detectFlowBottlenecks(todaySnapshot),
+    ...detectNewPatientTrends(todaySnapshot, last30DaysSnapshot),
   ];
 
   const clinicDate = getClinicYMD();

@@ -19,7 +19,7 @@ export const handleStatusChange = async (
   value,
   hoveredRowKey,
   station,
-  checkoutMessage
+  checkoutMessage,
 ) => {
   try {
     // Getting the database name from the environment variable
@@ -38,7 +38,7 @@ export const handleStatusChange = async (
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     // Check if the updatedPlanOfCare contains the specified statuses
@@ -54,7 +54,7 @@ export const handleStatusChange = async (
       "obs",
     ];
     const hasRelevantStatuses = response.data.updatedPlanOfCare.some((entry) =>
-      statusesToCheck.includes(entry.status)
+      statusesToCheck.includes(entry.status),
     );
 
     if (!hasRelevantStatuses) {
