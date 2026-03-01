@@ -26,7 +26,8 @@
   "CLICKORDRAGFILE": "Haga clic o arrastre el archivo aquí.",
   "common": {
     "cancel": "Cancelar",
-    "remove": "Eliminar"
+    "remove": "Eliminar",
+    "add": "Agregar"
   },
   "consped": "Consulta Pediátrica",
   "consulta": "Consulta Adultos",
@@ -89,14 +90,17 @@
     "current": "Actual",
     "editItems": "Editar Articulos y Pars",
     "editor": {
+      "category": "Categoría",
       "confirmRemove": "Eliminar esta cosa?",
-
       "title": "Editar Artículos y Pars",
+      "name": "Nombre",
       "newCategory": "Nueva Categoría",
       "newName": "Nombre",
       "newUnits": "Unidades",
       "noLocation": "No location eligida.",
-      "remove": "Eliminar"
+      "remove": "Eliminar",
+      "shelf": "Estante",
+      "units": "Unidades"
     },
     "editorNameCategoryRequired": "Nombre y Categoría Son Obligatorios",
     "editorAddFailed": "No se pudo añadir el artículo.",
@@ -113,7 +117,7 @@
     "reportFailed": "No se pudo poner en cola el informe de inventario.",
     "title": "Inventario",
     "uncategorized": "Sin categorizar",
-    "units": "unidades"
+    "units": "Unidades"
   },
   "KNOWNPATIENTFOUND": "Paciente conocido selectionado",
   "lab": "Lab",
@@ -184,7 +188,8 @@
     "manager": "Manager",
     "settings": "Admin",
     "stats": "Estadisticas",
-    "inventory_edit": "Gestion de Inventario"
+    "inventory_edit": "Gestion de Inventario",
+    "shelf": "Estante"
   },
   "pfm": "Anfitrión",
   "pha": "Far",
@@ -274,7 +279,7 @@
   "UPLOAD": "Subir",
   "UPLOAD_KNOWN_PATIENTS": "Subir Pacientes Conocidos desde Medicabe (xlsx)",
   "USER_PERMISSIONS": "Permisos de Usuarios",
-  "version": "2.3.0g",
+  "version": "2.3.0",
   "visitCompleted": "Servicio Completo",
   "visitPayed": "Pagando",
   "visitTypes": "Tipo de Visita",

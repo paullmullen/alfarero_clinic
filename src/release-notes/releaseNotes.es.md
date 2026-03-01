@@ -2,56 +2,14 @@
 
 Las versiones con sufijos de letras son versiones candidatas que no se han implementado en producción. Las versiones sin sufijos de letras son las versiones de producción que incluyen los cambios de las versiones candidatas (si han sido aprobados).
 
-## V2.3.0g
+## v2.3.0
 
-Se agregó la ubicación del estante del inventario
+- Nueva pantalla de sala de espera
+- Gestión de inventario
+- Ciberseguridad mejorada
 
-## v2.3.0f
+## V2.2.0
 
-- Se solucionó un problema de desplazamiento en la página de la sala de espera.
-
-## v2.3.0e
-
-- Se solucionó un problema de desplazamiento en la página de la sala de espera.
-
-## v2.3.0d
-
-- Colores finales de página
-
-## V2.3.0d
-
-- Se actualizaron algunos elementos arquitectural de sala de espera que podrían ser un problema en el futuro.
-- Se cambiaron los íconos de la sala de espera. Ahora parpadean cuando están en estado "en espera" o "en proceso".
-
-## V2.3.0c
-
-- Traducción corregida en la página del editor de inventario.
-
-## V2.3.0b
-
-- Actualización importante en la seguridad del correo
-- Se agregó un archivo adjunto de Excel al correo electrónico enviado con el inventario actual/par por sitio
-
-## V2.3.0a
-
-### Cambios Pequeños
-
-- Traducción de los títulos de la página de permisos de usuario.
-
-### Cambios Grandes
-
-- Inclusión de los cambios de V2.2.0
-- Se agregó el primer borrador de la aplicación de inventario.
-
-## V2.2.0d
-
-- Switch para activar/desactivar cada ubicación en la página de administración.
-- Congelar la barra superior y la araña para que no se desplacen con el cuerpo de la página.
-
-## V2.2.0c
-
-- Seguimiento y gráfico de pacientes nuevos y recurrentes
-- Funcionalidad para múltiples sedes implementada
-- Se agregó la función "todas las ubicaciones" para múltiples sedes
-- Reestructuración importante de sendDailyEmails, Registro y Configuración (ahora Administración)
-- Se agregaron las notas de la versión al menú lateral
+- Nueva función multiubicación
+- Seguimiento de pacientes nuevos/repetidos mediante el número de identificación nacional
+- Se añadieron notas de la versión al menú lateral

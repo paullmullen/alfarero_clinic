@@ -1,8 +1,6 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
-// ❌ REMOVE any admin.initializeApp() from this file
-
 exports.getPatientsData = onRequest(
   {
     region: "us-central1",
@@ -14,7 +12,6 @@ exports.getPatientsData = onRequest(
     methods: ["POST", "OPTIONS"],
   },
   async (req, res) => {
-    // ✅ allow preflight
     if (req.method === "OPTIONS") return res.status(204).send("");
 
     if (req.method !== "POST")

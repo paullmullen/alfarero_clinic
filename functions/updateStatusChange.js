@@ -9,6 +9,9 @@ const admin = require("firebase-admin");
 exports.updateStatusChange = onRequest(
   {
     region: "us-central1",
+    serviceAccount:
+      "sa-functions-runtime@alfarero-478ad.iam.gserviceaccount.com",
+
     cors: [
       /localhost(:\d+)?$/,
       "https://multimedica.org",

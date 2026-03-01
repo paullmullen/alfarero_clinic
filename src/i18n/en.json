@@ -25,7 +25,8 @@
   "CLICKORDRAGFILE": "Click or drag file here.",
   "common": {
     "cancel": "Cancel",
-    "remove": "Remove"
+    "remove": "Remove",
+    "add": "Add"
   },
   "consped": "Pediatrics",
   "consulta": "Adult Clinic",
@@ -85,6 +86,7 @@
   "infoSavedSuccessfully": "Data saved successfully",
   "INVENTORY": "Inventory",
   "inventory": {
+    "category": "Category",
     "current": "Current",
     "editItems": "Edit Items",
     "editor": {
@@ -94,7 +96,10 @@
       "newName": "Name",
       "newUnits": "Units",
       "noLocation": "No location selected.",
-      "remove": "Remove"
+      "remove": "Remove",
+      "shelf": "Shelf",
+      "name": "Name",
+      "units": "Units"
     },
     "editorNameCategoryRequired": "Name and Category Are Required",
     "editorAddFailed": "Failed to add item",
@@ -270,7 +275,7 @@
   "UPLOAD": "Upload",
   "UPLOAD_KNOWN_PATIENTS": "Upload Known Patients from Medicabe  (xlsx)",
   "USER_PERMISSIONS": "User Permissions",
-  "version": "2.3.0g",
+  "version": "2.3.0",
   "visitCompleted": "Service completed",
   "visitPayed": "Paying",
   "visitTypes": "Type of Visit",
