@@ -82,16 +82,19 @@ async function buildInventoryWorkbook({
   // Row 2:       Current | Par   ...             Current | Par
 
   // Header styles
+  // Stronger header styles
+
   const headerFill = {
     type: "pattern",
     pattern: "solid",
-    fgColor: { argb: "FFFAFAFA" },
+    fgColor: { argb: "FF3B3F46" }, // dark gray-blue
   };
+
   const headerBorder = {
-    top: { style: "thin", color: { argb: "FFDDDDDD" } },
-    left: { style: "thin", color: { argb: "FFDDDDDD" } },
-    bottom: { style: "thin", color: { argb: "FFDDDDDD" } },
-    right: { style: "thin", color: { argb: "FFDDDDDD" } },
+    top: { style: "thin", color: { argb: "FF2A2E34" } },
+    left: { style: "thin", color: { argb: "FF2A2E34" } },
+    bottom: { style: "thin", color: { argb: "FF2A2E34" } },
+    right: { style: "thin", color: { argb: "FF2A2E34" } },
   };
   const headerAlignCenter = {
     vertical: "middle",
@@ -115,7 +118,7 @@ async function buildInventoryWorkbook({
 
     // Row 2 subheaders: Current, Par
     ws.getCell(2, col).value = "Current";
-    ws.getCell(2, col + 1).value = "Par";
+    ws.getCell(2, col + 1).value = "Minimum";
 
     // widths
     ws.getColumn(col).width = 14;
@@ -137,7 +140,7 @@ async function buildInventoryWorkbook({
   for (let r = 1; r <= 2; r++) {
     for (let c = 1; c <= lastCol; c++) {
       const cell = ws.getCell(r, c);
-      cell.font = { bold: true };
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } }; // white text
       cell.fill = headerFill;
       cell.border = headerBorder;
 
@@ -151,6 +154,31 @@ async function buildInventoryWorkbook({
         cell.alignment = headerAlignRight;
       }
     }
+  }
+
+  // White vertical separator between location groups (header rows only)
+  const groupSeparatorBorder = {
+    right: { style: "medium", color: { argb: "FFFFFFFF" } },
+  };
+
+  let sepCol = 2;
+
+  for (let i = 0; i < locations.length; i++) {
+    const groupEndCol = sepCol + 1; // second column of Current/Minimum
+
+    // Row 1
+    ws.getCell(1, groupEndCol).border = {
+      ...ws.getCell(1, groupEndCol).border,
+      ...groupSeparatorBorder,
+    };
+
+    // Row 2
+    ws.getCell(2, groupEndCol).border = {
+      ...ws.getCell(2, groupEndCol).border,
+      ...groupSeparatorBorder,
+    };
+
+    sepCol += 2;
   }
 
   // Data rows start at row 3
@@ -212,12 +240,6 @@ async function buildInventoryWorkbook({
 
     rowIdx++;
   }
-
-  // Optional: Auto-filter on row 2 (subheaders), across entire table
-  ws.autoFilter = {
-    from: { row: 2, column: 1 },
-    to: { row: 2, column: lastCol },
-  };
 
   // ---- Sheet 2: Meta ----
   const meta = wb.addWorksheet("Meta");
