@@ -15,7 +15,7 @@ exports.updateStatusChange = onRequest(
     cors: [
       /localhost(:\d+)?$/,
       "https://multimedica.org",
-      "https://alfarero-478ad--expire-iqz1ydnq.web.app",
+      "https://alfarero-478ad--expire-o4gpaz9l.web.app",
     ],
     methods: ["POST", "OPTIONS"],
   },

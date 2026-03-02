@@ -1,7 +1,6 @@
-// dailyEmail/sendDailyEmails.js
 "use strict";
 
-const axios = require("axios");
+const { sendEmail } = require("./mailer");
 
 const { buildDailyEmailHTML } = require("./template");
 
@@ -21,7 +20,6 @@ const {
   getMilestoneProjection,
 } = require("./metrics");
 
-// Time + Queries (new extractions)
 const {
   getLocalDayRangeTimestamps,
   getStartOf30DaysAgoTimestamp,
@@ -37,7 +35,7 @@ const {
   fetchTotalPatients,
 } = require("./queries");
 
-// Charts (already extracted)
+// Charts
 const generatePatientSummaryChart = require("../charts/patientSummary");
 const generateNewVsRepeatPieChart = require("../charts/newVsRepeatPie");
 const generateArrivalChart = require("../charts/arrivalsByHour");
@@ -45,11 +43,8 @@ const generateWaitingTimeChart = require("../charts/waitingByStation");
 const generateWaitingHeatmapChart = require("../charts/waitingHeatmap");
 const generateVisitTypeChart = require("../charts/visitTypeChart");
 
-// Constants (kept identical)
-const SEND_EMAIL_URL = "https://sendemail-479287307088.us-central1.run.app";
 const TIMEZONE_OFFSET_MINUTES = 6 * 60; // UTC-6
 
-// Injected deps (from index.js)
 let db = null;
 let Timestamp = null;
 
@@ -57,10 +52,6 @@ function initDailyEmailDeps({ db: _db, Timestamp: _Timestamp }) {
   db = _db;
   Timestamp = _Timestamp;
 }
-
-/* ============================================================
-   MAIN
-   ============================================================ */
 
 async function sendDailyEmails() {
   if (!db || !Timestamp) {
@@ -93,14 +84,15 @@ async function sendDailyEmails() {
 
   // --- Recipients ---
   const recipients = await fetchRecipients({ db });
+
   if (recipients.length === 0) {
     console.log("No users with dailyEmail permission found.");
     return [];
-  } else {
-    console.log("Number of email recipients", recipients.length);
   }
 
-  // --- Hourly counts (hoy) ---
+  console.log("Number of email recipients", recipients.length);
+
+  // --- Hourly counts ---
   const hourlyCounts = {};
   for (let hour = 7; hour <= 17; hour++) hourlyCounts[hour] = 0;
 
@@ -116,14 +108,14 @@ async function sendDailyEmails() {
     }
   });
 
-  // --- Patient summary metrics (no extra reads; uses snapshots) ---
+  // --- Patient summary ---
   const patientInsights = computePatientInsightsFromSnapshots(
     todaySnapshot,
     last30DaysSnapshot,
     TIMEZONE_OFFSET_MINUTES,
   );
 
-  // --- Visit type metrics + labels ---
+  // --- Visit type metrics ---
   const {
     todayCounts: visitTodayCounts,
     avg30Counts: visitAvgCounts,
@@ -135,13 +127,10 @@ async function sendDailyEmails() {
   );
 
   const visitTypeLabelMap = await fetchVisitTypeLabelMap({ db });
-
-  // --- Thresholds for wait-time coloring/alerts ---
   const thresholds = await fetchStationThresholds({ db });
 
-  // --- Total patients for milestones ---
   const totalPatientsRaw = await fetchTotalPatients({ db });
-  const totalPatients = totalPatientsRaw + 4074; // pacientes pre-sistema
+  const totalPatients = totalPatientsRaw + 4074;
 
   const { nextMilestone, projectedDateStr } = getMilestoneProjection(
     totalPatients,
@@ -169,12 +158,11 @@ async function sendDailyEmails() {
   const waitingHeatmap = generateWaitingHeatmapChart(todaySnapshot, {
     thresholds,
     timezoneOffsetMinutes: TIMEZONE_OFFSET_MINUTES,
-    // Optional tighter step filtering:
     startOfToday,
     startOfTomorrow,
   });
 
-  // --- Operational insights (Option A) ---
+  // --- Insights ---
   const historicalHourlyAvg = computeHistoricalHourlyAverages(
     last30DaysSnapshot,
     TIMEZONE_OFFSET_MINUTES,
@@ -192,7 +180,7 @@ async function sendDailyEmails() {
 
   const insightsHTML = renderInsightsHTML(aiInsights);
 
-  // --- Email HTML (kept identical content/order) ---
+  // --- Build Email HTML ---
   const html = buildDailyEmailHTML({
     patientInsights,
     charts: {
@@ -208,24 +196,25 @@ async function sendDailyEmails() {
     milestone: { nextMilestone, projectedDateStr },
   });
 
-  // --- Send emails (same behavior) ---
-  const results = [];
-  for (const { name, email } of recipients) {
-    try {
-      await axios.post(SEND_EMAIL_URL, {
-        to: email,
-        subject: "Informe Diario de Pacientes",
-        html,
-      });
-      console.log(`Email sent to ${email}`);
-      results.push({ email, status: "sent" });
-    } catch (error) {
-      const status = error.response?.status ?? "unknown";
-      const msg = error.response?.statusText ?? error.message;
-      console.error(`Failed to send email to ${email}: [${status}] ${msg}`);
-      results.push({ email, status: "failed", error: msg });
-    }
-  }
+  // --- Send Emails (direct nodemailer) ---
+  const results = await Promise.all(
+    recipients.map(async ({ email }) => {
+      try {
+        await sendEmail({
+          to: email,
+          subject: "Informe Diario de Pacientes",
+          html,
+        });
+
+        console.log(`Email sent to ${email}`);
+        return { email, status: "sent" };
+      } catch (error) {
+        const msg = error?.message ?? String(error);
+        console.error(`Failed to send email to ${email}: ${msg}`);
+        return { email, status: "failed", error: msg };
+      }
+    }),
+  );
 
   return results;
 }

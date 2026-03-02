@@ -13,6 +13,10 @@ const {
   sendDailyEmails,
 } = require("./dailyEmail/sendDailyEmails");
 
+// IMPORTANT: pull the secret handles from mailer.js
+// so we can mount them as function secrets.
+const { GMAIL_USER, GMAIL_APP_PASSWORD } = require("./dailyEmail/mailer");
+
 function applyCors(req, res) {
   const origin = req.headers.origin || "*";
   res.setHeader("Access-Control-Allow-Origin", origin);
@@ -28,7 +32,10 @@ const db = getFirestore();
 initDailyEmailDeps({ db, Timestamp });
 
 exports.manualDailyEmail = onRequest(
-  { timeoutSeconds: 60 },
+  {
+    timeoutSeconds: 60,
+    secrets: [GMAIL_USER, GMAIL_APP_PASSWORD],
+  },
   async (req, res) => {
     applyCors(req, res);
     if (req.method === "OPTIONS") return res.status(204).send("");
@@ -57,9 +64,11 @@ exports.scheduledDailyEmail = onSchedule(
     schedule: "0 17 * * *",
     timeZone: "America/Guatemala",
     timeoutSeconds: 60,
+    secrets: [GMAIL_USER, GMAIL_APP_PASSWORD],
   },
   async () => {
-    console.log("Exito.");
+    console.log("scheduledDailyEmail: starting");
     await runDailyEmailPipeline({ sendDailyEmails });
+    console.log("scheduledDailyEmail: complete");
   },
 );

@@ -101,6 +101,9 @@ export default function Turno() {
     tableRef,
     scrollingRef,
     scrollSpeed,
+    pauseTopMs: 1200,
+    pauseBottomMs: 1500,
+
     deps: [dataSource], // same behavior as before
   });
 
