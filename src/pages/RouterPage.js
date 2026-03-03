@@ -21,6 +21,7 @@ const Settings = lazy(() => import("./Settings"));
 const Stats = lazy(() => import("./Stats"));
 const Anfitrion = lazy(() => import("./Anfitrion"));
 const LoginPage = lazy(() => import("./LoginPage"));
+const OperationalObservations = lazy(() => import("./OperationalObservations"));
 
 export const RouterPage = () => {
   const { ocultarMenu } = useContext(UiContext);
@@ -101,7 +102,14 @@ export const RouterPage = () => {
                   </ProtectedRoute>
                 }
               />
-
+              <Route
+                path="/observaciones-operativas"
+                element={
+                  <ProtectedRoute requiredPermission="basic">
+                    <OperationalObservations />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/settings"
                 element={

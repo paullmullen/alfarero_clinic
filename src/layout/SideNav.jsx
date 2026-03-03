@@ -10,6 +10,7 @@ import {
   OrderedListOutlined,
   SettingOutlined,
   MedicineBoxOutlined,
+  BulbOutlined,
 } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import { useServiceLocation } from "../providers/ServiceLocationProvider";
@@ -62,6 +63,18 @@ export default function SideNav({ t, permissions }) {
       icon: <BarChartOutlined />,
       label: <Link to="/estadisticas">{t("statistics")}</Link>,
       hidden: !permissions?.stats,
+    },
+    {
+      key: "8",
+      icon: <BulbOutlined />,
+      label: (
+        <Link to="/observaciones-operativas">
+          {t("ops.title") ||
+            t("OPERATIONAL_OBSERVATIONS") ||
+            "Operational Observations"}
+        </Link>
+      ),
+      hidden: !permissions?.basic,
     },
     {
       key: "9",
