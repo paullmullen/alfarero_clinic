@@ -34,7 +34,15 @@ initDailyEmailDeps({ db, Timestamp });
 exports.manualDailyEmail = onRequest(
   {
     timeoutSeconds: 60,
-    secrets: [GMAIL_USER, GMAIL_APP_PASSWORD],
+    secrets: [
+      "MAIL_PROVIDER",
+      "GMAIL_USER",
+      "GMAIL_APP_PASSWORD",
+      "O365_TENANT_ID",
+      "O365_CLIENT_ID",
+      "O365_CLIENT_SECRET",
+      "O365_SENDER",
+    ],
   },
   async (req, res) => {
     applyCors(req, res);
@@ -64,7 +72,15 @@ exports.scheduledDailyEmail = onSchedule(
     schedule: "0 17 * * *",
     timeZone: "America/Guatemala",
     timeoutSeconds: 60,
-    secrets: [GMAIL_USER, GMAIL_APP_PASSWORD],
+    secrets: [
+      "MAIL_PROVIDER",
+      "GMAIL_USER",
+      "GMAIL_APP_PASSWORD",
+      "O365_TENANT_ID",
+      "O365_CLIENT_ID",
+      "O365_CLIENT_SECRET",
+      "O365_SENDER",
+    ],
   },
   async () => {
     console.log("scheduledDailyEmail: starting");

@@ -271,7 +271,15 @@ exports.sendInventoryReport = onDocumentCreated(
     document: "inventory_reports/{reportId}",
     region: "us-central1",
     timeoutSeconds: 120,
-    secrets: ["GMAIL_USER", "GMAIL_APP_PASSWORD"], // keep, since mailer uses nodemailer creds
+    secrets: [
+      "MAIL_PROVIDER",
+      "GMAIL_USER",
+      "GMAIL_APP_PASSWORD",
+      "O365_TENANT_ID",
+      "O365_CLIENT_ID",
+      "O365_CLIENT_SECRET",
+      "O365_SENDER",
+    ],
   },
   async (event) => {
     const snap = event.data;
@@ -358,7 +366,7 @@ exports.sendInventoryReport = onDocumentCreated(
       });
 
       const xlsxBuffer = await workbook.xlsx.writeBuffer();
-      const attachmentBase64 = Buffer.from(xlsxBuffer).toString("base64");
+      const attachmentBuffer = Buffer.from(xlsxBuffer);
       const filename = `inventory-report-${ymdLocal(new Date())}.xlsx`;
 
       // 6) Small email body (Excel attachment holds details)
@@ -382,9 +390,6 @@ exports.sendInventoryReport = onDocumentCreated(
                  </div>`
               : ""
           }
-          <p style="margin-top:12px;color:#777;font-size:12px;">
-            Generated automatically from the clinic inventory system.
-          </p>
         </div>
       `;
 
@@ -402,8 +407,7 @@ exports.sendInventoryReport = onDocumentCreated(
         attachments: [
           {
             filename,
-            content: attachmentBase64,
-            encoding: "base64",
+            content: attachmentBuffer, // ✅ Buffer (works for Gmail + Graph)
             contentType:
               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
           },

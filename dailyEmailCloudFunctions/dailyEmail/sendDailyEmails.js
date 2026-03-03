@@ -204,6 +204,7 @@ async function sendDailyEmails() {
           to: email,
           subject: "Informe Diario de Pacientes",
           html,
+          attachments: [],
         });
 
         console.log(`Email sent to ${email}`);

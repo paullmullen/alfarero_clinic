@@ -6,7 +6,15 @@ const { sendEmail } = require("./mailer");
 exports.sendemail = onRequest(
   {
     timeoutSeconds: 120,
-    secrets: ["GMAIL_USER", "GMAIL_APP_PASSWORD"],
+    secrets: [
+      "MAIL_PROVIDER",
+      "GMAIL_USER",
+      "GMAIL_APP_PASSWORD",
+      "O365_TENANT_ID",
+      "O365_CLIENT_ID",
+      "O365_CLIENT_SECRET",
+      "O365_SENDER",
+    ],
   },
   async (req, res) => {
     // CORS (simple, permissive)
