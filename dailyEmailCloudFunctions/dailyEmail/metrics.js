@@ -10,7 +10,9 @@ function classifyServices(planOfCare) {
   const services = new Set();
   for (const entry of planOfCare ?? []) {
     const { station, status } = entry;
-    if (!station || status === "pending" || station === "reg") continue;
+
+    // Only EXECUTED services
+    if (!station || station === "reg" || status !== "complete") continue;
 
     switch (station) {
       case "ped":
@@ -34,6 +36,112 @@ function classifyServices(planOfCare) {
     }
   }
   return services;
+}
+
+function computeStationPlanVsComplete(
+  todaySnapshot,
+  last30DaysSnapshot,
+  timezoneOffsetMinutes,
+) {
+  const EXCLUDED_STATIONS = new Set(["reg"]);
+
+  const todayPlanned = {};
+  const todayCompleted = {};
+
+  const lastPlanned = {};
+  const lastCompleted = {};
+  const uniqueDateSet = new Set();
+
+  // ---- TODAY ----
+  todaySnapshot.forEach((doc) => {
+    const data = doc.data();
+    const poc = Array.isArray(data.plan_of_care) ? data.plan_of_care : [];
+
+    for (const step of poc) {
+      const { station, status } = step;
+      if (!station || EXCLUDED_STATIONS.has(station)) continue;
+
+      if (status && status !== "pending") {
+        todayPlanned[station] = (todayPlanned[station] ?? 0) + 1;
+      }
+
+      if (status === "complete") {
+        todayCompleted[station] = (todayCompleted[station] ?? 0) + 1;
+      }
+    }
+  });
+
+  // ---- LAST 30 DAYS ----
+  last30DaysSnapshot.forEach((doc) => {
+    const data = doc.data();
+    if (!data.stop_time) return;
+
+    const localDate = new Date(
+      data.stop_time.toDate().getTime() - timezoneOffsetMinutes * 60 * 1000,
+    );
+    const dateKey = localDate.toISOString().split("T")[0];
+    uniqueDateSet.add(dateKey);
+
+    const poc = Array.isArray(data.plan_of_care) ? data.plan_of_care : [];
+
+    for (const step of poc) {
+      const { station, status } = step;
+      if (!station || EXCLUDED_STATIONS.has(station)) continue;
+
+      if (status && status !== "pending") {
+        lastPlanned[station] = (lastPlanned[station] ?? 0) + 1;
+      }
+
+      if (status === "complete") {
+        lastCompleted[station] = (lastCompleted[station] ?? 0) + 1;
+      }
+    }
+  });
+
+  const daysWithPatients = uniqueDateSet.size || 1;
+
+  const avgPlanned = {};
+  const avgCompleted = {};
+  const avgNotCompleted = {};
+
+  const stations = new Set([
+    ...Object.keys(lastPlanned),
+    ...Object.keys(lastCompleted),
+  ]);
+
+  for (const s of stations) {
+    const pl = lastPlanned[s] ?? 0;
+    const co = lastCompleted[s] ?? 0;
+
+    avgPlanned[s] = pl / daysWithPatients;
+    avgCompleted[s] = co / daysWithPatients;
+    avgNotCompleted[s] = (pl - co) / daysWithPatients;
+  }
+
+  const todayNotCompleted = {};
+  const todayStations = new Set([
+    ...Object.keys(todayPlanned),
+    ...Object.keys(todayCompleted),
+  ]);
+
+  for (const s of todayStations) {
+    const pl = todayPlanned[s] ?? 0;
+    const co = todayCompleted[s] ?? 0;
+    todayNotCompleted[s] = Math.max(0, pl - co);
+  }
+
+  return {
+    today: {
+      planned: todayPlanned,
+      completed: todayCompleted,
+      notCompleted: todayNotCompleted,
+    },
+    avg30: {
+      planned: avgPlanned,
+      completed: avgCompleted,
+      notCompleted: avgNotCompleted,
+    },
+  };
 }
 
 function computePatientInsightsFromSnapshots(
@@ -73,10 +181,10 @@ function computePatientInsightsFromSnapshots(
 
   last30DaysSnapshot.forEach((doc) => {
     const data = doc.data();
-    if (!data.start_time) return;
+    if (!data.stop_time) return;
 
     const localDate = new Date(
-      data.start_time.toDate().getTime() - timezoneOffsetMinutes * 60 * 1000,
+      data.stop_time.toDate().getTime() - timezoneOffsetMinutes * 60 * 1000,
     );
     const dateKey = localDate.toISOString().split("T")[0];
     uniqueDateSet.add(dateKey);
@@ -175,4 +283,5 @@ module.exports = {
   computePatientInsightsFromSnapshots,
   getVisitTypeMetrics,
   getMilestoneProjection,
+  computeStationPlanVsComplete, // <-- ADD THIS
 };

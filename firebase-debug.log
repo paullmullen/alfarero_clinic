@@ -1,0 +1,78 @@
+[debug] [2026-03-03T18:08:00.425Z] ----------------------------------------------------------------------
+[debug] [2026-03-03T18:08:00.427Z] Command:       C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions:daily
+[debug] [2026-03-03T18:08:00.427Z] CLI Version:   15.8.0
+[debug] [2026-03-03T18:08:00.427Z] Platform:      win32
+[debug] [2026-03-03T18:08:00.427Z] Node Version:  v20.19.5
+[debug] [2026-03-03T18:08:00.427Z] Time:          Tue Mar 03 2026 12:08:00 GMT-0600 (Central Standard Time)
+[debug] [2026-03-03T18:08:00.427Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-03T18:08:01.557Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-03T18:08:01.557Z] > authorizing via signed-in user (mullenpaull@gmail.com)
+[debug] [2026-03-03T18:08:01.557Z] [iam] checking project alfarero-478ad for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2026-03-03T18:08:01.558Z] Checked if tokens are valid: true, expires at: 1772564259123
+[debug] [2026-03-03T18:08:01.558Z] Checked if tokens are valid: true, expires at: 1772564259123
+[debug] [2026-03-03T18:08:01.559Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/alfarero-478ad:testIamPermissions [none]
+[debug] [2026-03-03T18:08:01.559Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/alfarero-478ad:testIamPermissions  x-goog-user-project=alfarero-478ad
+[debug] [2026-03-03T18:08:01.559Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/alfarero-478ad:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-03-03T18:08:01.877Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/alfarero-478ad:testIamPermissions 200
+[debug] [2026-03-03T18:08:01.878Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/alfarero-478ad:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-03-03T18:08:01.878Z] Checked if tokens are valid: true, expires at: 1772564259123
+[debug] [2026-03-03T18:08:01.878Z] Checked if tokens are valid: true, expires at: 1772564259123
+[debug] [2026-03-03T18:08:01.878Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/alfarero-478ad/serviceAccounts/alfarero-478ad@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2026-03-03T18:08:01.878Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/alfarero-478ad/serviceAccounts/alfarero-478ad@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2026-03-03T18:08:02.148Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/alfarero-478ad/serviceAccounts/alfarero-478ad@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2026-03-03T18:08:02.148Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/alfarero-478ad/serviceAccounts/alfarero-478ad@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[info] 
+[info] === Deploying to 'alfarero-478ad'...
+[info] 
+[info] i  deploying functions 
+[debug] [2026-03-03T18:08:02.151Z] Checked if tokens are valid: true, expires at: 1772564259123
+[debug] [2026-03-03T18:08:02.151Z] Checked if tokens are valid: true, expires at: 1772564259123
+[debug] [2026-03-03T18:08:02.152Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/alfarero-478ad [none]
+[debug] [2026-03-03T18:08:02.257Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/alfarero-478ad 200
+[debug] [2026-03-03T18:08:02.257Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/alfarero-478ad {"projectNumber":"479287307088","projectId":"alfarero-478ad","lifecycleState":"ACTIVE","name":"alfarero","labels":{"firebase":"enabled"},"createTime":"2023-05-21T19:20:43.992452Z"}
+[info] i  functions: preparing codebase daily for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2026-03-03T18:08:02.260Z] Checked if tokens are valid: true, expires at: 1772564259123
+[debug] [2026-03-03T18:08:02.260Z] Checked if tokens are valid: true, expires at: 1772564259123
+[debug] [2026-03-03T18:08:02.260Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/alfarero-478ad/adminSdkConfig [none]
+[debug] [2026-03-03T18:08:02.872Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/alfarero-478ad/adminSdkConfig 200
+[debug] [2026-03-03T18:08:02.873Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/alfarero-478ad/adminSdkConfig {"projectId":"alfarero-478ad","databaseURL":"https://alfarero-478ad-default-rtdb.firebaseio.com","storageBucket":"alfarero-478ad.appspot.com","locationId":"us-central"}
+[debug] [2026-03-03T18:08:02.873Z] Checked if tokens are valid: true, expires at: 1772564259123
+[debug] [2026-03-03T18:08:02.873Z] Checked if tokens are valid: true, expires at: 1772564259123
+[debug] [2026-03-03T18:08:02.873Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/alfarero-478ad/configs [none]
+[debug] [2026-03-03T18:08:03.126Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/alfarero-478ad/configs 200
+[debug] [2026-03-03T18:08:03.126Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/alfarero-478ad/configs {}
+[debug] [2026-03-03T18:08:03.127Z] Validating nodejs source
+[warn] !  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2026-03-03T18:08:03.906Z] > [functions] package.json contents: {
+  "name": "daily-email-sender",
+  "version": "1.0.0",
+  "description": "Sends daily emails to users with dailyEmail permission",
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.x.x",
+    "axios": "^1.4.0",
+    "canvas": "^3.1.2",
+    "chart.js": "^4.5.0",
+    "chartjs-chart-matrix": "^3.0.0",
+    "chartjs-plugin-datalabels": "^2.2.0",
+    "cors": "^2.8.6",
+    "firebase-admin": "^11.10.1",
+    "firebase-functions": "^7.0.5",
+    "node-fetch": "^2.6.9",
+    "nodemailer": "^8.0.1"
+  }
+}
+[debug] [2026-03-03T18:08:03.906Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase daily to determine what to deploy 
+[debug] [2026-03-03T18:08:03.907Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-03-03T18:08:03.914Z] Found firebase-functions binary at 'C:\Users\paull\OneDrive\Documents\Potters House\alfarero_clinic\dailyEmailCloudFunctions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8154
+
+[debug] [2026-03-03T18:08:04.309Z] Got response from /__/functions.yaml {"endpoints":{"manualDailyEmail":{"availableMemoryMb":null,"timeoutSeconds":60,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","secretEnvironmentVariables":[{"key":"MAIL_PROVIDER"},{"key":"GMAIL_USER"},{"key":"GMAIL_APP_PASSWORD"},{"key":"O365_TENANT_ID"},{"key":"O365_CLIENT_ID"},{"key":"O365_CLIENT_SECRET"},{"key":"O365_SENDER"}],"labels":{},"httpsTrigger":{},"entryPoint":"manualDailyEmail"},"scheduledDailyEmail":{"availableMemoryMb":null,"timeoutSeconds":60,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","secretEnvironmentVariables":[{"key":"MAIL_PROVIDER"},{"key":"GMAIL_USER"},{"key":"GMAIL_APP_PASSWORD"},{"key":"O365_TENANT_ID"},{"key":"O365_CLIENT_ID"},{"key":"O365_CLIENT_SECRET"},{"key":"O365_SENDER"}],"labels":{},"scheduleTrigger":{"schedule":"0 17 * * *","retryConfig":{},"timeZone":"America/Guatemala"},"entryPoint":"scheduledDailyEmail"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{},"params":[{"type":"secret","name":"MAIL_PROVIDER"}]}

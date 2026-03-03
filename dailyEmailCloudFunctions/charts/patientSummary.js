@@ -39,6 +39,9 @@ module.exports = function generatePatientSummaryChart(todayCounts, avgCounts) {
       plugins: {
         legend: { display: true },
         title: { display: true, text: "Resumen de Pacientes por Servicio" },
+        datalabels: {
+          display: false,
+        },
       },
       scales: {
         x: { title: { display: true, text: "Servicio" } },

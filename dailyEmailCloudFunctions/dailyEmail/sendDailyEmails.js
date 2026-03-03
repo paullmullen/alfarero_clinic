@@ -18,6 +18,8 @@ const {
   computePatientInsightsFromSnapshots,
   getVisitTypeMetrics,
   getMilestoneProjection,
+  // NEW (you will add this export in dailyEmail/metrics.js)
+  computeStationPlanVsComplete,
 } = require("./metrics");
 
 const {
@@ -37,6 +39,7 @@ const {
 
 // Charts
 const generatePatientSummaryChart = require("../charts/patientSummary");
+const generateStationPlanVsCompletedChart = require("../charts/stationPlanVsCompleted");
 const generateNewVsRepeatPieChart = require("../charts/newVsRepeatPie");
 const generateArrivalChart = require("../charts/arrivalsByHour");
 const generateWaitingTimeChart = require("../charts/waitingByStation");
@@ -51,6 +54,23 @@ let Timestamp = null;
 function initDailyEmailDeps({ db: _db, Timestamp: _Timestamp }) {
   db = _db;
   Timestamp = _Timestamp;
+}
+
+function buildDefaultStationLabelMap() {
+  // You can replace this later with a DB-backed map if you want.
+  return {
+    nur: "Enfermería",
+    doc: "Doctor",
+    ped: "Pediatría",
+    og: "Clínica General",
+    lab: "Laboratorio",
+    den: "Odontología",
+    pt: "Fisioterapia",
+    nut: "Nutrición",
+    pha: "Farmacia",
+    psi: "Psicología",
+    reg: "Registro",
+  };
 }
 
 async function sendDailyEmails() {
@@ -92,7 +112,7 @@ async function sendDailyEmails() {
 
   console.log("Number of email recipients", recipients.length);
 
-  // --- Hourly counts ---
+  // --- Hourly counts (based on start_time of patients in today's cohort) ---
   const hourlyCounts = {};
   for (let hour = 7; hour <= 17; hour++) hourlyCounts[hour] = 0;
 
@@ -137,6 +157,34 @@ async function sendDailyEmails() {
     patientInsights.avgCounts.total,
   );
 
+  // --- NEW: station planned vs completed (patients complete only, exclude reg) ---
+  // NOTE: this assumes you've updated:
+  //  - queries.fetchTodayPatients() to use stop_time window + complete==true
+  //  - queries.fetchLast30DaysPatients() to use stop_time >= + complete==true
+  //  - metrics to export computeStationPlanVsComplete()
+  const stationMetrics = computeStationPlanVsComplete(
+    todaySnapshot,
+    last30DaysSnapshot,
+    TIMEZONE_OFFSET_MINUTES,
+  );
+
+  // Order stations (by planned today desc, then code)
+  const stationKeys = Array.from(
+    new Set([
+      ...Object.keys(stationMetrics?.today?.planned ?? {}),
+      ...Object.keys(stationMetrics?.today?.completed ?? {}),
+    ]),
+  );
+
+  stationKeys.sort((a, b) => {
+    const ap = stationMetrics.today.planned?.[a] ?? 0;
+    const bp = stationMetrics.today.planned?.[b] ?? 0;
+    if (bp !== ap) return bp - ap;
+    return a.localeCompare(b);
+  });
+
+  const stationLabelMap = buildDefaultStationLabelMap();
+
   // --- Charts ---
   const patientSummaryChart = generatePatientSummaryChart(
     patientInsights.todayCounts,
@@ -161,6 +209,14 @@ async function sendDailyEmails() {
     startOfToday,
     startOfTomorrow,
   });
+
+  // NEW chart: Planned vs Completed by station (today only)
+  // (Template must render charts.stationPlanVsCompletedChart to display it.)
+  const stationPlanVsCompletedChart = generateStationPlanVsCompletedChart(
+    stationMetrics.today,
+    stationKeys,
+    stationLabelMap,
+  );
 
   // --- Insights ---
   const historicalHourlyAvg = computeHistoricalHourlyAverages(
@@ -190,6 +246,9 @@ async function sendDailyEmails() {
       arrivalChart,
       waitingChart,
       waitingHeatmap,
+
+      // NEW
+      stationPlanVsCompletedChart,
     },
     insightsHTML,
     totals: { totalPatients },
