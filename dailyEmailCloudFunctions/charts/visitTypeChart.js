@@ -43,7 +43,7 @@ module.exports = function generateVisitTypeChart(
           display: true,
           text: "Visitas por Tipo (Hoy vs Promedio 30 días)",
         },
-        dataLabels: { display: false },
+        datalabels: { display: false },
       },
       scales: {
         x: {
