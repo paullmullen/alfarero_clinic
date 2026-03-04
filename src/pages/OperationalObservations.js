@@ -17,10 +17,6 @@ import {
   collection,
   getDocs,
   addDoc,
-  query,
-  where,
-  orderBy,
-  limit,
   Timestamp,
   serverTimestamp,
 } from "firebase/firestore";
@@ -78,6 +74,39 @@ function subtractDays(date, days) {
   return d;
 }
 
+// Convert whatever the API gives us into a Firestore Timestamp
+function toTimestamp(v) {
+  if (!v) return null;
+
+  // already a Timestamp
+  if (typeof v?.toDate === "function") return v;
+
+  // ISO date string
+  if (typeof v === "string") {
+    const d = new Date(v);
+    if (!Number.isNaN(d.getTime())) return Timestamp.fromDate(d);
+    return null;
+  }
+
+  // { seconds, nanoseconds }
+  if (typeof v === "object" && typeof v.seconds === "number") {
+    return new Timestamp(v.seconds, v.nanoseconds || 0);
+  }
+
+  // { _seconds, _nanoseconds } (common JSON shape)
+  if (typeof v === "object" && typeof v._seconds === "number") {
+    return new Timestamp(v._seconds, v._nanoseconds || 0);
+  }
+
+  // millis
+  if (typeof v === "number") {
+    const d = new Date(v);
+    if (!Number.isNaN(d.getTime())) return Timestamp.fromDate(d);
+  }
+
+  return null;
+}
+
 export default function OperationalObservations() {
   const [t] = useTranslation("global");
   const [form] = Form.useForm();
@@ -124,21 +153,6 @@ export default function OperationalObservations() {
     return services.map((s) => ({ value: s.value, label: s.label }));
   }, [services]);
 
-  async function loadTypes() {
-    const snap = await getDocs(collection(firestore, "ops_observation_types"));
-    const rows = snap.docs.map((d) => {
-      const data = d.data() || {};
-      return {
-        id: d.id,
-        category: data.category ?? "",
-        labelKey: data.labelKey ?? `ops.types.${d.id}`,
-        sortOrder: data.sortOrder ?? null,
-        active: data.active ?? true,
-      };
-    });
-    setTypes(rows);
-  }
-
   async function loadServicesFromStats() {
     const snap = await getDocs(collection(firestore, "stats"));
     const rows = snap.docs
@@ -165,20 +179,55 @@ export default function OperationalObservations() {
     setServices(unique);
   }
 
-  async function loadRecentObservations() {
+  // NEW: Load BOTH types + observations from the Cloud Function feed
+  async function loadObservationsFeed() {
     setRecentLoading(true);
+
     try {
-      const start = subtractDays(new Date(), 30);
-      const q = query(
-        collection(firestore, "ops_observations"),
-        where("date", ">=", Timestamp.fromDate(start)),
-        orderBy("date", "desc"),
-        limit(200),
+      const startYMD = getLocalYMD(subtractDays(new Date(), 30));
+      const endYMD = getLocalYMD(new Date());
+
+      const url = new URL(
+        "https://us-central1-alfarero-478ad.cloudfunctions.net/getOpsObservationsFeed",
+      );
+      url.searchParams.set("startYMD", startYMD);
+      url.searchParams.set("endYMD", endYMD);
+
+      const res = await fetch(url, { method: "GET" });
+      if (!res.ok) {
+        throw new Error(`getOpsObservationsFeed HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      // typesById → array (keep same shape as before)
+      const typesArray = Object.entries(data?.typesById || {}).map(
+        ([id, v]) => {
+          const obj = v || {};
+          return {
+            id,
+            category: obj.category ?? "",
+            labelKey: obj.labelKey ?? `ops.types.${id}`,
+            sortOrder: obj.sortOrder ?? null,
+            active: obj.active ?? true,
+          };
+        },
       );
 
-      const snap = await getDocs(q);
-      const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() || {}) }));
-      setRecent(rows);
+      setTypes(typesArray);
+
+      // observations (normalize timestamps so the table render/sorter works)
+      const obs = Array.isArray(data?.observations) ? data.observations : [];
+      const normalized = obs.map((o) => {
+        const rec = o || {};
+        return {
+          ...rec,
+          date: toTimestamp(rec.date) || rec.date,
+          createdAt: toTimestamp(rec.createdAt) || rec.createdAt,
+        };
+      });
+
+      setRecent(normalized);
     } catch (err) {
       console.error(err);
       message.error(t("ops.loadError") || "Error loading observations");
@@ -191,11 +240,7 @@ export default function OperationalObservations() {
     (async () => {
       setLoading(true);
       try {
-        await Promise.all([
-          loadTypes(),
-          loadServicesFromStats(),
-          loadRecentObservations(),
-        ]);
+        await Promise.all([loadObservationsFeed(), loadServicesFromStats()]);
       } finally {
         setLoading(false);
       }
@@ -316,7 +361,8 @@ export default function OperationalObservations() {
       // Clear notes; keep selections for fast repeated entry
       form.setFieldsValue({ notes: "" });
 
-      await loadRecentObservations();
+      // IMPORTANT: reload via the same cloud function feed
+      await loadObservationsFeed();
     } catch (err) {
       console.error(err);
       message.error(t("ops.addError") || "Error adding observation");
@@ -423,7 +469,7 @@ export default function OperationalObservations() {
       <Card
         title={t("ops.recentObservations") || "Last 30 days"}
         extra={
-          <Button onClick={loadRecentObservations} loading={recentLoading}>
+          <Button onClick={loadObservationsFeed} loading={recentLoading}>
             {t("ops.refresh") || "Refresh"}
           </Button>
         }

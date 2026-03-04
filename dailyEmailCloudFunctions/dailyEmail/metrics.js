@@ -144,6 +144,47 @@ function computeStationPlanVsComplete(
   };
 }
 
+/**
+ * Daily patient volume timeline for the last N days (default 14).
+ * Uses start_time and timezoneOffsetMinutes to bucket patients into local YYYY-MM-DD.
+ */
+function computeDailyVolumeTimeline(
+  last30DaysSnapshot,
+  timezoneOffsetMinutes,
+  days = 14,
+) {
+  // Build last N local days (including today) as YYYY-MM-DD labels
+  const todayLocal = new Date(Date.now() - timezoneOffsetMinutes * 60 * 1000);
+  todayLocal.setHours(0, 0, 0, 0);
+
+  const labels = [];
+  const counts = {};
+
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(todayLocal);
+    d.setDate(d.getDate() - i);
+    const ymd = d.toISOString().split("T")[0];
+    labels.push(ymd);
+    counts[ymd] = 0;
+  }
+
+  // Count patients per local day using start_time
+  last30DaysSnapshot.forEach((doc) => {
+    const data = doc.data();
+    if (!data.start_time) return;
+
+    const localDate = new Date(
+      data.start_time.toDate().getTime() - timezoneOffsetMinutes * 60 * 1000,
+    );
+    const ymd = localDate.toISOString().split("T")[0];
+
+    if (counts[ymd] !== undefined) counts[ymd] += 1;
+  });
+
+  const values = labels.map((ymd) => counts[ymd] ?? 0);
+  return { labels, values };
+}
+
 function computePatientInsightsFromSnapshots(
   todaySnapshot,
   last30DaysSnapshot,
@@ -284,4 +325,5 @@ module.exports = {
   getVisitTypeMetrics,
   getMilestoneProjection,
   computeStationPlanVsComplete, // <-- ADD THIS
+  computeDailyVolumeTimeline, // <-- NEW
 };

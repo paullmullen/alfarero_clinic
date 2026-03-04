@@ -13,6 +13,7 @@ const { sendInventoryReport } = require("./sendInventoryReport");
 
 // ✅ NEW: sendemail (Gen-2, Cloud Run)
 const { sendemail } = require("./email/sendemail");
+const { getOpsObservationsFeed } = require("./getOpsObservationsFeed");
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -27,3 +28,5 @@ exports.sendInventoryReport = sendInventoryReport;
 
 // ✅ Export sendemail endpoint
 exports.sendemail = sendemail;
+
+exports.getOpsObservationsFeed = getOpsObservationsFeed;

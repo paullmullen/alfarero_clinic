@@ -13,6 +13,13 @@
     ],
     "rewrites": [
       {
+        "source": "/getOpsObservationsFeed",
+        "function": {
+          "functionId": "getOpsObservationsFeed",
+          "codebase": "api"
+        }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

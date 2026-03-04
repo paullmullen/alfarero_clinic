@@ -18,8 +18,10 @@ const {
   computePatientInsightsFromSnapshots,
   getVisitTypeMetrics,
   getMilestoneProjection,
-  // NEW (you will add this export in dailyEmail/metrics.js)
   computeStationPlanVsComplete,
+
+  // NEW
+  computeDailyVolumeTimeline,
 } = require("./metrics");
 
 const {
@@ -35,6 +37,10 @@ const {
   fetchStationThresholds,
   fetchVisitTypeLabelMap,
   fetchTotalPatients,
+
+  // NEW
+  fetchOpsObservations,
+  fetchObservationTypes,
 } = require("./queries");
 
 // Charts
@@ -45,6 +51,9 @@ const generateArrivalChart = require("../charts/arrivalsByHour");
 const generateWaitingTimeChart = require("../charts/waitingByStation");
 const generateWaitingHeatmapChart = require("../charts/waitingHeatmap");
 const generateVisitTypeChart = require("../charts/visitTypeChart");
+
+// NEW
+const generateDailyVolumeWithObservations = require("../charts/dailyVolumeWithObservations");
 
 const TIMEZONE_OFFSET_MINUTES = 6 * 60; // UTC-6
 
@@ -57,7 +66,6 @@ function initDailyEmailDeps({ db: _db, Timestamp: _Timestamp }) {
 }
 
 function buildDefaultStationLabelMap() {
-  // You can replace this later with a DB-backed map if you want.
   return {
     nur: "Enfermería",
     doc: "Doctor",
@@ -73,6 +81,40 @@ function buildDefaultStationLabelMap() {
   };
 }
 
+function buildKeyObservationsHTML(observations, typesById) {
+  if (!observations || observations.length === 0) return "";
+
+  const sorted = [...observations]
+    .sort((a, b) => {
+      const aTime = a?.date?.toMillis ? a.date.toMillis() : 0;
+      const bTime = b?.date?.toMillis ? b.date.toMillis() : 0;
+      return bTime - aTime;
+    })
+    .slice(0, 3);
+
+  const rows = sorted
+    .map((o) => {
+      const type = typesById[o.typeId] || {};
+      const impact = type.impact === "positive" ? "🟢" : "🔴";
+
+      const note = o.notes ? ` — ${o.notes}` : "";
+
+      return `<li style="margin-bottom:4px;">${impact} ${o.ymd}${note}</li>`;
+    })
+    .join("");
+
+  return `
+<div style="margin:0 0 30px 0;">
+  <div style="font-family: Arial, sans-serif; font-size:16px; font-weight:700; margin-bottom:6px;">
+    Observaciones Clave
+  </div>
+  <ul style="margin:0; padding-left:18px; font-family: Arial, sans-serif; font-size:13px;">
+    ${rows}
+  </ul>
+</div>
+`;
+}
+
 async function sendDailyEmails() {
   if (!db || !Timestamp) {
     throw new Error(
@@ -80,11 +122,9 @@ async function sendDailyEmails() {
     );
   }
 
-  // --- Clinic day window ---
   const { startOfToday, startOfTomorrow } =
     getLocalDayRangeTimestamps(Timestamp);
 
-  // --- Pull snapshots ---
   const todaySnapshot = await fetchTodayPatients({
     db,
     startOfToday,
@@ -102,7 +142,6 @@ async function sendDailyEmails() {
     startOf30DaysAgoTimestamp,
   });
 
-  // --- Recipients ---
   const recipients = await fetchRecipients({ db });
 
   if (recipients.length === 0) {
@@ -112,7 +151,6 @@ async function sendDailyEmails() {
 
   console.log("Number of email recipients", recipients.length);
 
-  // --- Hourly counts (based on start_time of patients in today's cohort) ---
   const hourlyCounts = {};
   for (let hour = 7; hour <= 17; hour++) hourlyCounts[hour] = 0;
 
@@ -128,14 +166,12 @@ async function sendDailyEmails() {
     }
   });
 
-  // --- Patient summary ---
   const patientInsights = computePatientInsightsFromSnapshots(
     todaySnapshot,
     last30DaysSnapshot,
     TIMEZONE_OFFSET_MINUTES,
   );
 
-  // --- Visit type metrics ---
   const {
     todayCounts: visitTodayCounts,
     avg30Counts: visitAvgCounts,
@@ -157,18 +193,12 @@ async function sendDailyEmails() {
     patientInsights.avgCounts.total,
   );
 
-  // --- NEW: station planned vs completed (patients complete only, exclude reg) ---
-  // NOTE: this assumes you've updated:
-  //  - queries.fetchTodayPatients() to use stop_time window + complete==true
-  //  - queries.fetchLast30DaysPatients() to use stop_time >= + complete==true
-  //  - metrics to export computeStationPlanVsComplete()
   const stationMetrics = computeStationPlanVsComplete(
     todaySnapshot,
     last30DaysSnapshot,
     TIMEZONE_OFFSET_MINUTES,
   );
 
-  // Order stations (by planned today desc, then code)
   const stationKeys = Array.from(
     new Set([
       ...Object.keys(stationMetrics?.today?.planned ?? {}),
@@ -185,7 +215,6 @@ async function sendDailyEmails() {
 
   const stationLabelMap = buildDefaultStationLabelMap();
 
-  // --- Charts ---
   const patientSummaryChart = generatePatientSummaryChart(
     patientInsights.todayCounts,
     patientInsights.avgCounts,
@@ -210,15 +239,44 @@ async function sendDailyEmails() {
     startOfTomorrow,
   });
 
-  // NEW chart: Planned vs Completed by station (today only)
-  // (Template must render charts.stationPlanVsCompletedChart to display it.)
   const stationPlanVsCompletedChart = generateStationPlanVsCompletedChart(
     stationMetrics.today,
     stationKeys,
     stationLabelMap,
   );
 
-  // --- Insights ---
+  // ---------------- NEW SECTION ----------------
+
+  const DAYS = 14;
+
+  // ✅ Fix: correct argument order (snapshot, offset, days)
+  const timeline = computeDailyVolumeTimeline(
+    last30DaysSnapshot,
+    TIMEZONE_OFFSET_MINUTES,
+    DAYS,
+  );
+
+  // ✅ Fetch ops data (works with your queries.js)
+  const observations = await fetchOpsObservations({ db, days: DAYS });
+  const observationTypes = await fetchObservationTypes({ db });
+
+  // ✅ Fix: use timeline.values (not timeline.counts)
+  const dailyVolumeChart = generateDailyVolumeWithObservations({
+    labels: timeline.labels,
+    volumeData: timeline.values,
+    observations,
+    typesById: observationTypes,
+    daysLabel: `(últimos ${DAYS} días)`,
+  });
+
+  // ✅ Fix: DEFINE keyObservationsHTML so it exists
+  const keyObservationsHTML = buildKeyObservationsHTML(
+    observations,
+    observationTypes,
+  );
+
+  // ---------------- END NEW SECTION ----------------
+
   const historicalHourlyAvg = computeHistoricalHourlyAverages(
     last30DaysSnapshot,
     TIMEZONE_OFFSET_MINUTES,
@@ -236,7 +294,6 @@ async function sendDailyEmails() {
 
   const insightsHTML = renderInsightsHTML(aiInsights);
 
-  // --- Build Email HTML ---
   const html = buildDailyEmailHTML({
     patientInsights,
     charts: {
@@ -246,16 +303,17 @@ async function sendDailyEmails() {
       arrivalChart,
       waitingChart,
       waitingHeatmap,
+      stationPlanVsCompletedChart,
 
       // NEW
-      stationPlanVsCompletedChart,
+      dailyVolumeChart,
+      keyObservationsHTML,
     },
     insightsHTML,
     totals: { totalPatients },
     milestone: { nextMilestone, projectedDateStr },
   });
 
-  // --- Send Emails (direct nodemailer) ---
   const results = await Promise.all(
     recipients.map(async ({ email }) => {
       try {

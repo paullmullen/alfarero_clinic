@@ -1,3 +1,4 @@
+/* eslint-env node */
 "use strict";
 
 /**
@@ -134,6 +135,15 @@ function buildDailyEmailHTML({
                 </p>
 
                 <!-- Charts (consistent blocks) -->
+
+                ${chartBlock({
+                  src: charts.dailyVolumeChart,
+                  alt: "Volumen Diario de Pacientes",
+                  title: "Volumen Diario de Pacientes (últimos 14 días)",
+                })}
+
+                ${charts.keyObservationsHTML || ""}
+
                 ${chartBlock({
                   src: stationPlanVsCompletedChart,
                   alt: "Plan de Atención - Ideal vs Real",
@@ -178,7 +188,7 @@ function buildDailyEmailHTML({
 
                 <!-- Insights -->
                 <div style="margin: 0 0 22px 0;">
-                  ${insightsHTML ?? ""}
+                  ${insightsHTML || ""}
                 </div>
 
                 <p style="margin: 0 0 6px 0;">
