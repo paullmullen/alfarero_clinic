@@ -42,13 +42,11 @@ module.exports = function generateStationPlanVsCompletedChart(
     },
     options: {
       responsive: false,
+      devicePixelRatio: 2,
       indexAxis: "y",
       plugins: {
         legend: { display: true },
-        title: {
-          display: true,
-          text: "Servicios Planeados vs Completados (Pacientes Completos)",
-        },
+        title: { display: false },
         datalabels: { display: false },
       },
       scales: {

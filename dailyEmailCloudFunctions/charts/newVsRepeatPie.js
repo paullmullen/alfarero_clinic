@@ -36,11 +36,9 @@ module.exports = function generateNewVsRepeatPieChart(todaySnapshot) {
     },
     options: {
       responsive: false,
+      devicePixelRatio: 2,
       plugins: {
-        title: {
-          display: true,
-          text: "Pacientes: Nuevos vs Repetidos (Hoy)",
-        },
+        title: { display: false },
         legend: {
           display: true,
           position: "right",

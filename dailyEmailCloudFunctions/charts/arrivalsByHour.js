@@ -21,9 +21,10 @@ module.exports = function generateArrivalChart(hourlyCounts) {
     },
     options: {
       responsive: false,
+      devicePixelRatio: 2,
       plugins: {
         legend: { display: false },
-        title: { display: true, text: "Pacientes por hora (hoy)" },
+        title: { display: false },
       },
       scales: {
         x: { title: { display: true, text: "Hora del día" } },

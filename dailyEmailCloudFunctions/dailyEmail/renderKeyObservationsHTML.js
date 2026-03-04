@@ -70,6 +70,7 @@ module.exports = function renderKeyObservationsHTML({
       ${rows || emptyLine}
       ${moreLine}
       ${linkLine}
+      <br><br>
     </div>
   `;
 };

@@ -45,13 +45,11 @@ module.exports = function generateWaitingTimeChart(patientsSnapshot) {
       ],
     },
     options: {
+      devicePixelRatio: 2,
       responsive: false,
       plugins: {
         legend: { display: false },
-        title: {
-          display: true,
-          text: "Tiempo promedio de espera por servicio",
-        },
+        title: { display: false },
       },
       scales: {
         x: { title: { display: true, text: "Servicio" } },

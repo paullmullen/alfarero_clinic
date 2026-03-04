@@ -36,13 +36,11 @@ module.exports = function generateVisitTypeChart(
     },
     options: {
       responsive: false,
+      devicePixelRatio: 2,
       indexAxis: "y",
       plugins: {
         legend: { display: true },
-        title: {
-          display: true,
-          text: "Visitas por Tipo (Hoy vs Promedio 30 días)",
-        },
+        title: { display: false },
         datalabels: { display: false },
       },
       scales: {

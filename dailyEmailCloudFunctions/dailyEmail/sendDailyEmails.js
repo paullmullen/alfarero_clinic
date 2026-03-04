@@ -99,7 +99,7 @@ function buildKeyObservationsHTML(observations, typesById) {
 
       const note = o.notes ? ` — ${o.notes}` : "";
 
-      return `<li style="margin-bottom:4px;">${impact} ${o.ymd}${note}</li>`;
+      return `<li style="margin-bottom:0px;">${impact} ${o.ymd}${note}</li>`;
     })
     .join("");
 

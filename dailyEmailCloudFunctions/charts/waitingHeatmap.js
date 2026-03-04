@@ -271,14 +271,11 @@ module.exports = function generateWaitingHeatmapChart(
       ],
     },
     options: {
+      devicePixelRatio: 2,
       responsive: false,
       layout: { padding: { top: 10, right: 10, bottom: 24, left: 10 } },
       plugins: {
-        title: {
-          display: true,
-          text: "Mapa de calor de tiempo de espera por servicio y hora",
-          padding: { top: 20, bottom: 20 },
-        },
+        title: { display: false },
         legend: { display: false },
         datalabels: {
           color: "black",

@@ -9,14 +9,21 @@ module.exports = function generateDailyVolumeWithObservations({
   laneTitle = "Observaciones",
   daysLabel = "", // optional suffix like "(últimos 14 días)"
   showLegend = false, // keep false for clean email look
+  showLaneTitle = false, // NEW: hide the lane label by default
 }) {
   const { createCanvas } = require("canvas");
   const Chart = require("chart.js/auto");
 
   // --- Match other email charts: 800px wide static canvas ---
   const width = 800;
-  const height = 460;
-  const laneHeight = 70;
+
+  // Lane sizing / spacing
+  const laneHeight = 62;
+  const lanePadTop = 14; // breathing room between x-axis labels and lane
+  const lanePadBottom = showLegend ? 26 : 12; // space below lane
+
+  // Slightly taller canvas so the lane never collides with the bottom edge
+  const height = 520;
 
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d");
@@ -50,14 +57,17 @@ module.exports = function generateDailyVolumeWithObservations({
   // eslint-disable-next-line no-console
   console.log("dailyVolumeWithObservations: matched events =", totalEvents);
 
-  // Reserve space below chart area for the lane by adding bottom padding
-  const bottomPad = laneHeight;
+  // Reserve space below chart area for lane + breathing room
+  const bottomPad = laneHeight + lanePadTop + lanePadBottom;
 
   const lanePlugin = makeObservationLanePlugin({
     laneHeight,
     laneTitle,
     lanePoints,
     showLegend,
+    showLaneTitle,
+    lanePadTop,
+    lanePadBottom,
   });
 
   new Chart(ctx, {
@@ -76,6 +86,7 @@ module.exports = function generateDailyVolumeWithObservations({
     },
     options: {
       responsive: false,
+      devicePixelRatio: 2,
       animation: false, // deterministic for email
       layout: { padding: { top: 10, left: 10, right: 10, bottom: bottomPad } },
       plugins: {
@@ -83,11 +94,7 @@ module.exports = function generateDailyVolumeWithObservations({
           display: !!showLegend,
           labels: { font: { family: "Arial, sans-serif", size: 12 } },
         },
-        title: {
-          display: true,
-          text: daysLabel ? `${title} ${daysLabel}` : title,
-          font: { family: "Arial, sans-serif", size: 14, weight: "bold" },
-        },
+        title: { display: false },
         // If chartjs-plugin-datalabels is registered in your env, disable it
         datalabels: { display: false },
       },
@@ -182,6 +189,9 @@ module.exports = function generateDailyVolumeWithObservations({
     laneTitle,
     lanePoints,
     showLegend,
+    showLaneTitle,
+    lanePadTop,
+    lanePadBottom,
   }) {
     return {
       id: "observationLane",
@@ -190,9 +200,21 @@ module.exports = function generateDailyVolumeWithObservations({
         const xScale = scales.x;
         if (!xScale || !chartArea) return;
 
-        const laneTop = chartArea.bottom + 40;
-        const laneBottom = laneTop + laneHeight;
-        const laneMid = Math.round((laneTop + laneBottom) / 2);
+        // Place lane just below the chart area (x-axis labels included)
+        // and clamp so we never draw outside the canvas.
+        let laneTop = chartArea.bottom + lanePadTop;
+        const maxBottom = chart.height - lanePadBottom;
+
+        let laneBottom = Math.min(laneTop + laneHeight, maxBottom);
+
+        // If clamped too tight, pull laneTop up so lane keeps its height.
+        if (laneBottom - laneTop < laneHeight) {
+          laneTop = Math.max(chartArea.bottom + 6, maxBottom - laneHeight);
+          laneBottom = Math.min(laneTop + laneHeight, maxBottom);
+        }
+
+        // Slight +2px to visually center markers in the lane without a baseline
+        const laneMid = Math.round((laneTop + laneBottom) / 2) + 2;
 
         const maxStack = 3;
         const markerR = 6;
@@ -200,25 +222,22 @@ module.exports = function generateDailyVolumeWithObservations({
 
         ctx.save();
 
-        // Lane label (left)
-        ctx.font = "bold 12px Arial, sans-serif";
-        ctx.fillStyle = "rgba(0,0,0,0.75)";
-        ctx.fillText(laneTitle, chartArea.left + 4, laneTop - 4);
+        // Lane label (optional) — draw inside lane so it doesn't collide with x labels
+        if (showLaneTitle && laneTitle) {
+          ctx.font = "bold 12px Arial, sans-serif";
+          ctx.fillStyle = "rgba(0,0,0,0.75)";
+          ctx.textBaseline = "top";
+          ctx.fillText(laneTitle, chartArea.left + 4, laneTop + 2);
+        }
 
-        // Baseline
-        ctx.beginPath();
-        ctx.moveTo(chartArea.left, laneMid);
-        ctx.lineTo(chartArea.right, laneMid);
-        ctx.strokeStyle = "rgba(0,0,0,0.20)";
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        // Baseline removed (cleaner + prevents visual overlap)
 
         // Markers per day
         for (let i = 0; i < lanePoints.length; i++) {
           const { events } = lanePoints[i];
           if (!events || events.length === 0) continue;
 
-          // ✅ More reliable for bar/category scales than getPixelForTick
+          // More reliable for bar/category scales than getPixelForTick
           const x = xScale.getPixelForValue(i);
 
           const normalized = events.map((e) => ({
@@ -266,10 +285,11 @@ module.exports = function generateDailyVolumeWithObservations({
         if (showLegend) {
           ctx.font = "12px Arial, sans-serif";
           ctx.fillStyle = "rgba(0,0,0,0.70)";
+          ctx.textBaseline = "top";
           ctx.fillText(
             "🟢 Favorable   🔴 Desfavorable   +N más",
             chartArea.left,
-            laneBottom + 12,
+            laneBottom + 6,
           );
         }
 
