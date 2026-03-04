@@ -147,7 +147,6 @@ function computeHistoricalHourlyAverages(
       : 0;
 
   if (tz === 0 && timezoneOffsetMinutes !== 0) {
-    // Helps catch the exact issue you're seeing without crashing
     console.warn(
       "computeHistoricalHourlyAverages: timezoneOffsetMinutes missing/invalid; defaulting to 0. Received:",
       timezoneOffsetMinutes,
@@ -160,7 +159,6 @@ function computeHistoricalHourlyAverages(
   last30DaysSnapshot.forEach((doc) => {
     const data = doc.data();
 
-    // Guard: start_time must be a Firestore Timestamp-like
     if (!data.start_time || typeof data.start_time.toDate !== "function")
       return;
 
@@ -172,9 +170,7 @@ function computeHistoricalHourlyAverages(
     if (Number.isNaN(local.getTime())) return;
 
     const hour = local.getHours();
-
-    // Avoid toISOString on invalid dates (already guarded, but keep safe)
-    const iso = local.toISOString(); // safe now
+    const iso = local.toISOString();
     const dayKey = iso.split("T")[0];
 
     hourTotals[hour] = (hourTotals[hour] ?? 0) + 1;
@@ -275,6 +271,7 @@ function detectFlowBottlenecks(todaySnapshot) {
 
   return insights;
 }
+
 /* ============================================================
    NEW PATIENT RATIO INSIGHTS
    ============================================================ */
@@ -295,7 +292,6 @@ function detectNewPatientTrends(todaySnapshot, historicalSnapshot) {
 
   const todayRatio = todayNew / todayTotal;
 
-  // HISTORICAL BASELINE (last 30 days)
   let histTotal = 0;
   let histNew = 0;
 
@@ -305,11 +301,10 @@ function detectNewPatientTrends(todaySnapshot, historicalSnapshot) {
     if (data.new_patient === true) histNew++;
   });
 
-  if (histTotal < 20) return []; // not enough history for meaningful baseline
+  if (histTotal < 20) return [];
 
   const baselineRatio = histNew / histTotal;
 
-  // ---- HIGH NEW PATIENT SURGE ----
   if (todayRatio > baselineRatio * 1.5 && todayNew >= 5) {
     insights.push({
       type: "new_patient_surge",
@@ -329,7 +324,6 @@ function detectNewPatientTrends(todaySnapshot, historicalSnapshot) {
     });
   }
 
-  // ---- UNUSUALLY LOW NEW PATIENT RATE ----
   if (todayRatio < baselineRatio * 0.5 && todayTotal >= 10) {
     insights.push({
       type: "low_new_patient_rate",
@@ -350,6 +344,264 @@ function detectNewPatientTrends(todaySnapshot, historicalSnapshot) {
   }
 
   return insights;
+}
+
+/* ============================================================
+   SERVICE SUPPRESSION (Refined)
+   - planned: patient has a step for the station
+   - reached: patient actually engaged (waiting/in_process/complete/2..7)
+   - not_planned: explicitly skipped
+   ============================================================ */
+
+function detectServiceSuppression(
+  todaySnapshot,
+  historicalSnapshot,
+  opts = {},
+) {
+  const {
+    minPlannedToday = 6,
+    minPlannedHist = 30,
+    reachedDropFactor = 0.6,
+    notPlannedSpikeFactor = 1.8,
+    minBaselineReachedRate = 0.25,
+  } = opts;
+
+  function accumulate(snapshot) {
+    const planned = {};
+    const reached = {};
+    const notPlanned = {};
+
+    snapshot.forEach((doc) => {
+      const data = doc.data() ?? {};
+      const plan = Array.isArray(data.plan_of_care) ? data.plan_of_care : [];
+
+      const plannedSet = new Set();
+      const reachedSet = new Set();
+      const notPlannedSet = new Set();
+
+      for (const step of plan) {
+        const station = step?.station;
+        if (!station || station === "reg") continue;
+
+        plannedSet.add(station);
+
+        const status = step?.status;
+
+        if (status === "not_planned") {
+          notPlannedSet.add(station);
+          continue;
+        }
+
+        if (
+          status === "waiting" ||
+          status === "in_process" ||
+          status === "complete" ||
+          status === "two" ||
+          status === "three" ||
+          status === "four" ||
+          status === "five" ||
+          status === "six" ||
+          status === "seven"
+        ) {
+          reachedSet.add(station);
+        }
+      }
+
+      for (const s of plannedSet) planned[s] = (planned[s] ?? 0) + 1;
+      for (const s of reachedSet) reached[s] = (reached[s] ?? 0) + 1;
+      for (const s of notPlannedSet) notPlanned[s] = (notPlanned[s] ?? 0) + 1;
+    });
+
+    return { planned, reached, notPlanned };
+  }
+
+  const today = accumulate(todaySnapshot);
+  const hist = accumulate(historicalSnapshot);
+
+  const stations = new Set([
+    ...Object.keys(today.planned),
+    ...Object.keys(hist.planned),
+  ]);
+
+  const insights = [];
+
+  for (const station of stations) {
+    const plannedToday = today.planned[station] ?? 0;
+    if (plannedToday < minPlannedToday) continue;
+
+    const reachedToday = today.reached[station] ?? 0;
+    const notPlannedToday = today.notPlanned[station] ?? 0;
+
+    const plannedHist = hist.planned[station] ?? 0;
+    if (plannedHist < minPlannedHist) continue;
+
+    const reachedHist = hist.reached[station] ?? 0;
+    const notPlannedHist = hist.notPlanned[station] ?? 0;
+
+    const todayReachedRate = plannedToday ? reachedToday / plannedToday : 0;
+    const histReachedRate = plannedHist ? reachedHist / plannedHist : 0;
+
+    const todayNotPlannedRate = plannedToday
+      ? notPlannedToday / plannedToday
+      : 0;
+
+    const histNotPlannedRate = plannedHist ? notPlannedHist / plannedHist : 0;
+
+    if (histReachedRate < minBaselineReachedRate) continue;
+
+    const reachedDropped =
+      todayReachedRate < histReachedRate * reachedDropFactor;
+
+    const notPlannedSpiked =
+      histNotPlannedRate > 0
+        ? todayNotPlannedRate > histNotPlannedRate * notPlannedSpikeFactor
+        : todayNotPlannedRate >= 0.35;
+
+    if (!reachedDropped && !notPlannedSpiked) continue;
+
+    const severity =
+      todayReachedRate < histReachedRate * 0.35 || todayNotPlannedRate >= 0.6
+        ? "high"
+        : "medium";
+
+    const parts = [];
+    parts.push(
+      `Alcance hoy: ${Math.round(todayReachedRate * 100)}% (${reachedToday}/${plannedToday}) vs histórico ${Math.round(
+        histReachedRate * 100,
+      )}% (${reachedHist}/${plannedHist}).`,
+    );
+
+    if (notPlannedSpiked || todayNotPlannedRate > 0.15) {
+      parts.push(
+        `Marcado como "no planificado" hoy: ${Math.round(
+          todayNotPlannedRate * 100,
+        )}% (${notPlannedToday}/${plannedToday}) vs histórico ${Math.round(
+          histNotPlannedRate * 100,
+        )}% (${notPlannedHist}/${plannedHist}).`,
+      );
+    }
+
+    insights.push({
+      type: "service_suppression",
+      severity,
+      title: `Posible indisponibilidad de ${station.toUpperCase()}`,
+      explanation: `${parts.join(
+        " ",
+      )} Posible servicio no disponible o desviado.`,
+      metrics: {
+        station,
+        plannedToday,
+        reachedToday,
+        notPlannedToday,
+        plannedHist,
+        reachedHist,
+        notPlannedHist,
+        todayReachedRate,
+        histReachedRate,
+        todayNotPlannedRate,
+        histNotPlannedRate,
+      },
+    });
+  }
+
+  return insights;
+}
+
+/* ============================================================
+   OPS OBSERVATIONS CONTEXT LAYER
+   - Attaches matching ops_observations to insights by station
+   - Optionally builds "ops_observation" informational insights (email-only)
+   ============================================================ */
+
+function buildObservationInsights(observations, typesById = {}) {
+  if (!Array.isArray(observations) || observations.length === 0) return [];
+
+  return observations.map((o) => {
+    const type = (o?.typeId && typesById?.[o.typeId]) || {};
+    const impact = type?.impact || o?.category || "internal";
+
+    const severity =
+      impact === "negative" || impact === "external" ? "medium" : "low";
+
+    const title =
+      o?.typeId === "staff_absence"
+        ? "Ausencia de personal"
+        : o?.typeId === "promotion"
+          ? "Promoción activa"
+          : "Observación operativa";
+
+    const servicesAffected = Array.isArray(o?.servicesAffected)
+      ? o.servicesAffected
+      : [];
+
+    return {
+      type: "ops_observation",
+      severity,
+      title,
+      explanation: o?.notes || "(sin notas)",
+      metrics: {
+        observationId: o?.id ?? null,
+        ymd: o?.ymd ?? null,
+        category: o?.category ?? null,
+        typeId: o?.typeId ?? null,
+        servicesAffected,
+      },
+    };
+  });
+}
+
+function attachObservationsToInsights(insights, observations) {
+  if (!Array.isArray(insights) || insights.length === 0) return insights ?? [];
+  if (!Array.isArray(observations) || observations.length === 0)
+    return insights;
+
+  // index observations by affected service (lowercase)
+  const byService = {};
+  for (const o of observations) {
+    const svcs = Array.isArray(o?.servicesAffected) ? o.servicesAffected : [];
+    for (const s of svcs) {
+      const key = String(s).toLowerCase();
+      byService[key] ??= [];
+      byService[key].push(o);
+    }
+  }
+
+  // stable newest-first within each service
+  for (const k of Object.keys(byService)) {
+    byService[k].sort((a, b) => {
+      const at = a?.date?.toMillis ? a.date.toMillis() : 0;
+      const bt = b?.date?.toMillis ? b.date.toMillis() : 0;
+      return bt - at;
+    });
+  }
+
+  return insights.map((i) => {
+    const station = i?.metrics?.station
+      ? String(i.metrics.station).toLowerCase()
+      : null;
+
+    if (!station) return i;
+
+    const matches = byService[station] ?? [];
+    if (matches.length === 0) return i;
+
+    const lines = matches.slice(0, 3).map((o) => {
+      const note = o?.notes || o?.typeId || "observación";
+      const ymd = o?.ymd ? `${o.ymd}: ` : "";
+      return `• ${ymd}${note}`;
+    });
+
+    const context = `\n\nContexto operativo:\n${lines.join("\n")}`;
+
+    return {
+      ...i,
+      explanation: `${i.explanation ?? ""}${context}`,
+      metrics: {
+        ...(i.metrics ?? {}),
+        opsObservationIds: matches.map((o) => o?.id).filter(Boolean),
+      },
+    };
+  });
 }
 
 /* ============================================================
@@ -431,7 +683,6 @@ async function persistInsights({ db, Timestamp }, insights, clinicDate) {
           resolution: { acknowledged: false, notes: null, by: null },
         });
       } else {
-        // Update analytics only; preserve resolution fields
         tx.update(ref, basePayload);
       }
     });
@@ -448,6 +699,12 @@ module.exports = {
   detectArrivalSurges,
   detectFlowBottlenecks,
   detectNewPatientTrends,
+  detectServiceSuppression,
+
+  // Context layer exports
+  attachObservationsToInsights,
+  buildObservationInsights,
+
   renderInsightsHTML,
   persistInsights,
 };

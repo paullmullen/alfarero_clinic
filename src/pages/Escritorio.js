@@ -59,7 +59,7 @@ const Escritorio = () => {
       () => {
         // Whenever there's a change in the 'patients' collection, update the state
         setPatientsChanged(true);
-      }
+      },
     );
 
     // Cleanup listener on unmount
@@ -90,7 +90,7 @@ const Escritorio = () => {
         isMounted = false;
       };
     }
-  }, [patientsChanged]);
+  }, [patientsChanged, statsData]);
 
   const salir = () => {
     localStorage.clear();
@@ -190,7 +190,7 @@ const Escritorio = () => {
                 value,
                 record.pt_no,
                 usuario.servicio,
-                t("complete")
+                t("complete"),
               );
             }}
             size="large"

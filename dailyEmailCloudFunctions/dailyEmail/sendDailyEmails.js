@@ -10,6 +10,10 @@ const {
   detectArrivalSurges,
   detectFlowBottlenecks,
   detectNewPatientTrends,
+  detectServiceSuppression,
+  attachObservationsToInsights,
+  buildObservationInsights,
+
   renderInsightsHTML,
   persistInsights,
 } = require("../insights");
@@ -282,12 +286,28 @@ async function sendDailyEmails() {
     TIMEZONE_OFFSET_MINUTES,
   );
 
-  const aiInsights = [
+  const baseInsights = [
     ...detectWaitTimeAnomalies(todaySnapshot, last30DaysSnapshot, thresholds),
+    ...detectServiceSuppression(todaySnapshot, last30DaysSnapshot),
     ...detectArrivalSurges(hourlyCounts, historicalHourlyAvg),
     ...detectFlowBottlenecks(todaySnapshot),
     ...detectNewPatientTrends(todaySnapshot, last30DaysSnapshot),
   ];
+
+  // 1) Append ops context to station insights (this is what ties LAB to staff_absence)
+  const enrichedInsights = attachObservationsToInsights(
+    baseInsights,
+    observations,
+  );
+
+  // 2) Optional: add small informational items (email-only, NOT persisted)
+  const observationInsights = buildObservationInsights(
+    observations,
+    observationTypes,
+  );
+
+  // Render email with BOTH enriched anomaly insights + observation items
+  const aiInsights = enrichedInsights.concat(observationInsights);
 
   const clinicDate = getClinicYMD();
   await persistInsights({ db, Timestamp }, aiInsights, clinicDate);

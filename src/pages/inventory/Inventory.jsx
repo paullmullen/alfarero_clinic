@@ -88,7 +88,7 @@ function useCurrentUserDoc() {
     );
 
     return () => unsub();
-  }, []);
+  }, [auth.currentUser?.uid]);
 
   return { userDoc, loading };
 }

@@ -1,6 +1,6 @@
 const IconSizes = {
   width: 60,
-  height: 50,
+  height: 45,
 };
 
 export default IconSizes;

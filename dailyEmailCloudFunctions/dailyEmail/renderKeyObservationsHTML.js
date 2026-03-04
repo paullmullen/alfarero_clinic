@@ -63,10 +63,10 @@ module.exports = function renderKeyObservationsHTML({
     : "";
 
   return `
-    <div style="margin: -20px 0 50px 0;">
-      <div style="margin: 0 0 10px 0; font-family: Arial, sans-serif; font-size: 16px; font-weight: 700;">
-        Observaciones Clave
-      </div>
+      <div style="margin: -20px 0 50px 0; text-align:left;">
+         <div style="margin: 0 0 10px 0; font-family: Arial, sans-serif; font-size: 16px; font-weight: 700;">
+           Observaciones Clave
+         </div>
       ${rows || emptyLine}
       ${moreLine}
       ${linkLine}

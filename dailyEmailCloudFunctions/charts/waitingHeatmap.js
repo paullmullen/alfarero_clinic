@@ -52,7 +52,7 @@ module.exports = function generateWaitingHeatmapChart(
   let outOfRange = 0;
 
   const validStatus = includeInProgress
-    ? new Set(["complete", "in_progress", "queued"])
+    ? new Set(["complete", "in_process", "queued"])
     : new Set(["complete"]);
 
   const start = startOfToday
