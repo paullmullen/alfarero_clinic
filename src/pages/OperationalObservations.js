@@ -150,8 +150,8 @@ export default function OperationalObservations() {
   }, [filteredTypes, t]);
 
   const servicesOptions = useMemo(() => {
-    return services.map((s) => ({ value: s.value, label: s.label }));
-  }, [services]);
+    return services.map((s) => ({ value: s.value, label: t(s.label) }));
+  }, [services, t]);
 
   async function loadServicesFromStats() {
     const snap = await getDocs(collection(firestore, "stats"));

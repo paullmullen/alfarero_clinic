@@ -33,6 +33,7 @@ initDailyEmailDeps({ db, Timestamp });
 
 exports.manualDailyEmail = onRequest(
   {
+    memory: "512MiB",
     timeoutSeconds: 60,
     secrets: [
       "MAIL_PROVIDER",
@@ -69,6 +70,7 @@ exports.manualDailyEmail = onRequest(
 
 exports.scheduledDailyEmail = onSchedule(
   {
+    memory: "512MiB",
     schedule: "0 17 * * *",
     timeZone: "America/Guatemala",
     timeoutSeconds: 60,

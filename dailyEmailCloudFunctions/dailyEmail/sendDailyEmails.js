@@ -1,8 +1,10 @@
 "use strict";
 
 const { sendEmail } = require("./mailer");
-
 const { buildDailyEmailHTML } = require("./template");
+const renderKeyObservationsHTML = require("./renderKeyObservationsHTML");
+
+const es = require("../i18n/es.json");
 
 const {
   detectWaitTimeAnomalies,
@@ -13,7 +15,6 @@ const {
   detectServiceSuppression,
   attachObservationsToInsights,
   buildObservationInsights,
-
   renderInsightsHTML,
   persistInsights,
 } = require("../insights");
@@ -23,8 +24,6 @@ const {
   getVisitTypeMetrics,
   getMilestoneProjection,
   computeStationPlanVsComplete,
-
-  // NEW
   computeDailyVolumeTimeline,
 } = require("./metrics");
 
@@ -41,13 +40,10 @@ const {
   fetchStationThresholds,
   fetchVisitTypeLabelMap,
   fetchTotalPatients,
-
-  // NEW
   fetchOpsObservations,
   fetchObservationTypes,
 } = require("./queries");
 
-// Charts
 const generatePatientSummaryChart = require("../charts/patientSummary");
 const generateStationPlanVsCompletedChart = require("../charts/stationPlanVsCompleted");
 const generateNewVsRepeatPieChart = require("../charts/newVsRepeatPie");
@@ -55,11 +51,9 @@ const generateArrivalChart = require("../charts/arrivalsByHour");
 const generateWaitingTimeChart = require("../charts/waitingByStation");
 const generateWaitingHeatmapChart = require("../charts/waitingHeatmap");
 const generateVisitTypeChart = require("../charts/visitTypeChart");
-
-// NEW
 const generateDailyVolumeWithObservations = require("../charts/dailyVolumeWithObservations");
 
-const TIMEZONE_OFFSET_MINUTES = 6 * 60; // UTC-6
+const TIMEZONE_OFFSET_MINUTES = 6 * 60;
 
 let db = null;
 let Timestamp = null;
@@ -85,45 +79,20 @@ function buildDefaultStationLabelMap() {
   };
 }
 
-function buildKeyObservationsHTML(observations, typesById) {
-  if (!observations || observations.length === 0) return "";
+const translationCache = {};
 
-  const sorted = [...observations]
-    .sort((a, b) => {
-      const aTime = a?.date?.toMillis ? a.date.toMillis() : 0;
-      const bTime = b?.date?.toMillis ? b.date.toMillis() : 0;
-      return bTime - aTime;
-    })
-    .slice(0, 3);
+function translateKey(key) {
+  if (!key) return key;
+  if (translationCache[key]) return translationCache[key];
 
-  const rows = sorted
-    .map((o) => {
-      const type = typesById[o.typeId] || {};
-      const impact = type.impact === "positive" ? "🟢" : "🔴";
-
-      const note = o.notes ? ` — ${o.notes}` : "";
-
-      return `<li style="margin-bottom:0px;">${impact} ${o.ymd}${note}</li>`;
-    })
-    .join("");
-
-  return `
-<div style="margin:0 0 30px 0;">
-  <div style="font-family: Arial, sans-serif; font-size:16px; font-weight:700; margin-bottom:6px;">
-    Observaciones Clave
-  </div>
-  <ul style="margin:0; padding-left:18px; font-family: Arial, sans-serif; font-size:13px;">
-    ${rows}
-  </ul>
-</div>
-`;
+  const value = key.split(".").reduce((obj, part) => obj?.[part], es) ?? key;
+  translationCache[key] = value;
+  return value;
 }
 
 async function sendDailyEmails() {
   if (!db || !Timestamp) {
-    throw new Error(
-      "dailyEmail deps not initialized. Call initDailyEmailDeps({db, Timestamp}) first.",
-    );
+    throw new Error("dailyEmail deps not initialized.");
   }
 
   const { startOfToday, startOfTomorrow } =
@@ -152,8 +121,6 @@ async function sendDailyEmails() {
     console.log("No users with dailyEmail permission found.");
     return [];
   }
-
-  console.log("Number of email recipients", recipients.length);
 
   const hourlyCounts = {};
   for (let hour = 7; hour <= 17; hour++) hourlyCounts[hour] = 0;
@@ -210,13 +177,6 @@ async function sendDailyEmails() {
     ]),
   );
 
-  stationKeys.sort((a, b) => {
-    const ap = stationMetrics.today.planned?.[a] ?? 0;
-    const bp = stationMetrics.today.planned?.[b] ?? 0;
-    if (bp !== ap) return bp - ap;
-    return a.localeCompare(b);
-  });
-
   const stationLabelMap = buildDefaultStationLabelMap();
 
   const patientSummaryChart = generatePatientSummaryChart(
@@ -234,6 +194,7 @@ async function sendDailyEmails() {
   );
 
   const arrivalChart = generateArrivalChart(hourlyCounts);
+
   const waitingChart = generateWaitingTimeChart(todaySnapshot);
 
   const waitingHeatmap = generateWaitingHeatmapChart(todaySnapshot, {
@@ -249,37 +210,49 @@ async function sendDailyEmails() {
     stationLabelMap,
   );
 
-  // ---------------- NEW SECTION ----------------
-
   const DAYS = 14;
 
-  // ✅ Fix: correct argument order (snapshot, offset, days)
   const timeline = computeDailyVolumeTimeline(
     last30DaysSnapshot,
     TIMEZONE_OFFSET_MINUTES,
     DAYS,
   );
 
-  // ✅ Fetch ops data (works with your queries.js)
   const observations = await fetchOpsObservations({ db, days: DAYS });
   const observationTypes = await fetchObservationTypes({ db });
 
-  // ✅ Fix: use timeline.values (not timeline.counts)
+  const clinicDate = getClinicYMD();
+
+  const observationsForChart = Array.isArray(observations) ? observations : [];
+
+  const observationsForKeyList = [...observationsForChart].sort((a, b) => {
+    const at = a?.date?.toMillis ? a.date.toMillis() : 0;
+    const bt = b?.date?.toMillis ? b.date.toMillis() : 0;
+    if (bt !== at) return bt - at;
+
+    const ay = String(a?.ymd ?? "");
+    const by = String(b?.ymd ?? "");
+    return by.localeCompare(ay);
+  });
+
+  const observationsForInsights = observationsForChart.filter(
+    (o) => o?.ymd === clinicDate,
+  );
+
   const dailyVolumeChart = generateDailyVolumeWithObservations({
     labels: timeline.labels,
     volumeData: timeline.values,
-    observations,
+    observations: observationsForChart,
     typesById: observationTypes,
     daysLabel: `(últimos ${DAYS} días)`,
   });
 
-  // ✅ Fix: DEFINE keyObservationsHTML so it exists
-  const keyObservationsHTML = buildKeyObservationsHTML(
-    observations,
-    observationTypes,
-  );
-
-  // ---------------- END NEW SECTION ----------------
+  const keyObservationsHTML = renderKeyObservationsHTML({
+    top3: observationsForKeyList.slice(0, 3),
+    remaining: Math.max(0, observationsForKeyList.length - 3),
+    dashboardUrl: null,
+    labelForKey: translateKey,
+  });
 
   const historicalHourlyAvg = computeHistoricalHourlyAverages(
     last30DaysSnapshot,
@@ -294,23 +267,19 @@ async function sendDailyEmails() {
     ...detectNewPatientTrends(todaySnapshot, last30DaysSnapshot),
   ];
 
-  // 1) Append ops context to station insights (this is what ties LAB to staff_absence)
   const enrichedInsights = attachObservationsToInsights(
     baseInsights,
-    observations,
+    observationsForInsights,
   );
 
-  // 2) Optional: add small informational items (email-only, NOT persisted)
   const observationInsights = buildObservationInsights(
-    observations,
+    observationsForInsights,
     observationTypes,
   );
 
-  // Render email with BOTH enriched anomaly insights + observation items
   const aiInsights = enrichedInsights.concat(observationInsights);
 
-  const clinicDate = getClinicYMD();
-  await persistInsights({ db, Timestamp }, aiInsights, clinicDate);
+  await persistInsights({ db, Timestamp }, enrichedInsights, clinicDate);
 
   const insightsHTML = renderInsightsHTML(aiInsights);
 
@@ -324,8 +293,6 @@ async function sendDailyEmails() {
       waitingChart,
       waitingHeatmap,
       stationPlanVsCompletedChart,
-
-      // NEW
       dailyVolumeChart,
       keyObservationsHTML,
     },
@@ -334,25 +301,25 @@ async function sendDailyEmails() {
     milestone: { nextMilestone, projectedDateStr },
   });
 
-  const results = await Promise.all(
-    recipients.map(async ({ email }) => {
-      try {
-        await sendEmail({
-          to: email,
-          subject: "Informe Diario de Pacientes",
-          html,
-          attachments: [],
-        });
+  const results = [];
 
-        console.log(`Email sent to ${email}`);
-        return { email, status: "sent" };
-      } catch (error) {
-        const msg = error?.message ?? String(error);
-        console.error(`Failed to send email to ${email}: ${msg}`);
-        return { email, status: "failed", error: msg };
-      }
-    }),
-  );
+  for (const { email } of recipients) {
+    try {
+      await sendEmail({
+        to: email,
+        subject: "Informe Diario de Pacientes",
+        html,
+        attachments: [],
+      });
+
+      console.log(`Email sent to ${email}`);
+      results.push({ email, status: "sent" });
+    } catch (error) {
+      const msg = error?.message ?? String(error);
+      console.error(`Failed to send email to ${email}: ${msg}`);
+      results.push({ email, status: "failed", error: msg });
+    }
+  }
 
   return results;
 }
