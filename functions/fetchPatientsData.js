@@ -3,18 +3,18 @@
 // AS A CLOUD FUNCTION AND NOT AS PART OF THE CLIENT SIDE CODE.
 //***************************************************************** */
 
-const { onRequest } = require("firebase-functions/v2/https");
-const cors = require("cors");
+import { onRequest } from "firebase-functions/v2/https";
+import corsFactory from "cors";
 
-const { initializeApp, getApps } = require("firebase-admin/app");
-const { getFirestore, Timestamp } = require("firebase-admin/firestore");
+import { initializeApp, getApps } from "firebase-admin/app";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
-// Initialize Admin safely (avoid duplicate init during cold starts / emulator reloads)
+// Safe Admin initialization
 if (!getApps().length) {
   initializeApp();
 }
 
-const corsHandler = cors({
+const corsHandler = corsFactory({
   origin: [
     /^http:\/\/localhost(:\d+)?$/,
     /^https:\/\/localhost(:\d+)?$/,
@@ -27,7 +27,7 @@ const corsHandler = cors({
   maxAge: 3600,
 });
 
-exports.fetchPatientsData = onRequest(async (req, res) => {
+export const fetchPatientsData = onRequest(async (req, res) => {
   corsHandler(req, res, async () => {
     if (req.method === "OPTIONS") return res.status(204).send("");
 
@@ -48,7 +48,7 @@ exports.fetchPatientsData = onRequest(async (req, res) => {
 
       const patientsCollection = db.collection("patients");
 
-      // Build timestamps safely from your JSON {seconds, ...}
+      // Build timestamps safely from { seconds }
       const startTs = Timestamp.fromMillis(dateRange[0].seconds * 1000);
       const endTs = Timestamp.fromMillis(dateRange[1].seconds * 1000);
 
@@ -56,17 +56,15 @@ exports.fetchPatientsData = onRequest(async (req, res) => {
         .where("start_time", ">=", startTs)
         .where("start_time", "<=", endTs);
 
-      // add location filter ONLY when provided
       if (locationId) {
         q = q.where("location_id", "==", locationId);
       }
 
-      // complete filter branches
       if (include_completed === "active") {
         q = q.where("complete", "==", false);
       } else if (include_completed === "complete") {
         q = q.where("complete", "==", true);
-      } // "both" => no filter
+      }
 
       const snapshot = await q.get();
 

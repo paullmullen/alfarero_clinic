@@ -1,10 +1,8 @@
-"use strict";
+import nodemailer from "nodemailer";
+import { defineSecret } from "firebase-functions/params";
 
-const nodemailer = require("nodemailer");
-const { defineSecret } = require("firebase-functions/params");
-
-const GMAIL_USER = defineSecret("GMAIL_USER");
-const GMAIL_APP_PASSWORD = defineSecret("GMAIL_APP_PASSWORD");
+export const GMAIL_USER = defineSecret("GMAIL_USER");
+export const GMAIL_APP_PASSWORD = defineSecret("GMAIL_APP_PASSWORD");
 
 function getTransporter() {
   const gmailUserRaw = (GMAIL_USER.value() || "").trim();
@@ -23,7 +21,7 @@ function getTransporter() {
   });
 }
 
-async function sendEmail({ to, subject, html, attachments }) {
+export async function sendEmail({ to, subject, html, attachments }) {
   if (!to || !subject || !html) {
     throw new Error("sendEmail missing required fields: to, subject, html");
   }
@@ -39,5 +37,3 @@ async function sendEmail({ to, subject, html, attachments }) {
     attachments,
   });
 }
-
-module.exports = { sendEmail };

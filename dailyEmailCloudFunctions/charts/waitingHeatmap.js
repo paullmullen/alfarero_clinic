@@ -1,19 +1,10 @@
-// charts/waitingHeatmap.js
-"use strict";
+import { createCanvas } from "canvas";
+import Chart from "chart.js/auto";
+import ChartDataLabels from "chartjs-plugin-datalabels";
+import { MatrixController, MatrixElement } from "chartjs-chart-matrix";
+import { CategoryScale, LinearScale } from "chart.js";
 
-/**
- * Waiting Heatmap Chart (Chart.js Matrix)
- *
- * NOTE: This is intentionally extracted with minimal behavioral changes
- * from your original index.js implementation.
- *
- * Inputs:
- * - patientsSnapshot: Firestore QuerySnapshot of patients
- * - thresholds: map of station -> max_waiting_time (seconds)
- * - timezoneOffsetMinutes: number (e.g., 360 for UTC-6)
- * - startOfToday/startOfTomorrow: optional Timestamp|Date bounds for filtering steps
- */
-module.exports = function generateWaitingHeatmapChart(
+export function generateWaitingHeatmapChart(
   patientsSnapshot,
   {
     thresholds = null,
@@ -26,20 +17,20 @@ module.exports = function generateWaitingHeatmapChart(
     showDecimalMinutes = true,
   } = {},
 ) {
-  const { createCanvas } = require("canvas");
-  const Chart = require("chart.js/auto");
-  const ChartDataLabels = require("chartjs-plugin-datalabels");
-  Chart.register(ChartDataLabels);
-
-  const { MatrixController, MatrixElement } = require("chartjs-chart-matrix");
-  const { CategoryScale, LinearScale } = require("chart.js");
-  Chart.register(MatrixController, MatrixElement, CategoryScale, LinearScale);
+  // Register plugins inside function (Cloud Functions safe)
+  Chart.register(
+    ChartDataLabels,
+    MatrixController,
+    MatrixElement,
+    CategoryScale,
+    LinearScale,
+  );
 
   const canvas = createCanvas(800, 400);
   const ctx = canvas.getContext("2d");
 
   // --- Core accumulators ---
-  const stationHourMap = {}; // key: `${station}_${hour}` -> [minutes...]
+  const stationHourMap = {};
   const stationLabels = new Set();
   const hourLabels = new Set();
 
@@ -52,7 +43,7 @@ module.exports = function generateWaitingHeatmapChart(
   let outOfRange = 0;
 
   const validStatus = includeInProgress
-    ? new Set(["complete", "in_process", "queued"])
+    ? new Set(["complete", "in_process, queued"])
     : new Set(["complete"]);
 
   const start = startOfToday
@@ -60,6 +51,7 @@ module.exports = function generateWaitingHeatmapChart(
       ? startOfToday.toDate()
       : startOfToday
     : null;
+
   const end = startOfTomorrow
     ? startOfTomorrow.toDate
       ? startOfTomorrow.toDate()
@@ -73,7 +65,6 @@ module.exports = function generateWaitingHeatmapChart(
     for (const step of plan) {
       totalSteps++;
 
-      // waiting_start required
       const hasTimestamp = !!step?.waiting_start?.toDate;
       if (!hasTimestamp) {
         noTimestamp++;
@@ -81,7 +72,6 @@ module.exports = function generateWaitingHeatmapChart(
       }
       const ws = step.waiting_start.toDate();
 
-      // waiting_time required
       const hasTime =
         typeof step?.waiting_time === "number" &&
         !Number.isNaN(step.waiting_time);
@@ -90,19 +80,16 @@ module.exports = function generateWaitingHeatmapChart(
         continue;
       }
 
-      // status filter
       if (!validStatus.has(step?.status)) {
         badStatus++;
         continue;
       }
 
-      // optional day window filter
       if (start && end && !(ws >= start && ws < end)) {
         outOfRange++;
         continue;
       }
 
-      // local hour bucket
       const localStart = new Date(
         ws.getTime() - timezoneOffsetMinutes * 60 * 1000,
       );
@@ -112,9 +99,7 @@ module.exports = function generateWaitingHeatmapChart(
       const key = `${station}_${hour}`;
       if (!stationHourMap[key]) stationHourMap[key] = [];
 
-      // IMPORTANT: keep behavior identical to your original:
-      // waiting_time is treated as seconds and converted to minutes here.
-      const minutes = step.waiting_time / 60; // seconds → minutes
+      const minutes = step.waiting_time / 60;
       stationHourMap[key].push(minutes);
 
       stationLabels.add(station);
@@ -132,9 +117,7 @@ module.exports = function generateWaitingHeatmapChart(
       const times = stationHourMap[key] ?? [];
       if (times.length === 0) return 0;
 
-      const avg = times.reduce((a, b) => a + b, 0) / times.length; // minutes
-
-      // Keep original behavior (it was effectively integer output)
+      const avg = times.reduce((a, b) => a + b, 0) / times.length;
       return showDecimalMinutes ? parseFloat(avg.toFixed(0)) : Math.round(avg);
     }),
   );
@@ -147,17 +130,15 @@ module.exports = function generateWaitingHeatmapChart(
     const header = "[WaitingHeatmap Diagnostics]";
     console.log(`${header} Steps (total=${totalSteps})`);
     console.log(
-      `${header} Included=${included}, Excluded: ` +
-        `noTimestamp=${noTimestamp}, noWaitingTime=${noWaitingTime}, ` +
-        `badStatus=${badStatus}, outOfRange=${outOfRange}`,
+      `${header} Included=${included}, Excluded: noTimestamp=${noTimestamp}, noWaitingTime=${noWaitingTime}, badStatus=${badStatus}, outOfRange=${outOfRange}`,
     );
 
     if (start && end) {
       console.log(
-        `${header} Day window (UTC timestamps passed in): start=${start.toISOString()} end=${end.toISOString()} (exclusive)`,
+        `${header} Day window: start=${start.toISOString()} end=${end.toISOString()}`,
       );
     } else {
-      console.log(`${header} Day window not applied at step level`);
+      console.log(`${header} Day window not applied`);
     }
 
     console.log(
@@ -212,9 +193,7 @@ module.exports = function generateWaitingHeatmapChart(
         );
       }
     } else {
-      console.log(
-        `${header} Top-by-average list is empty (insufficient data).`,
-      );
+      console.log(`${header} Top-by-average list is empty.`);
     }
   }
 
@@ -233,14 +212,13 @@ module.exports = function generateWaitingHeatmapChart(
           ),
           backgroundColor: function (ctx) {
             const dataPoint = ctx?.dataset?.data?.[ctx.dataIndex];
-            const value = dataPoint?.v ?? 0; // minutes
+            const value = dataPoint?.v ?? 0;
             const stationLabel = dataPoint?.y ?? "";
             const station = stationLabel.split(" [")[0];
-            const maxValue = thresholds?.[station] ?? 900; // seconds (stored)
+            const maxValue = thresholds?.[station] ?? 900;
 
             if (value === 0) return "rgba(255,255,255,1)";
 
-            // Compare using seconds for threshold
             if (value * 60 <= maxValue) {
               const ratio = (value * 60) / maxValue;
               const green = Math.floor(200 + 55 * ratio);
@@ -315,4 +293,4 @@ module.exports = function generateWaitingHeatmapChart(
   });
 
   return canvas.toDataURL();
-};
+}

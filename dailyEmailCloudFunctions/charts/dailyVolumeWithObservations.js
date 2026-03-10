@@ -1,28 +1,23 @@
-"use strict";
+import { createCanvas } from "canvas";
+import Chart from "chart.js/auto";
 
-module.exports = function generateDailyVolumeWithObservations({
-  labels, // ["YYYY-MM-DD", ...] in order
-  volumeData, // [number, ...] aligned to labels
-  observations, // ops_observations docs (need at least ymd, date, typeId, notes)
-  typesById = {}, // { [typeId]: { impact, sortOrder, labelKey, ... } }
+export function generateDailyVolumeWithObservations({
+  labels,
+  volumeData,
+  observations,
+  typesById = {},
   title = "Volumen Diario de Pacientes",
   laneTitle = "Observaciones",
-  daysLabel = "", // optional suffix like "(últimos 14 días)"
-  showLegend = false, // keep false for clean email look
-  showLaneTitle = false, // NEW: hide the lane label by default
+  daysLabel = "",
+  showLegend = false,
+  showLaneTitle = false,
 }) {
-  const { createCanvas } = require("canvas");
-  const Chart = require("chart.js/auto");
-
-  // --- Match other email charts: 800px wide static canvas ---
   const width = 800;
 
-  // Lane sizing / spacing
   const laneHeight = 62;
-  const lanePadTop = 14; // breathing room between x-axis labels and lane
-  const lanePadBottom = showLegend ? 26 : 12; // space below lane
+  const lanePadTop = 14;
+  const lanePadBottom = showLegend ? 26 : 12;
 
-  // Slightly taller canvas so the lane never collides with the bottom edge
   const height = 520;
 
   const canvas = createCanvas(width, height);
@@ -32,13 +27,11 @@ module.exports = function generateDailyVolumeWithObservations({
   const safeVolume = Array.isArray(volumeData) ? volumeData : [];
   const safeObs = Array.isArray(observations) ? observations : [];
 
-  // Group observations by ymd and attach type + dateMs for sorting
   const obsByYmd = groupObservationsByYmd(safeObs, typesById);
 
   const lanePoints = safeLabels.map((ymd) => {
     const events = obsByYmd.get(ymd) ?? [];
 
-    // Sort within day: higher sortOrder first, then newer
     events.sort((a, b) => {
       const soA = a.type?.sortOrder ?? 0;
       const soB = b.type?.sortOrder ?? 0;
@@ -49,15 +42,12 @@ module.exports = function generateDailyVolumeWithObservations({
     return { ymd, events };
   });
 
-  // Debug after lanePoints exists (safe)
   const totalEvents = lanePoints.reduce(
     (sum, p) => sum + (p.events?.length ?? 0),
     0,
   );
-  // eslint-disable-next-line no-console
   console.log("dailyVolumeWithObservations: matched events =", totalEvents);
 
-  // Reserve space below chart area for lane + breathing room
   const bottomPad = laneHeight + lanePadTop + lanePadBottom;
 
   const lanePlugin = makeObservationLanePlugin({
@@ -87,15 +77,16 @@ module.exports = function generateDailyVolumeWithObservations({
     options: {
       responsive: false,
       devicePixelRatio: 2,
-      animation: false, // deterministic for email
-      layout: { padding: { top: 10, left: 10, right: 10, bottom: bottomPad } },
+      animation: false,
+      layout: {
+        padding: { top: 10, left: 10, right: 10, bottom: bottomPad },
+      },
       plugins: {
         legend: {
           display: !!showLegend,
           labels: { font: { family: "Arial, sans-serif", size: 12 } },
         },
         title: { display: false },
-        // If chartjs-plugin-datalabels is registered in your env, disable it
         datalabels: { display: false },
       },
       scales: {
@@ -200,20 +191,16 @@ module.exports = function generateDailyVolumeWithObservations({
         const xScale = scales.x;
         if (!xScale || !chartArea) return;
 
-        // Place lane just below the chart area (x-axis labels included)
-        // and clamp so we never draw outside the canvas.
         let laneTop = chartArea.bottom + lanePadTop;
         const maxBottom = chart.height - lanePadBottom;
 
         let laneBottom = Math.min(laneTop + laneHeight, maxBottom);
 
-        // If clamped too tight, pull laneTop up so lane keeps its height.
         if (laneBottom - laneTop < laneHeight) {
           laneTop = Math.max(chartArea.bottom + 6, maxBottom - laneHeight);
           laneBottom = Math.min(laneTop + laneHeight, maxBottom);
         }
 
-        // Slight +2px to visually center markers in the lane without a baseline
         const laneMid = Math.round((laneTop + laneBottom) / 2) + 2;
 
         const maxStack = 3;
@@ -222,7 +209,6 @@ module.exports = function generateDailyVolumeWithObservations({
 
         ctx.save();
 
-        // Lane label (optional) — draw inside lane so it doesn't collide with x labels
         if (showLaneTitle && laneTitle) {
           ctx.font = "bold 12px Arial, sans-serif";
           ctx.fillStyle = "rgba(0,0,0,0.75)";
@@ -230,14 +216,10 @@ module.exports = function generateDailyVolumeWithObservations({
           ctx.fillText(laneTitle, chartArea.left + 4, laneTop + 2);
         }
 
-        // Baseline removed (cleaner + prevents visual overlap)
-
-        // Markers per day
         for (let i = 0; i < lanePoints.length; i++) {
           const { events } = lanePoints[i];
           if (!events || events.length === 0) continue;
 
-          // More reliable for bar/category scales than getPixelForTick
           const x = xScale.getPixelForValue(i);
 
           const normalized = events.map((e) => ({
@@ -248,20 +230,18 @@ module.exports = function generateDailyVolumeWithObservations({
           const visible = normalized.slice(0, maxStack);
           const hiddenCount = Math.max(0, normalized.length - visible.length);
 
-          // Draw stacked visible markers
           for (let s = 0; s < visible.length; s++) {
             const ev = visible[s];
             const y = laneMid - s * stackGap;
 
             const fill =
               ev.impact === "positive"
-                ? "rgba(46, 125, 50, 0.95)" // green
-                : "rgba(198, 40, 40, 0.95)"; // red
+                ? "rgba(46, 125, 50, 0.95)"
+                : "rgba(198, 40, 40, 0.95)";
 
             drawDot(ctx, x, y, markerR, fill);
           }
 
-          // Draw +N pill if needed
           if (hiddenCount > 0) {
             const y = laneMid - visible.length * stackGap;
 
@@ -281,7 +261,6 @@ module.exports = function generateDailyVolumeWithObservations({
           }
         }
 
-        // Optional tiny legend
         if (showLegend) {
           ctx.font = "12px Arial, sans-serif";
           ctx.fillStyle = "rgba(0,0,0,0.70)";
@@ -305,7 +284,6 @@ module.exports = function generateDailyVolumeWithObservations({
     ctx.fillStyle = fill;
     ctx.fill();
 
-    // white outline (email-friendly)
     ctx.lineWidth = 1;
     ctx.strokeStyle = "rgba(255,255,255,0.9)";
     ctx.stroke();
@@ -341,4 +319,4 @@ module.exports = function generateDailyVolumeWithObservations({
     ctx.arcTo(x, y, x + w, y, rr);
     ctx.closePath();
   }
-};
+}

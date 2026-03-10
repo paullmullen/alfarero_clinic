@@ -1,12 +1,10 @@
-"use strict";
+import { sendEmail } from "./mailer.js";
+import { buildDailyEmailHTML } from "./template.js";
+import renderKeyObservationsHTML from "./renderKeyObservationsHTML.js";
 
-const { sendEmail } = require("./mailer");
-const { buildDailyEmailHTML } = require("./template");
-const renderKeyObservationsHTML = require("./renderKeyObservationsHTML");
+import es from "../i18n/es.json" assert { type: "json" };
 
-const es = require("../i18n/es.json");
-
-const {
+import {
   detectWaitTimeAnomalies,
   computeHistoricalHourlyAverages,
   detectArrivalSurges,
@@ -17,23 +15,23 @@ const {
   buildObservationInsights,
   renderInsightsHTML,
   persistInsights,
-} = require("../insights");
+} from "../insights/index.js";
 
-const {
+import {
   computePatientInsightsFromSnapshots,
   getVisitTypeMetrics,
   getMilestoneProjection,
   computeStationPlanVsComplete,
   computeDailyVolumeTimeline,
-} = require("./metrics");
+} from "./metrics.js";
 
-const {
+import {
   getLocalDayRangeTimestamps,
   getStartOf30DaysAgoTimestamp,
   getClinicYMD,
-} = require("./time");
+} from "./time.js";
 
-const {
+import {
   fetchTodayPatients,
   fetchLast30DaysPatients,
   fetchRecipients,
@@ -42,23 +40,23 @@ const {
   fetchTotalPatients,
   fetchOpsObservations,
   fetchObservationTypes,
-} = require("./queries");
+} from "./queries.js";
 
-const generatePatientSummaryChart = require("../charts/patientSummary");
-const generateStationPlanVsCompletedChart = require("../charts/stationPlanVsCompleted");
-const generateNewVsRepeatPieChart = require("../charts/newVsRepeatPie");
-const generateArrivalChart = require("../charts/arrivalsByHour");
-const generateWaitingTimeChart = require("../charts/waitingByStation");
-const generateWaitingHeatmapChart = require("../charts/waitingHeatmap");
-const generateVisitTypeChart = require("../charts/visitTypeChart");
-const generateDailyVolumeWithObservations = require("../charts/dailyVolumeWithObservations");
+import { generatePatientSummaryChart } from "../charts/patientSummary.js";
+import { generateStationPlanVsCompletedChart } from "../charts/stationPlanVsCompleted.js";
+import { generateNewVsRepeatPieChart } from "../charts/newVsRepeatPie.js";
+import { generateArrivalChart } from "../charts/arrivalsByHour.js";
+import { generateWaitingTimeChart } from "../charts/waitingByStation.js";
+import { generateWaitingHeatmapChart } from "../charts/waitingHeatmap.js";
+import { generateVisitTypeChart } from "../charts/visitTypeChart.js";
+import { generateDailyVolumeWithObservations } from "../charts/dailyVolumeWithObservations.js";
 
-const TIMEZONE_OFFSET_MINUTES = 6 * 60;
+export const TIMEZONE_OFFSET_MINUTES = 6 * 60;
 
 let db = null;
 let Timestamp = null;
 
-function initDailyEmailDeps({ db: _db, Timestamp: _Timestamp }) {
+export function initDailyEmailDeps({ db: _db, Timestamp: _Timestamp }) {
   db = _db;
   Timestamp = _Timestamp;
 }
@@ -90,7 +88,7 @@ function translateKey(key) {
   return value;
 }
 
-async function sendDailyEmails() {
+export async function sendDailyEmails() {
   if (!db || !Timestamp) {
     throw new Error("dailyEmail deps not initialized.");
   }
@@ -323,9 +321,3 @@ async function sendDailyEmails() {
 
   return results;
 }
-
-module.exports = {
-  initDailyEmailDeps,
-  sendDailyEmails,
-  TIMEZONE_OFFSET_MINUTES,
-};

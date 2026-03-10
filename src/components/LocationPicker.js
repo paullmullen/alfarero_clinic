@@ -4,12 +4,17 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import PropTypes from "prop-types";
 
-// Ensure default Leaflet icons are loaded correctly
+// Import Leaflet marker assets directly (ESM-safe)
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+// Fix default Leaflet icon paths
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconUrl: require("leaflet/dist/images/marker-icon.png"),
-  iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
-  shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
 });
 
 const DEFAULT_LOCATION = { lat: 14.6232421, lng: -90.5304184 };
@@ -28,7 +33,6 @@ const LocationPicker = ({ currentLocation, onLocationSelect }) => {
         const { lat, lng } = e.latlng;
         setPosition({ lat, lng });
 
-        // Only notify parent if callback provided (and you keep your hover behavior)
         if (hovering && typeof onLocationSelect === "function") {
           onLocationSelect(lat, lng);
         }
@@ -58,7 +62,7 @@ LocationPicker.propTypes = {
     lat: PropTypes.number,
     lng: PropTypes.number,
   }),
-  onLocationSelect: PropTypes.func, // no longer required
+  onLocationSelect: PropTypes.func,
 };
 
 LocationPicker.defaultProps = {

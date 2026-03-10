@@ -1,15 +1,12 @@
-// charts/visitTypeChart.js
-"use strict";
+import { createCanvas } from "canvas";
+import Chart from "chart.js/auto";
 
-module.exports = function generateVisitTypeChart(
+export function generateVisitTypeChart(
   todayCounts,
   avgCounts,
   orderedKeys,
   labelMap = {},
 ) {
-  const { createCanvas } = require("canvas");
-  const Chart = require("chart.js/auto");
-
   const keys = Array.isArray(orderedKeys) ? orderedKeys : [];
 
   const height = Math.max(400, 40 * keys.length + 120);
@@ -26,7 +23,11 @@ module.exports = function generateVisitTypeChart(
     data: {
       labels,
       datasets: [
-        { label: "Visitas Hoy", data: todayData, backgroundColor: "#3367D6" },
+        {
+          label: "Visitas Hoy",
+          data: todayData,
+          backgroundColor: "#3367D6",
+        },
         {
           label: "Promedio Diario (últimos 30 días)",
           data: avgData,
@@ -57,4 +58,4 @@ module.exports = function generateVisitTypeChart(
   });
 
   return canvas.toDataURL();
-};
+}

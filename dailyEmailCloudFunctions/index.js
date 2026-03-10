@@ -1,21 +1,23 @@
-// index.js
-"use strict";
+//***************************************************************** */
+// NOTE THAT THIS IS A GOOGLE CLOUD FUNCTION THAT NEEDS TO BE DEPLOYED
+// AS A CLOUD FUNCTION AND NOT AS PART OF THE CLIENT SIDE CODE.
+//***************************************************************** */
 
-const { onRequest } = require("firebase-functions/v2/https");
-const { onSchedule } = require("firebase-functions/v2/scheduler");
+import { onRequest } from "firebase-functions/v2/https";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 
-const { initializeApp } = require("firebase-admin/app");
-const { getFirestore, Timestamp } = require("firebase-admin/firestore");
+import { initializeApp } from "firebase-admin/app";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
-const { runDailyEmailPipeline } = require("./dailyEmail/pipeline");
-const {
+import { runDailyEmailPipeline } from "./dailyEmail/pipeline.js";
+import {
   initDailyEmailDeps,
   sendDailyEmails,
-} = require("./dailyEmail/sendDailyEmails");
+} from "./dailyEmail/sendDailyEmails.js";
 
 // IMPORTANT: pull the secret handles from mailer.js
 // so we can mount them as function secrets.
-const { GMAIL_USER, GMAIL_APP_PASSWORD } = require("./dailyEmail/mailer");
+import { GMAIL_USER, GMAIL_APP_PASSWORD } from "./dailyEmail/mailer.js";
 
 function applyCors(req, res) {
   const origin = req.headers.origin || "*";
@@ -31,7 +33,7 @@ const db = getFirestore();
 
 initDailyEmailDeps({ db, Timestamp });
 
-exports.manualDailyEmail = onRequest(
+export const manualDailyEmail = onRequest(
   {
     memory: "512MiB",
     timeoutSeconds: 60,
@@ -68,7 +70,7 @@ exports.manualDailyEmail = onRequest(
   },
 );
 
-exports.scheduledDailyEmail = onSchedule(
+export const scheduledDailyEmail = onSchedule(
   {
     memory: "512MiB",
     schedule: "0 17 * * *",

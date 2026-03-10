@@ -3,21 +3,26 @@
 // AS A CLOUD FUNCTION AND NOT AS PART OF THE CLIENT SIDE CODE.
 //***************************************************************** */
 
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-const cors = require("cors")({ origin: true });
-const { getFirestore } = require("firebase-admin/firestore");
+import * as functions from "firebase-functions";
+import admin from "firebase-admin";
+import corsFactory from "cors";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
-app = admin.initializeApp();
+const cors = corsFactory({ origin: true });
 
-exports.fetchDaysAgoData = functions.https.onRequest(async (req, res) => {
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+export const fetchDaysAgoData = functions.https.onRequest(async (req, res) => {
   cors(req, res, async () => {
     try {
-      const { daysCount, database } = req.body; // ✅ Extract from req.body (HTTP request format)
+      const { daysCount, database } = req.body;
       console.log("Received daysCount:", daysCount);
+
       const db =
         database === "alfarero-dev"
-          ? getFirestore(app, "alfarero-dev") // Explicitly select 'alfarero-dev' database
+          ? getFirestore(app, "alfarero-dev")
           : getFirestore(app);
 
       console.log("Using Firestore database:", db._databaseId.database);
@@ -28,12 +33,13 @@ exports.fetchDaysAgoData = functions.https.onRequest(async (req, res) => {
 
       const now = new Date();
       const daysAgo = new Date(now.setDate(now.getDate() - daysCount));
-      const daysAgoTimestamp = admin.firestore.Timestamp.fromDate(daysAgo);
+      const daysAgoTimestamp = Timestamp.fromDate(daysAgo);
 
       const patientsCollection = db.collection("patients");
       const querySnapshot = await patientsCollection
         .where("start_time", ">=", daysAgoTimestamp)
         .get();
+
       const patientCountHistogram = querySnapshot.docs.reduce(
         (histogram, doc) => {
           const startTime = doc.data().start_time.toDate();
@@ -50,10 +56,10 @@ exports.fetchDaysAgoData = functions.https.onRequest(async (req, res) => {
           }
           return histogram;
         },
-        []
+        [],
       );
 
-      return res.status(200).json(patientCountHistogram); // ✅ Send response
+      return res.status(200).json(patientCountHistogram);
     } catch (error) {
       console.error("Error fetching data:", error);
       return res.status(500).json({ error: "Internal Server Error" });

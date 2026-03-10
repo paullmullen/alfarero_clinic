@@ -1,10 +1,7 @@
-// charts/waitingByStation.js
-"use strict";
+import { createCanvas } from "canvas";
+import Chart from "chart.js/auto";
 
-module.exports = function generateWaitingTimeChart(patientsSnapshot) {
-  const { createCanvas } = require("canvas");
-  const Chart = require("chart.js/auto");
-
+export function generateWaitingTimeChart(patientsSnapshot) {
   const canvas = createCanvas(800, 400);
   const ctx = canvas.getContext("2d");
 
@@ -62,4 +59,4 @@ module.exports = function generateWaitingTimeChart(patientsSnapshot) {
   });
 
   return canvas.toDataURL();
-};
+}

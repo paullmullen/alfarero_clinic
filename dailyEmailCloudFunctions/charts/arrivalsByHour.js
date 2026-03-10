@@ -1,10 +1,7 @@
-// charts/arrivalsByHour.js
-"use strict";
+import { createCanvas } from "canvas";
+import Chart from "chart.js/auto";
 
-module.exports = function generateArrivalChart(hourlyCounts) {
-  const { createCanvas } = require("canvas");
-  const Chart = require("chart.js/auto");
-
+export function generateArrivalChart(hourlyCounts) {
   const canvas = createCanvas(800, 400);
   const ctx = canvas.getContext("2d");
 
@@ -16,7 +13,11 @@ module.exports = function generateArrivalChart(hourlyCounts) {
     data: {
       labels,
       datasets: [
-        { label: "Pacientes por hora (hoy)", data, backgroundColor: "#009688" },
+        {
+          label: "Pacientes por hora (hoy)",
+          data,
+          backgroundColor: "#009688",
+        },
       ],
     },
     options: {
@@ -37,4 +38,4 @@ module.exports = function generateArrivalChart(hourlyCounts) {
   });
 
   return canvas.toDataURL();
-};
+}

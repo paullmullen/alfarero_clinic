@@ -1,7 +1,11 @@
-const { onRequest } = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
+import { onRequest } from "firebase-functions/v2/https";
+import admin from "firebase-admin";
 
-exports.getPatientsData = onRequest(
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+export const getPatientsData = onRequest(
   {
     region: "us-central1",
     cors: [
@@ -14,13 +18,14 @@ exports.getPatientsData = onRequest(
   async (req, res) => {
     if (req.method === "OPTIONS") return res.status(204).send("");
 
-    if (req.method !== "POST")
+    if (req.method !== "POST") {
       return res.status(405).send("Method Not Allowed");
+    }
 
     try {
       const { dateRange, database, include_completed } = req.body;
 
-      // ✅ default DB (since app already initialized in index.js)
+      // default DB (app already initialized in index.js)
       const db = admin.firestore();
 
       // ... keep the rest of your query code ...

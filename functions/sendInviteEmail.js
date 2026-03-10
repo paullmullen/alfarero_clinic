@@ -1,11 +1,12 @@
-"use strict";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
+import { sendEmail } from "./email/sendEmail.js";
 
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
-const { getFirestore } = require("firebase-admin/firestore");
-const { sendEmail } = require("./email/sendemail");
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
-if (!admin.apps.length) admin.initializeApp();
 const db = getFirestore();
 
 async function getUserByAuthUid(uid) {
@@ -14,11 +15,12 @@ async function getUserByAuthUid(uid) {
     .where("uid", "==", uid)
     .limit(1)
     .get();
+
   const doc = snap.docs[0];
   return doc ? { id: doc.id, ...doc.data() } : null;
 }
 
-exports.sendInviteEmail = onCall(
+export const sendInviteEmail = onCall(
   {
     region: "us-central1",
     timeoutSeconds: 120,
@@ -52,10 +54,13 @@ exports.sendInviteEmail = onCall(
       const email = String(request.data?.email || "")
         .trim()
         .toLowerCase();
-      if (!email)
+
+      if (!email) {
         throw new HttpsError("invalid-argument", "Email is required.");
-      if (email.length > 254)
+      }
+      if (email.length > 254) {
         throw new HttpsError("invalid-argument", "Email is too long.");
+      }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         throw new HttpsError("invalid-argument", "Invalid email.");
       }
@@ -65,6 +70,7 @@ exports.sendInviteEmail = onCall(
         .collection("signupMessage")
         .doc("email_message")
         .get();
+
       if (!templateSnap.exists) {
         throw new HttpsError(
           "failed-precondition",
@@ -81,11 +87,14 @@ exports.sendInviteEmail = onCall(
       }
 
       // 5) Send email
-      await sendEmail({ to: email, subject: subjectLine, html: text });
+      await sendEmail({
+        to: email,
+        subject: subjectLine,
+        html: text,
+      });
 
       return { ok: true };
     } catch (err) {
-      // Preserve explicit HttpsErrors
       if (err instanceof HttpsError) throw err;
 
       console.error("sendInviteEmail error:", err);

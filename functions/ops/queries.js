@@ -1,42 +1,29 @@
-"use strict";
+import { getFirestore } from "firebase-admin/firestore";
 
-async function fetchObservationTypes({ db }) {
-  const snap = await db.collection("ops_observation_types").get();
+// Example structure — adjust based on your actual code
+export async function fetchObservationTypes({ db }) {
+  const snapshot = await db.collection("observation_types").get();
   const typesById = {};
-
-  snap.forEach((doc) => {
-    const d = doc.data() || {};
-    typesById[doc.id] = {
-      id: doc.id,
-      active: d.active ?? true,
-      category: d.category ?? "",
-      impact: d.impact ?? "negative",
-      labelKey: d.labelKey ?? `ops.types.${doc.id}`,
-      sortOrder: typeof d.sortOrder === "number" ? d.sortOrder : 9999,
-    };
+  snapshot.forEach((doc) => {
+    typesById[doc.id] = doc.data();
   });
-
   return typesById;
 }
 
-async function fetchOpsObservationsByYmdRange({
+export async function fetchOpsObservationsByYmdRange({
   db,
   startYMD,
   endYMD,
-  limitN = 1500,
+  limitN,
 }) {
-  const snap = await db
+  const snapshot = await db
     .collection("ops_observations")
     .where("ymd", ">=", startYMD)
     .where("ymd", "<=", endYMD)
-    .orderBy("ymd", "desc")
     .limit(limitN)
     .get();
 
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() || {}) }));
+  const results = [];
+  snapshot.forEach((doc) => results.push({ id: doc.id, ...doc.data() }));
+  return results;
 }
-
-module.exports = {
-  fetchObservationTypes,
-  fetchOpsObservationsByYmdRange,
-};

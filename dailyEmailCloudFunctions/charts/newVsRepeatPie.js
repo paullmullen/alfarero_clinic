@@ -1,11 +1,8 @@
-// charts/newVsRepeatPie.js
-"use strict";
+import { createCanvas } from "canvas";
+import Chart from "chart.js/auto";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 
-module.exports = function generateNewVsRepeatPieChart(todaySnapshot) {
-  const { createCanvas } = require("canvas");
-  const Chart = require("chart.js/auto");
-  const ChartDataLabels = require("chartjs-plugin-datalabels");
-
+export function generateNewVsRepeatPieChart(todaySnapshot) {
   // MUST register inside the function for gcloud
   Chart.register(ChartDataLabels);
 
@@ -69,4 +66,4 @@ module.exports = function generateNewVsRepeatPieChart(todaySnapshot) {
   });
 
   return canvas.toDataURL();
-};
+}

@@ -3,8 +3,8 @@
 // AS A CLOUD FUNCTION AND NOT AS PART OF THE CLIENT SIDE CODE.
 //***************************************************************** */
 
-const { onRequest } = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
+import { onRequest } from "firebase-functions/v2/https";
+import admin from "firebase-admin";
 
 if (admin.apps.length === 0) {
   admin.initializeApp();
@@ -12,7 +12,7 @@ if (admin.apps.length === 0) {
 
 const ALL_LOCATIONS_ID = "__ALL__";
 
-exports.getPatientCount = onRequest(
+export const getPatientCount = onRequest(
   {
     region: "us-central1",
     cors: [
@@ -24,12 +24,11 @@ exports.getPatientCount = onRequest(
   },
   async (req, res) => {
     try {
-      // ✅ allow CORS preflight
+      // CORS preflight
       if (req.method === "OPTIONS") {
         return res.status(204).send("");
       }
 
-      // enforce POST-only
       if (req.method !== "POST") {
         return res.status(405).send("Method Not Allowed");
       }
@@ -47,7 +46,6 @@ exports.getPatientCount = onRequest(
         return res.status(400).send("Missing startTimestamp/endTimestamp");
       }
 
-      // use already-initialized default app
       const db = admin.firestore();
 
       const start = new admin.firestore.Timestamp(startTimestamp.seconds, 0);
@@ -58,7 +56,6 @@ exports.getPatientCount = onRequest(
         .where("start_time", ">=", start)
         .where("start_time", "<=", end);
 
-      // Optional clinic filter
       if (locationId && locationId !== ALL_LOCATIONS_ID) {
         q = q.where("location_id", "==", locationId);
       }

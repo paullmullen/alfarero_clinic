@@ -1,14 +1,12 @@
-"use strict";
+import admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
+import { onRequest } from "firebase-functions/v2/https";
+import cors from "cors";
 
-const admin = require("firebase-admin");
-const { getFirestore } = require("firebase-admin/firestore");
-const { onRequest } = require("firebase-functions/v2/https");
-const cors = require("cors");
-
-const {
+import {
   fetchObservationTypes,
   fetchOpsObservationsByYmdRange,
-} = require("./ops/queries");
+} from "./ops/queries.js";
 
 if (!admin.apps.length) admin.initializeApp();
 const db = getFirestore();
@@ -25,23 +23,18 @@ const ALLOWED_ORIGINS = new Set([
 
 const corsMiddleware = cors({
   origin: (origin, cb) => {
-    // allow curl / server-to-server (no Origin header)
     if (!origin) return cb(null, true);
-
     if (ALLOWED_ORIGINS.has(origin)) return cb(null, true);
-
-    // IMPORTANT: return false (no CORS) for disallowed origins
     return cb(null, false);
   },
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 });
 
-exports.getOpsObservationsFeed = onRequest(
+export const getOpsObservationsFeed = onRequest(
   { timeoutSeconds: 60 },
   (req, res) => {
     corsMiddleware(req, res, async () => {
-      // Explicitly answer preflight
       if (req.method === "OPTIONS") {
         return res.status(204).send("");
       }

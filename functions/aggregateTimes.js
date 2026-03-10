@@ -4,44 +4,18 @@
 //***************************************************************** */
 
 //***************************************************************** */
-//
 // PROD VERSION
-//
-// THERE ARE TWO DIFFERENT AGGREGATE-TIMES.JS FILES.  ONE FOR DEV AND ONE
-// FOR PROD.  THE ONLY DIFFERENCE IS THIS LINE
-// const db = getFirestore(admin); // specify the db name
-// THERE IS NO DB NAMED IN THE PROD VERSION.
-////
-// This version should be triggered by a cloud trigger configured as follows:
-// Firestore Trigger
-// Event Type: google.cloud.firestore.document.v1.updated
-// Region: nam5
-// Database: alfarero-dev
-// Service URL Path:  //firestore.googleapis.com/projects/alfarero-478ad/databases/(default)/run_aggregation/timestamp/last_updated
-//
-//
-// It requires a package.json file with the following dependencies:
-// {
-//   "dependencies": {
-//     "@google-cloud/functions-framework": "^3.0.0",
-//     "firebase-admin": "^11.0.0",
-//       "firebase-functions": "^4.0.0",
-
-//     "protobufjs": "^7.0.0"
-//   }
-// }
-//
 //***************************************************************** */
 
-const functions = require("@google-cloud/functions-framework");
-const admin = require("firebase-admin");
-const { getFirestore } = require("firebase-admin/firestore");
-const { Timestamp } = require("firebase-admin/firestore");
+import * as functions from "@google-cloud/functions-framework";
+import admin from "firebase-admin";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
-// Initialize Firebase Admin with a specific database URL
+// Initialize Firebase Admin
 admin.initializeApp();
 
-const db = getFirestore(admin.app()); // specify the db name
+// PROD: use default Firestore DB (no named DB)
+const db = getFirestore(admin.app());
 
 async function processAggregation(startTime, endTime, prefix = "") {
   try {
@@ -64,7 +38,7 @@ async function processAggregation(startTime, endTime, prefix = "") {
           [`${prefix}adult_feminine`]: 0,
           [`${prefix}child_masculine`]: 0,
           [`${prefix}child_feminine`]: 0,
-        })
+        }),
       );
       await Promise.all(resetPromises);
       return;
@@ -89,27 +63,27 @@ async function processAggregation(startTime, endTime, prefix = "") {
         }) => {
           if (!station) return;
 
-          // Waiting Time Calculation
+          // Waiting Time
           if (waiting_start && waiting_end) {
             const waitingTime = Math.abs(
-              waiting_end.toDate() - waiting_start.toDate()
+              waiting_end.toDate() - waiting_start.toDate(),
             );
             if (!stationWaitingTimes[station])
               stationWaitingTimes[station] = [];
             stationWaitingTimes[station].push(waitingTime);
           }
 
-          // Procedure Time Calculation
+          // Procedure Time
           if (in_process_start && in_process_end) {
             const procedureTime = Math.abs(
-              in_process_end.toDate() - in_process_start.toDate()
+              in_process_end.toDate() - in_process_start.toDate(),
             );
             if (!stationProcedureTimes[station])
               stationProcedureTimes[station] = [];
             stationProcedureTimes[station].push(procedureTime);
           }
 
-          // Age & Gender Categorization
+          // Age & Gender
           if (!ageGenderCounts[station]) {
             ageGenderCounts[station] = {
               adultMasculine: 0,
@@ -152,27 +126,26 @@ async function processAggregation(startTime, endTime, prefix = "") {
             ageGenderCounts[station].childFeminine++;
             ageGenderCounts[station].totalCount++;
           }
-        }
+        },
       );
     });
 
-    // Calculate Averages
+    // Averages
     const waitingAverages = {};
     const procedureAverages = {};
 
     for (const station in stationWaitingTimes) {
       const times = stationWaitingTimes[station];
       waitingAverages[station] =
-        times.reduce((sum, time) => sum + time, 0) / times.length;
+        times.reduce((sum, t) => sum + t, 0) / times.length;
     }
 
     for (const station in stationProcedureTimes) {
       const times = stationProcedureTimes[station];
       procedureAverages[station] =
-        times.reduce((sum, time) => sum + time, 0) / times.length;
+        times.reduce((sum, t) => sum + t, 0) / times.length;
     }
 
-    // Firestore Updates
     const updatePromises = [];
 
     console.log("waiting averages", waitingAverages);
@@ -187,7 +160,7 @@ async function processAggregation(startTime, endTime, prefix = "") {
           .update({
             [`${prefix}avg_waiting_time`]: waitingAverages[station] || 0,
             [`${prefix}waiting_time_data`]: stationWaitingTimes[station] || [],
-          })
+          }),
       );
     });
 
@@ -200,7 +173,7 @@ async function processAggregation(startTime, endTime, prefix = "") {
             [`${prefix}avg_procedure_time`]: procedureAverages[station] || 0,
             [`${prefix}procedure_time_data`]:
               stationProcedureTimes[station] || [],
-          })
+          }),
       );
     });
 
@@ -215,7 +188,7 @@ async function processAggregation(startTime, endTime, prefix = "") {
             [`${prefix}child_masculine`]: counts.childMasculine,
             [`${prefix}child_feminine`]: counts.childFeminine,
             [`${prefix}count`]: counts.totalCount,
-          })
+          }),
       );
     });
 
@@ -229,12 +202,14 @@ functions.cloudEvent("aggregateTimes", async () => {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const todayMidnight = Timestamp.fromDate(now);
+
   await processAggregation(todayMidnight, Timestamp.now(), "");
 
   const rangeDoc = await db
     .collection("run_aggregation")
     .doc("timestamp")
     .get();
+
   if (rangeDoc.exists) {
     const { range_start, range_end } = rangeDoc.data();
     if (range_start && range_end) {

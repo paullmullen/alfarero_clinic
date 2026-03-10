@@ -1,9 +1,7 @@
-"use strict";
+import { onRequest } from "firebase-functions/v2/https";
+import { sendEmail as sendEmailInternal } from "./mailer.js";
 
-const { onRequest } = require("firebase-functions/v2/https");
-const { sendEmail } = require("./mailer");
-
-exports.sendemail = onRequest(
+export const sendEmail = onRequest(
   {
     timeoutSeconds: 120,
     secrets: [
@@ -24,8 +22,9 @@ exports.sendemail = onRequest(
     res.set("Access-Control-Allow-Headers", "Content-Type");
 
     if (req.method === "OPTIONS") return res.status(204).send("");
-    if (req.method !== "POST")
+    if (req.method !== "POST") {
       return res.status(405).send("Method Not Allowed");
+    }
 
     // Defensive body parsing
     let body = req.body || {};
@@ -41,7 +40,7 @@ exports.sendemail = onRequest(
     const subject = body?.subject ?? body?.data?.subject ?? null;
     const html = body?.html ?? body?.data?.html ?? null;
 
-    console.error("[sendemail] request summary", {
+    console.error("[sendEmail] request summary", {
       contentType: req.headers["content-type"],
       keys: Object.keys(body || {}),
       toPresent: !!to,
@@ -50,7 +49,7 @@ exports.sendemail = onRequest(
     });
 
     try {
-      await sendEmail({ to, subject, html });
+      await sendEmailInternal({ to, subject, html });
       return res.status(200).json({ ok: true });
     } catch (err) {
       console.error("[sendemail] error", {

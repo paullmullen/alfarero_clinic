@@ -24,3 +24,4 @@ yarn-error.log*
 .cache
 .serviceAccount.json
 .vscode/firebase/serviceAccount.json
+.edge_device_secret_token.txt

@@ -1,6 +1,4 @@
-"use strict";
-
-const es = require("../i18n/es.json");
+import es from "../i18n/es.json" assert { type: "json" };
 
 function getNested(obj, path) {
   return String(path)
@@ -11,9 +9,7 @@ function getNested(obj, path) {
     );
 }
 
-function t(key, fallback) {
+export function t(key, fallback) {
   const val = getNested(es, key);
   return typeof val === "string" ? val : (fallback ?? key);
 }
-
-module.exports = { t };

@@ -1,14 +1,11 @@
-// charts/stationPlanVsCompleted.js
-"use strict";
+import { createCanvas } from "canvas";
+import Chart from "chart.js/auto";
 
-module.exports = function generateStationPlanVsCompletedChart(
+export function generateStationPlanVsCompletedChart(
   todayData,
   orderedStations,
   stationLabelMap = {},
 ) {
-  const { createCanvas } = require("canvas");
-  const Chart = require("chart.js/auto");
-
   const keys = Array.isArray(orderedStations) ? orderedStations : [];
 
   const height = Math.max(400, 40 * keys.length + 120);
@@ -67,4 +64,4 @@ module.exports = function generateStationPlanVsCompletedChart(
   });
 
   return canvas.toDataURL();
-};
+}

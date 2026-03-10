@@ -1,11 +1,9 @@
-"use strict";
+import { defineSecret } from "firebase-functions/params";
 
-const { defineSecret } = require("firebase-functions/params");
-
-const O365_TENANT_ID = defineSecret("O365_TENANT_ID");
-const O365_CLIENT_ID = defineSecret("O365_CLIENT_ID");
-const O365_CLIENT_SECRET = defineSecret("O365_CLIENT_SECRET");
-const O365_SENDER = defineSecret("O365_SENDER");
+export const O365_TENANT_ID = defineSecret("O365_TENANT_ID");
+export const O365_CLIENT_ID = defineSecret("O365_CLIENT_ID");
+export const O365_CLIENT_SECRET = defineSecret("O365_CLIENT_SECRET");
+export const O365_SENDER = defineSecret("O365_SENDER");
 
 let cachedToken = null;
 let cachedTokenExpMs = 0;
@@ -51,7 +49,9 @@ async function getGraphToken() {
 }
 
 function normalizeToList(to) {
-  if (Array.isArray(to)) return to.map((s) => String(s).trim()).filter(Boolean);
+  if (Array.isArray(to)) {
+    return to.map((s) => String(s).trim()).filter(Boolean);
+  }
   return String(to || "")
     .split(",")
     .map((s) => s.trim())
@@ -61,7 +61,6 @@ function normalizeToList(to) {
 /**
  * Accepts "nodemailer-style" attachments:
  *  - { filename, content: Buffer|string, contentType, encoding? }
- * Supports Buffer (preferred) OR base64 string with encoding:"base64".
  */
 function toGraphFileAttachments(attachments) {
   if (!Array.isArray(attachments) || attachments.length === 0) return [];
@@ -76,17 +75,15 @@ function toGraphFileAttachments(attachments) {
       throw new Error(`[graph] attachment "${name}" missing content`);
     }
 
-    let contentBytes; // base64 string
+    let contentBytes;
+
     if (Buffer.isBuffer(content)) {
       contentBytes = content.toString("base64");
     } else if (typeof content === "string") {
-      if (encoding === "base64") {
-        // allow base64 strings (strip whitespace)
-        contentBytes = content.replace(/\s+/g, "");
-      } else {
-        // treat as utf8 text
-        contentBytes = Buffer.from(content, "utf8").toString("base64");
-      }
+      contentBytes =
+        encoding === "base64"
+          ? content.replace(/\s+/g, "")
+          : Buffer.from(content, "utf8").toString("base64");
     } else if (content instanceof Uint8Array) {
       contentBytes = Buffer.from(content).toString("base64");
     } else {
@@ -104,7 +101,7 @@ function toGraphFileAttachments(attachments) {
   });
 }
 
-async function sendEmail({ to, subject, html, attachments = [] }) {
+export async function sendEmail({ to, subject, html, attachments = [] }) {
   if (!to || !subject || !html) {
     throw new Error("sendEmail missing required fields: to, subject, html");
   }
@@ -121,7 +118,9 @@ async function sendEmail({ to, subject, html, attachments = [] }) {
     message: {
       subject,
       body: { contentType: "HTML", content: html },
-      toRecipients: toList.map((addr) => ({ emailAddress: { address: addr } })),
+      toRecipients: toList.map((addr) => ({
+        emailAddress: { address: addr },
+      })),
       ...(graphAttachments.length ? { attachments: graphAttachments } : {}),
     },
     saveToSentItems: true,
@@ -151,5 +150,3 @@ async function sendEmail({ to, subject, html, attachments = [] }) {
     attachments: graphAttachments.length,
   });
 }
-
-module.exports = { sendEmail };

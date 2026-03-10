@@ -1,10 +1,7 @@
-// charts/patientSummary.js
-"use strict";
+import { createCanvas } from "canvas";
+import Chart from "chart.js/auto";
 
-module.exports = function generatePatientSummaryChart(todayCounts, avgCounts) {
-  const { createCanvas } = require("canvas");
-  const Chart = require("chart.js/auto");
-
+export function generatePatientSummaryChart(todayCounts, avgCounts) {
   const canvas = createCanvas(800, 400);
   const ctx = canvas.getContext("2d");
 
@@ -55,4 +52,4 @@ module.exports = function generatePatientSummaryChart(todayCounts, avgCounts) {
   });
 
   return canvas.toDataURL();
-};
+}

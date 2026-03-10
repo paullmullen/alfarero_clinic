@@ -1,12 +1,11 @@
-//***************************************************************** */
-// NOTE THAT THIS IS A GOOGLE CLOUD FUNCTION THAT NEEDS TO BE DEPLOYED
-// AS A CLOUD FUNCTION AND NOT AS PART OF THE CLIENT SIDE CODE.
-//***************************************************************** */
+import { onRequest } from "firebase-functions/v2/https";
+import admin from "firebase-admin";
 
-const { onRequest } = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
-exports.updateStatusChange = onRequest(
+export const updateStatusChange = onRequest(
   {
     region: "us-central1",
     serviceAccount:
@@ -20,18 +19,15 @@ exports.updateStatusChange = onRequest(
     methods: ["POST", "OPTIONS"],
   },
   async (req, res) => {
-    // ✅ allow preflight
     if (req.method === "OPTIONS") return res.status(204).send("");
 
-    // enforce POST
-    if (req.method !== "POST")
+    if (req.method !== "POST") {
       return res.status(405).send("Method Not Allowed");
+    }
 
     try {
-      const { patientId, carePlanIndex, newStatus, databaseName } = req.body;
+      const { patientId, carePlanIndex, newStatus } = req.body;
 
-      // ✅ your original check was wrong because carePlanIndex like "reg" is truthy,
-      // but if it were "0" you’d fail; also you want to allow index values that are "0".
       if (!patientId || carePlanIndex == null || !newStatus) {
         return res.status(400).json({
           error: "Invalid arguments. Missing required data.",
@@ -39,11 +35,7 @@ exports.updateStatusChange = onRequest(
         });
       }
 
-      // ✅ use already initialized default app (index.js initializes once)
       const db = admin.firestore();
-
-      // If you truly need dev/prod separation, do it by deploying to a different Firebase project
-      // or using env config; don't re-initialize admin here.
 
       const patientRef = db.collection("patients").doc(patientId);
       const patientDoc = await patientRef.get();
@@ -93,8 +85,6 @@ exports.updateStatusChange = onRequest(
       } else if (currentEntry.status === "waiting" && newStatus !== "waiting") {
         updatedEntry.waiting_end = now;
         if (updatedEntry.waiting_start && updatedEntry.waiting_end) {
-          // NOTE: Firestore Timestamp subtraction isn't "seconds" directly;
-          // but leaving your behavior as-is for now.
           updatedEntry.waiting_time =
             updatedEntry.waiting_end - updatedEntry.waiting_start;
         }
