@@ -1,5 +1,7 @@
+// Force ESM mode
+import {} from "module";
+
 // dailyEmail/queries.js
-"use strict";
 
 async function fetchTodayPatients({ db, startOfToday, startOfTomorrow }) {
   return await db
@@ -41,7 +43,7 @@ async function fetchStationThresholds({ db }) {
   snapshot.forEach((doc) => {
     const data = doc.data() ?? {};
     if (typeof data.max_waiting_time === "number") {
-      thresholds[doc.id] = data.max_waiting_time; // seconds
+      thresholds[doc.id] = data.max_waiting_time;
     }
   });
 
@@ -67,10 +69,6 @@ async function fetchTotalPatients({ db }) {
   return totalPatientsSnapshot.data().count;
 }
 
-/**
- * NEW: ops observation types (map keyed by typeId)
- * Collection: ops_observation_types
- */
 async function fetchObservationTypes({ db }) {
   const snapshot = await db.collection("ops_observation_types").get();
   const typesById = {};
@@ -87,10 +85,11 @@ async function fetchObservationTypes({ db }) {
     };
   });
 
+  console.log(typesById);
+
   return typesById;
 }
 
-// Guatemala is UTC-6 year-round
 const TIMEZONE_OFFSET_MINUTES = 6 * 60;
 
 function toLocalYMD(date, timezoneOffsetMinutes) {
@@ -112,14 +111,6 @@ function getYmdRangeForLastNDays(days, timezoneOffsetMinutes) {
   return { startYMD, endYMD };
 }
 
-/**
- * NEW: ops observations for a date range
- * Collection: ops_observations
- *
- * Usage:
- *  - fetchOpsObservations({ db, startYMD, endYMD })
- *  - fetchOpsObservations({ db, days: 14 }) // convenience
- */
 async function fetchOpsObservations({
   db,
   startYMD,
@@ -147,15 +138,13 @@ async function fetchOpsObservations({
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() || {}) }));
 }
 
-module.exports = {
+export {
   fetchTodayPatients,
   fetchLast30DaysPatients,
   fetchRecipients,
   fetchStationThresholds,
   fetchVisitTypeLabelMap,
   fetchTotalPatients,
-
-  // NEW
   fetchObservationTypes,
   fetchOpsObservations,
 };

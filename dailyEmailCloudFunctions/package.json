@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "daily-email-sender",
   "version": "1.0.0",
   "description": "Sends daily emails to users with dailyEmail permission",

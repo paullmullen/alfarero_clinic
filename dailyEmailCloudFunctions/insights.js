@@ -693,7 +693,7 @@ async function persistInsights({ db, Timestamp }, insights, clinicDate) {
    EXPORTS
    ============================================================ */
 
-module.exports = {
+export {
   detectWaitTimeAnomalies,
   computeHistoricalHourlyAverages,
   detectArrivalSurges,
@@ -704,7 +704,6 @@ module.exports = {
   // Context layer exports
   attachObservationsToInsights,
   buildObservationInsights,
-
   renderInsightsHTML,
   persistInsights,
 };

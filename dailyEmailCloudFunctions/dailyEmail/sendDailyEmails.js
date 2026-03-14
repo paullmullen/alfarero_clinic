@@ -1,8 +1,9 @@
 import { sendEmail } from "./mailer.js";
 import { buildDailyEmailHTML } from "./template.js";
-import renderKeyObservationsHTML from "./renderKeyObservationsHTML.js";
-
-import es from "../i18n/es.json" assert { type: "json" };
+import { renderKeyObservationsHTML } from "./renderKeyObservationsHTML.js";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const es = require("../i18n/es.json");
 
 import {
   detectWaitTimeAnomalies,
@@ -15,7 +16,7 @@ import {
   buildObservationInsights,
   renderInsightsHTML,
   persistInsights,
-} from "../insights/index.js";
+} from "../insights.js";
 
 import {
   computePatientInsightsFromSnapshots,

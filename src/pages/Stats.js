@@ -4,6 +4,7 @@ import { Divider, Button, Form, DatePicker, InputNumber, Spin } from "antd";
 import { useTranslation } from "react-i18next";
 import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
 import ExcelExport from "../helpers/Export";
+import { getBarColors } from "../utils/getBarColors.js";
 
 // Hooks barrel
 import {
@@ -41,7 +42,7 @@ export default function Stats() {
   // 📅 Date range
   const { dateRange, pickerRange, handleDateChange } = useDateRange(
     todayTimestamp,
-    tomorrowTimestamp
+    tomorrowTimestamp,
   );
 
   // 🔄 Data hooks
@@ -104,7 +105,7 @@ export default function Stats() {
         width: 120,
       },
     ],
-    [t]
+    [t],
   );
 
   // 📊 Survey columns (define early and memoize)
@@ -137,7 +138,7 @@ export default function Stats() {
         render: t,
       },
     ],
-    [t]
+    [t],
   );
 
   // ⭐ Legend
@@ -155,7 +156,7 @@ export default function Stats() {
       };
       return <LegendTitle title={textMap[which]} style={center} />;
     },
-    [t, daysCount]
+    [t, daysCount],
   );
 
   [i18n.language];
@@ -221,7 +222,7 @@ export default function Stats() {
         adult_feminine: 0,
         child_masculine: 0,
         child_feminine: 0,
-      }
+      },
     );
     setAgeGender([
       { group: "ADULT_MASCULINE", count: sums.adult_masculine },
@@ -233,7 +234,6 @@ export default function Stats() {
 
   // 🎨 Chart color selection
   const barColorsMemo = useMemo(() => {
-    const { getBarColors } = require("../utils/getBarColors"); // avoid circular
     return getBarColors(statsData);
   }, [statsData]);
 
@@ -262,7 +262,7 @@ export default function Stats() {
     });
 
     return Array.from(byDay.values()).sort((a, b) =>
-      String(a.day).localeCompare(String(b.day))
+      String(a.day).localeCompare(String(b.day)),
     );
   }, [daysAgo, rollingAverages]);
 
@@ -477,7 +477,7 @@ export default function Stats() {
           }))}
           reportName="EXPORT_PATIENTS"
           fileName={`patients_${formatDateForFile(
-            dateRange[0]
+            dateRange[0],
           )}_to_${formatDateForFile(dateRange[1])}.xlsx`}
         />
       </div>
@@ -513,7 +513,7 @@ export default function Stats() {
           }))}
           reportName="EXPORT_SURVEYS"
           fileName={`surveys_${formatDateForFile(
-            dateRange[0]
+            dateRange[0],
           )}_to_${formatDateForFile(dateRange[1])}.xlsx`}
         />
       </div>

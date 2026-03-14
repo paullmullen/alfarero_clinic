@@ -1,5 +1,3 @@
-"use strict";
-
 function escapeHtml(s) {
   return String(s ?? "")
     .replaceAll("&", "&amp;")
@@ -14,7 +12,7 @@ function dotForImpact(impact) {
   return `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};"></span>`;
 }
 
-module.exports = function renderKeyObservationsHTML({
+export function renderKeyObservationsHTML({
   top3,
   remaining,
   dashboardUrl,
@@ -79,4 +77,4 @@ module.exports = function renderKeyObservationsHTML({
       ${linkLine}
     </div>
   `;
-};
+}

@@ -1,8 +1,12 @@
 import { createCanvas } from "canvas";
-import Chart from "chart.js/auto";
-import ChartDataLabels from "chartjs-plugin-datalabels";
-import { MatrixController, MatrixElement } from "chartjs-chart-matrix";
-import { CategoryScale, LinearScale } from "chart.js";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
+// --- CJS imports (required for Node 22 + Chart.js) ---
+const Chart = require("chart.js");
+const ChartDataLabels = require("chartjs-plugin-datalabels");
+const { MatrixController, MatrixElement } = require("chartjs-chart-matrix");
+const { CategoryScale, LinearScale } = require("chart.js");
 
 export function generateWaitingHeatmapChart(
   patientsSnapshot,

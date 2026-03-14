@@ -1,6 +1,9 @@
 import { createCanvas } from "canvas";
-import Chart from "chart.js/auto";
-import ChartDataLabels from "chartjs-plugin-datalabels";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
+const Chart = require("chart.js");
+const ChartDataLabels = require("chartjs-plugin-datalabels");
 
 export function generateNewVsRepeatPieChart(todaySnapshot) {
   // MUST register inside the function for gcloud

@@ -2,7 +2,7 @@ import { getFirestore } from "firebase-admin/firestore";
 
 // Example structure — adjust based on your actual code
 export async function fetchObservationTypes({ db }) {
-  const snapshot = await db.collection("observation_types").get();
+  const snapshot = await db.collection("ops_observation_types").get();
   const typesById = {};
   snapshot.forEach((doc) => {
     typesById[doc.id] = doc.data();

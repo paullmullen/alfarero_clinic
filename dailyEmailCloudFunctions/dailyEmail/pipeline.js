@@ -1,5 +1,4 @@
 // dailyEmail/pipeline.js
-"use strict";
 
 /**
  * Pipeline orchestrator.
@@ -14,4 +13,4 @@ async function runDailyEmailPipeline({ sendDailyEmails }) {
   return await sendDailyEmails();
 }
 
-module.exports = { runDailyEmailPipeline };
+export { runDailyEmailPipeline };

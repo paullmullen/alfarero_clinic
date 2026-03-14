@@ -1,5 +1,3 @@
-"use strict";
-
 async function fetchObservationTypes({ db }) {
   const snap = await db.collection("ops_observation_types").get();
   const typesById = {};
@@ -36,7 +34,4 @@ async function fetchOpsObservationsByYmdRange({
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() || {}) }));
 }
 
-module.exports = {
-  fetchObservationTypes,
-  fetchOpsObservationsByYmdRange,
-};
+export { fetchObservationTypes, fetchOpsObservationsByYmdRange };

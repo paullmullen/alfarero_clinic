@@ -1,5 +1,8 @@
 import { createCanvas } from "canvas";
-import Chart from "chart.js/auto";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
+const Chart = require("chart.js");
 
 export function generateArrivalChart(hourlyCounts) {
   const canvas = createCanvas(800, 400);

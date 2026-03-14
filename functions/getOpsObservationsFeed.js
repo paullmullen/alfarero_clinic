@@ -17,6 +17,7 @@ function getParam(req, key) {
 
 const ALLOWED_ORIGINS = new Set([
   "https://multimedica.org",
+  "http://localhost:3000",
   "https://localhost:3000",
   "https://alfarero-478ad--expire-o4gpaz9l.web.app",
 ]);

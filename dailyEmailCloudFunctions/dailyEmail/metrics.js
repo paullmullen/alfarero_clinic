@@ -1,5 +1,4 @@
 // dailyEmail/metrics.js
-"use strict";
 
 /**
  * Pure compute helpers — no Firestore reads here.
@@ -319,7 +318,7 @@ function getMilestoneProjection(totalPatients, avgDailyPatients) {
   return { nextMilestone, projectedDateStr, patientsRemaining };
 }
 
-module.exports = {
+export {
   classifyServices,
   computePatientInsightsFromSnapshots,
   getVisitTypeMetrics,

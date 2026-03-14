@@ -1,5 +1,5 @@
 /* eslint-env node */
-"use strict";
+
 const SECTION_GAP = 48;
 /**
  * Daily email HTML (Outlook-friendly).
@@ -293,4 +293,4 @@ Gerente
 `;
 }
 
-module.exports = { buildDailyEmailHTML };
+export { buildDailyEmailHTML };

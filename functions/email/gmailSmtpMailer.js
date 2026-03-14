@@ -1,4 +1,8 @@
-import nodemailer from "nodemailer";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
+const nodemailer = require("nodemailer");
+
 import { defineSecret } from "firebase-functions/params";
 
 export const GMAIL_USER = defineSecret("GMAIL_USER");

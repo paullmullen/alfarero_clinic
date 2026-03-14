@@ -213,7 +213,11 @@ export default function OperationalObservations() {
           };
         },
       );
-
+      console.log("typesArray from feed:", typesArray);
+      console.log("categories returned:", [
+        ...new Set(typesArray.map((x) => x.category)),
+      ]);
+      console.log("current selected category:", category);
       setTypes(typesArray);
 
       // observations (normalize timestamps so the table render/sorter works)

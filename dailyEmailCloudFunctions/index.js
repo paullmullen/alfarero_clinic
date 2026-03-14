@@ -15,9 +15,20 @@ import {
   sendDailyEmails,
 } from "./dailyEmail/sendDailyEmails.js";
 
-// IMPORTANT: pull the secret handles from mailer.js
-// so we can mount them as function secrets.
-import { GMAIL_USER, GMAIL_APP_PASSWORD } from "./dailyEmail/mailer.js";
+// --- SINGLE initialization block ---
+initializeApp();
+
+const db = getFirestore();
+
+// Use Firestore emulator only when running locally
+if (process.env.FUNCTIONS_EMULATOR) {
+  db.settings({
+    host: "127.0.0.1:8080",
+    ssl: false,
+  });
+}
+
+initDailyEmailDeps({ db, Timestamp });
 
 function applyCors(req, res) {
   const origin = req.headers.origin || "*";
@@ -27,11 +38,6 @@ function applyCors(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   res.setHeader("Access-Control-Max-Age", "3600");
 }
-
-initializeApp();
-const db = getFirestore();
-
-initDailyEmailDeps({ db, Timestamp });
 
 export const manualDailyEmail = onRequest(
   {

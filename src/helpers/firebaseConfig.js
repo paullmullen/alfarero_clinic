@@ -33,19 +33,23 @@ try {
     "Firebase initialization error:",
     error.message,
     error.stack,
-    error
+    error,
   );
   throw error; // Rethrow to fail fast during development
 }
 
 const loginWithMicrosoft = async () => {
   const provider = new OAuthProvider("microsoft.com");
+  console.log("TENANT ID:", firebaseConfig.tenantId);
+  // REQUIRED for single-tenant Azure AD apps
   if (firebaseConfig.tenantId) {
-    provider.setCustomParameters({ tenant: firebaseConfig.tenantId });
+    provider.setCustomParameters({
+      tenant: firebaseConfig.tenantId,
+    });
   }
+
   return signInWithPopup(auth, provider);
 };
-
 const logout = () => signOut(auth);
 
 export { firebaseApp, firestore, auth, loginWithMicrosoft, logout };

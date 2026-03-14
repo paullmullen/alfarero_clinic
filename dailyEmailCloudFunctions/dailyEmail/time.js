@@ -1,5 +1,4 @@
 // dailyEmail/time.js
-"use strict";
 
 /**
  * Time helpers for clinic-local day boundaries.
@@ -60,7 +59,7 @@ function getStartOf30DaysAgoTimestamp(Timestamp) {
   return Timestamp.fromDate(start30DaysAgoUtc);
 }
 
-module.exports = {
+export {
   CLINIC_TIMEZONE,
   TIMEZONE_OFFSET_MINUTES,
   getClinicYMD,

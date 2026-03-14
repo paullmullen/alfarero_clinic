@@ -1,6 +1,4 @@
-"use strict";
-
-module.exports = function selectKeyObservations(observations, typesById = {}) {
+export function selectKeyObservations(observations, typesById = {}) {
   const safe = Array.isArray(observations) ? observations : [];
 
   const normalized = safe
@@ -27,4 +25,4 @@ module.exports = function selectKeyObservations(observations, typesById = {}) {
   const remaining = Math.max(0, normalized.length - top3.length);
 
   return { top3, remaining };
-};
+}
