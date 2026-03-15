@@ -15,7 +15,7 @@
     "description": "Subir archivo de Excel de citas anticipadas.",
     "upload": {
       "clickOrDrag": "Haz clic o arrastra",
-      "hint": "Download a template Excel file to get started.</a>"
+      "hint": "Descargue una plantilla de Excel para comenzar.</a>"
     },
     "summary": {
       "total": "Total",
@@ -46,10 +46,10 @@
     },
     "summary": { "willImport": "Serán importados." },
     "messages": {
-      "parsedRows": "parsedRows",
+      "parsedRows": "Archivo procesado.",
       "readError": "Error de Lectura",
       "noValidRows": "No hay Filas Válidas",
-      "importeWithSkipped": "{{imported}} records importados exitosamente. {{skipped}} records omitidos por problemas de validación.",
+      "importedWithSkipped": "{{imported}} records importados exitosamente. {{skipped}} records omitidos por problemas de validación.",
       "importFailed": "Importación Fallida"
     },
     "issues": {

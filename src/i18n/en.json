@@ -11,60 +11,70 @@
   "ALL_LOCATIONS": "All Locations",
   "allFieldsAlert": "Please complete all fields",
   "appointmentImport": {
-    "title": "Appointment Import",
-    "description": "Upload Excel file of appointments.",
+    "title": "Upload Appointments",
+    "description": "Upload file of anticipated appointments.",
     "upload": {
-      "clickOrDrag": "Click or drag file here.",
-      "hint": "Download a template file to get started."
+      "clickOrDrag": "Click or drag",
+      "hint": "Download template Excel file to get started.</a>"
     },
     "summary": {
       "total": "Total",
       "validBasic": "Valid",
-      "needsReview": "Needs Review"
+      "needsReview": "Requires review"
     },
     "alert": {
-      "title": "Alert",
+      "title": "Alerta",
       "description": ""
     },
     "buttons": {
-      "import": "Import",
-      "clear": "Clear"
+      "import": "Import records with OK status.",
+      "clear": "Start over."
     },
     "columns": {
-      "row": "Row",
+      "row": "RowFila",
       "location": "Location",
       "name": "Name",
-      "visitType": "Visit Type",
+      "visitType": "Type of Visit",
       "date": "Date",
       "time": "Time",
       "status": "Status",
-      "issues": "Issues"
+      "issues": "Review Required"
     },
     "status": {
       "ok": "OK",
       "review": "Review"
     },
+    "summary": { "willImport": "Will be imported." },
     "messages": {
-      "parsedRows": "parsedRows",
-      "readError": "Read Error",
-      "noRows": "No Rows",
-      "importedRows": "Imported Rows",
-      "importFailed": "Import Failed"
+      "parsedRows": "File read.",
+      "readError": "Read error.",
+      "noValidRows": "No valid rows.",
+      "importedWithSkipped": "{{imported}} records imported successfully. {{skipped}} records omitted due to validation problems.",
+      "importFailed": "Import failed."
     },
     "issues": {
-      "missing_location": "Missing Location",
-      "missing_patientName": "Missing Patient Name",
-      "missing_ageGroup": "Missing Age Group",
-      "missing_gender": "Missing Gender",
-      "missing_reasonForVisit": "Missing Reason for Visit",
-      "missing_visitType": "Missing Visit Type",
-      "missing_appointmentDateText": "Missing Appointment Date",
-      "missing_appointmentTimeText": "Missing Appointment Time",
-      "invalid_ageGroup": "Invalid Age Group",
-      "invalid_gender": "Invalid Gender",
-      "invalid_datetime": "Invalid Date and Time  "
+      "missing_location": "Missing location.",
+      "missing_patientName": "Missing patient name.",
+      "missing_ageGroup": "Missing age group",
+      "missing_gender": "Missing gender",
+      "missing_reasonForVisit": "Missing reason for visit.",
+      "missing_visitType": "Falta de Tipo de Visita",
+      "missing_appointmentDateText": "Missing appointment date.",
+      "missing_appointmentTimeText": "Mising appointment time.",
+      "invalid_ageGroup": "Age group not valid.",
+      "invalid_gender": "Gender not valid",
+      "invalid_datetime": "Date and time not valid."
+    },
+    "upload": {
+      "clickOrDrag": "Click or drag file here.",
+      "dragHint": "File format matters.  Use the link above to download an Excel template with the correct format.",
+      "downloadTemplate": "Download an excel file to begin.",
+      "noFileSelected": "No file selected.",
+      "supportedFiles": "Only .xls or xlsx files are allowed.",
+      "selectedFile": "File selected:"
     }
   },
+  "APPOINTMENTS": "Appointments",
   "areYouSure": "Are you sure you're done with this patient?",
   "ARRIVAL_TIME": "Arrival Hour",
   "attending": "Attending",
