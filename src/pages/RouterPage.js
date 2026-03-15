@@ -9,6 +9,7 @@ import AppShell from "../layout/AppShell";
 import { ServiceLocationProvider } from "../providers/ServiceLocationProvider";
 import { usePermissions } from "../providers/PermissionsProvider";
 const Inventory = lazy(() => import("./inventory"));
+const AppointmentImport = lazy(() => import("./AppointmentInput"));
 
 const Registro = lazy(() => import("./Registro/Registro"));
 const Turno = lazy(() => import("./Turno/Turno"));
@@ -140,6 +141,22 @@ export const RouterPage = () => {
                       }
                     >
                       <Inventory />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/appointmentinput"
+                element={
+                  <ProtectedRoute requiredPermission="basic">
+                    <Suspense
+                      fallback={
+                        <div style={{ padding: 24 }}>
+                          <Spin />
+                        </div>
+                      }
+                    >
+                      <AppointmentImport />
                     </Suspense>
                   </ProtectedRoute>
                 }

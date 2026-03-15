@@ -16,6 +16,14 @@ i18next.init({
     es: { global: global_es },
     en: { global: global_en },
   },
+  debug: process.env.NODE_ENV === "development",
+  saveMissing: process.env.NODE_ENV === "development",
+  missingKeyHandler: function (lng, ns, key) {
+    console.warn(`[i18n missing] ${ns}:${key}`);
+  },
+  parseMissingKeyHandler: function (key) {
+    return `⚠️ ${key}`;
+  },
 });
 
 // Create a root and render the app
@@ -27,5 +35,5 @@ root.render(
     <AlfareroApp />
     {/* </PermissionsProvider> */}
     {/* </BrowserRouter> */}
-  </I18nextProvider>
+  </I18nextProvider>,
 );

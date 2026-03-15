@@ -10,6 +10,61 @@
   "age": "Age",
   "ALL_LOCATIONS": "All Locations",
   "allFieldsAlert": "Please complete all fields",
+  "appointmentImport": {
+    "title": "Appointment Import",
+    "description": "Upload Excel file of appointments.",
+    "upload": {
+      "clickOrDrag": "Click or drag file here.",
+      "hint": "Download a template file to get started."
+    },
+    "summary": {
+      "total": "Total",
+      "validBasic": "Valid",
+      "needsReview": "Needs Review"
+    },
+    "alert": {
+      "title": "Alert",
+      "description": ""
+    },
+    "buttons": {
+      "import": "Import",
+      "clear": "Clear"
+    },
+    "columns": {
+      "row": "Row",
+      "location": "Location",
+      "name": "Name",
+      "visitType": "Visit Type",
+      "date": "Date",
+      "time": "Time",
+      "status": "Status",
+      "issues": "Issues"
+    },
+    "status": {
+      "ok": "OK",
+      "review": "Review"
+    },
+    "messages": {
+      "parsedRows": "parsedRows",
+      "readError": "Read Error",
+      "noRows": "No Rows",
+      "importedRows": "Imported Rows",
+      "importFailed": "Import Failed"
+    },
+    "issues": {
+      "missing_location": "Missing Location",
+      "missing_patientName": "Missing Patient Name",
+      "missing_ageGroup": "Missing Age Group",
+      "missing_gender": "Missing Gender",
+      "missing_reasonForVisit": "Missing Reason for Visit",
+      "missing_visitType": "Missing Visit Type",
+      "missing_appointmentDateText": "Missing Appointment Date",
+      "missing_appointmentTimeText": "Missing Appointment Time",
+      "invalid_ageGroup": "Invalid Age Group",
+      "invalid_gender": "Invalid Gender",
+      "invalid_datetime": "Invalid Date and Time  "
+    }
+  },
   "areYouSure": "Are you sure you're done with this patient?",
   "ARRIVAL_TIME": "Arrival Hour",
   "attending": "Attending",

@@ -10,6 +10,72 @@
   "age": "Edad",
   "ALL_LOCATIONS": "Todas Ubicaciones",
   "allFieldsAlert": "Por favor ingrese todos los campos",
+  "appointmentImport": {
+    "title": "Carga de Citas",
+    "description": "Subir archivo de Excel de citas anticipadas.",
+    "upload": {
+      "clickOrDrag": "Haz clic o arrastra",
+      "hint": "Download a template Excel file to get started.</a>"
+    },
+    "summary": {
+      "total": "Total",
+      "validBasic": "Valido",
+      "needsReview": "Requiere Revisión"
+    },
+    "alert": {
+      "title": "Alerta",
+      "description": ""
+    },
+    "buttons": {
+      "import": "Importar records con status OK",
+      "clear": "Empezar de nuevo."
+    },
+    "columns": {
+      "row": "Fila",
+      "location": "Ubicación",
+      "name": "Nombre",
+      "visitType": "Tipo de Visita",
+      "date": "Fecha",
+      "time": "Hora",
+      "status": "Status",
+      "issues": "Revisión Requerida"
+    },
+    "status": {
+      "ok": "OK",
+      "review": "Revisión"
+    },
+    "summary": { "willImport": "Serán importados." },
+    "messages": {
+      "parsedRows": "parsedRows",
+      "readError": "Error de Lectura",
+      "noValidRows": "No hay Filas Válidas",
+      "importeWithSkipped": "{{imported}} records importados exitosamente. {{skipped}} records omitidos por problemas de validación.",
+      "importFailed": "Importación Fallida"
+    },
+    "issues": {
+      "missing_location": "Falta de Ubicación",
+      "missing_patientName": "Falta de Nombre del Paciente",
+      "missing_ageGroup": "Falta de Grupo de Edad",
+      "missing_gender": "Falta de Género",
+      "missing_reasonForVisit": "Falta de Razón para la Visita",
+      "missing_visitType": "Falta de Tipo de Visita",
+      "missing_appointmentDateText": "Falta de Fecha de Cita",
+      "missing_appointmentTimeText": "Falta de Hora de Cita",
+      "invalid_ageGroup": "Grupo de Edad Inválido",
+      "invalid_gender": "Género Inválido",
+      "invalid_datetime": "Fecha y Hora Inválidas"
+    },
+    "upload": {
+      "clickOrDrag": "Haz clic o arrastra tu archivo aquí.",
+      "dragHint": "El formato del archivo importa.  Use el enlace arriba para descargar una plantilla de Excel con el formato correcto.",
+      "downloadTemplate": "Descarga una plantilla de Excel para comenzar.",
+      "noFileSelected": "No se ha seleccionado ningún archivo.",
+      "supportedFiles": "Solo se permiten archivos .xlsx o .xls.",
+      "selectedFile": "Archivo seleccionado:"
+    }
+  },
+  "APPOINTMENTS": "Citas",
+
   "areYouSure": "¿Estás seguro que quieres finalizar esta paciente?",
   "ARRIVAL_TIME": "Hora de Llegada",
   "attending": "Atendiendo",

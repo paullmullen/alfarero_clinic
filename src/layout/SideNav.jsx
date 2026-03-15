@@ -11,6 +11,7 @@ import {
   SettingOutlined,
   MedicineBoxOutlined,
   BulbOutlined,
+  CalendarOutlined,
 } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import { useServiceLocation } from "../providers/ServiceLocationProvider";
@@ -88,9 +89,15 @@ export default function SideNav({ t, permissions }) {
       label: <Link to="/Inventory">{t("INVENTORY")}</Link>,
     },
     {
+      key: "13",
+      icon: <CalendarOutlined />,
+      label: <Link to="/AppointmentInput">{t("APPOINTMENTS")}</Link>,
+    },
+
+    {
       key: "10",
       icon: <LoginOutlined />,
-      label: <Link to="/loginpage">{t("Login")}</Link>,
+      label: <Link to="/loginpage">{t("login")}</Link>,
     },
   ];
 
