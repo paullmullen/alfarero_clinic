@@ -8,7 +8,7 @@ import React, {
   useCallback,
   memo,
 } from "react";
-import { Table, Space, Popover, Popconfirm, Button } from "antd";
+import { Table, Space, Popover, Popconfirm, Button, Segmented } from "antd";
 import {
   collection,
   query,
@@ -89,7 +89,11 @@ const formatNationalId = (rawDigits) => {
   return `${v.slice(0, 4)} ${v.slice(4, 9)} ${v.slice(9, 13)}`;
 };
 
-const AppointmentList = memo(function AppointmentList({ appointmentsData }) {
+const AppointmentList = memo(function AppointmentList({
+  appointmentsData,
+  appointmentScope,
+  setAppointmentScope,
+}) {
   const [t] = useTranslation("global");
 
   return (
@@ -112,14 +116,40 @@ const AppointmentList = memo(function AppointmentList({ appointmentsData }) {
           </div>
         </div>
 
-        <div style={{ fontSize: 13, color: "#595959", fontWeight: 600 }}>
-          {appointmentsData.length} {t("appointment.scheduled")}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <Segmented
+            value={appointmentScope}
+            onChange={setAppointmentScope}
+            options={[
+              {
+                label: t("appointment.todayOnly"),
+                value: "today",
+              },
+              {
+                label: t("appointment.todayAndFuture"),
+                value: "future",
+              },
+            ]}
+          />
+
+          <div style={{ fontSize: 13, color: "#595959", fontWeight: 600 }}>
+            {appointmentsData.length} {t("appointment.scheduled")}
+          </div>
         </div>
       </div>
 
       {appointmentsData.length === 0 ? (
         <div style={{ padding: "18px 0 6px 0", color: "#8c8c8c" }}>
-          {t("appointment.noneToday")}
+          {appointmentScope === "today"
+            ? t("appointment.noneToday")
+            : t("appointment.noneTodayOrFuture")}
         </div>
       ) : (
         <>
@@ -164,7 +194,6 @@ const AppointmentList = memo(function AppointmentList({ appointmentsData }) {
                     {appt.reasonForVisit ? (
                       <div>{appt.reasonForVisit}</div>
                     ) : null}
-                    {appt.location ? <div>{appt.location}</div> : null}
                     {appt.ageGroup || appt.gender ? (
                       <div>
                         {[appt.ageGroup, appt.gender]
@@ -272,6 +301,7 @@ const Anfitrion = () => {
   const [rowsRaw, setRowsRaw] = useState([]);
   const [statsData, setStatsData] = useState([]);
   const [appointmentsRaw, setAppointmentsRaw] = useState([]);
+  const [appointmentScope, setAppointmentScope] = useState("today");
   const [t] = useTranslation("global");
   const navigate = useNavigate();
 
@@ -280,9 +310,12 @@ const Anfitrion = () => {
     [],
   );
 
-  const { locationId } = useServiceLocation();
+  const { locationId, selectedLocation } = useServiceLocation();
+
   const locationFilterId = locationId === "__ALL__" ? null : locationId;
 
+  const locationFilterName =
+    locationId === "__ALL__" ? null : selectedLocation?.name || null;
   useEffect(() => {
     const baseConstraints = [
       where("start_time", ">=", todayTimestamp),
@@ -305,19 +338,34 @@ const Anfitrion = () => {
   }, [todayTimestamp, tomorrowTimestamp, locationFilterId]);
 
   useEffect(() => {
-    const unsubscribeAppointments = onSnapshot(
-      collection(firestore, "appointments"),
-      (snapshot) => {
-        const rows = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setAppointmentsRaw(rows);
-      },
-    );
+    const baseConstraints = [where("appointmentAt", ">=", todayTimestamp)];
+
+    if (appointmentScope === "today") {
+      baseConstraints.push(where("appointmentAt", "<", tomorrowTimestamp));
+    }
+
+    if (locationFilterName) {
+      baseConstraints.push(where("location", "==", locationFilterName));
+    }
+
+    const q = query(collection(firestore, "appointments"), ...baseConstraints);
+
+    const unsubscribeAppointments = onSnapshot(q, (snapshot) => {
+      const rows = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setAppointmentsRaw(rows);
+    });
 
     return () => unsubscribeAppointments();
-  }, []);
+  }, [
+    todayTimestamp,
+    tomorrowTimestamp,
+    locationFilterId,
+    locationFilterName,
+    appointmentScope,
+  ]);
 
   useEffect(() => {
     let isMounted = true;
@@ -410,9 +458,6 @@ const Anfitrion = () => {
   );
 
   const appointmentsData = useMemo(() => {
-    const startMs = todayTimestamp?.toMillis?.() ?? 0;
-    const endMs = tomorrowTimestamp?.toMillis?.() ?? Number.MAX_SAFE_INTEGER;
-
     return (appointmentsRaw || [])
       .filter((item) => {
         if (!item) return false;
@@ -430,7 +475,7 @@ const Anfitrion = () => {
         const appointmentMs = getAppointmentMs(item);
         if (appointmentMs === null) return false;
 
-        return appointmentMs >= startMs && appointmentMs < endMs;
+        return true;
       })
       .sort((a, b) => {
         const aMs = getAppointmentMs(a) ?? Number.MAX_SAFE_INTEGER;
@@ -449,13 +494,7 @@ const Anfitrion = () => {
         ageGroup: item.ageGroup || "",
         gender: item.gender || "",
       }));
-  }, [
-    appointmentsRaw,
-    todayTimestamp,
-    tomorrowTimestamp,
-    getAppointmentMs,
-    formatAppointmentDateTime,
-  ]);
+  }, [appointmentsRaw, getAppointmentMs, formatAppointmentDateTime]);
 
   const dataSource = useMemo(() => {
     if (!Array.isArray(rowsRaw)) return [];
@@ -776,7 +815,11 @@ const Anfitrion = () => {
         rowClassName={getRowClassName}
       />
 
-      <AppointmentList appointmentsData={appointmentsData} />
+      <AppointmentList
+        appointmentsData={appointmentsData}
+        appointmentScope={appointmentScope}
+        setAppointmentScope={setAppointmentScope}
+      />
     </>
   );
 };

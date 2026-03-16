@@ -20,7 +20,10 @@
     "admit": "Admit",
     "cancel": "Cancel",
     "confirmCancel": "Cancel this appointment?",
-    "noDate": "No date"
+    "noDate": "No date",
+    "todayOnly": "Today only",
+    "todayAndFuture": "Today + future",
+    "noneTodayOrFuture": "No upcoming appointments for this location."
   },
 
   "appointmentImport": {

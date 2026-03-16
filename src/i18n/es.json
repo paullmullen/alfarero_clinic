@@ -20,7 +20,10 @@
     "admit": "Admitir",
     "cancel": "Cancelar",
     "confirmCancel": "¿Cancelar esta cita?",
-    "noDate": "Sin fecha"
+    "noDate": "Sin fecha",
+    "todayOnly": "Solo hoy",
+    "todayAndFuture": "Hoy y futuras",
+    "noneTodayOrFuture": "No hay citas próximas para esta ubicación."
   },
   "appointmentImport": {
     "title": "Carga de Citas",
