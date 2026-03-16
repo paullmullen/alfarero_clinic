@@ -115,7 +115,9 @@
   "common": {
     "cancel": "Cancel",
     "remove": "Remove",
-    "add": "Add"
+    "add": "Add",
+    "minutesShort": "min",
+    "phone": "Tel"
   },
   "consped": "Pediatrics",
   "consulta": "Adult Clinic",
@@ -417,7 +419,7 @@
   "UPLOAD": "Upload",
   "UPLOAD_KNOWN_PATIENTS": "Upload Known Patients from Medicabe  (xlsx)",
   "USER_PERMISSIONS": "User Permissions",
-  "version": "2.4.0b",
+  "version": "2.4.0c",
   "visitCompleted": "Service completed",
   "visitPayed": "Paying",
   "visitTypes": "Type of Visit",

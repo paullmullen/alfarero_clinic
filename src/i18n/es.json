@@ -116,7 +116,9 @@
   "common": {
     "cancel": "Cancelar",
     "remove": "Eliminar",
-    "add": "Agregar"
+    "add": "Agregar",
+    "minutesShort": "min",
+    "phone": "Teléfono"
   },
   "consped": "Consulta Pediátrica",
   "consulta": "Consulta Adultos",
@@ -421,7 +423,7 @@
   "UPLOAD": "Subir",
   "UPLOAD_KNOWN_PATIENTS": "Subir Pacientes Conocidos desde Medicabe (xlsx)",
   "USER_PERMISSIONS": "Permisos de Usuarios",
-  "version": "2.4.0b",
+  "version": "2.4.0c",
   "visitCompleted": "Servicio Completo",
   "visitPayed": "Pagando",
   "visitTypes": "Tipo de Visita",

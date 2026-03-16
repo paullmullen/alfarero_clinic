@@ -1,4 +1,3 @@
-// src/pages/Anfitrion.js
 import React, {
   useEffect,
   useState,
@@ -6,9 +5,8 @@ import React, {
   lazy,
   Suspense,
   useCallback,
-  memo,
 } from "react";
-import { Table, Space, Popover, Popconfirm, Button, Segmented } from "antd";
+import { Table, Space, Popover, Popconfirm } from "antd";
 import {
   collection,
   query,
@@ -42,45 +40,10 @@ import eye from "../img/eye.svg";
 import edit from "../img/edit.svg";
 import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
 import { useServiceLocation } from "../providers/ServiceLocationProvider";
+import AppointmentList from "../components/anfitrion/AppointmentList";
+import useAnfitrionAppointments from "../hooks/useAnfitrionAppointments";
 
 const EditPatientData = lazy(() => import("../components/EditPatientData.js"));
-
-const sectionCardStyle = {
-  marginTop: 16,
-  background: "#ffffff",
-  border: "1px solid #e8e8e8",
-  borderRadius: 12,
-  padding: 16,
-};
-
-const appointmentRowStyle = {
-  display: "grid",
-  gridTemplateColumns: "140px minmax(220px, 1.5fr) minmax(220px, 1.2fr) 160px",
-  gap: 12,
-  alignItems: "center",
-  padding: "10px 12px",
-  borderTop: "1px solid #f0f0f0",
-};
-
-const appointmentCellLabelStyle = {
-  fontSize: 12,
-  color: "#8c8c8c",
-  marginBottom: 2,
-};
-
-const appointmentCellValueStyle = {
-  fontSize: 14,
-  color: "#262626",
-  lineHeight: 1.35,
-};
-
-const mobileAppointmentBlockStyle = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 8,
-  padding: "12px 0",
-  borderTop: "1px solid #f0f0f0",
-};
 
 const formatNationalId = (rawDigits) => {
   const v = (rawDigits || "").replace(/\D/g, "").slice(0, 13);
@@ -89,219 +52,14 @@ const formatNationalId = (rawDigits) => {
   return `${v.slice(0, 4)} ${v.slice(4, 9)} ${v.slice(9, 13)}`;
 };
 
-const AppointmentList = memo(function AppointmentList({
-  appointmentsData,
-  appointmentScope,
-  setAppointmentScope,
-}) {
-  const [t] = useTranslation("global");
-
-  return (
-    <div style={sectionCardStyle}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 12,
-          flexWrap: "wrap",
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: "#262626" }}>
-            {t("appointment.title")}
-          </div>
-          <div style={{ fontSize: 13, color: "#8c8c8c", marginTop: 4 }}>
-            {t("appointment.subtitle")}
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            flexWrap: "wrap",
-          }}
-        >
-          <Segmented
-            value={appointmentScope}
-            onChange={setAppointmentScope}
-            options={[
-              {
-                label: t("appointment.todayOnly"),
-                value: "today",
-              },
-              {
-                label: t("appointment.todayAndFuture"),
-                value: "future",
-              },
-            ]}
-          />
-
-          <div style={{ fontSize: 13, color: "#595959", fontWeight: 600 }}>
-            {appointmentsData.length} {t("appointment.scheduled")}
-          </div>
-        </div>
-      </div>
-
-      {appointmentsData.length === 0 ? (
-        <div style={{ padding: "18px 0 6px 0", color: "#8c8c8c" }}>
-          {appointmentScope === "today"
-            ? t("appointment.noneToday")
-            : t("appointment.noneTodayOrFuture")}
-        </div>
-      ) : (
-        <>
-          <div className="appointments-desktop" style={{ marginTop: 12 }}>
-            {appointmentsData.map((appt) => (
-              <div key={appt.id} style={appointmentRowStyle}>
-                <div>
-                  <div style={appointmentCellLabelStyle}>
-                    {t("appointment.time")}
-                  </div>
-                  <div style={appointmentCellValueStyle}>
-                    {appt.appointmentDateTime}
-                  </div>
-                </div>
-
-                <div>
-                  <div style={appointmentCellLabelStyle}>{t("patient")}</div>
-                  <div style={appointmentCellValueStyle}>
-                    <div style={{ fontWeight: 600 }}>{appt.patientName}</div>
-
-                    {appt.nationalIdNumber ? (
-                      <div>
-                        {t("NATIONAL_ID_NUMBER")}:{" "}
-                        {formatNationalId(appt.nationalIdNumber)}
-                      </div>
-                    ) : null}
-
-                    {appt.phone ? (
-                      <div>
-                        {t("common.phone")} {appt.phone}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div>
-                  <div style={appointmentCellLabelStyle}>
-                    {t("appointment.details")}
-                  </div>
-                  <div style={appointmentCellValueStyle}>
-                    {appt.visitType ? <div>{appt.visitType}</div> : null}
-                    {appt.reasonForVisit ? (
-                      <div>{appt.reasonForVisit}</div>
-                    ) : null}
-                    {appt.ageGroup || appt.gender ? (
-                      <div>
-                        {[appt.ageGroup, appt.gender]
-                          .filter(Boolean)
-                          .join(" • ")}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    gap: 8,
-                  }}
-                >
-                  <Button disabled>{t("appointment.admit")}</Button>
-                  <Button danger disabled>
-                    {t("appointment.cancel")}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div
-            className="appointments-mobile"
-            style={{ display: "none", marginTop: 12 }}
-          >
-            {appointmentsData.map((appt) => (
-              <div
-                key={`${appt.id}-mobile`}
-                style={mobileAppointmentBlockStyle}
-              >
-                <div>
-                  <div style={appointmentCellLabelStyle}>
-                    {t("appointment.time")}
-                  </div>
-                  <div style={appointmentCellValueStyle}>
-                    {appt.appointmentDateTime}
-                  </div>
-                </div>
-
-                <div>
-                  <div style={appointmentCellLabelStyle}>{t("patient")}</div>
-                  <div style={appointmentCellValueStyle}>
-                    <div style={{ fontWeight: 600 }}>{appt.patientName}</div>
-
-                    {appt.nationalIdNumber ? (
-                      <div>
-                        {t("NATIONAL_ID_NUMBER")}:{" "}
-                        {formatNationalId(appt.nationalIdNumber)}
-                      </div>
-                    ) : null}
-
-                    {appt.phone ? (
-                      <div>
-                        {t("common.phone")} {appt.phone}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div>
-                  <div style={appointmentCellLabelStyle}>
-                    {t("appointment.details")}
-                  </div>
-                  <div style={appointmentCellValueStyle}>
-                    {appt.visitType ? <div>{appt.visitType}</div> : null}
-                    {appt.reasonForVisit ? (
-                      <div>{appt.reasonForVisit}</div>
-                    ) : null}
-                    {appt.location ? <div>{appt.location}</div> : null}
-                    {appt.ageGroup || appt.gender ? (
-                      <div>
-                        {[appt.ageGroup, appt.gender]
-                          .filter(Boolean)
-                          .join(" • ")}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", gap: 8 }}>
-                  <Button disabled block>
-                    {t("appointment.admit")}
-                  </Button>
-                  <Button danger disabled block>
-                    {t("appointment.cancel")}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
-});
-
 const Anfitrion = () => {
   useHideMenu(true);
 
   const [rowsRaw, setRowsRaw] = useState([]);
   const [statsData, setStatsData] = useState([]);
-  const [appointmentsRaw, setAppointmentsRaw] = useState([]);
   const [appointmentScope, setAppointmentScope] = useState("today");
+  const [busyAppointmentId, setBusyAppointmentId] = useState(null);
+
   const [t] = useTranslation("global");
   const navigate = useNavigate();
 
@@ -313,9 +71,9 @@ const Anfitrion = () => {
   const { locationId, selectedLocation } = useServiceLocation();
 
   const locationFilterId = locationId === "__ALL__" ? null : locationId;
-
   const locationFilterName =
     locationId === "__ALL__" ? null : selectedLocation?.name || null;
+
   useEffect(() => {
     const baseConstraints = [
       where("start_time", ">=", todayTimestamp),
@@ -337,35 +95,12 @@ const Anfitrion = () => {
     return () => unsubscribePatients();
   }, [todayTimestamp, tomorrowTimestamp, locationFilterId]);
 
-  useEffect(() => {
-    const baseConstraints = [where("appointmentAt", ">=", todayTimestamp)];
-
-    if (appointmentScope === "today") {
-      baseConstraints.push(where("appointmentAt", "<", tomorrowTimestamp));
-    }
-
-    if (locationFilterName) {
-      baseConstraints.push(where("location", "==", locationFilterName));
-    }
-
-    const q = query(collection(firestore, "appointments"), ...baseConstraints);
-
-    const unsubscribeAppointments = onSnapshot(q, (snapshot) => {
-      const rows = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setAppointmentsRaw(rows);
-    });
-
-    return () => unsubscribeAppointments();
-  }, [
+  const { appointmentsData } = useAnfitrionAppointments({
     todayTimestamp,
     tomorrowTimestamp,
-    locationFilterId,
-    locationFilterName,
     appointmentScope,
-  ]);
+    locationFilterName,
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -424,77 +159,6 @@ const Anfitrion = () => {
       })
       .map(([name]) => name);
   }, [statsData]);
-
-  const getAppointmentMs = useCallback((appointment) => {
-    const candidate = appointment?.appointmentAt || null;
-
-    if (candidate instanceof Timestamp) return candidate.toMillis();
-
-    if (candidate?.seconds) {
-      return new Timestamp(
-        candidate.seconds,
-        candidate.nanoseconds || 0,
-      ).toMillis();
-    }
-
-    return null;
-  }, []);
-
-  const formatAppointmentDateTime = useCallback(
-    (appointment) => {
-      const rawDateText = appointment?.appointmentDateText || "";
-      const rawTimeText = appointment?.appointmentTimeText || "";
-
-      if (rawDateText || rawTimeText) {
-        return [rawDateText, rawTimeText].filter(Boolean).join(" • ");
-      }
-
-      const ms = getAppointmentMs(appointment);
-      if (!ms) return "";
-
-      return new Date(ms).toLocaleString();
-    },
-    [getAppointmentMs],
-  );
-
-  const appointmentsData = useMemo(() => {
-    return (appointmentsRaw || [])
-      .filter((item) => {
-        if (!item) return false;
-
-        const admitted =
-          item.admitted === true ||
-          item.status === "admitted" ||
-          item.convertedToPatient === true;
-
-        const cancelled =
-          item.cancelled === true || item.status === "cancelled";
-
-        if (admitted || cancelled) return false;
-
-        const appointmentMs = getAppointmentMs(item);
-        if (appointmentMs === null) return false;
-
-        return true;
-      })
-      .sort((a, b) => {
-        const aMs = getAppointmentMs(a) ?? Number.MAX_SAFE_INTEGER;
-        const bMs = getAppointmentMs(b) ?? Number.MAX_SAFE_INTEGER;
-        return aMs - bMs;
-      })
-      .map((item) => ({
-        id: item.id,
-        patientName: item.patientName || "—",
-        nationalIdNumber: item.dpi || "",
-        phone: item.phoneNumber || "",
-        visitType: item.visitType || "",
-        reasonForVisit: item.reasonForVisit || "",
-        appointmentDateTime: formatAppointmentDateTime(item),
-        location: item.location || "",
-        ageGroup: item.ageGroup || "",
-        gender: item.gender || "",
-      }));
-  }, [appointmentsRaw, getAppointmentMs, formatAppointmentDateTime]);
 
   const dataSource = useMemo(() => {
     if (!Array.isArray(rowsRaw)) return [];
@@ -797,6 +461,24 @@ const Anfitrion = () => {
         : "odd-row";
   };
 
+  const handleAdmitAppointment = async (appointment) => {
+    setBusyAppointmentId(appointment.id);
+    try {
+      console.log("Admit appointment", appointment);
+    } finally {
+      setBusyAppointmentId(null);
+    }
+  };
+
+  const handleCancelAppointment = async (appointment) => {
+    setBusyAppointmentId(appointment.id);
+    try {
+      console.log("Cancel appointment", appointment);
+    } finally {
+      setBusyAppointmentId(null);
+    }
+  };
+
   return (
     <>
       <AlertInfo />
@@ -819,6 +501,9 @@ const Anfitrion = () => {
         appointmentsData={appointmentsData}
         appointmentScope={appointmentScope}
         setAppointmentScope={setAppointmentScope}
+        onAdmit={handleAdmitAppointment}
+        onCancel={handleCancelAppointment}
+        busyAppointmentId={busyAppointmentId}
       />
     </>
   );
