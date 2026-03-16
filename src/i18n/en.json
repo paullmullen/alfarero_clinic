@@ -4,6 +4,7 @@
   "ADD_LOCATION": "Add Location",
   "ADMINISTRATION": "Administration",
   "adult": "Adult",
+  "Adulto": "Adult",
   "ADULT_FEMININE": "Adult Feminine",
   "ADULT_MASCULINE": "Adult Masculine",
   "advertising": "Advertising in my neighborhood",
@@ -12,6 +13,7 @@
   "allFieldsAlert": "Please complete all fields",
   "appointment": {
     "actions": "Actions",
+    "admittedSuccess": "Patient admitted successfully.",
     "title": "Appointments",
     "subtitle": "Potential patients for today. Not yet admitted to the clinic.",
     "scheduled": "scheduled",
@@ -25,7 +27,8 @@
     "todayOnly": "Today only",
     "todayAndFuture": "Today + future",
     "noneFound": "No upcoming appointments for this location.",
-    "patient": "Patient"
+    "patient": "Patient",
+    "recipeNotFound": "No plan of care found for the visit type."
   },
   "appointments": {
     "cancelModalTitle": "Cancel appointment",
@@ -136,7 +139,8 @@
     "remove": "Remove",
     "add": "Add",
     "minutesShort": "min",
-    "phone": "Tel"
+    "phone": "Tel",
+    "loading": "Loading..."
   },
   "consped": "Pediatrics",
   "consulta": "Adult Clinic",
@@ -157,6 +161,7 @@
   "desk": "Patient List",
   "doc": "Doctor",
   "doctor": "Doctor",
+  "DoctorVisitante": "Visiting Doctor",
   "done": "Done",
   "DOWNLOAD": "Download to Excel",
   "EDITPATIENTDATA": "Change Patient Data",

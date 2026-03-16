@@ -333,7 +333,14 @@ export default function AppointmentInput() {
               item.status === "cancelled" ||
               !!item.cancelledAt;
 
-            return !cancelled;
+            const admitted =
+              item.status === "admitted" ||
+              !!item.admittedAt ||
+              !!item.admitted_patient_id;
+
+            const noLongerOperational = cancelled || admitted;
+
+            return !noLongerOperational;
           });
 
         setExistingAppointments(sortAppointmentsForDisplay(upcoming));

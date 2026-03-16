@@ -2,6 +2,10 @@
 
 Releases with letter suffixes are candidate releases not pushed to production. Releases without letter suffixes are the production releases that include the candidate changes (if approved).
 
+## v2.4.0c
+
+- Appointment functionality completely implemented and ready for testing.
+
 ## v2.4.0b
 
 - Added list of existing appointments to Citas page

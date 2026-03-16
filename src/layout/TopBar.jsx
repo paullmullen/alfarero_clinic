@@ -44,7 +44,7 @@ export default function TopBar({
           setPopoverOpen(false);
         }}
       >
-        Erase Paul Tests
+        Erase testing records
       </Button>
     </div>
   );

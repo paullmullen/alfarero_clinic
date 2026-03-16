@@ -124,8 +124,8 @@ export const cleanPaulTests = async () => {
     // Reference the "patients" collection
     const patientsRef = collection(firestore, "patients");
 
-    // Create a query to find patients with `patient_name` equal to "Paul"
-    const q = query(patientsRef, where("patient_name", "==", "Paul"));
+    // Create a query to find patients with `reason_for_visit` equal to "testing"
+    const q = query(patientsRef, where("reason_for_visit", "==", "testing"));
 
     // Execute the query and get matching documents
     const querySnapshot = await getDocs(q);
@@ -135,8 +135,8 @@ export const cleanPaulTests = async () => {
       await deleteDoc(patientDoc.ref);
     }
 
-    console.log("Paul's test data cleaned successfully.");
+    console.log("Test data cleaned successfully.");
   } catch (error) {
-    console.error("Error cleaning Paul's tests:", error);
+    console.error("Error cleaning test data:", error);
   }
 };

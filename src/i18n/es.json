@@ -4,6 +4,7 @@
   "ADD_LOCATION": "Añadir Ubicación",
   "ADMIN": "Administración",
   "adult": "Adulto",
+  "Adulto": "Adulto",
   "ADULT_FEMININE": "Adulto Feminina",
   "ADULT_MASCULINE": "Adulto Masculino",
   "advertising": "Rotulos o volantes en mi vecindario",
@@ -29,6 +30,7 @@
   },
   "appointment": {
     "actions": "Acciones",
+    "admittedSuccess": "Paciente admitido exitosamente.",
     "title": "Citas",
     "subtitle": "Pacientes potenciales para hoy. Aún no admitidos a la clínica.",
     "scheduled": "programadas",
@@ -42,7 +44,8 @@
     "todayOnly": "Solo hoy",
     "todayAndFuture": "Hoy y futuras",
     "noneFound": "No hay citas próximas.",
-    "patient": "Paciente"
+    "patient": "Paciente",
+    "recipeNotFound": "No se encontró plan de atención para el tipo de visita."
   },
   "appointmentImport": {
     "title": "Carga de Citas",
@@ -137,7 +140,8 @@
     "remove": "Eliminar",
     "add": "Agregar",
     "minutesShort": "min",
-    "phone": "Teléfono"
+    "phone": "Teléfono",
+    "loading": "Cargando..."
   },
   "consped": "Consulta Pediátrica",
   "consulta": "Consulta Adultos",
@@ -158,6 +162,7 @@
   "desk": "Próximos Pacientes",
   "doc": "Doc",
   "DOCTOR": "Doctor",
+  "DoctorVisitante": "Doctor Visitante",
   "done": "Fin",
   "DOWNLOAD": "Descargar para Excel",
   "EDITPATIENTDATA": "Modificar Datos del Paciente",
