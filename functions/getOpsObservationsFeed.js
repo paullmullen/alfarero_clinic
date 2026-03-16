@@ -19,7 +19,7 @@ const ALLOWED_ORIGINS = new Set([
   "https://multimedica.org",
   "http://localhost:3000",
   "https://localhost:3000",
-  "https://alfarero-478ad--expire-o4gpaz9l.web.app",
+  "https://alfarero-478ad--test-712c1z2l.web.app",
 ]);
 
 const corsMiddleware = cors({

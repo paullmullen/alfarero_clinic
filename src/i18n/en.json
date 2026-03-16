@@ -27,6 +27,11 @@
   },
 
   "appointmentImport": {
+    "existingAppointments": {
+      "title": "Existing Appointments",
+      "description": "These appointments are already in the system for all locations.  The report is limited to 50 appointments.  Others may exist beyond those shown here.",
+      "empty": "No existing appointments in the system"
+    },
     "title": "Upload Appointments",
     "description": "Upload file of anticipated appointments.",
     "upload": {
@@ -69,6 +74,7 @@
       "importFailed": "Import failed."
     },
     "issues": {
+      "appointment_in_past": "Appointment is in the past.",
       "missing_location": "Missing location.",
       "missing_patientName": "Missing patient name.",
       "missing_ageGroup": "Missing age group",
@@ -79,7 +85,9 @@
       "missing_appointmentTimeText": "Mising appointment time.",
       "invalid_ageGroup": "Age group not valid.",
       "invalid_gender": "Gender not valid",
-      "invalid_datetime": "Date and time not valid."
+      "invalid_datetime": "Date and time not valid.",
+      "invalid_location": "Location not valid.",
+      "duplicate_existing": "Duplicate of existing appointment."
     },
     "upload": {
       "clickOrDrag": "Click or drag file here.",
@@ -409,7 +417,7 @@
   "UPLOAD": "Upload",
   "UPLOAD_KNOWN_PATIENTS": "Upload Known Patients from Medicabe  (xlsx)",
   "USER_PERMISSIONS": "User Permissions",
-  "version": "2.3.1a",
+  "version": "2.4.0b",
   "visitCompleted": "Service completed",
   "visitPayed": "Paying",
   "visitTypes": "Type of Visit",

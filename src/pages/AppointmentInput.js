@@ -1,5 +1,5 @@
-// src/pages/AppointmentImport.js
-import React, { useMemo, useState } from "react";
+// src/pages/AppointmentInput.js
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Button,
@@ -16,10 +16,16 @@ import styled from "styled-components";
 import * as XLSX from "xlsx";
 import {
   collection,
+  getDocs,
   doc,
   serverTimestamp,
   writeBatch,
   Timestamp,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  limit,
 } from "firebase/firestore";
 import { useTranslation } from "react-i18next";
 import { auth, firestore } from "../helpers/firebaseConfig";
@@ -135,6 +141,48 @@ function cleanText(value) {
   return String(value).trim();
 }
 
+function normalizeKeyText(value) {
+  return cleanText(value).toLowerCase().replace(/\s+/g, " ");
+}
+
+function buildAppointmentMatchKey({
+  location,
+  patientName,
+  appointmentDateText,
+  appointmentTimeText,
+}) {
+  return [
+    normalizeKeyText(location),
+    normalizeKeyText(patientName),
+    normalizeKeyText(appointmentDateText),
+    normalizeKeyText(appointmentTimeText),
+  ].join("|");
+}
+
+function compareTextAsc(a, b) {
+  return cleanText(a).localeCompare(cleanText(b), undefined, {
+    sensitivity: "base",
+  });
+}
+
+function sortAppointmentsForDisplay(appointments) {
+  return [...appointments].sort((a, b) => {
+    const byLocation = compareTextAsc(a.location, b.location);
+    if (byLocation !== 0) return byLocation;
+
+    const aTime =
+      a.appointmentAt?.toDate?.()?.getTime?.() ?? Number.MAX_SAFE_INTEGER;
+    const bTime =
+      b.appointmentAt?.toDate?.()?.getTime?.() ?? Number.MAX_SAFE_INTEGER;
+    if (aTime !== bTime) return aTime - bTime;
+
+    const byVisitType = compareTextAsc(a.visitType, b.visitType);
+    if (byVisitType !== 0) return byVisitType;
+
+    return compareTextAsc(a.patientName, b.patientName);
+  });
+}
+
 function buildAppointmentFromRow(row, rowNumber, fileName) {
   const appointmentDateText = normalizeDate(row[8]);
   const appointmentTimeText = normalizeTime(row[9]);
@@ -156,6 +204,13 @@ function buildAppointmentFromRow(row, rowNumber, fileName) {
     appointmentDateText,
     appointmentTimeText,
     appointmentAt,
+
+    appointmentMatchKey: buildAppointmentMatchKey({
+      location: cleanText(row[0]),
+      patientName: cleanText(row[1]),
+      appointmentDateText,
+      appointmentTimeText,
+    }),
 
     source: "excel_upload",
     importFileName: fileName,
@@ -207,7 +262,7 @@ function chunkArray(arr, size) {
   return chunks;
 }
 
-export default function AppointmentImport() {
+export default function AppointmentInput() {
   const [t] = useTranslation("global");
   const ti = (key, options) => t(`appointmentImport.${key}`, options);
 
@@ -217,13 +272,158 @@ export default function AppointmentImport() {
   const [parsedRows, setParsedRows] = useState([]);
   const [loadingParse, setLoadingParse] = useState(false);
   const [loadingImport, setLoadingImport] = useState(false);
+  const [validLocationSet, setValidLocationSet] = useState(new Set());
+
+  const [existingAppointments, setExistingAppointments] = useState([]);
+  const [loadingExistingAppointments, setLoadingExistingAppointments] =
+    useState(true);
+
+  useEffect(() => {
+    const now = Timestamp.now();
+
+    const q = query(
+      collection(firestore, "appointments"),
+      where("appointmentAt", ">=", now),
+      orderBy("appointmentAt", "asc"),
+      limit(50),
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const upcoming = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data();
+
+          const appointmentDateText =
+            data.appointmentDateText ||
+            (data.appointmentAt?.toDate
+              ? formatDateYYYYMMDD(data.appointmentAt.toDate())
+              : "");
+
+          const appointmentTimeText =
+            data.appointmentTimeText ||
+            (data.appointmentAt?.toDate
+              ? `${String(data.appointmentAt.toDate().getHours()).padStart(
+                  2,
+                  "0",
+                )}:${String(data.appointmentAt.toDate().getMinutes()).padStart(
+                  2,
+                  "0",
+                )}`
+              : "");
+
+          return {
+            id: docSnap.id,
+            ...data,
+            appointmentDateText,
+            appointmentTimeText,
+            appointmentMatchKey:
+              data.appointmentMatchKey ||
+              buildAppointmentMatchKey({
+                location: data.location,
+                patientName: data.patientName,
+                appointmentDateText,
+                appointmentTimeText,
+              }),
+          };
+        });
+
+        setExistingAppointments(sortAppointmentsForDisplay(upcoming));
+        setLoadingExistingAppointments(false);
+      },
+      (error) => {
+        console.error(error);
+        setExistingAppointments([]);
+        setLoadingExistingAppointments(false);
+      },
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const loadLocations = async () => {
+      try {
+        const snapshot = await getDocs(collection(firestore, "locations"));
+
+        const names = snapshot.docs
+          .map((doc) => doc.data()?.name)
+          .filter(Boolean)
+          .map((name) => name.trim().toLowerCase());
+
+        setValidLocationSet(new Set(names));
+      } catch (err) {
+        console.error("Error loading locations", err);
+      }
+    };
+
+    loadLocations();
+  }, []);
+
+  const existingAppointmentKeySet = useMemo(
+    () =>
+      new Set(
+        existingAppointments
+          .map((item) => item.appointmentMatchKey)
+          .filter(Boolean),
+      ),
+    [existingAppointments],
+  );
+
+  const analyzedRows = useMemo(() => {
+    const keyCounts = parsedRows.reduce((acc, row) => {
+      if (!row.appointmentMatchKey) return acc;
+      acc[row.appointmentMatchKey] = (acc[row.appointmentMatchKey] || 0) + 1;
+      return acc;
+    }, {});
+
+    const nowMs = Date.now();
+
+    return parsedRows.map((row) => {
+      const extraIssues = [];
+
+      if (row.appointmentAt?.toDate) {
+        const rowMs = row.appointmentAt.toDate().getTime();
+        if (rowMs < nowMs) {
+          extraIssues.push("appointment_in_past");
+        }
+      }
+
+      if (row.appointmentMatchKey && keyCounts[row.appointmentMatchKey] > 1) {
+        extraIssues.push("duplicate_in_upload");
+      }
+
+      if (
+        row.appointmentMatchKey &&
+        existingAppointmentKeySet.has(row.appointmentMatchKey)
+      ) {
+        extraIssues.push("duplicate_existing");
+      }
+
+      if (
+        row.location &&
+        !validLocationSet.has(row.location.trim().toLowerCase())
+      ) {
+        extraIssues.push("invalid_location");
+      }
+
+      const combinedIssues = [...row.importIssues, ...extraIssues];
+      const uniqueIssues = [...new Set(combinedIssues)];
+
+      return {
+        ...row,
+        importIssues: uniqueIssues,
+        isImportReady: uniqueIssues.length === 0,
+      };
+    });
+  }, [parsedRows, existingAppointmentKeySet, validLocationSet]);
 
   const summary = useMemo(() => {
-    const total = parsedRows.length;
-    const valid = parsedRows.filter((r) => r.isValidBasic).length;
-    const withIssues = total - valid;
-    return { total, valid, withIssues };
-  }, [parsedRows]);
+    const total = analyzedRows.length;
+    const ready = analyzedRows.filter((r) => r.isImportReady).length;
+    const withIssues = total - ready;
+    return { total, ready, withIssues };
+  }, [analyzedRows]);
 
   const previewColumns = [
     {
@@ -236,16 +436,19 @@ export default function AppointmentImport() {
       title: ti("columns.location"),
       dataIndex: "location",
       key: "location",
+      width: 140,
     },
     {
       title: ti("columns.name"),
       dataIndex: "patientName",
       key: "patientName",
+      width: 220,
     },
     {
       title: ti("columns.visitType"),
       dataIndex: "visitType",
       key: "visitType",
+      width: 160,
     },
     {
       title: ti("columns.date"),
@@ -264,7 +467,7 @@ export default function AppointmentImport() {
       key: "status",
       width: 130,
       render: (_, record) =>
-        record.isValidBasic ? (
+        record.isImportReady ? (
           <Tag color="green">{ti("status.ok")}</Tag>
         ) : (
           <Tag color="orange">{ti("status.review")}</Tag>
@@ -277,6 +480,39 @@ export default function AppointmentImport() {
         record.importIssues?.length
           ? record.importIssues.map((issue) => ti(`issues.${issue}`)).join(", ")
           : "",
+    },
+  ];
+
+  const existingAppointmentsColumns = [
+    {
+      title: ti("columns.location"),
+      dataIndex: "location",
+      key: "location",
+      width: 140,
+    },
+    {
+      title: ti("columns.date"),
+      dataIndex: "appointmentDateText",
+      key: "appointmentDateText",
+      width: 120,
+    },
+    {
+      title: ti("columns.time"),
+      dataIndex: "appointmentTimeText",
+      key: "appointmentTimeText",
+      width: 100,
+    },
+    {
+      title: ti("columns.visitType"),
+      dataIndex: "visitType",
+      key: "visitType",
+      width: 160,
+    },
+    {
+      title: ti("columns.name"),
+      dataIndex: "patientName",
+      key: "patientName",
+      width: 220,
     },
   ];
 
@@ -335,14 +571,14 @@ export default function AppointmentImport() {
   };
 
   const handleImport = async () => {
-    if (!parsedRows.length) {
+    if (!analyzedRows.length) {
       message.warning(ti("messages.noRows"));
       return;
     }
 
-    const validRows = parsedRows.filter((r) => r.isValidBasic);
+    const importableRows = analyzedRows.filter((r) => r.isImportReady);
 
-    if (!validRows.length) {
+    if (!importableRows.length) {
       message.error(ti("messages.noValidRows"));
       return;
     }
@@ -352,7 +588,7 @@ export default function AppointmentImport() {
 
       const currentUser = auth.currentUser;
 
-      const rowsToWrite = validRows.map((row) => ({
+      const rowsToWrite = importableRows.map((row) => ({
         ...row,
         createdAt: serverTimestamp(),
         createdBy: currentUser?.uid || "",
@@ -371,19 +607,19 @@ export default function AppointmentImport() {
         await batch.commit();
       }
 
-      const skipped = parsedRows.length - validRows.length;
+      const skipped = analyzedRows.length - importableRows.length;
 
       if (skipped > 0) {
         message.warning(
           ti("messages.importedWithSkipped", {
-            imported: validRows.length,
+            imported: importableRows.length,
             skipped,
           }),
         );
       } else {
         message.success(
           ti("messages.importedRows", {
-            count: validRows.length,
+            count: importableRows.length,
           }),
         );
       }
@@ -461,7 +697,7 @@ export default function AppointmentImport() {
             <p className="ant-upload-hint">{ti("upload.dragHint")}</p>
           </Dragger>
 
-          {!!parsedRows.length && (
+          {!!analyzedRows.length && (
             <>
               <Card size="small">
                 <Space size="large" wrap>
@@ -469,7 +705,7 @@ export default function AppointmentImport() {
                     <strong>{ti("summary.total")}:</strong> {summary.total}
                   </Text>
                   <Text>
-                    <strong>{ti("summary.validBasic")}:</strong> {summary.valid}{" "}
+                    <strong>{ti("summary.validBasic")}:</strong> {summary.ready}{" "}
                     ({ti("summary.willImport")})
                   </Text>
                   <Text>
@@ -493,9 +729,9 @@ export default function AppointmentImport() {
                   `${record.importRowNumber}-${record.patientName}-${record.visitType}`
                 }
                 columns={previewColumns}
-                dataSource={parsedRows}
+                dataSource={analyzedRows}
                 pagination={{ pageSize: 10 }}
-                scroll={{ x: 1000 }}
+                scroll={{ x: 1100 }}
                 size="small"
               />
 
@@ -514,6 +750,30 @@ export default function AppointmentImport() {
               </Space>
             </>
           )}
+
+          <Card
+            size="small"
+            title={t("appointmentImport.existingAppointments.title")}
+          >
+            <Text type="secondary">
+              {t("appointmentImport.existingAppointments.description")}
+            </Text>
+
+            <div style={{ marginTop: 12 }}>
+              <Table
+                rowKey="id"
+                columns={existingAppointmentsColumns}
+                dataSource={existingAppointments}
+                loading={loadingExistingAppointments}
+                pagination={{ pageSize: 10 }}
+                scroll={{ x: 900 }}
+                size="small"
+                locale={{
+                  emptyText: t("appointmentImport.existingAppointments.empty"),
+                }}
+              />
+            </div>
+          </Card>
         </Space>
       </Card>
     </Page>

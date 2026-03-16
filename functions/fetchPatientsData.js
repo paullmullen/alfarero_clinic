@@ -19,7 +19,7 @@ const corsHandler = corsFactory({
     /^http:\/\/localhost(:\d+)?$/,
     /^https:\/\/localhost(:\d+)?$/,
     "https://multimedica.org",
-    "https://alfarero-478ad--expire-o4gpaz9l.web.app",
+    "https://alfarero-478ad--test-712c1z2l.web.app",
   ],
   methods: ["POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],

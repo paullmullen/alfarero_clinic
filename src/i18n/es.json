@@ -28,6 +28,11 @@
   "appointmentImport": {
     "title": "Carga de Citas",
     "description": "Subir archivo de Excel de citas anticipadas.",
+    "existingAppointments": {
+      "title": "Citas Existentes",
+      "description": "Estas citas ya están en todas las ubicaciones.  Este reporte está limitado a 50 citas.  Pueden existir otras más allá de las mostradas aquí.",
+      "empty": "No hay citas existentes en el sistema"
+    },
     "upload": {
       "clickOrDrag": "Haz clic o arrastra",
       "hint": "Descargue una plantilla de Excel para comenzar.</a>"
@@ -68,6 +73,7 @@
       "importFailed": "Importación Fallida"
     },
     "issues": {
+      "appointment_in_past": "Cita en el pasado",
       "missing_location": "Falta de Ubicación",
       "missing_patientName": "Falta de Nombre del Paciente",
       "missing_ageGroup": "Falta de Grupo de Edad",
@@ -78,7 +84,9 @@
       "missing_appointmentTimeText": "Falta de Hora de Cita",
       "invalid_ageGroup": "Grupo de Edad Inválido",
       "invalid_gender": "Género Inválido",
-      "invalid_datetime": "Fecha y Hora Inválidas"
+      "invalid_datetime": "Fecha y Hora Inválidas",
+      "invalid_location": "Ubicación Inválida",
+      "duplicate_existing": "Duplicado de cita existente"
     },
     "upload": {
       "clickOrDrag": "Haz clic o arrastra tu archivo aquí.",
@@ -413,7 +421,7 @@
   "UPLOAD": "Subir",
   "UPLOAD_KNOWN_PATIENTS": "Subir Pacientes Conocidos desde Medicabe (xlsx)",
   "USER_PERMISSIONS": "Permisos de Usuarios",
-  "version": "2.3.1a",
+  "version": "2.4.0b",
   "visitCompleted": "Servicio Completo",
   "visitPayed": "Pagando",
   "visitTypes": "Tipo de Visita",
