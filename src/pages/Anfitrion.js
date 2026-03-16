@@ -1,4 +1,4 @@
-// Anfitrion.js (Step 2 + stateless renderStatusIcon + stable order + display filter + exclude complete)
+// src/pages/Anfitrion.js
 import React, {
   useEffect,
   useState,
@@ -6,8 +6,9 @@ import React, {
   lazy,
   Suspense,
   useCallback,
+  memo,
 } from "react";
-import { Table, Space, Popover, Popconfirm } from "antd";
+import { Table, Space, Popover, Popconfirm, Button } from "antd";
 import {
   collection,
   query,
@@ -44,11 +45,233 @@ import { useServiceLocation } from "../providers/ServiceLocationProvider";
 
 const EditPatientData = lazy(() => import("../components/EditPatientData.js"));
 
+const sectionCardStyle = {
+  marginTop: 16,
+  background: "#ffffff",
+  border: "1px solid #e8e8e8",
+  borderRadius: 12,
+  padding: 16,
+};
+
+const appointmentRowStyle = {
+  display: "grid",
+  gridTemplateColumns: "140px minmax(220px, 1.5fr) minmax(220px, 1.2fr) 160px",
+  gap: 12,
+  alignItems: "center",
+  padding: "10px 12px",
+  borderTop: "1px solid #f0f0f0",
+};
+
+const appointmentCellLabelStyle = {
+  fontSize: 12,
+  color: "#8c8c8c",
+  marginBottom: 2,
+};
+
+const appointmentCellValueStyle = {
+  fontSize: 14,
+  color: "#262626",
+  lineHeight: 1.35,
+};
+
+const mobileAppointmentBlockStyle = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 8,
+  padding: "12px 0",
+  borderTop: "1px solid #f0f0f0",
+};
+
+const formatNationalId = (rawDigits) => {
+  const v = (rawDigits || "").replace(/\D/g, "").slice(0, 13);
+  if (v.length <= 4) return v;
+  if (v.length <= 9) return `${v.slice(0, 4)} ${v.slice(4)}`;
+  return `${v.slice(0, 4)} ${v.slice(4, 9)} ${v.slice(9, 13)}`;
+};
+
+const AppointmentList = memo(function AppointmentList({ appointmentsData }) {
+  const [t] = useTranslation("global");
+
+  return (
+    <div style={sectionCardStyle}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: "#262626" }}>
+            {t("appointment.title")}
+          </div>
+          <div style={{ fontSize: 13, color: "#8c8c8c", marginTop: 4 }}>
+            {t("appointment.subtitle")}
+          </div>
+        </div>
+
+        <div style={{ fontSize: 13, color: "#595959", fontWeight: 600 }}>
+          {appointmentsData.length} {t("appointment.scheduled")}
+        </div>
+      </div>
+
+      {appointmentsData.length === 0 ? (
+        <div style={{ padding: "18px 0 6px 0", color: "#8c8c8c" }}>
+          {t("appointment.noneToday")}
+        </div>
+      ) : (
+        <>
+          <div className="appointments-desktop" style={{ marginTop: 12 }}>
+            {appointmentsData.map((appt) => (
+              <div key={appt.id} style={appointmentRowStyle}>
+                <div>
+                  <div style={appointmentCellLabelStyle}>
+                    {t("appointment.time")}
+                  </div>
+                  <div style={appointmentCellValueStyle}>
+                    {appt.appointmentDateTime}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={appointmentCellLabelStyle}>{t("patient")}</div>
+                  <div style={appointmentCellValueStyle}>
+                    <div style={{ fontWeight: 600 }}>{appt.patientName}</div>
+
+                    {appt.nationalIdNumber ? (
+                      <div>
+                        {t("NATIONAL_ID_NUMBER")}:{" "}
+                        {formatNationalId(appt.nationalIdNumber)}
+                      </div>
+                    ) : null}
+
+                    {appt.phone ? (
+                      <div>
+                        {t("common.phone")} {appt.phone}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={appointmentCellLabelStyle}>
+                    {t("appointment.details")}
+                  </div>
+                  <div style={appointmentCellValueStyle}>
+                    {appt.visitType ? <div>{appt.visitType}</div> : null}
+                    {appt.reasonForVisit ? (
+                      <div>{appt.reasonForVisit}</div>
+                    ) : null}
+                    {appt.location ? <div>{appt.location}</div> : null}
+                    {appt.ageGroup || appt.gender ? (
+                      <div>
+                        {[appt.ageGroup, appt.gender]
+                          .filter(Boolean)
+                          .join(" • ")}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    gap: 8,
+                  }}
+                >
+                  <Button disabled>{t("appointment.admit")}</Button>
+                  <Button danger disabled>
+                    {t("appointment.cancel")}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div
+            className="appointments-mobile"
+            style={{ display: "none", marginTop: 12 }}
+          >
+            {appointmentsData.map((appt) => (
+              <div
+                key={`${appt.id}-mobile`}
+                style={mobileAppointmentBlockStyle}
+              >
+                <div>
+                  <div style={appointmentCellLabelStyle}>
+                    {t("appointment.time")}
+                  </div>
+                  <div style={appointmentCellValueStyle}>
+                    {appt.appointmentDateTime}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={appointmentCellLabelStyle}>{t("patient")}</div>
+                  <div style={appointmentCellValueStyle}>
+                    <div style={{ fontWeight: 600 }}>{appt.patientName}</div>
+
+                    {appt.nationalIdNumber ? (
+                      <div>
+                        {t("NATIONAL_ID_NUMBER")}:{" "}
+                        {formatNationalId(appt.nationalIdNumber)}
+                      </div>
+                    ) : null}
+
+                    {appt.phone ? (
+                      <div>
+                        {t("common.phone")} {appt.phone}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={appointmentCellLabelStyle}>
+                    {t("appointment.details")}
+                  </div>
+                  <div style={appointmentCellValueStyle}>
+                    {appt.visitType ? <div>{appt.visitType}</div> : null}
+                    {appt.reasonForVisit ? (
+                      <div>{appt.reasonForVisit}</div>
+                    ) : null}
+                    {appt.location ? <div>{appt.location}</div> : null}
+                    {appt.ageGroup || appt.gender ? (
+                      <div>
+                        {[appt.ageGroup, appt.gender]
+                          .filter(Boolean)
+                          .join(" • ")}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 8 }}>
+                  <Button disabled block>
+                    {t("appointment.admit")}
+                  </Button>
+                  <Button danger disabled block>
+                    {t("appointment.cancel")}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+});
+
 const Anfitrion = () => {
   useHideMenu(true);
 
-  const [rowsRaw, setRowsRaw] = useState([]); // snapshot docs for today's patients
-  const [statsData, setStatsData] = useState([]); // station metrics (includes sort_order, display)
+  const [rowsRaw, setRowsRaw] = useState([]);
+  const [statsData, setStatsData] = useState([]);
+  const [appointmentsRaw, setAppointmentsRaw] = useState([]);
   const [t] = useTranslation("global");
   const navigate = useNavigate();
 
@@ -57,18 +280,9 @@ const Anfitrion = () => {
     [],
   );
 
-  const formatNationalId = (rawDigits) => {
-    const v = (rawDigits || "").replace(/\D/g, "").slice(0, 13);
-    if (v.length <= 4) return v;
-    if (v.length <= 9) return `${v.slice(0, 4)} ${v.slice(4)}`;
-    return `${v.slice(0, 4)} ${v.slice(4, 9)} ${v.slice(9, 13)}`;
-  };
-
   const { locationId } = useServiceLocation();
-
   const locationFilterId = locationId === "__ALL__" ? null : locationId;
 
-  // Filtered real-time listener for today's patients, excluding completed
   useEffect(() => {
     const baseConstraints = [
       where("start_time", ">=", todayTimestamp),
@@ -76,7 +290,6 @@ const Anfitrion = () => {
       where("complete", "==", false),
     ];
 
-    // Add location constraint only when a real clinic is selected
     const constraints = locationFilterId
       ? [...baseConstraints, where("location_id", "==", locationFilterId)]
       : baseConstraints;
@@ -89,17 +302,31 @@ const Anfitrion = () => {
     });
 
     return () => unsubscribePatients();
-  }, [todayTimestamp, tomorrowTimestamp, locationId, locationFilterId]);
+  }, [todayTimestamp, tomorrowTimestamp, locationFilterId]);
 
-  // Load only station stats (keeps Step-1 behavior but avoids reloading patient rows)
+  useEffect(() => {
+    const unsubscribeAppointments = onSnapshot(
+      collection(firestore, "appointments"),
+      (snapshot) => {
+        const rows = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setAppointmentsRaw(rows);
+      },
+    );
+
+    return () => unsubscribeAppointments();
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
     const dateRange = [todayTimestamp, tomorrowTimestamp];
 
     fetchData({
       dateRange,
-      setData: () => {}, // no-op: rows come from snapshot above
-      setPatientsChanged: () => {}, // no-op
+      setData: () => {},
+      setPatientsChanged: () => {},
       setStatsData,
       isMounted,
     });
@@ -109,11 +336,6 @@ const Anfitrion = () => {
     };
   }, [todayTimestamp, tomorrowTimestamp, setStatsData]);
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // STEP 2: Memoized helpers and derived data (stable order + display filter)
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  // Station metrics map for O(1) lookup in column titles
   const stationMetrics = useMemo(() => {
     const map = new Map();
     statsData.forEach((s) => {
@@ -122,10 +344,6 @@ const Anfitrion = () => {
     return map;
   }, [statsData]);
 
-  /**
-   * Station names sorted by statsData.sort_order (ascending),
-   * filtered to only include stations with display === true (or missing -> treated as true).
-   */
   const stationNames = useMemo(() => {
     const stations = statsData
       .filter(
@@ -140,7 +358,6 @@ const Anfitrion = () => {
             : Number.POSITIVE_INFINITY,
       }));
 
-    // Deduplicate by name and pick lowest sort_order
     const orderMap = new Map();
     stations.forEach(({ name, order }) => {
       if (!orderMap.has(name)) {
@@ -160,26 +377,102 @@ const Anfitrion = () => {
       .map(([name]) => name);
   }, [statsData]);
 
-  // Compute table rows once (sorted), including wtg_time and per-station statuses
+  const getAppointmentMs = useCallback((appointment) => {
+    const candidate = appointment?.appointmentAt || null;
+
+    if (candidate instanceof Timestamp) return candidate.toMillis();
+
+    if (candidate?.seconds) {
+      return new Timestamp(
+        candidate.seconds,
+        candidate.nanoseconds || 0,
+      ).toMillis();
+    }
+
+    return null;
+  }, []);
+
+  const formatAppointmentDateTime = useCallback(
+    (appointment) => {
+      const rawDateText = appointment?.appointmentDateText || "";
+      const rawTimeText = appointment?.appointmentTimeText || "";
+
+      if (rawDateText || rawTimeText) {
+        return [rawDateText, rawTimeText].filter(Boolean).join(" • ");
+      }
+
+      const ms = getAppointmentMs(appointment);
+      if (!ms) return "";
+
+      return new Date(ms).toLocaleString();
+    },
+    [getAppointmentMs],
+  );
+
+  const appointmentsData = useMemo(() => {
+    const startMs = todayTimestamp?.toMillis?.() ?? 0;
+    const endMs = tomorrowTimestamp?.toMillis?.() ?? Number.MAX_SAFE_INTEGER;
+
+    return (appointmentsRaw || [])
+      .filter((item) => {
+        if (!item) return false;
+
+        const admitted =
+          item.admitted === true ||
+          item.status === "admitted" ||
+          item.convertedToPatient === true;
+
+        const cancelled =
+          item.cancelled === true || item.status === "cancelled";
+
+        if (admitted || cancelled) return false;
+
+        const appointmentMs = getAppointmentMs(item);
+        if (appointmentMs === null) return false;
+
+        return appointmentMs >= startMs && appointmentMs < endMs;
+      })
+      .sort((a, b) => {
+        const aMs = getAppointmentMs(a) ?? Number.MAX_SAFE_INTEGER;
+        const bMs = getAppointmentMs(b) ?? Number.MAX_SAFE_INTEGER;
+        return aMs - bMs;
+      })
+      .map((item) => ({
+        id: item.id,
+        patientName: item.patientName || "—",
+        nationalIdNumber: item.dpi || "",
+        phone: item.phoneNumber || "",
+        visitType: item.visitType || "",
+        reasonForVisit: item.reasonForVisit || "",
+        appointmentDateTime: formatAppointmentDateTime(item),
+        location: item.location || "",
+        ageGroup: item.ageGroup || "",
+        gender: item.gender || "",
+      }));
+  }, [
+    appointmentsRaw,
+    todayTimestamp,
+    tomorrowTimestamp,
+    getAppointmentMs,
+    formatAppointmentDateTime,
+  ]);
+
   const dataSource = useMemo(() => {
     if (!Array.isArray(rowsRaw)) return [];
 
-    // Helper to turn Firestore Timestamp or Date string into ms
     const toMs = (val) => {
       if (val instanceof Timestamp) return val.toMillis();
       const d = new Date(val);
-      return isNaN(d.getTime()) ? Date.now() : d.getTime();
+      return Number.isNaN(d.getTime()) ? Date.now() : d.getTime();
     };
 
     const nowMs = Timestamp.now().toMillis();
 
-    // Sort by start_time asc
     const sorted = [...rowsRaw].sort(
       (a, b) => toMs(a?.start_time) - toMs(b?.start_time),
     );
 
     return sorted.map((item) => {
-      // Build map station -> status; compute current_process and total minutes
       const stations = {};
       const elapsedMinsCandidates = [];
 
@@ -229,11 +522,6 @@ const Anfitrion = () => {
     });
   }, [rowsRaw, t]);
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // 3) Stateless & cheap renderStatusIcon
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  // Icon sources
   const iconMap = useMemo(
     () => ({
       pending: not_planned,
@@ -252,7 +540,6 @@ const Anfitrion = () => {
     [],
   );
 
-  // All possible status transitions to show in the popover
   const STATUS_CHOICES = useMemo(
     () => [
       ["pending", not_planned],
@@ -270,12 +557,6 @@ const Anfitrion = () => {
     [],
   );
 
-  /**
-   * Stateless icon renderer:
-   * - Receives status, station, and the *row's* pt_no.
-   * - No state writes on hover.
-   * - Uses lightweight <img> tags with lazy loading.
-   */
   const renderStatusIcon = useCallback(
     (status, stationName, pt_no) => {
       const src = iconMap[status];
@@ -323,9 +604,7 @@ const Anfitrion = () => {
     [STATUS_CHOICES, t, iconMap],
   );
 
-  // 🧱 Memoized columns (stable reference for Table), using stationNames sorted by sort_order and filtered by display
   const columns = useMemo(() => {
-    // Patient base column
     const patientCol = {
       title: t("patient"),
       dataIndex: "patient_name",
@@ -342,13 +621,15 @@ const Anfitrion = () => {
                 <br /> {String(name).split("\n")[2]} <br />
                 <i>{String(name).split("\n")[3]} </i>
                 <br />
-                Tel: {String(name).split("\n")[4]}{" "}
+                {t("common.phone")} {String(name).split("\n")[4]}{" "}
               </td>
               <td align="right">
                 <Popover
                   content={
                     <Suspense
-                      fallback={<div style={{ padding: 8 }}>Cargando…</div>}
+                      fallback={
+                        <div style={{ padding: 8 }}>{t("common.loading")}</div>
+                      }
                     >
                       <EditPatientData
                         initialValues={{
@@ -382,11 +663,10 @@ const Anfitrion = () => {
       ),
     };
 
-    // Station columns from statsData (stable, sorted by sort_order asc, filtered by display)
     const stationCols = stationNames.map((stationName) => {
       const metrics = stationMetrics.get(stationName) || {};
-      const avgMs = metrics.avg_waiting_time ?? 0; // milliseconds
-      const maxSec = metrics.max_waiting_time ?? 0; // seconds
+      const avgMs = metrics.avg_waiting_time ?? 0;
+      const maxSec = metrics.max_waiting_time ?? 0;
       const isOverLimit = avgMs / 1000 > maxSec;
       const waitTextMin = Math.round(avgMs / 60000);
 
@@ -407,7 +687,6 @@ const Anfitrion = () => {
             </div>
           </div>
         ),
-        // Pass the row's pt_no so actions always target the correct patient
         render: (status, row) =>
           renderStatusIcon(status, stationName, row.pt_no),
         width: IconSizes.width,
@@ -415,7 +694,6 @@ const Anfitrion = () => {
       };
     });
 
-    // Waiting time + Action columns
     const waitingCol = {
       title: t("waitingTime"),
       dataIndex: "wtg_time",
@@ -431,8 +709,10 @@ const Anfitrion = () => {
         };
         return (
           <span style={style}>
-            {String(wtg_time).split("\n")[0]} min <hr></hr>
-            <h5>{String(wtg_time).split("\n")[1]} min</h5>
+            {String(wtg_time).split("\n")[0]} {t("common.minutesShort")} <hr />
+            <h5>
+              {String(wtg_time).split("\n")[1]} {t("common.minutesShort")}
+            </h5>
           </span>
         );
       },
@@ -465,7 +745,6 @@ const Anfitrion = () => {
     return [patientCol, ...stationCols, waitingCol, actionCol];
   }, [t, stationNames, stationMetrics, navigate, renderStatusIcon]);
 
-  // Row class based on all (displayed) station statuses
   const getRowClassName = (record, index) => {
     const allPendingOrComplete = stationNames.every((st) => {
       const status = record[st];
@@ -479,11 +758,10 @@ const Anfitrion = () => {
         : "odd-row";
   };
 
-  // ─────────────────────────────────────────────────────────────────────────────
-
   return (
     <>
       <AlertInfo />
+
       <Table
         rowKey={"pt_no"}
         columns={columns}
@@ -497,6 +775,8 @@ const Anfitrion = () => {
         sticky={{ offsetHeader: 0 }}
         rowClassName={getRowClassName}
       />
+
+      <AppointmentList appointmentsData={appointmentsData} />
     </>
   );
 };

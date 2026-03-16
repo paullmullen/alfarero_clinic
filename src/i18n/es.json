@@ -10,6 +10,18 @@
   "age": "Edad",
   "ALL_LOCATIONS": "Todas Ubicaciones",
   "allFieldsAlert": "Por favor ingrese todos los campos",
+  "appointment": {
+    "title": "Citas",
+    "subtitle": "Pacientes potenciales para hoy. Aún no admitidos a la clínica.",
+    "scheduled": "programadas",
+    "noneToday": "No hay citas para hoy.",
+    "time": "Hora",
+    "details": "Detalles",
+    "admit": "Admitir",
+    "cancel": "Cancelar",
+    "confirmCancel": "¿Cancelar esta cita?",
+    "noDate": "Sin fecha"
+  },
   "appointmentImport": {
     "title": "Carga de Citas",
     "description": "Subir archivo de Excel de citas anticipadas.",

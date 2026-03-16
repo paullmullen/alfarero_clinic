@@ -10,6 +10,19 @@
   "age": "Age",
   "ALL_LOCATIONS": "All Locations",
   "allFieldsAlert": "Please complete all fields",
+  "appointment": {
+    "title": "Appointments",
+    "subtitle": "Potential patients for today. Not yet admitted to the clinic.",
+    "scheduled": "scheduled",
+    "noneToday": "No appointments for today.",
+    "time": "Time",
+    "details": "Details",
+    "admit": "Admit",
+    "cancel": "Cancel",
+    "confirmCancel": "Cancel this appointment?",
+    "noDate": "No date"
+  },
+
   "appointmentImport": {
     "title": "Upload Appointments",
     "description": "Upload file of anticipated appointments.",
