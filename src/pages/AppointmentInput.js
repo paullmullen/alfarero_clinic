@@ -291,42 +291,50 @@ export default function AppointmentInput() {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const upcoming = snapshot.docs.map((docSnap) => {
-          const data = docSnap.data();
+        const upcoming = snapshot.docs
+          .map((docSnap) => {
+            const data = docSnap.data();
 
-          const appointmentDateText =
-            data.appointmentDateText ||
-            (data.appointmentAt?.toDate
-              ? formatDateYYYYMMDD(data.appointmentAt.toDate())
-              : "");
+            const appointmentDateText =
+              data.appointmentDateText ||
+              (data.appointmentAt?.toDate
+                ? formatDateYYYYMMDD(data.appointmentAt.toDate())
+                : "");
 
-          const appointmentTimeText =
-            data.appointmentTimeText ||
-            (data.appointmentAt?.toDate
-              ? `${String(data.appointmentAt.toDate().getHours()).padStart(
-                  2,
-                  "0",
-                )}:${String(data.appointmentAt.toDate().getMinutes()).padStart(
-                  2,
-                  "0",
-                )}`
-              : "");
+            const appointmentTimeText =
+              data.appointmentTimeText ||
+              (data.appointmentAt?.toDate
+                ? `${String(data.appointmentAt.toDate().getHours()).padStart(
+                    2,
+                    "0",
+                  )}:${String(
+                    data.appointmentAt.toDate().getMinutes(),
+                  ).padStart(2, "0")}`
+                : "");
 
-          return {
-            id: docSnap.id,
-            ...data,
-            appointmentDateText,
-            appointmentTimeText,
-            appointmentMatchKey:
-              data.appointmentMatchKey ||
-              buildAppointmentMatchKey({
-                location: data.location,
-                patientName: data.patientName,
-                appointmentDateText,
-                appointmentTimeText,
-              }),
-          };
-        });
+            return {
+              id: docSnap.id,
+              ...data,
+              appointmentDateText,
+              appointmentTimeText,
+              appointmentMatchKey:
+                data.appointmentMatchKey ||
+                buildAppointmentMatchKey({
+                  location: data.location,
+                  patientName: data.patientName,
+                  appointmentDateText,
+                  appointmentTimeText,
+                }),
+            };
+          })
+          .filter((item) => {
+            const cancelled =
+              item.cancelled === true ||
+              item.status === "cancelled" ||
+              !!item.cancelledAt;
+
+            return !cancelled;
+          });
 
         setExistingAppointments(sortAppointmentsForDisplay(upcoming));
         setLoadingExistingAppointments(false);

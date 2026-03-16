@@ -11,6 +11,7 @@
   "ALL_LOCATIONS": "All Locations",
   "allFieldsAlert": "Please complete all fields",
   "appointment": {
+    "actions": "Actions",
     "title": "Appointments",
     "subtitle": "Potential patients for today. Not yet admitted to the clinic.",
     "scheduled": "scheduled",
@@ -23,7 +24,25 @@
     "noDate": "No date",
     "todayOnly": "Today only",
     "todayAndFuture": "Today + future",
-    "noneTodayOrFuture": "No upcoming appointments for this location."
+    "noneFound": "No upcoming appointments for this location.",
+    "patient": "Patient"
+  },
+  "appointments": {
+    "cancelModalTitle": "Cancel appointment",
+    "cancelAppointment": "Cancel appointment",
+    "cancelSuccess": "Appointment cancelled.",
+    "cancelError": "Could not cancel the appointment.",
+    "cancellationReason": "Cancellation reason",
+    "cancellationReasonRequired": "Please select a cancellation reason.",
+    "selectCancellationReason": "Select a cancellation reason",
+    "cancellationNotes": "Notes",
+    "cancellationNotesPlaceholder": "Optional notes"
+  },
+  "cancellationReasons": {
+    "no_show": "No show",
+    "service_not_available": "Service not available as planned",
+    "reschedule": "Reschedule",
+    "other": "Other"
   },
 
   "appointmentImport": {

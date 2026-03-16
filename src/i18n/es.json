@@ -10,7 +10,25 @@
   "age": "Edad",
   "ALL_LOCATIONS": "Todas Ubicaciones",
   "allFieldsAlert": "Por favor ingrese todos los campos",
+  "appointments": {
+    "cancelModalTitle": "Cancelar cita",
+    "cancelAppointment": "Cancelar cita",
+    "cancelSuccess": "La cita fue cancelada.",
+    "cancelError": "No se pudo cancelar la cita.",
+    "cancellationReason": "Razón de cancelación",
+    "cancellationReasonRequired": "Seleccione una razón de cancelación.",
+    "selectCancellationReason": "Seleccione una razón de cancelación",
+    "cancellationNotes": "Notas",
+    "cancellationNotesPlaceholder": "Notas opcionales"
+  },
+  "cancellationReasons": {
+    "no_show": "No se presentó",
+    "service_not_available": "Servicio no disponible según lo planeado",
+    "reschedule": "Reprogramar",
+    "other": "Otro"
+  },
   "appointment": {
+    "actions": "Acciones",
     "title": "Citas",
     "subtitle": "Pacientes potenciales para hoy. Aún no admitidos a la clínica.",
     "scheduled": "programadas",
@@ -23,7 +41,8 @@
     "noDate": "Sin fecha",
     "todayOnly": "Solo hoy",
     "todayAndFuture": "Hoy y futuras",
-    "noneTodayOrFuture": "No hay citas próximas para esta ubicación."
+    "noneFound": "No hay citas próximas.",
+    "patient": "Paciente"
   },
   "appointmentImport": {
     "title": "Carga de Citas",

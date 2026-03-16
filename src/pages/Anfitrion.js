@@ -6,16 +6,29 @@ import React, {
   Suspense,
   useCallback,
 } from "react";
-import { Table, Space, Popover, Popconfirm } from "antd";
+import {
+  Table,
+  Space,
+  Popover,
+  Popconfirm,
+  Modal,
+  Form,
+  Select,
+  Input,
+  message,
+} from "antd";
 import {
   collection,
   query,
   where,
   Timestamp,
   onSnapshot,
+  doc,
+  updateDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { fetchData } from "../helpers/fetchData";
-import { firestore } from "./../helpers/firebaseConfig";
+import { firestore, auth } from "./../helpers/firebaseConfig";
 import {
   handleStatusChange,
   handleDelete,
@@ -42,7 +55,9 @@ import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
 import { useServiceLocation } from "../providers/ServiceLocationProvider";
 import AppointmentList from "../components/anfitrion/AppointmentList";
 import useAnfitrionAppointments from "../hooks/useAnfitrionAppointments";
+import useCancellationReasons from "../hooks/useCancellationReasons";
 
+const { TextArea } = Input;
 const EditPatientData = lazy(() => import("../components/EditPatientData.js"));
 
 const formatNationalId = (rawDigits) => {
@@ -60,6 +75,10 @@ const Anfitrion = () => {
   const [appointmentScope, setAppointmentScope] = useState("today");
   const [busyAppointmentId, setBusyAppointmentId] = useState(null);
 
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [appointmentToCancel, setAppointmentToCancel] = useState(null);
+  const [cancelForm] = Form.useForm();
+
   const [t] = useTranslation("global");
   const navigate = useNavigate();
 
@@ -73,6 +92,8 @@ const Anfitrion = () => {
   const locationFilterId = locationId === "__ALL__" ? null : locationId;
   const locationFilterName =
     locationId === "__ALL__" ? null : selectedLocation?.name || null;
+
+  const { activeReasons, loadingReasons } = useCancellationReasons();
 
   useEffect(() => {
     const baseConstraints = [
@@ -461,6 +482,24 @@ const Anfitrion = () => {
         : "odd-row";
   };
 
+  const openCancelModal = useCallback(
+    (appointment) => {
+      setAppointmentToCancel(appointment);
+      cancelForm.setFieldsValue({
+        cancellationReasonCode: undefined,
+        cancellationNotes: "",
+      });
+      setCancelModalOpen(true);
+    },
+    [cancelForm],
+  );
+
+  const closeCancelModal = useCallback(() => {
+    setCancelModalOpen(false);
+    setAppointmentToCancel(null);
+    cancelForm.resetFields();
+  }, [cancelForm]);
+
   const handleAdmitAppointment = async (appointment) => {
     setBusyAppointmentId(appointment.id);
     try {
@@ -471,13 +510,56 @@ const Anfitrion = () => {
   };
 
   const handleCancelAppointment = async (appointment) => {
-    setBusyAppointmentId(appointment.id);
+    openCancelModal(appointment);
+  };
+
+  const submitCancelAppointment = async () => {
+    if (!appointmentToCancel?.id) return;
+
+    let values;
     try {
-      console.log("Cancel appointment", appointment);
+      values = await cancelForm.validateFields();
+    } catch {
+      return;
+    }
+
+    setBusyAppointmentId(appointmentToCancel.id);
+
+    try {
+      await updateDoc(doc(firestore, "appointments", appointmentToCancel.id), {
+        status: "cancelled",
+        cancelled: true,
+        cancelledAt: serverTimestamp(),
+        cancelledBy: auth?.currentUser?.uid || null,
+        cancellationReasonCode: values.cancellationReasonCode,
+        cancellationNotes: values.cancellationNotes?.trim() || "",
+        updatedAt: serverTimestamp(),
+      });
+
+      message.success(t("appointments.cancelSuccess"));
+      closeCancelModal();
+    } catch (error) {
+      console.error("Error cancelling appointment", error);
+      message.error(t("appointments.cancelError"));
     } finally {
       setBusyAppointmentId(null);
     }
   };
+
+  const cancellationReasonOptions = useMemo(() => {
+    return (activeReasons || []).map((reason) => {
+      const normalizedCode = String(reason?.code || "")
+        .trim()
+        .toLowerCase();
+
+      return {
+        value: normalizedCode,
+        label: t(`cancellationReasons.${normalizedCode}`, {
+          defaultValue: normalizedCode,
+        }),
+      };
+    });
+  }, [activeReasons, t]);
 
   return (
     <>
@@ -505,6 +587,65 @@ const Anfitrion = () => {
         onCancel={handleCancelAppointment}
         busyAppointmentId={busyAppointmentId}
       />
+
+      <Modal
+        open={cancelModalOpen}
+        title={t("appointments.cancelModalTitle")}
+        onCancel={closeCancelModal}
+        onOk={submitCancelAppointment}
+        okText={t("appointment.cancel")}
+        cancelText={t("common.cancel")}
+        confirmLoading={
+          !!appointmentToCancel?.id &&
+          busyAppointmentId === appointmentToCancel.id
+        }
+        destroyOnClose
+      >
+        <div style={{ marginBottom: 16 }}>
+          <strong>{appointmentToCancel?.patientName || "—"}</strong>
+          <div style={{ marginTop: 4, color: "#666" }}>
+            {appointmentToCancel?.appointmentDateTime ||
+              t("appointment.noDate")}
+          </div>
+          {!!appointmentToCancel?.location && (
+            <div style={{ marginTop: 4, color: "#666" }}>
+              {appointmentToCancel.location}
+            </div>
+          )}
+        </div>
+
+        <Form form={cancelForm} layout="vertical">
+          <Form.Item
+            label={t("appointments.cancellationReason")}
+            name="cancellationReasonCode"
+            rules={[
+              {
+                required: true,
+                message: t("appointments.cancellationReasonRequired"),
+              },
+            ]}
+          >
+            <Select
+              showSearch
+              loading={loadingReasons}
+              options={cancellationReasonOptions}
+              placeholder={t("appointments.selectCancellationReason")}
+              optionFilterProp="label"
+            />
+          </Form.Item>
+
+          <Form.Item
+            label={t("appointments.cancellationNotes")}
+            name="cancellationNotes"
+          >
+            <TextArea
+              rows={3}
+              maxLength={500}
+              placeholder={t("appointments.cancellationNotesPlaceholder")}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </>
   );
 };
