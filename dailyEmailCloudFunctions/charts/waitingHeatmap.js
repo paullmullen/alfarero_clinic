@@ -3,7 +3,7 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
 // --- CJS imports (required for Node 22 + Chart.js) ---
-const Chart = require("chart.js");
+import Chart from "chart.js/auto";
 const ChartDataLabels = require("chartjs-plugin-datalabels");
 const { MatrixController, MatrixElement } = require("chartjs-chart-matrix");
 const { CategoryScale, LinearScale } = require("chart.js");

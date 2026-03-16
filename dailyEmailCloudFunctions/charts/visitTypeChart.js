@@ -2,7 +2,7 @@ import { createCanvas } from "canvas";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
-const Chart = require("chart.js");
+import Chart from "chart.js/auto";
 
 export function generateVisitTypeChart(
   todayCounts,

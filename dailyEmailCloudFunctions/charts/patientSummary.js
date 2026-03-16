@@ -1,8 +1,5 @@
 import { createCanvas } from "canvas";
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-
-const Chart = require("chart.js");
+import Chart from "chart.js/auto";
 
 export function generatePatientSummaryChart(todayCounts, avgCounts) {
   const canvas = createCanvas(800, 400);
@@ -26,7 +23,11 @@ export function generatePatientSummaryChart(todayCounts, avgCounts) {
     data: {
       labels,
       datasets: [
-        { label: "Pacientes Hoy", data: todayData, backgroundColor: "#009688" },
+        {
+          label: "Pacientes Hoy",
+          data: todayData,
+          backgroundColor: "#009688",
+        },
         {
           label: "Promedio Diario (últimos 30 días)",
           data: avgData,
@@ -40,12 +41,11 @@ export function generatePatientSummaryChart(todayCounts, avgCounts) {
       plugins: {
         legend: { display: true },
         title: { display: false },
-        datalabels: {
-          display: false,
-        },
       },
       scales: {
-        x: { title: { display: true, text: "Servicio" } },
+        x: {
+          title: { display: true, text: "Servicio" },
+        },
         y: {
           title: { display: true, text: "Número de pacientes" },
           beginAtZero: true,
