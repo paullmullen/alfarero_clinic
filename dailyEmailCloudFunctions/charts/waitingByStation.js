@@ -50,6 +50,7 @@ export function generateWaitingTimeChart(patientsSnapshot) {
       plugins: {
         legend: { display: false },
         title: { display: false },
+        datalabels: false,
       },
       scales: {
         x: { title: { display: true, text: "Servicio" } },

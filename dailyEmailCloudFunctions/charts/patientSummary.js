@@ -1,6 +1,8 @@
 import { createCanvas } from "canvas";
 import Chart from "chart.js/auto";
 
+Chart.defaults.animation = false;
+
 export function generatePatientSummaryChart(todayCounts, avgCounts) {
   const canvas = createCanvas(800, 400);
   const ctx = canvas.getContext("2d");
@@ -36,11 +38,12 @@ export function generatePatientSummaryChart(todayCounts, avgCounts) {
       ],
     },
     options: {
-      devicePixelRatio: 2,
       responsive: false,
+      devicePixelRatio: 2,
       plugins: {
         legend: { display: true },
         title: { display: false },
+        datalabels: false,
       },
       scales: {
         x: {

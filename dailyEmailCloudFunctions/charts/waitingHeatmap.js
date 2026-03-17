@@ -1,12 +1,60 @@
 import { createCanvas } from "canvas";
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-
-// --- CJS imports (required for Node 22 + Chart.js) ---
 import Chart from "chart.js/auto";
-const ChartDataLabels = require("chartjs-plugin-datalabels");
-const { MatrixController, MatrixElement } = require("chartjs-chart-matrix");
-const { CategoryScale, LinearScale } = require("chart.js");
+import * as Matrix from "chartjs-chart-matrix";
+import { CategoryScale, LinearScale } from "chart.js";
+
+const CellLabelPlugin = {
+  id: "cellLabels",
+  afterDatasetsDraw(chart, _args, pluginOptions) {
+    const {
+      showDecimalMinutes = true,
+      color = "black",
+      fontSize = 10,
+      fontWeight = "bold",
+    } = pluginOptions || {};
+
+    const { ctx } = chart;
+    const meta = chart.getDatasetMeta(0);
+    const dataset = chart.data?.datasets?.[0];
+    const data = dataset?.data ?? [];
+
+    if (!meta?.data?.length) return;
+
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.font = `${fontWeight} ${fontSize}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    meta.data.forEach((element, index) => {
+      const raw = data[index];
+      const v = raw?.v ?? 0;
+
+      if (!element || !raw || !v) return;
+
+      const props = element.getProps(["x", "y", "width", "height"], true);
+
+      const x = props.x + props.width / 2;
+      const y = props.y + props.height / 2;
+
+      if (
+        typeof x !== "number" ||
+        typeof y !== "number" ||
+        Number.isNaN(x) ||
+        Number.isNaN(y)
+      ) {
+        return;
+      }
+
+      const label = showDecimalMinutes
+        ? v.toFixed(1)
+        : Math.round(v).toString();
+      ctx.fillText(label, x, y);
+    });
+
+    ctx.restore();
+  },
+};
 
 export function generateWaitingHeatmapChart(
   patientsSnapshot,
@@ -21,11 +69,9 @@ export function generateWaitingHeatmapChart(
     showDecimalMinutes = true,
   } = {},
 ) {
-  // Register plugins inside function (Cloud Functions safe)
   Chart.register(
-    ChartDataLabels,
-    MatrixController,
-    MatrixElement,
+    Matrix.MatrixController,
+    Matrix.MatrixElement,
     CategoryScale,
     LinearScale,
   );
@@ -33,12 +79,10 @@ export function generateWaitingHeatmapChart(
   const canvas = createCanvas(800, 400);
   const ctx = canvas.getContext("2d");
 
-  // --- Core accumulators ---
   const stationHourMap = {};
   const stationLabels = new Set();
   const hourLabels = new Set();
 
-  // --- Diagnostics counters ---
   let totalSteps = 0;
   let included = 0;
   let noTimestamp = 0;
@@ -47,7 +91,7 @@ export function generateWaitingHeatmapChart(
   let outOfRange = 0;
 
   const validStatus = includeInProgress
-    ? new Set(["complete", "in_process, queued"])
+    ? new Set(["complete", "in_process", "queued"])
     : new Set(["complete"]);
 
   const start = startOfToday
@@ -74,11 +118,13 @@ export function generateWaitingHeatmapChart(
         noTimestamp++;
         continue;
       }
+
       const ws = step.waiting_start.toDate();
 
       const hasTime =
         typeof step?.waiting_time === "number" &&
         !Number.isNaN(step.waiting_time);
+
       if (!hasTime) {
         noWaitingTime++;
         continue;
@@ -101,6 +147,7 @@ export function generateWaitingHeatmapChart(
 
       const station = step.station ?? "unknown";
       const key = `${station}_${hour}`;
+
       if (!stationHourMap[key]) stationHourMap[key] = [];
 
       const minutes = step.waiting_time / 60;
@@ -122,7 +169,7 @@ export function generateWaitingHeatmapChart(
       if (times.length === 0) return 0;
 
       const avg = times.reduce((a, b) => a + b, 0) / times.length;
-      return showDecimalMinutes ? parseFloat(avg.toFixed(0)) : Math.round(avg);
+      return showDecimalMinutes ? parseFloat(avg.toFixed(1)) : Math.round(avg);
     }),
   );
 
@@ -151,58 +198,11 @@ export function generateWaitingHeatmapChart(
     console.log(
       `${header} Distinct hours: ${hours.length} -> [${hours.join(", ")}]`,
     );
-
-    const bucketArr = [];
-    for (const [key, list] of Object.entries(stationHourMap)) {
-      const [st, h] = key.split("_");
-      const avg = list.reduce((a, b) => a + b, 0) / list.length;
-      bucketArr.push({
-        station: st,
-        hour: Number(h),
-        count: list.length,
-        avgMin: avg,
-      });
-    }
-
-    const topByCount = [...bucketArr]
-      .sort(
-        (a, b) =>
-          b.count - a.count ||
-          a.station.localeCompare(b.station) ||
-          a.hour - b.hour,
-      )
-      .slice(0, topN);
-
-    const topByAvg = [...bucketArr]
-      .filter((b) => b.count >= 2)
-      .sort((a, b) => b.avgMin - a.avgMin || b.count - a.count)
-      .slice(0, topN);
-
-    console.log(`${header} Top ${topN} buckets by COUNT:`);
-    for (const b of topByCount) {
-      console.log(
-        `${header}  - ${b.station} @ ${String(b.hour).padStart(2, "0")}:00  count=${b.count}, avg=${b.avgMin.toFixed(
-          2,
-        )} min`,
-      );
-    }
-
-    if (topByAvg.length > 0) {
-      console.log(`${header} Top ${topN} buckets by AVERAGE (count>=2):`);
-      for (const b of topByAvg) {
-        console.log(
-          `${header}  - ${b.station} @ ${String(b.hour).padStart(2, "0")}:00  avg=${b.avgMin.toFixed(
-            2,
-          )} min, count=${b.count}`,
-        );
-      }
-    } else {
-      console.log(`${header} Top-by-average list is empty.`);
-    }
   }
 
   new Chart(ctx, {
     type: "matrix",
+    plugins: [CellLabelPlugin],
     data: {
       datasets: [
         {
@@ -214,7 +214,7 @@ export function generateWaitingHeatmapChart(
               v: value,
             })),
           ),
-          backgroundColor: function (ctx) {
+          backgroundColor: (ctx) => {
             const dataPoint = ctx?.dataset?.data?.[ctx.dataIndex];
             const value = dataPoint?.v ?? 0;
             const stationLabel = dataPoint?.y ?? "";
@@ -228,23 +228,21 @@ export function generateWaitingHeatmapChart(
               const green = Math.floor(200 + 55 * ratio);
               const red = Math.floor(100 * (1 - ratio));
               return `rgba(${red}, ${green}, 0, 0.8)`;
-            } else {
-              const ratio = Math.min(1, (value * 60 - maxValue) / maxValue);
-              const red = Math.floor(200 + 55 * ratio);
-              const green = Math.floor(100 * (1 - ratio));
-              return `rgba(${red}, ${green}, 0, 0.8)`;
             }
+
+            const ratio = Math.min(1, (value * 60 - maxValue) / maxValue);
+            const red = Math.floor(200 + 55 * ratio);
+            const green = Math.floor(100 * (1 - ratio));
+            return `rgba(${red}, ${green}, 0, 0.8)`;
           },
           borderColor: "black",
           borderWidth: 1,
-          barPercentage: 1.0,
-          categoryPercentage: 1.0,
-          width: function (ctx) {
+          width: (ctx) => {
             const chartArea = ctx.chart.chartArea;
             if (!chartArea) return 0;
             return chartArea.width / Math.max(1, hours.length);
           },
-          height: function (ctx) {
+          height: (ctx) => {
             const chartArea = ctx.chart.chartArea;
             if (!chartArea) return 0;
             return chartArea.height / Math.max(1, stations.length) - 2;
@@ -259,14 +257,12 @@ export function generateWaitingHeatmapChart(
       plugins: {
         title: { display: false },
         legend: { display: false },
-        datalabels: {
+        datalabels: false,
+        cellLabels: {
+          showDecimalMinutes,
           color: "black",
-          font: { weight: "bold", size: 10 },
-          formatter: (value) => {
-            const v = value.v;
-            if (v <= 0) return "";
-            return showDecimalMinutes ? v.toFixed(1) : Math.round(v).toString();
-          },
+          fontSize: 10,
+          fontWeight: "bold",
         },
       },
       scales: {

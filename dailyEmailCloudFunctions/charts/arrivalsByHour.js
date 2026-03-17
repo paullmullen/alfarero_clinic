@@ -29,6 +29,7 @@ export function generateArrivalChart(hourlyCounts) {
       plugins: {
         legend: { display: false },
         title: { display: false },
+        datalabels: false,
       },
       scales: {
         x: { title: { display: true, text: "Hora del día" } },
