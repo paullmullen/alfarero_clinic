@@ -58,15 +58,37 @@ export const manualDailyEmail = onRequest(
     if (req.method === "OPTIONS") return res.status(204).send("");
 
     try {
-      const results = await runDailyEmailPipeline({ sendDailyEmails });
+      /**
+       * DEVELOPMENT / DEBUG SUPPORT
+       *
+       * The client may optionally pass:
+       *   { reportShiftDays: N }
+       *
+       * Meaning:
+       *   "Generate the report as if today were N clinic-days earlier."
+       *
+       * If omitted or invalid, defaults to 0 (normal production behavior).
+       */
+      const rawShift = Number(req.body?.reportShiftDays ?? 0);
+
+      const reportShiftDays = Number.isInteger(rawShift)
+        ? Math.max(0, Math.min(rawShift, 14)) // clamp to 0–14 for safety
+        : 0;
+
+      const results = await runDailyEmailPipeline({
+        sendDailyEmails,
+        reportShiftDays,
+      });
 
       console.log("Daily Email Results:", {
+        reportShiftDays,
         count: Array.isArray(results) ? results.length : null,
         sample: Array.isArray(results) ? results.slice(0, 3) : results,
       });
 
       return res.status(200).json({
         message: `Sent ${Array.isArray(results) ? results.length : 0} emails.`,
+        reportShiftDays,
         results,
       });
     } catch (err) {
@@ -94,7 +116,12 @@ export const scheduledDailyEmail = onSchedule(
   },
   async () => {
     console.log("scheduledDailyEmail: starting");
-    await runDailyEmailPipeline({ sendDailyEmails });
+
+    await runDailyEmailPipeline({
+      sendDailyEmails,
+      reportShiftDays: 0, // 🔒 force production behavior
+    });
+
     console.log("scheduledDailyEmail: complete");
   },
 );

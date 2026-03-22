@@ -5,20 +5,22 @@ import Chart from "chart.js/auto";
 
 export function generateDailyVolumeWithObservations({
   labels,
-  volumeData,
+  locationVolumeData,
+  locationsById = {},
+  volumeData, // legacy fallback
   observations,
   typesById = {},
   title = "Volumen Diario de Pacientes",
   laneTitle = "Observaciones",
   daysLabel = "",
-  showLegend = false,
+  showLegend = true,
   showLaneTitle = false,
 }) {
   const width = 800;
 
   const laneHeight = 62;
   const lanePadTop = 14;
-  const lanePadBottom = showLegend ? 26 : 12;
+  const lanePadBottom = showLegend ? 34 : 12;
 
   const height = 520;
 
@@ -26,8 +28,11 @@ export function generateDailyVolumeWithObservations({
   const ctx = canvas.getContext("2d");
 
   const safeLabels = Array.isArray(labels) ? labels : [];
-  const safeVolume = Array.isArray(volumeData) ? volumeData : [];
   const safeObs = Array.isArray(observations) ? observations : [];
+  const safeLocationVolumeData = Array.isArray(locationVolumeData)
+    ? locationVolumeData
+    : [];
+  const safeLegacyVolume = Array.isArray(volumeData) ? volumeData : [];
 
   const obsByYmd = groupObservationsByYmd(safeObs, typesById);
 
@@ -62,19 +67,18 @@ export function generateDailyVolumeWithObservations({
     lanePadBottom,
   });
 
+  const datasets = buildDatasets({
+    safeLabels,
+    safeLocationVolumeData,
+    safeLegacyVolume,
+    locationsById,
+  });
+
   new Chart(ctx, {
     type: "bar",
     data: {
       labels: safeLabels.map(formatShortDate),
-      datasets: [
-        {
-          label: "Pacientes",
-          data: safeVolume.map((n) => Number(n ?? 0)),
-          backgroundColor: "#009688",
-          borderRadius: 6,
-          borderSkipped: false,
-        },
-      ],
+      datasets,
     },
     options: {
       responsive: false,
@@ -86,13 +90,30 @@ export function generateDailyVolumeWithObservations({
       plugins: {
         legend: {
           display: !!showLegend,
-          labels: { font: { family: "Arial, sans-serif", size: 12 } },
+          position: "top",
+          labels: {
+            font: { family: "Arial, sans-serif", size: 12 },
+            boxWidth: 14,
+            boxHeight: 14,
+          },
         },
         title: { display: false },
         datalabels: { display: false },
+        tooltip: {
+          callbacks: {
+            footer(items) {
+              const total = items.reduce(
+                (sum, item) => sum + Number(item.parsed.y ?? 0),
+                0,
+              );
+              return `Total: ${total}`;
+            },
+          },
+        },
       },
       scales: {
         x: {
+          stacked: datasets.length > 1,
           grid: { display: false },
           ticks: {
             maxRotation: 0,
@@ -102,6 +123,7 @@ export function generateDailyVolumeWithObservations({
           },
         },
         y: {
+          stacked: datasets.length > 1,
           beginAtZero: true,
           grid: { color: "rgba(0,0,0,0.08)" },
           ticks: {
@@ -121,7 +143,97 @@ export function generateDailyVolumeWithObservations({
 
   return canvas.toDataURL();
 
-  // ---------------- helpers ----------------
+  function buildDatasets({
+    safeLabels,
+    safeLocationVolumeData,
+    safeLegacyVolume,
+    locationsById,
+  }) {
+    console.log(
+      "[dailyVolumeWithObservations] safeLabels count:",
+      safeLabels.length,
+    );
+    console.log(
+      "[dailyVolumeWithObservations] safeLocationVolumeData count:",
+      safeLocationVolumeData.length,
+    );
+    console.log(
+      "[dailyVolumeWithObservations] safeLegacyVolume count:",
+      safeLegacyVolume.length,
+    );
+
+    if (safeLocationVolumeData.length > 0) {
+      console.log(
+        "[dailyVolumeWithObservations] using stacked location datasets:",
+        safeLocationVolumeData.map((s) => ({
+          locationId: s?.locationId,
+          label: s?.label,
+          total: (s?.data ?? []).reduce((sum, n) => sum + Number(n ?? 0), 0),
+        })),
+      );
+
+      const sortedLocationVolumeData = [...safeLocationVolumeData].sort(
+        (a, b) => {
+          const totalA = (a?.data ?? []).reduce(
+            (sum, n) => sum + Number(n ?? 0),
+            0,
+          );
+          const totalB = (b?.data ?? []).reduce(
+            (sum, n) => sum + Number(n ?? 0),
+            0,
+          );
+          return totalB - totalA;
+        },
+      );
+
+      return sortedLocationVolumeData.map((series, index) => {
+        const location = series?.locationId
+          ? locationsById?.[series.locationId]
+          : null;
+
+        const backgroundColor =
+          location?.background_color ||
+          series?.backgroundColor ||
+          defaultColor(index);
+
+        console.log("[dailyVolumeWithObservations] dataset color:", {
+          locationId: series?.locationId,
+          label: series?.label,
+          matchedLocation: !!location,
+          backgroundColor,
+        });
+
+        return {
+          label: series?.label ?? location?.name ?? `Ubicación ${index + 1}`,
+          data: Array.isArray(series?.data)
+            ? series.data.map((n) => Number(n ?? 0))
+            : safeLabels.map(() => 0),
+          backgroundColor,
+          borderColor: backgroundColor,
+          borderWidth: 0,
+          borderRadius: index === sortedLocationVolumeData.length - 1 ? 6 : 0,
+          borderSkipped: false,
+          stack: "patients",
+        };
+      });
+    }
+
+    console.log(
+      "[dailyVolumeWithObservations] FALLING BACK to legacy single-series volumeData",
+    );
+
+    return [
+      {
+        label: "Pacientes",
+        data: safeLegacyVolume.map((n) => Number(n ?? 0)),
+        backgroundColor: "#009688",
+        borderColor: "#009688",
+        borderWidth: 0,
+        borderRadius: 6,
+        borderSkipped: false,
+      },
+    ];
+  }
 
   function groupObservationsByYmd(observationsArr, types) {
     const map = new Map();
@@ -175,6 +287,20 @@ export function generateDailyVolumeWithObservations({
       "Dec",
     ];
     return `${months[M - 1]} ${D}`;
+  }
+
+  function defaultColor(index) {
+    const palette = [
+      "#009688",
+      "#42A5F5",
+      "#FFB300",
+      "#7E57C2",
+      "#EF5350",
+      "#66BB6A",
+      "#8D6E63",
+      "#26C6DA",
+    ];
+    return palette[index % palette.length];
   }
 
   function makeObservationLanePlugin({
@@ -268,7 +394,7 @@ export function generateDailyVolumeWithObservations({
           ctx.fillStyle = "rgba(0,0,0,0.70)";
           ctx.textBaseline = "top";
           ctx.fillText(
-            "🟢 Favorable   🔴 Desfavorable   +N más",
+            "Observaciones: 🟢 Favorable   🔴 Desfavorable   +N más",
             chartArea.left,
             laneBottom + 6,
           );
@@ -321,4 +447,84 @@ export function generateDailyVolumeWithObservations({
     ctx.arcTo(x, y, x + w, y, rr);
     ctx.closePath();
   }
+}
+
+export function buildLocationVolumeData({
+  patients = [],
+  labels = [],
+  timeZone = "America/Guatemala",
+}) {
+  const labelIndexByYmd = Object.fromEntries(
+    labels.map((ymd, index) => [ymd, index]),
+  );
+
+  const seriesByLocationId = {};
+
+  for (const patient of patients) {
+    const locationId = String(patient?.location_id ?? "").trim();
+    if (!locationId) continue;
+
+    const locationName =
+      String(patient?.location_name ?? "").trim() || locationId;
+
+    const startDate = timestampToDate(patient?.start_time);
+    if (!startDate) continue;
+
+    const ymd = formatDateToYmdInTimeZone(startDate, timeZone);
+    const dayIndex = labelIndexByYmd[ymd];
+    if (dayIndex === undefined) continue;
+
+    if (!seriesByLocationId[locationId]) {
+      seriesByLocationId[locationId] = {
+        locationId,
+        label: locationName,
+        data: labels.map(() => 0),
+      };
+    }
+
+    seriesByLocationId[locationId].data[dayIndex] += 1;
+  }
+
+  return Object.values(seriesByLocationId);
+}
+
+export function buildLocationsById(locations = []) {
+  return Object.fromEntries(
+    (Array.isArray(locations) ? locations : [])
+      .filter((location) => String(location?.id ?? "").trim())
+      .map((location) => [String(location.id).trim(), location]),
+  );
+}
+
+function timestampToDate(value) {
+  if (!value) return null;
+
+  if (typeof value?.toDate === "function") {
+    return value.toDate();
+  }
+
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (typeof value === "number") {
+    return new Date(value);
+  }
+
+  return null;
+}
+
+function formatDateToYmdInTimeZone(date, timeZone = "America/Guatemala") {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+
+  const year = parts.find((p) => p.type === "year")?.value;
+  const month = parts.find((p) => p.type === "month")?.value;
+  const day = parts.find((p) => p.type === "day")?.value;
+
+  return `${year}-${month}-${day}`;
 }

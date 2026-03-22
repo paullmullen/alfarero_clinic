@@ -50,7 +50,11 @@ import { generateArrivalChart } from "../charts/arrivalsByHour.js";
 import { generateWaitingTimeChart } from "../charts/waitingByStation.js";
 import { generateWaitingHeatmapChart } from "../charts/waitingHeatmap.js";
 import { generateVisitTypeChart } from "../charts/visitTypeChart.js";
-import { generateDailyVolumeWithObservations } from "../charts/dailyVolumeWithObservations.js";
+import {
+  generateDailyVolumeWithObservations,
+  buildLocationVolumeData,
+  buildLocationsById,
+} from "../charts/dailyVolumeWithObservations.js";
 
 export const TIMEZONE_OFFSET_MINUTES = 6 * 60;
 
@@ -89,13 +93,33 @@ function translateKey(key) {
   return value;
 }
 
-export async function sendDailyEmails() {
+/**
+ * sendDailyEmails
+ *
+ * reportShiftDays:
+ * - 0 = normal production behavior ("today")
+ * - N = development/debug behavior ("pretend today is N clinic-days earlier")
+ *
+ * This lets us test the full deployed email pipeline after clinic hours, when
+ * the current day may have no patients in the filtered window.
+ *
+ * IMPORTANT:
+ * - This is intended for manual/debug runs.
+ * - Scheduled production runs should call this with the default of 0.
+ */
+export async function sendDailyEmails({ reportShiftDays = 0 } = {}) {
   if (!db || !Timestamp) {
     throw new Error("dailyEmail deps not initialized.");
   }
 
-  const { startOfToday, startOfTomorrow } =
-    getLocalDayRangeTimestamps(Timestamp);
+  const safeReportShiftDays = Number.isInteger(reportShiftDays)
+    ? Math.max(0, reportShiftDays)
+    : 0;
+
+  const { startOfToday, startOfTomorrow } = getLocalDayRangeTimestamps(
+    Timestamp,
+    { shiftDays: safeReportShiftDays },
+  );
 
   const todaySnapshot = await fetchTodayPatients({
     db,
@@ -107,7 +131,9 @@ export async function sendDailyEmails() {
     return [];
   }
 
-  const startOf30DaysAgoTimestamp = getStartOf30DaysAgoTimestamp(Timestamp);
+  const startOf30DaysAgoTimestamp = getStartOf30DaysAgoTimestamp(Timestamp, {
+    shiftDays: safeReportShiftDays,
+  });
 
   const last30DaysSnapshot = await fetchLast30DaysPatients({
     db,
@@ -220,7 +246,29 @@ export async function sendDailyEmails() {
   const observations = await fetchOpsObservations({ db, days: DAYS });
   const observationTypes = await fetchObservationTypes({ db });
 
-  const clinicDate = getClinicYMD();
+  /**
+   * Location-aware stacked daily volume chart support
+   *
+   * We fetch locations separately so the chart can:
+   * - match each patient series by location_id
+   * - use the location document's background_color
+   * - keep colors stable even if stack order changes
+   */
+  const locationsSnapshot = await db.collection("locations").get();
+  const locations = locationsSnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
+  const locationsById = buildLocationsById(locations);
+
+  const locationVolumeData = buildLocationVolumeData({
+    patients: last30DaysSnapshot.docs.map((doc) => doc.data()),
+    labels: timeline.labels,
+    timeZone: "America/Guatemala",
+  });
+
+  const clinicDate = getClinicYMD(undefined, safeReportShiftDays);
 
   const observationsForChart = Array.isArray(observations) ? observations : [];
 
@@ -240,10 +288,12 @@ export async function sendDailyEmails() {
 
   const dailyVolumeChart = generateDailyVolumeWithObservations({
     labels: timeline.labels,
-    volumeData: timeline.values,
+    locationVolumeData,
+    locationsById,
     observations: observationsForChart,
     typesById: observationTypes,
     daysLabel: `(últimos ${DAYS} días)`,
+    showLegend: true,
   });
 
   const keyObservationsHTML = renderKeyObservationsHTML({
