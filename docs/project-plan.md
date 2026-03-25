@@ -17,11 +17,11 @@ Each item should produce either:
 
 Goal: The system can **accept scan events and locate visits**.
 
-- [ ] Define final `room_events` schema
-- [ ] Document event fields in `workflow-spec.md`
-- [ ] Create Postman scanner simulator collection
-- [ ] Implement HTTP ingestion endpoint
-- [ ] Verify events are written to `room_events`
+- [x] Define final `room_events` schema
+- [x] Document event fields in `workflow-spec.md`
+- [x] Create Postman scanner simulator collection
+- [x] Implement HTTP ingestion endpoint
+- [x] Verify events are written to `room_events`
 - [ ] Create Cloud Function trigger for new events
 - [ ] Implement visit lookup using `visit_id`
 - [ ] Add exception handling for missing visit
