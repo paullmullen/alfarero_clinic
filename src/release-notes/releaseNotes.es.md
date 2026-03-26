@@ -2,19 +2,9 @@
 
 Las versiones con sufijos de letras son versiones candidatas que no se han implementado en producción. Las versiones sin sufijos de letras son las versiones de producción que incluyen los cambios de las versiones candidatas (si han sido aprobados).
 
-## v2.4.0c
+## v2.4.0
 
-- Caracteristicas de citas implementadas y preparadas para testing.
-
-## v2.4.0b
-
-- Nueva mostrador de citas existentes en la página de citas
-- Nueva función de verificación de calidad de datos en Excel agregada a la misma página
-
-## v2.4.0a
-
-- Se añade la función de carga de citas
-- Se añaden las citas a la página de Anfi
+- Caracteristica de citas implementadas.
 
 ## v2.3.0
 

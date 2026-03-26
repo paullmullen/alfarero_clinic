@@ -10,6 +10,7 @@ import { usePatientCount } from "../hooks/usePatientCount";
 import { useServiceLocation } from "../providers/ServiceLocationProvider";
 import ReleaseNotesModal from "../components/ReleaseNotesModal";
 import { useLocation } from "react-router-dom";
+import appVersion from "../appVersion.json";
 
 const { Sider, Content } = Layout;
 
@@ -139,7 +140,7 @@ export default function AppShell({ ocultarMenu, t, permissions, children }) {
             }}
             underline
           >
-            V{t("version")}
+            V{appVersion.version}
           </Typography.Text>
 
           <ReleaseNotesModal
