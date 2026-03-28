@@ -383,7 +383,7 @@ export default function InventoryEditorDrawer({
       width={980}
       open={open}
       onClose={onClose}
-      destroyOnClose
+      destroyOnHidde
     >
       <Space direction="vertical" style={{ width: "100%" }} size="middle">
         <Space wrap>

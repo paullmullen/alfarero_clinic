@@ -1,4 +1,4 @@
-const admin = require("firebase-admin");
+import admin from "firebase-admin";
 
 function toMillis(value) {
   if (!value) return null;
@@ -52,7 +52,7 @@ function getOpenEncounter(stationEntry) {
 
 function createEncounter({ station, timestamp, source }) {
   return {
-    encounter_id: `${station}_1`, // replaced by caller
+    encounter_id: `${station}_1`,
     status: "waiting",
     closed: false,
 
@@ -71,15 +71,7 @@ function createEncounter({ station, timestamp, source }) {
   };
 }
 
-/**
- * Scanner-only transition engine.
- *
- * Rules:
- * - waiting    -> in_process
- * - in_process -> complete
- * - complete   -> new encounter -> in_process
- */
-function applyScannerAdvance({
+export function applyScannerAdvance({
   visitData,
   station,
   timestamp,
@@ -114,7 +106,6 @@ function applyScannerAdvance({
   let changed = false;
   let targetStatus = null;
 
-  // If status is not complete and we somehow have no open encounter, create one.
   if (!encounter && currentStatus !== "complete") {
     encounter = createEncounter({ station, timestamp, source });
     encounter.encounter_id = getNextEncounterId(stationEntry);
@@ -194,7 +185,6 @@ function applyScannerAdvance({
     const newEncounter = createEncounter({ station, timestamp, source });
     newEncounter.encounter_id = getNextEncounterId(stationEntry);
 
-    // Re-entry through scanner: immediate in_process
     newEncounter.waiting_start = timestamp || null;
     newEncounter.waiting_end = timestamp || null;
     newEncounter.waiting_time = 0;
@@ -236,7 +226,3 @@ function applyScannerAdvance({
     targetStatus,
   };
 }
-
-module.exports = {
-  applyScannerAdvance,
-};

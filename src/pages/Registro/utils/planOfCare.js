@@ -3,8 +3,12 @@ import { Timestamp } from "firebase/firestore";
 
 /**
  * Builds a full plan_of_care array with all stations present.
- * Stations that are not in visits are "pending".
- * Stations that are in visits are assigned a "status" from statusList.
+ *
+ * Rules:
+ * - Preserve the exact order from visit_types.plan_of_care for included stations
+ * - First included station starts as "waiting"
+ * - Later included stations get "2", "3", "4", etc.
+ * - Stations not included in the visit recipe are appended as "pending"
  */
 export function buildPlanOfCare(stationsList, visits) {
   const statusList = [
@@ -27,47 +31,36 @@ export function buildPlanOfCare(stationsList, visits) {
     "7",
   ];
 
-  const visitsSet = new Set(visits || []);
-  const stationOrder = [
-    "reg",
-    "nur",
-    "doc",
-    "ped",
-    "og",
-    "lab",
-    "pha",
-    "pt",
-    "den",
-    "nut",
-    "psi",
-    "ora",
-  ];
-
   const result = [];
-  let order = 0;
+  const safeVisits = Array.isArray(visits) ? visits : [];
+  const includedSet = new Set(safeVisits);
+  const waitingStart = Timestamp.now();
 
-  stationOrder.forEach((stationValue) => {
+  // First: included stations in the exact recipe order
+  safeVisits.forEach((stationValue, index) => {
     const station = stationsList.find((s) => s.value === stationValue);
     if (!station) return;
 
-    const used = visitsSet.has(stationValue);
+    const status = statusList[index] || "7";
 
-    if (used) {
-      const status = statusList[order + 1] ?? "waiting"; // mimic original ordering pattern safely
-      const row = {
-        order: order++,
-        station: station.value,
-        status,
-        ...(status === "waiting" ? { waiting_start: Timestamp.now() } : {}),
-      };
-      result.push(row);
-    } else {
-      result.push({
-        order: order++,
-        station: station.value,
-        status: "pending",
-      });
-    }
+    result.push({
+      order: result.length,
+      station: station.value,
+      status,
+      ...(status === "waiting" ? { waiting_start: waitingStart } : {}),
+    });
+  });
+
+  // Then: all remaining stations as pending
+  stationsList.forEach((station) => {
+    if (!station?.value) return;
+    if (includedSet.has(station.value)) return;
+
+    result.push({
+      order: result.length,
+      station: station.value,
+      status: "pending",
+    });
   });
 
   return result;

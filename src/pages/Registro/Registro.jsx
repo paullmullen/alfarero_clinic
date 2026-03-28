@@ -428,7 +428,6 @@ export const Registro = () => {
                 rules={[{ required: true, message: t("selectExamType") }]}
               >
                 <Radio.Group
-                  onChange={updateStations}
                   size="large"
                   optionType="button"
                   style={{ display: "flex", flexWrap: "wrap" }}

@@ -599,7 +599,7 @@ const Anfitrion = () => {
           !!appointmentToCancel?.id &&
           busyAppointmentId === appointmentToCancel.id
         }
-        destroyOnClose
+        destroyOnHidden
       >
         <div style={{ marginBottom: 16 }}>
           <strong>{appointmentToCancel?.patientName || "—"}</strong>

@@ -1,9 +1,9 @@
-const admin = require("firebase-admin");
+import admin from "firebase-admin";
 
 const db = admin.firestore();
 const { FieldValue } = admin.firestore;
 
-async function writeStatsIfNeeded({ visitRef, station, encounterId }) {
+export async function writeStatsIfNeeded({ visitRef, station, encounterId }) {
   const statsRef = db.collection("stats").doc(station);
 
   await db.runTransaction(async (tx) => {
@@ -78,7 +78,3 @@ async function writeStatsIfNeeded({ visitRef, station, encounterId }) {
     });
   });
 }
-
-module.exports = {
-  writeStatsIfNeeded,
-};
