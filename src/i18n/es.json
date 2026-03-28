@@ -287,6 +287,7 @@
   "ONLY90": "La búsqueda está limitada a un máximo de 90 días.",
   "ops": {
     "add": "Agregar",
+    "added": "Observación agregada exitosamente",
     "category": "Categoría",
     "categories": {
       "internal": "Staff y Operations",
@@ -298,6 +299,7 @@
     "notesPlaceholder": "Texto con Detalles",
     "recentObservations": "Observaciones Recientes",
     "recordingAs": "Observador",
+    "refresh": "Actualizar",
     "servicesAffected": "Servicios Impactados",
     "table": {
       "createdBy": "Por",
@@ -312,6 +314,8 @@
     "types": {
       "emergency": "Incidentes o Evento de Urgencia",
       "equipment_failure": "Falla de Equipamiento",
+      "extended_service": "Servicios Extraordinarios o Extendidos",
+
       "internet_outage": "Corte de Internet",
       "jornada": "Jornada Medica Gratis",
       "other": "Otro",
@@ -323,8 +327,10 @@
       "staff_meeting": "Reunión de Staff",
       "weather": "Tiempo/Clima"
     },
+    "typeRequired": "Seleccione una clase de observación.",
     "servicesPlaceholder": "Servicios",
     "stations": {
+      "reg": "Registro",
       "den": "Ondontología",
       "doc": "Doctor",
       "lab": "Laboratorio",
@@ -333,7 +339,9 @@
       "og": "Obstetricia/Ginecología",
       "ped": "Pediatria",
       "pha": "Farmacia",
-      "pra": "Oración"
+      "pra": "Oración",
+      "psi": "Psicología",
+      "pt": "Fisioterapia"
     },
     "typePlaceholder": "Seleccionar",
     "newObservation": "Nueva Observación"

@@ -284,6 +284,7 @@
   "ONLY90": "Range is limited to 90 days maximum",
   "ops": {
     "add": "Add",
+    "added": "Observation added successfully",
     "category": "Categoría",
     "categories": {
       "internal": "Staff & Operations",
@@ -295,6 +296,7 @@
     "notesPlaceholder": "Describe the details",
     "recentObservations": "Recent Observations",
     "recordingAs": "Observer",
+    "refresh": "Refresh",
     "servicesAffected": "Impacted Services",
     "table": {
       "createdBy": "By",
@@ -309,6 +311,7 @@
     "types": {
       "emergency": "Incident or Emergency",
       "equipment_failure": "Equipment Failure",
+      "extended_service": "Extra Service Hours",
       "internet_outage": "Internet Outage",
       "jornada": "Free Clinic",
       "other": "Other",
@@ -320,8 +323,10 @@
       "staff_meeting": "Staff Meeting",
       "weather": "Weather/Climate"
     },
+    "typeRequired": "Please select an observation type.",
     "servicesPlaceholder": "Services",
     "stations": {
+      "reg": "Registration",
       "den": "Dentistry",
       "doc": "Doctor",
       "lab": "Lab",
@@ -330,7 +335,9 @@
       "og": "Ob/Gyn",
       "ped": "Pediatrics",
       "pha": "Pharmacy",
-      "pra": "Prayer"
+      "pra": "Prayer",
+      "psi": "Psychology",
+      "pt": "Physical Therapy"
     },
     "typePlaceholder": "Select",
     "newObservation": "New Observation"
