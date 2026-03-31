@@ -174,6 +174,8 @@ export const onRoomEventCreated = onDocumentCreated(
         source: "scanner",
       });
 
+      console.log("[DEBUG] Transition result: " + JSON.stringify(result));
+
       if (!result.changed) {
         logger.info("No state change", {
           eventId,

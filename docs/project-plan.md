@@ -30,63 +30,75 @@ Goal: The system can **accept scan events and locate visits**.
 
 # Phase 2 --- Station State Updates
 
-Goal: Barcode scans update station status consistently with UI behavior
-and support repeat station encounters.
+Goal: Barcode scans update station status consistently with current UI behavior,
+assuming patients are already initialized with a valid starting state.
 
-- [ ] Define station data structure with `encounters[]` array
-- [ ] Define encounter object schema (timestamps, closed flag, stats_recorded flag)
+## Patient Initialization (Registration Flow)
 
-### Transition Engine (Shared Logic)
+- [x] Ensure `plan_of_care` preserves exact order from `visit_types.plan_of_care`
+- [x] Set first station in plan to `waiting` on patient creation
+- [x] Set `waiting_start` timestamp at creation time
+- [x] Assign `"2"`, `"3"`, etc. to subsequent stations
+- [x] Set all non-visit stations to `pending`
+- [x] Verify scanner pipeline does NOT initialize missing states
+- [ ] Add validation check for malformed or empty `plan_of_care`
+- [ ] Add unit test for `buildPlanOfCare`
 
-- [ ] Create shared transition helper (used by both scanner and UI)
-- [ ] Ensure all status changes flow through this helper
-- [ ] Enforce allowed state transitions (no accidental regressions)
-- [ ] Treat duplicate events as no-ops (idempotency)
+## Transition Engine (Scanner Path Only for Now)
 
-### Waiting → In Process
+- [x] Implement scanner-specific transition helper/path
+- [x] Enforce current allowed forward transitions
+- [x] Treat duplicate events as no-ops where possible
+- [x] Assume valid initial state exists (no null → waiting transitions)
+- [ ] Refactor into a shared transition engine later if still valuable
 
-- [ ] Implement `waiting → in_process` transition
-- [ ] Set `waiting_end` timestamp
-- [ ] Calculate `waiting_time`
-- [ ] Set `in_process_start`
-- [ ] Create or update active encounter
+## Waiting → In Process
 
-### In Process → Complete
+- [x] Implement `waiting → in_process` transition
+- [x] Set `waiting_end` timestamp
+- [x] Calculate `waiting_time`
+- [x] Set `in_process_start`
+- [x] Create or update active encounter
 
-- [ ] Implement `in_process → complete` transition
-- [ ] Set `in_process_end`
-- [ ] Calculate `procedure_time`
-- [ ] Mark encounter as `closed`
+## In Process → Complete
 
-### Encounter Handling
+- [x] Implement `in_process → complete` transition
+- [x] Set `in_process_end`
+- [x] Calculate `procedure_time`
+- [x] Mark encounter as `closed`
 
-- [ ] Create new encounter when re-entering a station after leaving it
-- [ ] Preserve prior encounters (no overwriting history)
-- [ ] Ensure top-level timing fields represent **latest encounter only**
+## Encounter Handling
+
+- [x] Create new encounter when re-entering a station after leaving it
+- [x] Preserve prior encounters (no overwriting history)
+- [x] Ensure top-level timing fields represent **latest encounter only**
 - [ ] Assign stable `encounter_id` for each encounter
 
-### Stats Integration (Daily Stats Collection)
+## Stats Integration (Daily Stats Collection)
 
-- [ ] Append `procedure_time` to `procedure_time_data` when encounter closes
-- [ ] Append `waiting_time` to `waiting_time_data` when applicable
-- [ ] Ensure stats writes occur **only once per encounter**
-- [ ] Add `stats_recorded` flag to prevent duplicate writes
-- [ ] Handle retry scenarios safely (idempotent updates)
+- [x] Append `procedure_time` to `procedure_time_data` when encounter closes
+- [x] Append `waiting_time` to `waiting_time_data` when applicable
+- [x] Ensure stats writes occur **only once per encounter**
+- [x] Add `stats_recorded` flag to prevent duplicate writes
+- [ ] Handle retry scenarios safely under repeated/near-simultaneous events
 
-### Integration with Existing System
+## Integration with Existing System
 
-- [ ] Integrate with existing `updateStatusChange` routing logic
+- [ ] Integrate scanner logic with existing `updateStatusChange` routing logic
+- [x] Confirm scanner path can advance patient state end-to-end
 - [ ] Confirm scanner path produces identical results to UI actions
 - [ ] Verify behavior with mixed scanner + manual updates
+- [x] Confirm Registro → scanner pipeline handoff is seamless
 
-### Edge Case Validation
+## Edge Case Validation
 
 - [ ] Validate repeated station flows (e.g., doc → lab → doc)
 - [ ] Validate duplicate scan handling
 - [ ] Validate out-of-order event handling
 - [ ] Validate partial encounters (e.g., never completed)
+- [x] Validate patient creation produces a correct initial `waiting` station
 
-### Final Verification
+## Final Verification
 
 - [ ] Confirm timing fields are correct across all transitions
 - [ ] Confirm stats collection reflects real encounter durations
@@ -96,13 +108,16 @@ and support repeat station encounters.
 
 # Phase 3 --- Route Advancement
 
-Goal: Correct promotion of next station.
+Goal: Correct promotion and scanner-driven advancement of the next station.
 
-- [ ] Implement auto-promotion of next station
-- [ ] Ensure promotion occurs only when no station is active
+- [x] Implement scanner-driven station advancement
+- [x] Ensure advancement respects current plan order
+- [x] Prevent scanner from inventing missing initial state
+- [ ] Preserve scanner transition correctness without forcing automatic next-station promotion
+- [ ] Leave lab/pharmacy routing choices to Anfitrión when multiple next stations are operationally possible
 - [ ] Prevent automatic promotion for `lab` and `pha`
 - [ ] Verify manual routing behavior by anfitrión
-- [ ] Implement duplicate scan protection
+- [x] Implement basic duplicate scan protection
 - [ ] Create `room_event_exceptions` collection
 - [ ] Log operational anomalies
 
@@ -155,6 +170,7 @@ Goal: Validate real clinic workflows.
 - [ ] Test missing visit behavior
 - [ ] Test invalid station scans
 - [ ] Test lab/pharmacy manual routing
+- [ ] Test emergency workflows (non-reg starting station)
 - [ ] Run small pilot with single scanner
 
 ---
@@ -169,6 +185,7 @@ Optional enhancements once the core system works.
 - [ ] Analytics dashboards
 - [ ] Patient flow heatmaps
 - [ ] Staff mobile scanning option
+- [ ] Refactor to a shared transition engine if justified by real usage
 
 ---
 
@@ -178,22 +195,22 @@ Phase Estimated Sessions
 
 ---
 
-Backend event system 4--5
-Station state updates 3
-Routing logic 2
-Ticket printing 3
-Scanner hardware 3
+Backend event system 4--5  
+Station state updates 1--2  
+Routing logic 1--2  
+Ticket printing 3  
+Scanner hardware 3  
 Testing 3
 
 Total estimate:
 
-**18--20 half-day development sessions**
+**15--18 half-day development sessions**
 
 ---
 
 # Usage
 
-Update this checklist as tasks are completed.\
+Update this checklist as tasks are completed.  
 Each check mark represents a completed development milestone.
 
 Recommended file location:

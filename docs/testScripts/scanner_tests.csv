@@ -1,0 +1,27 @@
+device_id,device_timestamp_utc,visit_id,room_id,station_id,notes
+
+# ---- Happy Path ----
+scanner_pi_01,2026-03-29T10:00:00.000Z,W75dPx81gcI68gSHK3fK,REG,reg,happy_step_1
+scanner_pi_01,2026-03-29T10:05:00.000Z,W75dPx81gcI68gSHK3fK,NUR,nur,happy_step_2
+scanner_pi_01,2026-03-29T10:10:00.000Z,W75dPx81gcI68gSHK3fK,DOC,doc,happy_step_3
+
+# ---- Skip Ahead ----
+scanner_pi_01,2026-03-29T11:00:00.000Z,W75dPx81gcI68gSHK3fK,DOC,doc,skip_ahead
+
+# ---- Go Backward ----
+scanner_pi_01,2026-03-29T11:05:00.000Z,W75dPx81gcI68gSHK3fK,NUR,nur,go_back
+
+# ---- Double Scan ----
+scanner_pi_01,2026-03-29T11:10:00.000Z,W75dPx81gcI68gSHK3fK,DOC,doc,double_scan_1
+scanner_pi_01,2026-03-29T11:10:01.000Z,W75dPx81gcI68gSHK3fK,DOC,doc,double_scan_2
+
+# ---- Station Not In Plan ----
+scanner_pi_01,2026-03-29T11:15:00.000Z,W75dPx81gcI68gSHK3fK,PHA,pha,invalid_station
+
+# ---- Repeat Station Loop ----
+scanner_pi_01,2026-03-29T11:20:00.000Z,W75dPx81gcI68gSHK3fK,DOC,doc,loop_doc_1
+scanner_pi_01,2026-03-29T11:25:00.000Z,W75dPx81gcI68gSHK3fK,LAB,lab,loop_lab
+scanner_pi_01,2026-03-29T11:30:00.000Z,W75dPx81gcI68gSHK3fK,DOC,doc,loop_doc_2
+
+# ---- After Completion ----
+scanner_pi_01,2026-03-29T11:40:00.000Z,W75dPx81gcI68gSHK3fK,DOC,doc,post_complete

@@ -71,12 +71,65 @@ function createEncounter({ station, timestamp, source }) {
   };
 }
 
+function getLowestNumericStepIndex(planOfCare) {
+  let bestIndex = -1;
+  let bestValue = Number.POSITIVE_INFINITY;
+
+  planOfCare.forEach((step, index) => {
+    const n = Number(step?.status);
+    if (Number.isFinite(n) && n < bestValue) {
+      bestValue = n;
+      bestIndex = index;
+    }
+  });
+
+  return bestIndex;
+}
+
+function maybePromoteNextStation({ planOfCare, timestamp }) {
+  const nextIndex = getLowestNumericStepIndex(planOfCare);
+  if (nextIndex === -1) {
+    return { promoted: false, promotedIndex: -1 };
+  }
+
+  const nextStep = { ...planOfCare[nextIndex] };
+
+  // Leave routing for lab / pha to Anfitrion
+  if (nextStep.station === "lab" || nextStep.station === "pha") {
+    return {
+      promoted: false,
+      promotedIndex: nextIndex,
+      reason: `manual_promotion_required:${nextStep.station}`,
+    };
+  }
+
+  nextStep.status = "waiting";
+  nextStep.waiting_start = timestamp || null;
+  nextStep.waiting_end = null;
+  nextStep.waiting_time = null;
+  nextStep.in_process_start = null;
+  nextStep.in_process_end = null;
+  nextStep.procedure_time = null;
+  nextStep.lastUpdate = timestamp || null;
+
+  planOfCare[nextIndex] = nextStep;
+
+  return {
+    promoted: true,
+    promotedIndex: nextIndex,
+    promotedStation: nextStep.station,
+  };
+}
+
 export function applyScannerAdvance({
   visitData,
   station,
   timestamp,
   source = "scanner",
 }) {
+  console.log(
+    "[DEBUG]" + JSON.stringify({ visitData, station, timestamp, source }),
+  );
   const updatedPlanOfCare = deepClone(visitData?.plan_of_care || []);
   const stationIndex = updatedPlanOfCare.findIndex(
     (step) => step.station === station,
@@ -105,6 +158,9 @@ export function applyScannerAdvance({
   let encounterClosed = false;
   let changed = false;
   let targetStatus = null;
+  let promoted = false;
+  let promotedIndex = -1;
+  let promotedStation = null;
 
   if (!encounter && currentStatus !== "complete") {
     encounter = createEncounter({ station, timestamp, source });
@@ -215,6 +271,21 @@ export function applyScannerAdvance({
 
   updatedPlanOfCare[stationIndex] = stationEntry;
 
+  if (encounterClosed) {
+    const promotion = maybePromoteNextStation({
+      planOfCare: updatedPlanOfCare,
+      timestamp,
+    });
+
+    promoted = promotion.promoted === true;
+    promotedIndex = promotion.promotedIndex ?? -1;
+    promotedStation = promotion.promotedStation ?? null;
+
+    if (promoted) {
+      changed = true;
+    }
+  }
+
   return {
     changed,
     reason: changed ? "ok" : "noop",
@@ -224,5 +295,8 @@ export function applyScannerAdvance({
     encounter,
     encounterClosed,
     targetStatus,
+    promoted,
+    promotedIndex,
+    promotedStation,
   };
 }

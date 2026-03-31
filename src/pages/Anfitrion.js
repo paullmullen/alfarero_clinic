@@ -38,24 +38,17 @@ import { useHideMenu } from "../hooks/useHideMenu";
 import { AlertInfo } from "../components/AlertInfo";
 import { useTranslation } from "react-i18next";
 import IconSizes from "../helpers/iconSizes";
-import two from "../img/2.svg";
-import three from "../img/3.svg";
-import four from "../img/4.svg";
-import five from "../img/5.svg";
-import six from "../img/6.svg";
-import seven from "../img/7.svg";
-import waiting from "../img/waiting.svg";
-import in_process from "../img/in_process.svg";
-import not_planned from "../img/not_planned.svg";
-import complete from "../img/complete.svg";
 import fin from "../img/fin.png";
-import eye from "../img/eye.svg";
 import edit from "../img/edit.svg";
 import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
 import { useServiceLocation } from "../providers/ServiceLocationProvider";
 import AppointmentList from "../components/anfitrion/AppointmentList";
 import useAnfitrionAppointments from "../hooks/useAnfitrionAppointments";
 import useCancellationReasons from "../hooks/useCancellationReasons";
+import {
+  getPlanOfCareIcon,
+  getPlannedRouteIcon,
+} from "../helpers/getPlanOfCareIcon";
 
 const { TextArea } = Input;
 const EditPatientData = lazy(() => import("../components/EditPatientData.js"));
@@ -201,7 +194,10 @@ const Anfitrion = () => {
       const elapsedMinsCandidates = [];
 
       (item.plan_of_care ?? []).forEach((plan) => {
-        stations[plan.station] = plan.status;
+        stations[plan.station] = {
+          status: plan.status,
+          route_order: plan.route_order,
+        };
 
         if (
           plan.status === "waiting" &&
@@ -246,71 +242,65 @@ const Anfitrion = () => {
     });
   }, [rowsRaw, t]);
 
-  const iconMap = useMemo(
-    () => ({
-      pending: not_planned,
-      in_process,
-      waiting,
-      obs: eye,
-      complete,
-      2: two,
-      3: three,
-      4: four,
-      5: five,
-      6: six,
-      7: seven,
-      fin,
-    }),
+  const STATUS_CHOICES = useMemo(
+    () => ["pending", "planned", "waiting", "in_process", "obs", "complete"],
     [],
   );
 
-  const STATUS_CHOICES = useMemo(
-    () => [
-      ["pending", not_planned],
-      ["in_process", in_process],
-      ["waiting", waiting],
-      ["obs", eye],
-      ["complete", complete],
-      ["2", two],
-      ["3", three],
-      ["4", four],
-      ["5", five],
-      ["6", six],
-      ["7", seven],
-    ],
-    [],
+  const renderStatusChoice = useCallback(
+    (nextStatus, stationName, pt_no, routeOrder, iconScale = 1.5) => {
+      const handleClick = () =>
+        handleStatusChange(nextStatus, pt_no, stationName, t("CHECKOUT"));
+
+      const src =
+        nextStatus === "planned"
+          ? getPlannedRouteIcon(routeOrder)
+          : getPlanOfCareIcon(nextStatus);
+
+      if (!src) return null;
+
+      return (
+        <img
+          key={nextStatus}
+          src={src}
+          width={IconSizes.width * iconScale}
+          height={IconSizes.height * iconScale}
+          loading="lazy"
+          decoding="async"
+          alt=""
+          style={{ cursor: "pointer" }}
+          onClick={handleClick}
+        />
+      );
+    },
+    [t],
   );
 
   const renderStatusIcon = useCallback(
-    (status, stationName, pt_no) => {
-      const src = iconMap[status];
-      if (!src) return null;
+    (step, stationName, pt_no) => {
+      const status = step && typeof step === "object" ? step.status : step;
+
+      const routeOrder =
+        step && typeof step === "object" ? step.route_order : undefined;
+
+      const src = getPlanOfCareIcon(status, routeOrder);
 
       const iconScale = 1.5;
       const popContent = (
         <Space wrap>
-          {STATUS_CHOICES.map(([nextStatus, imgSrc]) => (
-            <img
-              key={nextStatus}
-              src={imgSrc}
-              width={IconSizes.width * iconScale}
-              height={IconSizes.height * iconScale}
-              loading="lazy"
-              decoding="async"
-              alt=""
-              style={{ cursor: "pointer" }}
-              onClick={() =>
-                handleStatusChange(
-                  nextStatus,
-                  pt_no,
-                  stationName,
-                  t("CHECKOUT"),
-                )
-              }
-            />
-          ))}
+          {STATUS_CHOICES.map((nextStatus) =>
+            renderStatusChoice(
+              nextStatus,
+              stationName,
+              pt_no,
+              routeOrder,
+              iconScale,
+            ),
+          )}
         </Space>
       );
+
+      if (!src) return null;
 
       return (
         <Popover content={popContent} title={t("modifyStatus")} trigger="hover">
@@ -325,7 +315,7 @@ const Anfitrion = () => {
         </Popover>
       );
     },
-    [STATUS_CHOICES, t, iconMap],
+    [STATUS_CHOICES, t, renderStatusChoice],
   );
 
   const columns = useMemo(() => {
@@ -411,8 +401,7 @@ const Anfitrion = () => {
             </div>
           </div>
         ),
-        render: (status, row) =>
-          renderStatusIcon(status, stationName, row.pt_no),
+        render: (step, row) => renderStatusIcon(step, stationName, row.pt_no),
         width: IconSizes.width,
         align: "center",
       };
@@ -471,7 +460,8 @@ const Anfitrion = () => {
 
   const getRowClassName = (record, index) => {
     const allPendingOrComplete = stationNames.every((st) => {
-      const status = record[st];
+      const cell = record[st];
+      const status = cell && typeof cell === "object" ? cell.status : cell;
       return status === "pending" || status === "complete";
     });
 

@@ -1,0 +1,143 @@
+# Shared Cloud Logic (Patient State Engine)
+
+## Purpose
+
+This folder contains **shared domain logic for patient state transitions**.
+
+It is used by multiple cloud function codebases:
+
+* `./functions` (manual status changes)
+* `./scannerCloudFunctions` (scanner-driven transitions)
+
+This logic is the **single source of truth** for:
+
+* Plan of care state transitions
+* Scanner behavior
+* Automatic promotion (planned → waiting)
+* Checkout readiness
+
+---
+
+## Why this exists
+
+Historically, status logic was duplicated across:
+
+* manual UI-triggered updates
+* scanner-triggered updates
+
+This led to drift, bugs, and inconsistent behavior.
+
+We now centralize all transition logic here to ensure:
+
+* consistency across all workflows
+* easier testing and reasoning
+* safer future changes
+
+---
+
+## Key File
+
+* `planOfCareStateEngine.js`
+
+This file defines:
+
+* valid statuses
+* scanner event behavior
+* manual status updates
+* promotion rules
+* checkout logic
+
+---
+
+## Important Rules
+
+### 1. Do NOT duplicate this logic elsewhere
+
+All state transitions must go through this module.
+
+If you find yourself writing:
+
+* "if status === ..."
+* "find next station..."
+* "promote to waiting..."
+
+STOP and use this module instead.
+
+---
+
+### 2. Scanner and manual MUST stay aligned
+
+Both:
+
+* scanner pipeline
+* manual status changes
+
+must call into this shared engine.
+
+No exceptions.
+
+---
+
+### 3. `obs` is manual-only (special case)
+
+* Scanner can interpret `obs`
+* Scanner can exit `obs`
+* Scanner must NOT create `obs`
+
+---
+
+### 4. Auto-promotion rule
+
+When a station becomes `complete`:
+
+* next `planned` station → `waiting`
+* EXCEPT when only `lab` and/or `pha` remain
+
+This rule applies to BOTH:
+
+* manual updates
+* scanner updates
+
+---
+
+### 5. This is cloud logic (not UI logic)
+
+Even though this is plain JS, it is **server-side domain logic**.
+
+Do not move this into `/src` or treat it as UI helper code.
+
+---
+
+## Future Guidance
+
+If you need to change patient flow behavior:
+
+1. Update logic in `planOfCareStateEngine.js`
+2. Verify both scanner and manual paths
+3. Test edge cases:
+
+   * skipping stations
+   * returning from `obs`
+   * final stations (`lab`, `pha`)
+   * checkout readiness
+
+---
+
+## Mental Model
+
+* `route_order` = sequence
+* `status` = current state
+* scanner = event-driven transitions
+* manual = permissive overrides
+* this module = the rules that keep everything consistent
+
+---
+
+## If something feels "weird"
+
+It probably means:
+
+* logic was added outside this module
+* or this module was bypassed
+
+Fix that first.

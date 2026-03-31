@@ -7,30 +7,12 @@ import { Timestamp } from "firebase/firestore";
  * Rules:
  * - Preserve the exact order from visit_types.plan_of_care for included stations
  * - First included station starts as "waiting"
- * - Later included stations get "2", "3", "4", etc.
- * - Stations not included in the visit recipe are appended as "pending"
+ * - Later included stations start as "planned"
+ * - Stations not included in the visit recipe are "pending"
+ * - route_order is the patient-specific intended sequence
+ * - route_order is null for stations not in the planned visit
  */
 export function buildPlanOfCare(stationsList, visits) {
-  const statusList = [
-    "waiting",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "7",
-    "7",
-    "7",
-    "7",
-    "7",
-    "7",
-    "7",
-    "7",
-    "7",
-    "7",
-  ];
-
   const result = [];
   const safeVisits = Array.isArray(visits) ? visits : [];
   const includedSet = new Set(safeVisits);
@@ -41,23 +23,24 @@ export function buildPlanOfCare(stationsList, visits) {
     const station = stationsList.find((s) => s.value === stationValue);
     if (!station) return;
 
-    const status = statusList[index] || "7";
+    const routeOrder = index + 1;
+    const isFirstStep = index === 0;
 
     result.push({
-      order: result.length,
+      route_order: routeOrder,
       station: station.value,
-      status,
-      ...(status === "waiting" ? { waiting_start: waitingStart } : {}),
+      status: isFirstStep ? "waiting" : "planned",
+      ...(isFirstStep ? { waiting_start: waitingStart } : {}),
     });
   });
 
-  // Then: all remaining stations as pending
+  // Then: all remaining stations as pending / not planned
   stationsList.forEach((station) => {
     if (!station?.value) return;
     if (includedSet.has(station.value)) return;
 
     result.push({
-      order: result.length,
+      route_order: null,
       station: station.value,
       status: "pending",
     });

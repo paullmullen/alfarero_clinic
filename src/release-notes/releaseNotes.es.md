@@ -2,6 +2,10 @@
 
 Las versiones con sufijos de letras son versiones candidatas que no se han implementado en producción. Las versiones sin sufijos de letras son las versiones de producción que incluyen los cambios de las versiones candidatas (si han sido aprobados).
 
+## v2.4.1
+
+- Mejora de flujo en funcción de nuevo paciente.
+
 ## v2.4.0
 
 - Caracteristica de citas implementadas.
