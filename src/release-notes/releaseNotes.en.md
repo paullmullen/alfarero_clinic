@@ -2,9 +2,9 @@
 
 Releases with letter suffixes are candidate releases not pushed to production. Releases without letter suffixes are the production releases that include the candidate changes (if approved).
 
-## v2.4.1
+## v2.4.2 (includes changes in 2.4.1)
 
-- Improved new patient sequence
+- Improved new patient routing sequence
 
 ## v2.4.0
 
