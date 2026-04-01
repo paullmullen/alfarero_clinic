@@ -28,6 +28,15 @@ const SCANNER_CURRENT_CANDIDATES = new Set([
 const sortByRouteOrder = (a, b) =>
   (a.route_order ?? 999) - (b.route_order ?? 999);
 
+const getNextRouteOrder = (plan) => {
+  const maxRouteOrder = plan.reduce((max, step) => {
+    const value = typeof step.route_order === "number" ? step.route_order : 0;
+    return Math.max(max, value);
+  }, 0);
+
+  return maxRouteOrder + 1;
+};
+
 export const getScannerCurrentStation = (plan) => {
   const candidates = plan
     .filter((p) => SCANNER_CURRENT_CANDIDATES.has(p.status))
@@ -57,14 +66,17 @@ export const promoteNextPlannedStationIfNeeded = (plan, now) => {
 
   if (!planned.length) return plan;
 
-  const nonExcluded = planned.filter(
-    (p) => !AUTO_PROMOTION_EXCLUDED.has(p.station),
+  const plannedStationCodes = new Set(
+    planned.map((p) => String(p.station || "").toLowerCase()),
   );
 
-  // If only lab/pha remain → do nothing
-  if (nonExcluded.length === 0) return plan;
+  const bothLabAndPhaPlanned =
+    plannedStationCodes.has("lab") && plannedStationCodes.has("pha");
 
-  const next = nonExcluded[0];
+  // Manual pause only when BOTH lab and pha remain planned
+  if (bothLabAndPhaPlanned) return plan;
+
+  const next = planned[0];
 
   return plan.map((p) =>
     p.station === next.station
@@ -85,7 +97,54 @@ export const promoteNextPlannedStationIfNeeded = (plan, now) => {
 export const applyManualStatusChange = (plan, stationCode, newStatus, now) => {
   let becameComplete = false;
 
-  const updated = plan.map((p) => {
+  const ACTIVE_TARGET_STATUSES = new Set([STATUS.WAITING, STATUS.IN_PROCESS]);
+
+  let updated = plan.map((p) => ({ ...p }));
+
+  const current = getScannerCurrentStation(updated);
+  const targetIsDifferentStation = current && current.station !== stationCode;
+  const activatingDifferentStation = ACTIVE_TARGET_STATUSES.has(newStatus);
+
+  if (targetIsDifferentStation && activatingDifferentStation) {
+    updated = updated.map((p) => {
+      if (p.station !== current.station) return p;
+
+      if (current.status === STATUS.WAITING) {
+        return {
+          ...p,
+          status: STATUS.PLANNED,
+          lastUpdate: now,
+        };
+      }
+
+      if (
+        current.status === STATUS.IN_PROCESS ||
+        current.status === STATUS.OBS
+      ) {
+        becameComplete = true;
+
+        const completedEntry = {
+          ...p,
+          status: STATUS.COMPLETE,
+          lastUpdate: now,
+        };
+
+        if (
+          current.status === STATUS.IN_PROCESS &&
+          p.in_process_start &&
+          !p.in_process_end
+        ) {
+          completedEntry.in_process_end = now;
+        }
+
+        return completedEntry;
+      }
+
+      return p;
+    });
+  }
+
+  updated = updated.map((p) => {
     if (p.station !== stationCode) return p;
 
     if (p.status !== STATUS.COMPLETE && newStatus === STATUS.COMPLETE) {
@@ -98,17 +157,32 @@ export const applyManualStatusChange = (plan, stationCode, newStatus, now) => {
       lastUpdate: now,
     };
 
+    if (
+      p.status === STATUS.PENDING &&
+      newStatus === STATUS.PLANNED &&
+      typeof p.route_order !== "number"
+    ) {
+      next.route_order = getNextRouteOrder(updated);
+    }
+
+    // waiting timing
     if (newStatus === STATUS.WAITING && p.status !== STATUS.WAITING) {
       next.waiting_start = now;
       next.waiting_end = null;
+      next.waiting_time = null;
+    } else if (p.status === STATUS.WAITING && newStatus !== STATUS.WAITING) {
+      next.waiting_end = now;
     }
 
+    // in_process timing
     if (newStatus === STATUS.IN_PROCESS && p.status !== STATUS.IN_PROCESS) {
       next.in_process_start = now;
       next.in_process_end = null;
-    }
-
-    if (p.status === STATUS.IN_PROCESS && newStatus !== STATUS.IN_PROCESS) {
+      next.procedure_time = null;
+    } else if (
+      p.status === STATUS.IN_PROCESS &&
+      newStatus !== STATUS.IN_PROCESS
+    ) {
       next.in_process_end = now;
     }
 

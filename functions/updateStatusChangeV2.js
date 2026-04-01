@@ -1,6 +1,6 @@
 import { onRequest } from "firebase-functions/v2/https";
 import admin from "firebase-admin";
-import { applyManualStatusChange } from "../shared/planOfCareStateEngine.js";
+import { applyManualStatusChange } from "./shared/planOfCareStateEngine.js";
 
 if (!admin.apps.length) {
   admin.initializeApp();

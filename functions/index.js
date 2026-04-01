@@ -2,17 +2,15 @@ import admin from "firebase-admin";
 
 import { getPatientCount } from "./getPatientCount.js";
 import { updateStatusChange } from "./updateStatusChange.js";
+export { updateStatusChangeV2 } from "./updateStatusChangeV2.js";
 import { getPatientsData } from "./getPatientsData.js";
 import { sendInviteEmail } from "./sendInviteEmail.js";
 import { sendInventoryReport } from "./sendInventoryReport.js";
 import { sendEmail } from "./email/sendEmail.js";
 import { getOpsObservationsFeed } from "./getOpsObservationsFeed.js";
-import { receiveBarcodeUpdates } from "./receiveBarcodeUpdates.js";
+// import { receiveBarcodeUpdates } from "./receiveBarcodeUpdates.js";
 
-import { initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
-
-const db = getFirestore();
+const db = admin.firestore();
 
 // Use Firestore emulator only when running locally
 if (process.env.FUNCTIONS_EMULATOR) {
@@ -36,5 +34,5 @@ export {
   sendInventoryReport,
   sendEmail,
   getOpsObservationsFeed,
-  receiveBarcodeUpdates,
+  // receiveBarcodeUpdates,
 };

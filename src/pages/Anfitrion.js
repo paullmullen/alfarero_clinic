@@ -29,10 +29,8 @@ import {
 } from "firebase/firestore";
 import { fetchData } from "../helpers/fetchData";
 import { firestore, auth } from "./../helpers/firebaseConfig";
-import {
-  handleStatusChange,
-  handleDelete,
-} from "./../helpers/updateStationStatus";
+import { handleDelete } from "./../helpers/updateStationStatus";
+import { handleStatusChangeV2 } from "./../helpers/updateStationStatusV2";
 import { useNavigate } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
 import { AlertInfo } from "../components/AlertInfo";
@@ -40,6 +38,7 @@ import { useTranslation } from "react-i18next";
 import IconSizes from "../helpers/iconSizes";
 import fin from "../img/fin.png";
 import edit from "../img/edit.svg";
+import addToRoute from "../img/add-to-route.svg";
 import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
 import { useServiceLocation } from "../providers/ServiceLocationProvider";
 import AppointmentList from "../components/anfitrion/AppointmentList";
@@ -249,19 +248,55 @@ const Anfitrion = () => {
 
   const renderStatusChoice = useCallback(
     (nextStatus, stationName, pt_no, routeOrder, iconScale = 1.5) => {
-      const handleClick = () =>
-        handleStatusChange(nextStatus, pt_no, stationName, t("CHECKOUT"));
+      const handleClick = async () => {
+        try {
+          await handleStatusChangeV2(nextStatus, pt_no, stationName);
+        } catch (error) {
+          console.error("Failed to update status via V2 helper", error);
+        }
+      };
 
-      const src =
-        nextStatus === "planned"
-          ? getPlannedRouteIcon(routeOrder)
-          : getPlanOfCareIcon(nextStatus);
+      if (nextStatus === "planned") {
+        const plannedSrc = getPlannedRouteIcon(routeOrder);
+
+        if (plannedSrc) {
+          return (
+            <img
+              key={`${stationName}-planned`}
+              src={plannedSrc}
+              width={IconSizes.width * iconScale}
+              height={IconSizes.height * iconScale}
+              loading="lazy"
+              decoding="async"
+              alt=""
+              style={{ cursor: "pointer" }}
+              onClick={handleClick}
+            />
+          );
+        }
+
+        return (
+          <img
+            key={`${stationName}-planned`}
+            src={addToRoute}
+            width={IconSizes.width * iconScale}
+            height={IconSizes.height * iconScale}
+            loading="lazy"
+            decoding="async"
+            alt="add to route"
+            style={{ cursor: "pointer" }}
+            onClick={handleClick}
+          />
+        );
+      }
+
+      const src = getPlanOfCareIcon(nextStatus);
 
       if (!src) return null;
 
       return (
         <img
-          key={nextStatus}
+          key={`${stationName}-${nextStatus}`}
           src={src}
           width={IconSizes.width * iconScale}
           height={IconSizes.height * iconScale}
@@ -273,7 +308,7 @@ const Anfitrion = () => {
         />
       );
     },
-    [t],
+    [],
   );
 
   const renderStatusIcon = useCallback(
