@@ -72,6 +72,24 @@ function createEncounter({ station, timestamp, source }) {
   };
 }
 
+function recomputeStationTotals(stationEntry) {
+  ensureEncountersArray(stationEntry);
+
+  stationEntry.waiting_time = stationEntry.encounters.reduce(
+    (sum, encounter) => {
+      return sum + (Number(encounter?.waiting_time) || 0);
+    },
+    0,
+  );
+
+  stationEntry.procedure_time = stationEntry.encounters.reduce(
+    (sum, encounter) => {
+      return sum + (Number(encounter?.procedure_time) || 0);
+    },
+    0,
+  );
+}
+
 function reconcileEncounterForInProcess({
   stationEntry,
   previousStatus,
@@ -120,6 +138,8 @@ function reconcileEncounterForInProcess({
   encounter.closed = false;
   encounter.source = source;
 
+  recomputeStationTotals(stationEntry);
+
   return encounter;
 }
 
@@ -150,6 +170,8 @@ function reconcileEncounterForComplete({ stationEntry, timestamp, source }) {
   encounter.stats_recorded = false;
   encounter.source = source;
 
+  recomputeStationTotals(stationEntry);
+
   return encounter;
 }
 
@@ -162,7 +184,8 @@ export function applyScannerEventAdapter({
   const originalPlan = Array.isArray(visitData?.plan_of_care)
     ? deepClone(visitData.plan_of_care)
     : [];
-  // 🔒 Validate station BEFORE doing anything
+
+  // Validate station BEFORE doing anything
   const stationExists = originalPlan.some((p) => p.station === station);
 
   if (!stationExists) {
@@ -182,15 +205,12 @@ export function applyScannerEventAdapter({
       source,
     };
   }
+
   const enginePlan = applyScannerEvent(originalPlan, station, timestamp);
   const updatedPlan = deepClone(enginePlan);
 
   const originalByStation = new Map(
     originalPlan.map((step) => [step.station, step]),
-  );
-
-  const updatedByStation = new Map(
-    updatedPlan.map((step) => [step.station, step]),
   );
 
   let changed = JSON.stringify(originalPlan) !== JSON.stringify(updatedPlan);
