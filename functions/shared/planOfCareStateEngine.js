@@ -7,8 +7,6 @@ const STATUS = {
   COMPLETE: "complete",
 };
 
-const AUTO_PROMOTION_EXCLUDED = new Set(["lab", "pha"]);
-
 const SCANNER_CURRENT_PRIORITY = {
   in_process: 1,
   waiting: 2,
@@ -66,17 +64,21 @@ export const promoteNextPlannedStationIfNeeded = (plan, now) => {
 
   if (!planned.length) return plan;
 
-  const plannedStationCodes = new Set(
-    planned.map((p) => String(p.station || "").toLowerCase()),
-  );
-
-  const bothLabAndPhaPlanned =
-    plannedStationCodes.has("lab") && plannedStationCodes.has("pha");
-
-  // Manual pause only when BOTH lab and pha remain planned
-  if (bothLabAndPhaPlanned) return plan;
-
   const next = planned[0];
+  const second = planned[1] || null;
+
+  const nextTwoAreLabAndPha =
+    next &&
+    second &&
+    new Set([
+      String(next.station || "").toLowerCase(),
+      String(second.station || "").toLowerCase(),
+    ]).size === 2 &&
+    ["lab", "pha"].includes(String(next.station || "").toLowerCase()) &&
+    ["lab", "pha"].includes(String(second.station || "").toLowerCase());
+
+  // Pause only when the next two planned stations are lab and pha
+  if (nextTwoAreLabAndPha) return plan;
 
   return plan.map((p) =>
     p.station === next.station

@@ -198,12 +198,13 @@ export const onRoomEventCreated = onDocumentCreated(
         newStatus: result.targetStatus,
         encounterClosed: result.encounterClosed,
         encounterId: result.encounter?.encounter_id || null,
+        statsStation: result.statsStation || null,
       });
 
       if (result.encounterClosed && result.encounter?.encounter_id) {
         await writeStatsIfNeeded({
           visitRef,
-          station: stationId,
+          station: result.statsStation || stationId,
           encounterId: result.encounter.encounter_id,
         });
 
@@ -211,6 +212,7 @@ export const onRoomEventCreated = onDocumentCreated(
           eventId,
           visitId,
           stationId,
+          statsStation: result.statsStation || stationId,
           encounterId: result.encounter.encounter_id,
         });
       }
