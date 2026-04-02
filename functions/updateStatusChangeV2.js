@@ -1,6 +1,7 @@
 import { onRequest } from "firebase-functions/v2/https";
 import admin from "firebase-admin";
-import { applyManualStatusChange } from "./shared/planOfCareStateEngine.js";
+import { applyManualStatusChangeAdapter } from "./transitions/applyManualStatusChangeAdapter.js";
+import { writeStatsIfNeeded } from "./stats/writeStatsIfNeeded.js";
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -96,24 +97,48 @@ export const updateStatusChangeV2 = onRequest(
 
       const now = admin.firestore.Timestamp.now();
 
-      const updatedPlanOfCare = applyManualStatusChange(
-        patientData.plan_of_care,
-        stationCode,
+      // 🔥 NEW: use adapter instead of direct engine call
+      const result = applyManualStatusChangeAdapter({
+        visitData: patientData,
+        station: stationCode,
         newStatus,
-        now,
-      );
+        timestamp: now,
+        source: "manual",
+      });
+
+      if (!result.changed) {
+        return res.status(200).json({
+          success: true,
+          changed: false,
+          reason: result.reason,
+        });
+      }
 
       await patientRef.update({
-        plan_of_care: updatedPlanOfCare,
+        plan_of_care: result.updatedPlanOfCare,
         last_update: now,
       });
 
+      // 🔥 NEW: stats integration (same pattern as scanner)
+      if (result.encounterClosed && result.encounter?.encounter_id) {
+        await writeStatsIfNeeded({
+          visitRef: patientRef,
+          station: result.statsStation || stationCode,
+          encounterId: result.encounter.encounter_id,
+        });
+      }
+
       return res.status(200).json({
         success: true,
+        changed: true,
         patientId,
         station: stationCode,
         newStatus,
-        updatedPlanOfCare,
+        targetStatus: result.targetStatus,
+        promoted: result.promoted,
+        promotedStation: result.promotedStation,
+        encounterClosed: result.encounterClosed,
+        statsStation: result.statsStation,
       });
     } catch (error) {
       console.error("Error updating plan_of_care with V2 engine:", error);

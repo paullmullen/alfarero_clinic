@@ -1,3 +1,18 @@
+/**
+ * MIRRORED MODULE
+ *
+ * This file is intentionally duplicated in:
+ * - functions/shared/planOfCare/
+ * - scannerCloudFunctions/shared/planOfCare/
+ *
+ * Keep these copies functionally identical unless there is a documented reason
+ * for divergence. If you update logic here, review and update the twin copy.
+ *
+ * Why duplicated?
+ * Shared cross-codebase imports created deployment complexity that was not worth
+ * the risk for this project at this stage.
+ */
+
 const STATUS = {
   PENDING: "pending",
   PLANNED: "planned",
