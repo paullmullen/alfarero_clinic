@@ -1,5 +1,11 @@
+/**
+ * NOTE:
+ * In the api codebase, the manual state engine lives in ../shared/
+ * rather than ../state/ as in the scanner codebase.
+ */
+
 import admin from "firebase-admin";
-import { applyManualStatusChange } from "../state/planOfCareStateEngine.js";
+import { applyManualStatusChange } from "../shared/planOfCareStateEngine.js";
 
 function toMillis(value) {
   if (!value) return null;
