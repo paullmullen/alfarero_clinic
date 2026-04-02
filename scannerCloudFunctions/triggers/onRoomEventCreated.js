@@ -2,7 +2,7 @@ import admin from "firebase-admin";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 
-import { applyScannerAdvance } from "../transitions/applyScannerAdvance.js";
+import { applyScannerEventAdapter } from "../transitions/applyScannerEventAdapter.js";
 import { writeStatsIfNeeded } from "../stats/writeStatsIfNeeded.js";
 import { getScannerRuntimeConfig } from "../config/getScannerRuntimeConfig.js";
 
@@ -121,7 +121,6 @@ export const onRoomEventCreated = onDocumentCreated(
       toTimestampOrNull(receivedAt) || admin.firestore.Timestamp.now();
 
     try {
-      // --- Duplicate suppression ---
       const duplicate = await isRecentDuplicateScan({
         eventId,
         visitId,
@@ -145,9 +144,7 @@ export const onRoomEventCreated = onDocumentCreated(
         return;
       }
 
-      // --- Load visit ---
       const visitRef = db.collection("patients").doc(String(visitId));
-
       const visitSnap = await visitRef.get();
 
       if (!visitSnap.exists) {
@@ -166,8 +163,7 @@ export const onRoomEventCreated = onDocumentCreated(
 
       const visitData = visitSnap.data();
 
-      // --- Apply transition ---
-      const result = applyScannerAdvance({
+      const result = applyScannerEventAdapter({
         visitData,
         station: stationId,
         timestamp: transitionTimestamp,
@@ -191,7 +187,6 @@ export const onRoomEventCreated = onDocumentCreated(
         return;
       }
 
-      // --- Persist update ---
       await visitRef.update({
         plan_of_care: result.updatedPlanOfCare,
       });
@@ -205,7 +200,6 @@ export const onRoomEventCreated = onDocumentCreated(
         encounterId: result.encounter?.encounter_id || null,
       });
 
-      // --- Stats write ---
       if (result.encounterClosed && result.encounter?.encounter_id) {
         await writeStatsIfNeeded({
           visitRef,
