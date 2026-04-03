@@ -192,6 +192,8 @@
   "gender": "Genero",
   "GOAL": "Meta",
   "GOLD": "ORO",
+  "GUARDIAN_NAME": "Nombre del responsable",
+  "ENTER_GUARDIAN_NAME": "Ingrese el nombre del responsable",
   "greeting": "¡Bienvenido!",
   "Happy": "Contento",
   "headerTitle": "Plan de Atención de Pacientes",

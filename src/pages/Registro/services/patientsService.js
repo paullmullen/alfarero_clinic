@@ -46,6 +46,9 @@ export function buildFormattedPatient({
     national_id_number: nationalId,
     new_patient: isNewPatient,
 
+    // 👇 NEW FIELD
+    guardian_name: patient.guardian_name ?? null,
+
     location_id: effectiveLocationId,
     location_name: effectiveLocationName || null,
   };

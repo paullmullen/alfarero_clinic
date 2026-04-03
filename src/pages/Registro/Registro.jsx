@@ -1,6 +1,6 @@
 // src/pages/Registro/Registro.jsx
 /* eslint-disable no-unused-vars */
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Form,
   Input,
@@ -81,8 +81,14 @@ export const Registro = () => {
   const [patientPlanOfCare, setPatientPlanOfCare] = useState([]);
   const [disabledButton, setDisabledButton] = useState(false);
 
+  useEffect(() => {
+    if (ageGroup !== "child") {
+      form.setFieldValue("guardian_name", undefined);
+    }
+  }, [ageGroup, form]);
+
   const handleReset = () => {
-    form.setFieldsValue({ stations: [] });
+    form.setFieldsValue({ stations: [], guardian_name: undefined });
     form.resetFields();
     setDisabledButton(false);
     resetLookup();
@@ -129,7 +135,13 @@ export const Registro = () => {
     const isNewPatient = kpLookup?.status === "found" ? false : true;
 
     const formattedPatient = buildFormattedPatient({
-      patient,
+      patient: {
+        ...patient,
+        guardian_name:
+          patient.age_group === "child"
+            ? (patient.guardian_name || "").trim()
+            : null,
+      },
       patientPlanOfCare,
       normalizedTel,
       nationalId,
@@ -232,6 +244,29 @@ export const Registro = () => {
               </Form.Item>
             </Col>
           </Row>
+
+          {/* Guardian Name for pediatric visits */}
+          {ageGroup === "child" && (
+            <Row>
+              <Col xs={24} sm={24}>
+                <Form.Item
+                  label={t("GUARDIAN_NAME") || "Nombre del responsable"}
+                  name="guardian_name"
+                  validateFirst
+                  rules={[
+                    {
+                      required: true,
+                      message:
+                        t("ENTER_GUARDIAN_NAME") ||
+                        "Ingrese el nombre del responsable",
+                    },
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
+              </Col>
+            </Row>
+          )}
 
           {/* National ID Number (DPI) */}
           <Row style={{ display: "contents" }} gutter={24}>

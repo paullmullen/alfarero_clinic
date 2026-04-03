@@ -223,10 +223,21 @@ const Anfitrion = () => {
         (nowMs - toMs(item.start_time)) / 60000,
       );
 
+      const displayName =
+        (item.patient_name ?? "") +
+        (item.guardian_name ? ` (${item.guardian_name})` : "");
+
       return {
         pt_no: item.pt_no,
+        raw_patient_name: item.patient_name ?? "",
+        guardian_name: item.guardian_name ?? "",
+        age_group: item.age_group ?? null,
+        national_id_number: item.national_id_number ?? "",
+        reason_for_visit: item.reason_for_visit ?? "",
+        tel: item.tel ?? "",
+        type_of_visit: item.type_of_visit ?? "",
         patient_name:
-          (item.patient_name ?? "") +
+          displayName +
           "\n" +
           (item.national_id_number ?? "") +
           "\n" +
@@ -382,10 +393,12 @@ const Anfitrion = () => {
                     >
                       <EditPatientData
                         initialValues={{
-                          paciente: String(name).split("\n")[0],
-                          national_id_number: String(name).split("\n")[1],
-                          tel: String(name).split("\n")[4],
-                          motivo: String(name).split("\n")[2],
+                          paciente: record.raw_patient_name ?? "",
+                          national_id_number: record.national_id_number ?? "",
+                          tel: record.tel ?? "",
+                          motivo: record.reason_for_visit ?? "",
+                          guardian_name: record.guardian_name ?? "",
+                          age_group: record.age_group ?? null,
                           pt_no: record.pt_no,
                         }}
                         onSave={() => console.log("Patient data saved")}

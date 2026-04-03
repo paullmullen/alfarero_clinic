@@ -30,8 +30,8 @@ Goal: The system can **accept scan events and locate visits**.
 
 # Phase 2 --- Station State Updates
 
-Goal: Barcode scans update station status consistently with current UI behavior,
-assuming patients are already initialized with a valid starting state.
+Goal: Barcode scans and manual actions update station status consistently,
+with full encounter tracking and correct cumulative timing.
 
 ## Patient Initialization (Registration Flow)
 
@@ -44,94 +44,97 @@ assuming patients are already initialized with a valid starting state.
 - [ ] Add validation check for malformed or empty `plan_of_care`
 - [ ] Add unit test for `buildPlanOfCare`
 
-## Transition Engine (Scanner Path Only for Now)
+## Transition Engine (State Logic)
 
-- [x] Implement scanner-specific transition helper/path
-- [x] Enforce current allowed forward transitions
+- [x] Implement scanner-driven transition engine
+- [x] Implement manual status change engine
+- [x] Ensure consistent allowed transitions
 - [x] Treat duplicate events as no-ops where possible
-- [x] Assume valid initial state exists (no null → waiting transitions)
-- [ ] Refactor into a shared transition engine later if still valuable
-
-## Waiting → In Process
-
-- [x] Implement `waiting → in_process` transition
-- [x] Set `waiting_end` timestamp
-- [x] Calculate `waiting_time`
-- [x] Set `in_process_start`
-- [x] Create or update active encounter
-
-## In Process → Complete
-
-- [x] Implement `in_process → complete` transition
-- [x] Set `in_process_end`
-- [x] Calculate `procedure_time`
-- [x] Mark encounter as `closed`
+- [x] Prevent invalid station transitions
+- [ ] Refactor into shared transition engine later if justified
 
 ## Encounter Handling
 
-- [x] Create new encounter when re-entering a station after leaving it
+- [x] Create new encounter when entering/re-entering a station
 - [x] Preserve prior encounters (no overwriting history)
-- [x] Ensure top-level timing fields represent **latest encounter only**
-- [ ] Assign stable `encounter_id` for each encounter
+- [x] Support repeated station visits (doc → lab → doc)
+- [x] Ensure encounters are append-only
+- [x] Ensure top-level timestamps represent **latest encounter**
+- [x] Ensure top-level timing fields represent **cumulative totals across encounters**
+- [ ] Assign stable `encounter_id` for each encounter (formalize rules)
 
 ## Stats Integration (Daily Stats Collection)
 
-- [x] Append `procedure_time` to `procedure_time_data` when encounter closes
-- [x] Append `waiting_time` to `waiting_time_data` when applicable
-- [x] Ensure stats writes occur **only once per encounter**
+- [x] Append `procedure_time` to stats when encounter closes
+- [x] Append `waiting_time` when applicable
+- [x] Ensure stats writes occur only once per encounter
 - [x] Add `stats_recorded` flag to prevent duplicate writes
-- [ ] Handle retry scenarios safely under repeated/near-simultaneous events
+- [x] Ensure stats triggered from both scanner and manual paths
+- [ ] Handle retry scenarios safely under repeated events
 
-## Integration with Existing System
+## Manual Path Parity
 
-- [ ] Integrate scanner logic with existing `updateStatusChange` routing logic
-- [x] Confirm scanner path can advance patient state end-to-end
-- [ ] Confirm scanner path produces identical results to UI actions
-- [ ] Verify behavior with mixed scanner + manual updates
-- [x] Confirm Registro → scanner pipeline handoff is seamless
+- [x] Manual status changes use same transition engine concepts as scanner
+- [x] Reconcile encounters on manual transitions
+- [x] Update cumulative timing totals on manual path
+- [x] Trigger stats on manual encounter closure
+- [x] Validate identical behavior between scanner and manual paths
+- [x] Validate mixed manual + scanner workflows
 
 ## Edge Case Validation
 
-- [ ] Validate repeated station flows (e.g., doc → lab → doc)
-- [ ] Validate duplicate scan handling
-- [ ] Validate out-of-order event handling
-- [ ] Validate partial encounters (e.g., never completed)
-- [x] Validate patient creation produces a correct initial `waiting` station
+- [x] Validate repeated station flows (doc → lab → doc)
+- [x] Validate duplicate scan handling
+- [x] Validate out-of-order event handling
+- [x] Validate partial encounters (never completed)
+- [x] Validate mixed scanner + manual transitions
 
 ## Final Verification
 
 - [ ] Confirm timing fields are correct across all transitions
-- [ ] Confirm stats collection reflects real encounter durations
+- [ ] Confirm cumulative totals match sum of encounters
+- [ ] Confirm stats collection reflects true encounter durations
 - [ ] Confirm no duplicate stats entries occur
 
 ---
 
 # Phase 3 --- Route Advancement
 
-Goal: Correct promotion and scanner-driven advancement of the next station.
+Goal: Correct promotion and routing of next station.
 
 - [x] Implement scanner-driven station advancement
-- [x] Ensure advancement respects current plan order
+- [x] Ensure advancement respects plan order
 - [x] Prevent scanner from inventing missing initial state
-- [ ] Preserve scanner transition correctness without forcing automatic next-station promotion
-- [ ] Leave lab/pharmacy routing choices to Anfitrión when multiple next stations are operationally possible
-- [ ] Prevent automatic promotion for `lab` and `pha`
+- [x] Prevent automatic promotion for `lab` and `pha`
 - [ ] Verify manual routing behavior by anfitrión
-- [x] Implement basic duplicate scan protection
-- [ ] Create `room_event_exceptions` collection
+- [x] Validate promotion behavior under mixed manual/scanner scenarios
+- [ ] Create `room_event_exceptions` collection _(after real-world usage)_
 - [ ] Log operational anomalies
 
 ---
 
 # Phase 4 --- Ticket Printing
 
-Goal: Patients receive a printed barcode ticket.
+Goal: Patients receive a printed barcode ticket that reliably drives the system.
 
-- [ ] Implement barcode generation for `visit_id`
+## Barcode Definition
+
+- [ ] Define canonical scan payload format (e.g., `VISIT:<visit_id>`)
 - [ ] Select barcode format (recommended: CODE128)
-- [ ] Design ticket layout
-- [ ] Implement ticket printing logic
-- [ ] Connect restaurant-style thermal printer
+- [ ] Generate barcode images in frontend
+- [ ] Verify scanner reads barcode correctly
+
+## Ticket Design
+
+- [ ] Design ticket layout (barcode + human-readable info)
+- [ ] Include patient-facing identifiers if helpful
+- [ ] Ensure readability under real-world conditions (lighting, folds, smudging)
+
+## Printing Implementation
+
+- [ ] Implement ticket printing logic from frontend
+- [ ] Connect thermal printer
+- [ ] Verify print quality and scan reliability
 - [ ] Implement ticket reprint capability
 
 ---
@@ -150,12 +153,12 @@ Goal: Build a physical scanning station.
 
 Example admin codes:
 
-ADMIN:ENTER_CONFIG\
-ADMIN:SET_WIFI_SSID:ClinicNet\
-ADMIN:SET_WIFI_PASS:xxxxx\
-ADMIN:SET_ROOM:ROOM_A\
-ADMIN:SET_STATION:lab\
-ADMIN:SAVE\
+ADMIN:ENTER_CONFIG
+ADMIN:SET_WIFI_SSID:ClinicNet
+ADMIN:SET_WIFI_PASS:xxxxx
+ADMIN:SET_ROOM:ROOM_A
+ADMIN:SET_STATION:lab
+ADMIN:SAVE
 ADMIN:REBOOT
 
 ---
@@ -185,32 +188,30 @@ Optional enhancements once the core system works.
 - [ ] Analytics dashboards
 - [ ] Patient flow heatmaps
 - [ ] Staff mobile scanning option
-- [ ] Refactor to a shared transition engine if justified by real usage
+- [ ] Shared transition engine (only if justified by real usage)
 
 ---
 
 # Estimated Effort
 
-Phase Estimated Sessions
-
----
-
-Backend event system 4--5  
-Station state updates 1--2  
-Routing logic 1--2  
-Ticket printing 3  
-Scanner hardware 3  
-Testing 3
+| Phase                 | Estimated Sessions |
+| --------------------- | ------------------ |
+| Backend event system  | 4--5               |
+| Station state updates | 2--3               |
+| Routing logic         | 1--2               |
+| Ticket printing       | 3                  |
+| Scanner hardware      | 3                  |
+| Testing               | 3                  |
 
 Total estimate:
 
-**15--18 half-day development sessions**
+**16--19 half-day development sessions**
 
 ---
 
 # Usage
 
-Update this checklist as tasks are completed.  
+Update this checklist as tasks are completed.
 Each check mark represents a completed development milestone.
 
 Recommended file location:

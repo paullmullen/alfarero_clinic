@@ -10,6 +10,8 @@ const EditPatientData = ({ initialValues, onSave }) => {
   const [form] = Form.useForm();
   const [t] = useTranslation("global");
 
+  const ageGroup = Form.useWatch("age_group", form);
+
   // ---- National ID helpers ----
   const toRawNationalId = (value) =>
     (value || "").replace(/\D/g, "").slice(0, 13);
@@ -21,7 +23,6 @@ const EditPatientData = ({ initialValues, onSave }) => {
     return `${v.slice(0, 4)} ${v.slice(4, 9)} ${v.slice(9, 13)}`;
   };
 
-  // Ensure initial value shows formatted even if Firestore stores it as a number
   const initialValuesFormatted = {
     ...initialValues,
     national_id_number:
@@ -33,12 +34,16 @@ const EditPatientData = ({ initialValues, onSave }) => {
   };
 
   const onFinish = (values) => {
-    const { paciente, tel, motivo, national_id_number } = values;
+    const { paciente, tel, motivo, national_id_number, guardian_name } = values;
 
     const raw = toRawNationalId(national_id_number);
     const nationalIdInt = raw ? Number(raw) : null;
 
-    updatePatientData(paciente, tel, motivo, pt_no, nationalIdInt);
+    updatePatientData(paciente, tel, motivo, pt_no, nationalIdInt, {
+      guardian_name:
+        values.age_group === "child" ? guardian_name?.trim() || null : null,
+    });
+
     onSave();
   };
 
@@ -50,7 +55,7 @@ const EditPatientData = ({ initialValues, onSave }) => {
       onFinish={onFinish}
     >
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={24}>
+        <Col xs={24}>
           <Form.Item
             label={t("name")}
             name="paciente"
@@ -61,9 +66,40 @@ const EditPatientData = ({ initialValues, onSave }) => {
         </Col>
       </Row>
 
-      {/* National ID Number (enforced format #### ##### ####) */}
+      {/* Age Group (needed for guardian logic) */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={24}>
+        <Col xs={24}>
+          <Form.Item name="age_group" hidden>
+            <Input />
+          </Form.Item>
+        </Col>
+      </Row>
+
+      {/* Guardian Name (only for children) */}
+      {ageGroup === "child" && (
+        <Row gutter={[16, 16]}>
+          <Col xs={24}>
+            <Form.Item
+              label={t("GUARDIAN_NAME") || "Nombre del responsable"}
+              name="guardian_name"
+              rules={[
+                {
+                  required: true,
+                  message:
+                    t("ENTER_GUARDIAN_NAME") ||
+                    "Ingrese el nombre del responsable",
+                },
+              ]}
+            >
+              <Input />
+            </Form.Item>
+          </Col>
+        </Row>
+      )}
+
+      {/* National ID */}
+      <Row gutter={[16, 16]}>
+        <Col xs={24}>
           <Form.Item
             label={t("NATIONAL_ID_NUMBER") || "National ID Number"}
             name="national_id_number"
@@ -82,13 +118,12 @@ const EditPatientData = ({ initialValues, onSave }) => {
             ]}
           >
             <Input
-              maxLength={17} // 4 + 1 + 5 + 1 + 4
+              maxLength={17}
               onChange={(e) => {
                 const raw = toRawNationalId(e.target.value || "");
                 const formatted = formatNationalId(raw);
                 form.setFieldsValue({ national_id_number: formatted });
 
-                // Keep caret at end (helps on paste/typing)
                 setTimeout(() => {
                   const el = e.target;
                   if (el && typeof el.setSelectionRange === "function") {
@@ -113,17 +148,16 @@ const EditPatientData = ({ initialValues, onSave }) => {
         </Col>
       </Row>
 
+      {/* Phone */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={24}>
+        <Col xs={24}>
           <Form.Item
             label={t("tel")}
             name="tel"
             rules={[
               {
                 validator: (_, value) => {
-                  if (value === undefined || value === "") {
-                    return Promise.resolve();
-                  }
+                  if (!value) return Promise.resolve();
                   if (
                     /^(\+\d{1,3}[-  *])?\(?([0-9]{3,4})\)?[-.●  *]?([0-9]{3,4})[-.●  *]?([0-9]{3,4})?$/.test(
                       value,
@@ -141,8 +175,9 @@ const EditPatientData = ({ initialValues, onSave }) => {
         </Col>
       </Row>
 
+      {/* Reason */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={24}>
+        <Col xs={24}>
           <Form.Item
             label={t("reasonForVisit")}
             name="motivo"
@@ -153,10 +188,11 @@ const EditPatientData = ({ initialValues, onSave }) => {
         </Col>
       </Row>
 
+      {/* Submit */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={24}>
+        <Col xs={24}>
           <Form.Item>
-            <Button type="primary" htmlType="submit" shape="round" name="save">
+            <Button type="primary" htmlType="submit" shape="round">
               {t("SAVE")}
             </Button>
           </Form.Item>

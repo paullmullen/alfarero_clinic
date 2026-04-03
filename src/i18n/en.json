@@ -191,6 +191,8 @@
   "gender": "Gender",
   "GOAL": "Goal",
   "GOLD": "GOLD",
+  "GUARDIAN_NAME": "Name of responsible adult",
+  "ENTER_GUARDIAN_NAME": "Enter the name of the responsible adult",
   "greeting": "Welcome!",
   "Happy": "Happy",
   "headerTitle": "Patient Care Plan",

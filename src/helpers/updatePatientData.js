@@ -13,9 +13,17 @@ const updatePatientData = async (
   phone,
   reasonForVisit,
   hoveredRowKey,
-  national_id_number, // <-- number (int) or null
+  national_id_number, // number (int) or null
+  extra = {}, // 👈 NEW: optional fields (guardian_name, etc.)
 ) => {
-  console.log(name, phone, reasonForVisit, hoveredRowKey, national_id_number);
+  console.log(
+    name,
+    phone,
+    reasonForVisit,
+    hoveredRowKey,
+    national_id_number,
+    extra,
+  );
 
   try {
     const patientRef = collection(firestore, "patients");
@@ -31,6 +39,9 @@ const updatePatientData = async (
         tel: phone,
         reason_for_visit: reasonForVisit,
         national_id_number: national_id_number ?? null,
+
+        // 👇 NEW: spread additional fields safely
+        ...extra,
       });
 
       console.log("Patient data updated successfully!");
