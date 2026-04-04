@@ -5,6 +5,7 @@ import React, {
   lazy,
   Suspense,
   useCallback,
+  useRef,
 } from "react";
 import {
   Table,
@@ -17,6 +18,7 @@ import {
   Input,
   message,
 } from "antd";
+import { EditOutlined, PrinterOutlined } from "@ant-design/icons";
 import {
   collection,
   query,
@@ -37,7 +39,6 @@ import { AlertInfo } from "../components/AlertInfo";
 import { useTranslation } from "react-i18next";
 import IconSizes from "../helpers/iconSizes";
 import fin from "../img/fin.png";
-import edit from "../img/edit.svg";
 import addToRoute from "../img/add-to-route.svg";
 import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
 import { useServiceLocation } from "../providers/ServiceLocationProvider";
@@ -48,6 +49,7 @@ import {
   getPlanOfCareIcon,
   getPlannedRouteIcon,
 } from "../helpers/getPlanOfCareIcon";
+import TicketPrint from "../components/printing/TicketPrint";
 
 const { TextArea } = Input;
 const EditPatientData = lazy(() => import("../components/EditPatientData.js"));
@@ -71,6 +73,9 @@ const Anfitrion = () => {
   const [appointmentToCancel, setAppointmentToCancel] = useState(null);
   const [cancelForm] = Form.useForm();
 
+  const ticketPrintRef = useRef(null);
+  const [ticketPatient, setTicketPatient] = useState(null);
+
   const [t] = useTranslation("global");
   const navigate = useNavigate();
 
@@ -79,11 +84,13 @@ const Anfitrion = () => {
     [],
   );
 
-  const { locationId, selectedLocation } = useServiceLocation();
+  const { locationId, selectedLocation, locations } = useServiceLocation();
 
   const locationFilterId = locationId === "__ALL__" ? null : locationId;
   const locationFilterName =
     locationId === "__ALL__" ? null : selectedLocation?.name || null;
+
+  const printEnabled = locationId !== "__ALL__";
 
   const { activeReasons, loadingReasons } = useCancellationReasons();
 
@@ -236,6 +243,8 @@ const Anfitrion = () => {
         reason_for_visit: item.reason_for_visit ?? "",
         tel: item.tel ?? "",
         type_of_visit: item.type_of_visit ?? "",
+        location_id: item.location_id ?? "",
+        location_name: item.location_name ?? "",
         patient_name:
           displayName +
           "\n" +
@@ -255,6 +264,154 @@ const Anfitrion = () => {
   const STATUS_CHOICES = useMemo(
     () => ["pending", "planned", "waiting", "in_process", "obs", "complete"],
     [],
+  );
+
+  const printTicketNode = (node) => {
+    return new Promise((resolve, reject) => {
+      if (!node) {
+        reject(new Error("No printable node found."));
+        return;
+      }
+
+      const printWindow = window.open("", "_blank", "width=400,height=600");
+      if (!printWindow) {
+        reject(new Error("Popup blocked."));
+        return;
+      }
+
+      const styles = Array.from(
+        document.querySelectorAll("link[rel='stylesheet'], style"),
+      )
+        .map((el) => el.outerHTML)
+        .join("\n");
+
+      const clone = node.cloneNode(true);
+
+      const originalCanvases = node.querySelectorAll("canvas");
+      const clonedCanvases = clone.querySelectorAll("canvas");
+
+      clonedCanvases.forEach((canvas, i) => {
+        const originalCanvas = originalCanvases[i];
+        if (!originalCanvas) return;
+
+        const img = document.createElement("img");
+        img.src = originalCanvas.toDataURL("image/png");
+        img.width = originalCanvas.width;
+        img.height = originalCanvas.height;
+        img.style.display = "block";
+        img.style.margin = "0 auto";
+
+        canvas.replaceWith(img);
+      });
+
+      printWindow.document.open();
+      printWindow.document.write(`
+        <html>
+          <head>
+            ${styles}
+            <style>
+              html, body {
+                margin: 0;
+                padding: 0;
+                background: white;
+              }
+              @page {
+                margin: 0;
+              }
+            </style>
+          </head>
+          <body>${clone.outerHTML}</body>
+        </html>
+      `);
+      printWindow.document.close();
+
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.focus();
+          printWindow.print();
+          printWindow.close();
+          resolve();
+        }, 250);
+      };
+    });
+  };
+
+  const handleReprintTicket = useCallback(
+    async (record) => {
+      if (!printEnabled) {
+        message.warning(
+          t("SELECT_LOCATION_FIRST", {
+            defaultValue: "Please select a clinic first.",
+          }),
+        );
+        return;
+      }
+
+      try {
+        const rawPatient =
+          rowsRaw.find((row) => String(row.pt_no) === String(record.pt_no)) ||
+          null;
+
+        if (!rawPatient) {
+          message.error(
+            t("ticket.reprintPatientNotFound", {
+              defaultValue: "Could not find patient data for reprint.",
+            }),
+          );
+          return;
+        }
+
+        const patientLocation =
+          locations?.find((loc) => loc.id === rawPatient.location_id) || null;
+
+        const reprintPatient = {
+          pt_no: rawPatient.pt_no,
+          patient_name: rawPatient.patient_name || "",
+          guardian_name: rawPatient.guardian_name || "",
+          age_group: rawPatient.age_group || null,
+          type_of_visit: rawPatient.type_of_visit || "",
+          location_name:
+            patientLocation?.name ||
+            selectedLocation?.name ||
+            rawPatient.location_name ||
+            "",
+          location_message:
+            patientLocation?.message ||
+            selectedLocation?.message ||
+            rawPatient.location_message ||
+            "",
+          created_at:
+            rawPatient.start_time?.toDate?.() ||
+            rawPatient.created_at?.toDate?.() ||
+            rawPatient.start_time ||
+            rawPatient.created_at ||
+            new Date(),
+        };
+
+        setTicketPatient(reprintPatient);
+
+        setTimeout(async () => {
+          try {
+            await printTicketNode(ticketPrintRef.current);
+          } catch (err) {
+            console.error("Ticket reprint failed:", err);
+            message.error(
+              t("ticket.reprintFailed", {
+                defaultValue: "Ticket reprint failed.",
+              }),
+            );
+          }
+        }, 0);
+      } catch (error) {
+        console.error("Error preparing ticket reprint:", error);
+        message.error(
+          t("ticket.reprintFailed", {
+            defaultValue: "Ticket reprint failed.",
+          }),
+        );
+      }
+    },
+    [rowsRaw, locations, selectedLocation, printEnabled, t],
   );
 
   const renderStatusChoice = useCallback(
@@ -384,40 +541,58 @@ const Anfitrion = () => {
                 {t("common.phone")} {String(name).split("\n")[4]}{" "}
               </td>
               <td align="right">
-                <Popover
-                  content={
-                    <Suspense
-                      fallback={
-                        <div style={{ padding: 8 }}>{t("common.loading")}</div>
-                      }
-                    >
-                      <EditPatientData
-                        initialValues={{
-                          paciente: record.raw_patient_name ?? "",
-                          national_id_number: record.national_id_number ?? "",
-                          tel: record.tel ?? "",
-                          motivo: record.reason_for_visit ?? "",
-                          guardian_name: record.guardian_name ?? "",
-                          age_group: record.age_group ?? null,
-                          pt_no: record.pt_no,
-                        }}
-                        onSave={() => console.log("Patient data saved")}
-                      />
-                    </Suspense>
-                  }
-                  title={t("EDITPATIENTDATA")}
-                  trigger="click"
-                >
-                  <img
-                    src={edit}
-                    width={IconSizes.height}
-                    height={IconSizes.height}
-                    loading="lazy"
-                    decoding="async"
-                    alt=""
-                    style={{ cursor: "pointer" }}
+                <Space direction="vertical" size="small">
+                  <PrinterOutlined
+                    style={{
+                      fontSize: IconSizes.height,
+                      cursor: printEnabled ? "pointer" : "not-allowed",
+                      color: printEnabled ? "inherit" : "#bfbfbf",
+                      opacity: printEnabled ? 1 : 0.45,
+                    }}
+                    title={t("ticket.reprint", {
+                      defaultValue: "Reprint ticket",
+                    })}
+                    onClick={
+                      printEnabled
+                        ? () => handleReprintTicket(record)
+                        : undefined
+                    }
                   />
-                </Popover>
+
+                  <Popover
+                    content={
+                      <Suspense
+                        fallback={
+                          <div style={{ padding: 8 }}>
+                            {t("common.loading")}
+                          </div>
+                        }
+                      >
+                        <EditPatientData
+                          initialValues={{
+                            paciente: record.raw_patient_name ?? "",
+                            national_id_number: record.national_id_number ?? "",
+                            tel: record.tel ?? "",
+                            motivo: record.reason_for_visit ?? "",
+                            guardian_name: record.guardian_name ?? "",
+                            age_group: record.age_group ?? null,
+                            pt_no: record.pt_no,
+                          }}
+                          onSave={() => console.log("Patient data saved")}
+                        />
+                      </Suspense>
+                    }
+                    title={t("EDITPATIENTDATA")}
+                    trigger="click"
+                  >
+                    <EditOutlined
+                      style={{
+                        fontSize: IconSizes.height,
+                        cursor: "pointer",
+                      }}
+                    />
+                  </Popover>
+                </Space>
               </td>
             </tr>
           </tbody>
@@ -504,7 +679,15 @@ const Anfitrion = () => {
     };
 
     return [patientCol, ...stationCols, waitingCol, actionCol];
-  }, [t, stationNames, stationMetrics, navigate, renderStatusIcon]);
+  }, [
+    t,
+    stationNames,
+    stationMetrics,
+    navigate,
+    renderStatusIcon,
+    handleReprintTicket,
+    printEnabled,
+  ]);
 
   const getRowClassName = (record, index) => {
     const allPendingOrComplete = stationNames.every((st) => {
@@ -684,6 +867,20 @@ const Anfitrion = () => {
           </Form.Item>
         </Form>
       </Modal>
+
+      <div
+        style={{
+          position: "absolute",
+          left: "-10000px",
+          top: 0,
+          width: "320px",
+          pointerEvents: "none",
+        }}
+      >
+        <div ref={ticketPrintRef}>
+          {ticketPatient ? <TicketPrint patient={ticketPatient} /> : null}
+        </div>
+      </div>
     </>
   );
 };
