@@ -13,6 +13,7 @@ import { HexColorPicker } from "react-colorful";
 import LocationPicker from "../../../components/LocationPicker";
 
 const { Title, Text, Paragraph } = Typography;
+const { TextArea } = Input;
 
 export default function LocationsManager({
   locations,
@@ -22,28 +23,38 @@ export default function LocationsManager({
   t,
 }) {
   const [draftNames, setDraftNames] = useState({});
+  const [draftMessages, setDraftMessages] = useState({});
 
-  // Keep drafts in sync if locations change (snapshot updates, etc.)
   useEffect(() => {
-    setDraftNames((prev) => {
-      const next = { ...prev };
-      for (const loc of locations) {
-        if (next[loc.id] === undefined) next[loc.id] = loc.name || "";
-      }
-      return next;
-    });
+    const nextNames = {};
+    const nextMessages = {};
+
+    for (const loc of locations) {
+      nextNames[loc.id] = loc.name || "";
+      nextMessages[loc.id] = loc.message || "";
+    }
+
+    setDraftNames(nextNames);
+    setDraftMessages(nextMessages);
   }, [locations]);
 
   const commitName = (location) => {
-    const draft = (draftNames[location.id] ?? "").trimEnd(); // optional
+    const draft = (draftNames[location.id] ?? "").trimEnd();
     const current = location.name || "";
     if (draft !== current) {
       onUpdate(location.id, "name", draft);
     }
   };
 
+  const commitMessage = (location) => {
+    const draft = (draftMessages[location.id] ?? "").trim();
+    const current = (location.message || "").trim();
+    if (draft !== current) {
+      onUpdate(location.id, "message", draft);
+    }
+  };
+
   const isActive = (location) => {
-    // Default to active if the field doesn't exist yet
     return location.active !== false;
   };
 
@@ -71,7 +82,6 @@ export default function LocationsManager({
                 style={{ width: "100%" }}
                 size="middle"
               >
-                {/* Active / Inactive */}
                 <div
                   style={{
                     display: "flex",
@@ -79,7 +89,6 @@ export default function LocationsManager({
                     alignItems: "center",
                   }}
                 >
-                  {/* <Text strong>{t("ACTIVE") || "Active"}</Text> */}
                   <Space size="small">
                     <Switch
                       checked={isActive(location)}
@@ -113,6 +122,34 @@ export default function LocationsManager({
 
                 <div>
                   <Text strong>
+                    {t("PRINT_MESSAGE") || "Printed Ticket Message"}
+                  </Text>
+                  <Text
+                    type="secondary"
+                    style={{ display: "block", marginTop: 4, marginBottom: 6 }}
+                  >
+                    {t("PRINT_MESSAGE_HELP") ||
+                      "This message will appear on tickets printed for this location."}
+                  </Text>
+                  <TextArea
+                    rows={4}
+                    value={draftMessages[location.id] ?? location.message ?? ""}
+                    onChange={(e) =>
+                      setDraftMessages((prev) => ({
+                        ...prev,
+                        [location.id]: e.target.value,
+                      }))
+                    }
+                    onBlur={() => commitMessage(location)}
+                    placeholder={
+                      t("PRINT_MESSAGE_PLACEHOLDER") ||
+                      "Enter the printed ticket message for this location"
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Text strong>
                     {t("BACKGROUND_COLOR") || "Background Color"}
                   </Text>
                   <div style={{ marginTop: 6, display: "flex", gap: 8 }}>
@@ -137,7 +174,7 @@ export default function LocationsManager({
                 </div>
 
                 <div>
-                  <Text strong>{t("COORDINATES") || "Coordinates"}</Text>
+                  <Text strong>{t("LOCATION") || "Coordinates"}</Text>
                   <div style={{ marginTop: 6 }}>
                     <Suspense
                       fallback={<Text>Loading Location Picker...</Text>}
@@ -155,7 +192,7 @@ export default function LocationsManager({
                 </div>
 
                 <div>
-                  <Text strong>{t("STATIONS") || "Stations"}</Text>
+                  <Text strong>{t("stations") || "Stations"}</Text>
                   <Select
                     mode="multiple"
                     value={location.stations}

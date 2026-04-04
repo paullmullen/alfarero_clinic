@@ -20,7 +20,10 @@ export const useLocations = () => {
         const data = snap.docs.map((d) => ({
           id: d.id,
           name: d.data().name,
+          message: d.data().message ?? "",
+          active: d.data().active ?? true,
           stations: d.data().stations ?? [],
+          services: d.data().services ?? [],
           background_color: d.data().background_color ?? "#ffffff",
           latitude: d.data().latitude ?? 0,
           longitude: d.data().longitude ?? 0,
