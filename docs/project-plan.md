@@ -119,23 +119,23 @@ Goal: Patients receive a printed barcode ticket that reliably drives the system.
 
 ## Barcode Definition
 
-- [ ] Define canonical scan payload format (e.g., `VISIT:<visit_id>`)
-- [ ] Select barcode format (recommended: CODE128)
-- [ ] Generate barcode images in frontend
-- [ ] Verify scanner reads barcode correctly
+- [x] Define canonical scan payload format (e.g., `VISIT:<visit_id>`)
+- [x] Select barcode format (recommended: QR)
+- [x] Generate barcode images in frontend
+- [x] Verify scanner reads barcode correctly
 
 ## Ticket Design
 
-- [ ] Design ticket layout (barcode + human-readable info)
-- [ ] Include patient-facing identifiers if helpful
-- [ ] Ensure readability under real-world conditions (lighting, folds, smudging)
+- [x] Design ticket layout (barcode + human-readable info)
+- [x] Include patient-facing identifiers if helpful
+- [x] Ensure readability under real-world conditions (lighting, folds, smudging)
 
 ## Printing Implementation
 
-- [ ] Implement ticket printing logic from frontend
-- [ ] Connect thermal printer
-- [ ] Verify print quality and scan reliability
-- [ ] Implement ticket reprint capability
+- [x] Implement ticket printing logic from frontend
+- [x] Connect thermal printer
+- [x] Verify print quality and scan reliability
+- [x] Implement ticket reprint capability
 
 ---
 

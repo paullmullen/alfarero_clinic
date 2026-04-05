@@ -52,7 +52,12 @@ const TicketPrint = ({ patient }) => {
       </div>
 
       <div style={styles.qrWrapper}>
-        <QRCodeSVG value={pt_no} size={160} level="M" includeMargin={true} />
+        <QRCodeSVG
+          value={`VISIT:${pt_no}`}
+          size={160}
+          level="M"
+          includeMargin={true}
+        />
       </div>
 
       <div style={styles.footer}>Traiga este ticket a cada estación.</div>
