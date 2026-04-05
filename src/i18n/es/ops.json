@@ -1,0 +1,62 @@
+{
+  "ops": {
+    "add": "Agregar",
+    "added": "Observación agregada exitosamente",
+    "category": "Categoría",
+    "categories": {
+      "internal": "Staff y operaciones",
+      "external": "Comunidad y medio ambiente",
+      "facility": "Infraestructura y Equipamiento"
+    },
+    "dateAssumedToday": "Fecha",
+    "notes": "Detalles",
+    "notesPlaceholder": "Texto con detalles",
+    "recentObservations": "Observaciones recientes",
+    "recordingAs": "Observador",
+    "refresh": "Actualizar",
+    "servicesAffected": "Servicios impactados",
+    "table": {
+      "createdBy": "Por",
+      "date": "Fecha",
+      "category": "Categoría",
+      "notes": "Detalles",
+      "services": "Servicios impactados",
+      "type": "Tipo"
+    },
+    "title": "Observaciones Operativas Diarias",
+    "type": "Clase de observación",
+    "types": {
+      "emergency": "Incidente o evento de urgencia",
+      "equipment_failure": "Falla de equipamiento",
+      "extended_service": "Servicios Extraordinarios o Extendidos",
+      "internet_outage": "Corte de Internet",
+      "jornada": "Jornada médica gratis",
+      "other": "Otro",
+      "planned_closure": "Cierre planificado",
+      "power_outage": "Corte de Electricidad",
+      "promotion": "Promoción",
+      "external_doc": "Doctor externo",
+      "staff_absence": "Ausencia de miembro de staff",
+      "staff_meeting": "Reunión de Staff",
+      "weather": "Tiempo/Clima"
+    },
+    "typeRequired": "Seleccione una clase de observación.",
+    "servicesPlaceholder": "Servicios",
+    "stations": {
+      "reg": "Registro",
+      "den": "Odontología",
+      "doc": "Doctor",
+      "lab": "Laboratorio",
+      "nur": "Enfermería",
+      "nut": "Nutrición",
+      "og": "Obstetricia/Ginecología",
+      "ped": "Pediatría",
+      "pha": "Farmacia",
+      "pra": "Oración",
+      "psi": "Psicología",
+      "pt": "Fisioterapia"
+    },
+    "typePlaceholder": "Seleccionar",
+    "newObservation": "Nueva observación"
+  }
+}

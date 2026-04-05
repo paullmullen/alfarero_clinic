@@ -6,8 +6,8 @@ import i18next from "i18next";
 // import { BrowserRouter } from "react-router-dom"; // Import BrowserRouter for routing
 // import { PermissionsProvider } from "./helpers/permissionsContext"; // Import PermissionsProvider
 import { AlfareroApp } from "./AlfareroApp";
-import global_es from "./i18n/es.json";
-import global_en from "./i18n/en.json";
+import global_es from "./i18n/es";
+import global_en from "./i18n/en";
 
 i18next.init({
   escapeValue: false, // Fixed issue with the key

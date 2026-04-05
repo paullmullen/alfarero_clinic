@@ -1,0 +1,36 @@
+{
+  "INVENTORY": "Inventario",
+  "inventory": {
+    "current": "Actual",
+    "editItems": "Editar artículos y pars",
+    "editor": {
+      "category": "Categoría",
+      "confirmRemove": "¿Eliminar esta cosa?",
+      "title": "Editar artículos y pars",
+      "name": "Nombre",
+      "newCategory": "Nueva Categoría",
+      "newName": "Nombre",
+      "newUnits": "Unidades",
+      "noLocation": "No hay ubicación elegida.",
+      "remove": "Eliminar",
+      "shelf": "Estante",
+      "units": "Unidades"
+    },
+    "editorNameCategoryRequired": "Nombre y categoría son obligatorios",
+    "editorAddFailed": "No se pudo añadir el artículo.",
+    "item": "Artículo",
+    "notesPlaceholder": "Ingrese notas de texto libre para artículos inusuales, faltantes, sustituciones, etc.",
+    "noteSaveFailed": "No se puede guardar nota.",
+    "notesTitle": "Artículos y notas no habituales",
+    "par": "Mínimo",
+    "saving": "Guardando...",
+    "shelf": "Estante",
+    "selectLocationInfo": "Debe seleccionar una ubicación específica para ver/editar el inventario.",
+    "sendToManagers": "Enviar inventario a los gerentes.",
+    "reportQueued": "Informe de inventario en cola para entrega.",
+    "reportFailed": "No se pudo poner en cola el informe de inventario.",
+    "title": "Inventario",
+    "uncategorized": "Sin categorizar",
+    "units": "Unidades"
+  }
+}

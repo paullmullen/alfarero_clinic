@@ -1,0 +1,104 @@
+{
+  "appointments": {
+    "cancelModalTitle": "Cancel appointment",
+    "cancelAppointment": "Cancel appointment",
+    "cancelSuccess": "Appointment canceled.",
+    "cancelError": "Could not cancel the appointment.",
+    "cancellationReason": "Cancellation reason",
+    "cancellationReasonRequired": "Please select a cancellation reason.",
+    "selectCancellationReason": "Select a cancellation reason",
+    "cancellationNotes": "Notes",
+    "cancellationNotesPlaceholder": "Optional notes"
+  },
+  "cancellationReasons": {
+    "no_show": "No show",
+    "service_not_available": "Service not available as planned",
+    "reschedule": "Reschedule",
+    "other": "Other"
+  },
+  "appointment": {
+    "actions": "Actions",
+    "admittedSuccess": "Patient admitted successfully.",
+    "title": "Appointments",
+    "subtitle": "Potential patients for today. Not yet admitted to the clinic.",
+    "scheduled": "scheduled",
+    "noneToday": "No appointments for today.",
+    "time": "Time",
+    "details": "Details",
+    "admit": "Admit",
+    "cancel": "Cancel",
+    "confirmCancel": "Cancel this appointment?",
+    "noDate": "No date",
+    "todayOnly": "Today only",
+    "todayAndFuture": "Today and Future",
+    "noneFound": "No upcoming appointments.",
+    "patient": "Patient",
+    "recipeNotFound": "No plan of care found for the visit type."
+  },
+  "appointmentImport": {
+    "title": "Upload Appointments",
+    "description": "Upload an Excel file of upcoming appointments.",
+    "existingAppointments": {
+      "title": "Existing Appointments",
+      "description": "These appointments are already in the system for all locations.  The report is limited to 50 appointments.  Others may exist beyond those shown here.",
+      "empty": "No existing appointments in the system"
+    },
+    "upload": {
+      "clickOrDrag": "Click or drag file here.",
+      "dragHint": "File format matters.  Use the link above to download an Excel template with the correct format.",
+      "downloadTemplate": "Download an excel file to begin.",
+      "noFileSelected": "No file selected.",
+      "supportedFiles": "Only .xls or xlsx files are allowed.",
+      "selectedFile": "File selected:"
+    },
+    "summary": {
+      "willImport": "Will be imported."
+    },
+    "alert": {
+      "title": "Alert",
+      "description": ""
+    },
+    "buttons": {
+      "import": "Import records with OK status",
+      "clear": "Start over"
+    },
+    "columns": {
+      "row": "Row",
+      "location": "Location",
+      "name": "Name",
+      "visitType": "Visit Type",
+      "date": "Date",
+      "time": "Time",
+      "status": "Status",
+      "issues": "Review Required"
+    },
+    "status": {
+      "ok": "OK",
+      "review": "Review"
+    },
+    "messages": {
+      "parsedRows": "File processed.",
+      "readError": "Read error.",
+      "noValidRows": "No valid rows.",
+      "importedWithSkipped": "{{imported}} records imported successfully. {{skipped}} skipped due to validation problems.",
+      "importFailed": "Import failed."
+    },
+    "issues": {
+      "appointment_in_past": "Appointment is in the past.",
+      "missing_location": "Missing location.",
+      "missing_patientName": "Missing patient name.",
+      "missing_ageGroup": "Missing age group",
+      "missing_gender": "Missing gender",
+      "missing_reasonForVisit": "Missing reason for visit.",
+      "missing_visitType": "Missing visit type.",
+      "missing_appointmentDateText": "Missing appointment date.",
+      "missing_appointmentTimeText": "Missing appointment time.",
+      "invalid_ageGroup": "Invalid age group.",
+      "invalid_gender": "Invalid gender.",
+      "invalid_datetime": "Invalid date and time.",
+      "invalid_location": "Invalid location.",
+      "duplicate_existing": "Duplicate existing appointment."
+    }
+  },
+  "APPOINTMENTS": "Appointments"
+}

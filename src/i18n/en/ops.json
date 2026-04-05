@@ -1,0 +1,62 @@
+{
+  "ops": {
+    "add": "Add",
+    "added": "Observation added successfully",
+    "category": "Category",
+    "categories": {
+      "internal": "Staff & Operations",
+      "external": "Community & Environment",
+      "facility": "Infrastructure & Equipment"
+    },
+    "dateAssumedToday": "Date",
+    "notes": "Details",
+    "notesPlaceholder": "Describe the details",
+    "recentObservations": "Recent Observations",
+    "recordingAs": "Observer",
+    "refresh": "Refresh",
+    "servicesAffected": "Impacted Services",
+    "table": {
+      "createdBy": "By",
+      "date": "Date",
+      "category": "Category",
+      "notes": "Details",
+      "services": "Impacted Services",
+      "type": "Type"
+    },
+    "title": "Daily Operational Observations",
+    "type": "Type of Observation",
+    "types": {
+      "emergency": "Incident or Emergency",
+      "equipment_failure": "Equipment Failure",
+      "extended_service": "Extra Service Hours",
+      "internet_outage": "Internet Outage",
+      "jornada": "Free Clinic",
+      "other": "Other",
+      "planned_closure": "Planned Closure",
+      "power_outage": "Power Failure",
+      "promotion": "Promotion",
+      "external_doc": "External Doctor",
+      "staff_absence": "Staff Absence",
+      "staff_meeting": "Staff Meeting",
+      "weather": "Weather/Climate"
+    },
+    "typeRequired": "Select an observation type.",
+    "servicesPlaceholder": "Services",
+    "stations": {
+      "reg": "Registration",
+      "den": "Dentistry",
+      "doc": "Doctor",
+      "lab": "Lab",
+      "nur": "Nursing",
+      "nut": "Nutrition",
+      "og": "Ob/Gyn",
+      "ped": "Pediatrics",
+      "pha": "Pharmacy",
+      "pra": "Prayer",
+      "psi": "Psychology",
+      "pt": "Physical Therapy"
+    },
+    "typePlaceholder": "Select",
+    "newObservation": "New Observation"
+  }
+}

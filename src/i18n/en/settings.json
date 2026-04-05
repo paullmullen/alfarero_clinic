@@ -1,0 +1,37 @@
+{
+  "ACTIVE": "Active",
+  "ADD_LOCATION": "Add Location",
+  "ALL_LOCATIONS": "All Locations",
+  "CAN_EDIT": "Can Edit",
+  "INACTIVE": "Inactive",
+  "LOCATION": "Location",
+  "LOCATIONS": "Locations",
+  "LOGIN_PAGE_TITLE": "Sign in with Microsoft credentials",
+  "LOGIN_WITH_MICROSOFT": "Sign in",
+  "LOGOUT_BUTTON": "Log out",
+  "MANAGE_LOCATIONS": "Manage Locations",
+  "MANAGER_DESCRIPTION": "The manager permission designates the user as a recipient of an email when a new user registers for use of this app.",
+  "NOT_AUTHD_MESSAGE": "Contact your manager for access to this page.",
+  "NOT_AUTHORIZED": "Not authorized.",
+  "permissions": {
+    "basic": "Basic",
+    "dailyEmail": "Daily Email",
+    "host": "Host",
+    "manager": "Manager",
+    "settings": "Admin",
+    "stats": "Stats",
+    "inventory_edit": "Edit \nInventory",
+    "shelf": "Shelf"
+  },
+  "SAVE_SETTINGS": "Save Settings",
+  "SELECT_LOCATION": "Select Location",
+  "SEND_INVITE_EMAIL": "Invite New User",
+  "SERVICE_LOCATION": "Service Location",
+  "SETTINGS": "Admin",
+  "settings": {
+    "userPermissions": {
+      "title": "User Permissions"
+    }
+  },
+  "USER_PERMISSIONS": "User Permissions"
+}

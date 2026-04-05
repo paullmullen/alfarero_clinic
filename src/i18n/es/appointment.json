@@ -1,0 +1,104 @@
+{
+  "appointments": {
+    "cancelModalTitle": "Cancelar cita",
+    "cancelAppointment": "Cancelar cita",
+    "cancelSuccess": "La cita fue cancelada.",
+    "cancelError": "No se pudo cancelar la cita.",
+    "cancellationReason": "Razón de cancelación",
+    "cancellationReasonRequired": "Seleccione una razón de cancelación.",
+    "selectCancellationReason": "Seleccione una razón de cancelación",
+    "cancellationNotes": "Notas",
+    "cancellationNotesPlaceholder": "Notas opcionales"
+  },
+  "cancellationReasons": {
+    "no_show": "No se presentó",
+    "service_not_available": "Servicio no disponible según lo planeado",
+    "reschedule": "Reprogramar",
+    "other": "Otro"
+  },
+  "appointment": {
+    "actions": "Acciones",
+    "admittedSuccess": "Paciente admitido exitosamente.",
+    "title": "Citas",
+    "subtitle": "Pacientes potenciales para hoy. Aún no admitidos a la clínica.",
+    "scheduled": "programadas",
+    "noneToday": "No hay citas para hoy.",
+    "time": "Hora",
+    "details": "Detalles",
+    "admit": "Admitir",
+    "cancel": "Cancelar",
+    "confirmCancel": "¿Cancelar esta cita?",
+    "noDate": "Sin fecha",
+    "todayOnly": "Solo hoy",
+    "todayAndFuture": "Hoy y futuras",
+    "noneFound": "No hay citas próximas.",
+    "patient": "Paciente",
+    "recipeNotFound": "No se encontró plan de atención para el tipo de visita."
+  },
+  "appointmentImport": {
+    "title": "Carga de citas",
+    "description": "Subir archivo de Excel de citas anticipadas.",
+    "existingAppointments": {
+      "title": "Citas existentes",
+      "description": "Estas citas ya están en todas las ubicaciones. Este reporte está limitado a 50 citas.",
+      "empty": "No hay citas existentes en el sistema"
+    },
+    "upload": {
+      "clickOrDrag": "Haz clic o arrastra",
+      "dragHint": "El formato del archivo importa. Use la plantilla.",
+      "downloadTemplate": "Descargar plantilla de Excel",
+      "noFileSelected": "No se ha seleccionado ningún archivo.",
+      "supportedFiles": "Solo se permiten archivos .xlsx o .xls.",
+      "selectedFile": "Archivo seleccionado:"
+    },
+    "summary": {
+      "willImport": "Serán importados."
+    },
+    "alert": {
+      "title": "Alerta",
+      "description": ""
+    },
+    "buttons": {
+      "import": "Importar registros con estado OK",
+      "clear": "Empezar de nuevo"
+    },
+    "columns": {
+      "row": "Fila",
+      "location": "Ubicación",
+      "name": "Nombre",
+      "visitType": "Tipo de visita",
+      "date": "Fecha",
+      "time": "Hora",
+      "status": "Estado",
+      "issues": "Revisión requerida"
+    },
+    "status": {
+      "ok": "OK",
+      "review": "Revisión"
+    },
+    "messages": {
+      "parsedRows": "Archivo procesado.",
+      "readError": "Error de lectura.",
+      "noValidRows": "No hay filas válidas.",
+      "importedWithSkipped": "{{imported}} registros importados exitosamente. {{skipped}} omitidos por validación.",
+      "importFailed": "Importación fallida."
+    },
+    "issues": {
+      "appointment_in_past": "Cita en el pasado",
+      "missing_location": "Falta de ubicación",
+      "missing_patientName": "Falta nombre del paciente",
+      "missing_ageGroup": "Falta grupo de edad",
+      "missing_gender": "Falta género",
+      "missing_reasonForVisit": "Falta motivo de visita",
+      "missing_visitType": "Falta tipo de visita",
+      "missing_appointmentDateText": "Falta fecha de cita",
+      "missing_appointmentTimeText": "Falta hora de cita",
+      "invalid_ageGroup": "Grupo de edad inválido",
+      "invalid_gender": "Género inválido",
+      "invalid_datetime": "Fecha y hora inválidas",
+      "invalid_location": "Ubicación inválida",
+      "duplicate_existing": "Cita duplicada"
+    }
+  },
+  "APPOINTMENTS": "Citas"
+}

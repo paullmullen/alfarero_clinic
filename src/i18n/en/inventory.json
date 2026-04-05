@@ -1,0 +1,36 @@
+{
+  "INVENTORY": "Inventory",
+  "inventory": {
+    "current": "Current",
+    "editItems": "Edit Items",
+    "editor": {
+      "category": "Category",
+      "confirmRemove": "Remove this item?",
+      "title": "Edit Inventory Items and Pars",
+      "name": "Name",
+      "newCategory": "New Category",
+      "newName": "Name",
+      "newUnits": "Units",
+      "noLocation": "No location selected.",
+      "remove": "Remove",
+      "shelf": "Shelf",
+      "units": "Units"
+    },
+    "editorNameCategoryRequired": "Name and Category Are Required",
+    "editorAddFailed": "Failed to add item",
+    "item": "item",
+    "notesPlaceholder": "Enter free-text notes for unusual items, shortages, substitutions, etc.",
+    "noteSaveFailed": "Failed to save note",
+    "notesTitle": "Non-usual items and notes",
+    "par": "Par",
+    "saving": "Saving...",
+    "shelf": "Shelf",
+    "selectLocationInfo": "You must select a specific location to see/edit inventory.",
+    "sendToManagers": "Send inventory to managers.",
+    "reportQueued": "Inventory report queued for delivery.",
+    "reportFailed": "Failed to queue inventory report.",
+    "title": "Inventory",
+    "uncategorized": "Uncategorized",
+    "units": "units"
+  }
+}

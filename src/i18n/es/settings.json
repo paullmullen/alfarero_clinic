@@ -1,0 +1,37 @@
+{
+  "ACTIVE": "Activado",
+  "ADD_LOCATION": "Añadir Ubicación",
+  "ALL_LOCATIONS": "Todas las ubicaciones",
+  "CAN_EDIT": "Puede editar",
+  "INACTIVE": "Desactivado",
+  "LOCATION": "Ubicación",
+  "LOCATIONS": "Ubicaciones",
+  "LOGIN_PAGE_TITLE": "Login con credenciales de Microsoft",
+  "LOGIN_WITH_MICROSOFT": "Ingresar",
+  "LOGOUT_BUTTON": "Cerrar sesión",
+  "MANAGE_LOCATIONS": "Manejo de ubicaciones",
+  "MANAGER_DESCRIPTION": "El permiso de 'manager' designa al usuario como destinatario de un correo electrónico cuando un nuevo usuario se registra para usar esta aplicación.",
+  "NOT_AUTHD_MESSAGE": "Contacte a su gerente para acceder a esta página.",
+  "NOT_AUTHORIZED": "No autorizado.",
+  "permissions": {
+    "basic": "Básico",
+    "dailyEmail": "Correo diario",
+    "host": "Anfi",
+    "manager": "Manager",
+    "settings": "Admin",
+    "stats": "Estadísticas",
+    "inventory_edit": "Gestión de inventario",
+    "shelf": "Estante"
+  },
+  "SAVE_SETTINGS": "Guardar ajustes",
+  "SELECT_LOCATION": "Seleccione ubicación",
+  "SEND_INVITE_EMAIL": "Invitar a Nuevo Usuario",
+  "SERVICE_LOCATION": "Ubicación de servicio",
+  "SETTINGS": "Admin",
+  "settings": {
+    "userPermissions": {
+      "title": "Permisos de usuarios"
+    }
+  },
+  "USER_PERMISSIONS": "Permisos de usuarios"
+}
