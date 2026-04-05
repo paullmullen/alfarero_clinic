@@ -1,0 +1,29 @@
+{
+  "VISIT_TYPES": "Tipos de visita",
+  "VISIT_TYPES_DESCRIPTION": "Edite los planes de atención predeterminados para los motivos comunes de consulta.",
+  "VISIT_TYPES_ALERT": "Estos son planes de atención tipo receta. El personal puede cambiar el recorrido de un paciente en la página de Anfitrión.",
+
+  "ADD_VISIT_TYPE": "Agregar tipo de visita",
+  "CREATE": "Crear",
+
+  "VISIT_TYPE_LABEL": "Tipo de visita",
+  "SHORT_NAME": "Nombre corto",
+  "ALIASES": "Alias",
+  "ALIASES_PLACEHOLDER": "Agregar alias",
+
+  "PLAN_OF_CARE": "Plan de atención",
+  "PLAN_OF_CARE_HELP": "Seleccione solo estaciones existentes. Cada tipo de visita debe incluir registro.",
+  "ADD_STATION": "Agregar estación",
+  "REMOVE": "Eliminar",
+
+  "ACTIVE": "Activo",
+  "INACTIVE": "Inactivo",
+  "DEACTIVATE": "Desactivar",
+  "REACTIVATE": "Reactivar",
+
+  "MOVE_UP": "Subir",
+  "MOVE_DOWN": "Bajar",
+
+  "DOCUMENT_ID": "ID del documento",
+  "DOCUMENT_ID_HELP": "Este será el ID estable en Firestore y no se debe cambiar después."
+}

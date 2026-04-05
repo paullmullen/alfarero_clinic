@@ -1,0 +1,29 @@
+{
+  "VISIT_TYPES": "Visit Types",
+  "VISIT_TYPES_DESCRIPTION": "Edit the default plans of care used for common visit reasons.",
+  "VISIT_TYPES_ALERT": "These are default recipe-like plans of care. Staff may still change an individual patient's route on the Anfitrión page.",
+
+  "ADD_VISIT_TYPE": "Add Visit Type",
+  "CREATE": "Create",
+
+  "VISIT_TYPE_LABEL": "Visit Type",
+  "SHORT_NAME": "Short Name",
+  "ALIASES": "Aliases",
+  "ALIASES_PLACEHOLDER": "Add aliases",
+
+  "PLAN_OF_CARE": "Plan of Care",
+  "PLAN_OF_CARE_HELP": "Choose from known stations only. Every visit type must include registration.",
+  "ADD_STATION": "Add station",
+  "REMOVE": "Remove",
+
+  "ACTIVE": "Active",
+  "INACTIVE": "Inactive",
+  "DEACTIVATE": "Deactivate",
+  "REACTIVATE": "Reactivate",
+
+  "MOVE_UP": "Move up",
+  "MOVE_DOWN": "Move down",
+
+  "DOCUMENT_ID": "Document ID",
+  "DOCUMENT_ID_HELP": "This becomes the stable Firestore document ID and is not intended to change later."
+}

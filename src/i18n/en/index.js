@@ -6,6 +6,7 @@ import patients from "./patients.json";
 import settings from "./settings.json";
 import surveys from "./surveys.json";
 import misc from "./misc.json";
+import visiTypes from "./visitTypes.json";
 
 export default {
   ...common,
@@ -15,5 +16,6 @@ export default {
   ...patients,
   ...settings,
   ...surveys,
-  ...misc
+  ...misc,
+  ...visiTypes,
 };

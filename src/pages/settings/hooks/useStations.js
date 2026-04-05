@@ -13,12 +13,14 @@ export const useStations = () => {
       try {
         const ref = collection(firestore, "stats");
         const snap = await getDocs(ref);
-        const items = snap.docs.map((d) => ({
-          id: d.id,
-          name: t(d.id),
-          max_waiting_time: d.data().max_waiting_time ?? 0,
-          ...d.data(),
-        }));
+        const items = snap.docs
+          .map((d) => ({
+            id: d.id,
+            name: t(d.id),
+            max_waiting_time: d.data().max_waiting_time ?? 0,
+            ...d.data(),
+          }))
+          .filter((item) => item.active !== false);
         setStations(items);
       } catch (e) {
         console.error("Error fetching stations:", e);

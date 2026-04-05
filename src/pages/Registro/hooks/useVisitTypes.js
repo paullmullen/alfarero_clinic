@@ -15,15 +15,20 @@ export function useVisitTypes({ firestore, t }) {
     (async () => {
       try {
         const visitTypes = await fetchVisitTypes(firestore);
-        const next = visitTypes.map((item) => ({
-          value: item.name,
-          label: t(item.name),
-          stations: item.plan_of_care,
-        }));
-        if (alive) setRecipes(next);
-      } catch (err) {
-        console.log(err);
-        if (alive) setRecipes([]);
+
+        const next = visitTypes
+          .filter((item) => item.active !== false)
+          .map((item) => ({
+            value: item.name,
+            label: t(item.name),
+            stations: item.plan_of_care || [],
+          }));
+
+        if (alive) {
+          setRecipes(next);
+        }
+      } catch (error) {
+        console.error("Error fetching visit types:", error);
       }
     })();
 

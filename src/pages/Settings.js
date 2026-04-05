@@ -9,6 +9,7 @@ import LocationsManager from "./settings/sections/LocationsManager";
 import UserPermissionsTable from "./settings/sections/UserPermissionsTable";
 import InviteEmailForm from "./settings/sections/InviteEmailForm";
 import KnownPatientsUploader from "./settings/sections/KnownPatientsUploader";
+import VisitTypesManager from "./settings/sections/VisitTypesManager";
 
 import { useStations } from "./settings/hooks/useStations";
 import { useLocations } from "./settings/hooks/useLocations";
@@ -24,7 +25,6 @@ class ErrorBoundary extends Component {
   }
   render() {
     if (this.state.hasError) {
-      // You can also render a styled fallback, logging, etc.
       return (
         <div style={{ padding: 16 }}>
           Error loading component. Please try again.
@@ -64,6 +64,13 @@ const Settings = () => {
         <br />
         <Divider />
 
+        {/* VISIT TYPES */}
+        <VisitTypesManager stations={stations} t={t} />
+        <div>Visit Types Placeholder</div>
+        <br />
+        <br />
+        <Divider />
+
         {/* USER PERMISSIONS */}
         <UserPermissionsTable
           users={users}
@@ -73,8 +80,9 @@ const Settings = () => {
         />
         <Paragraph type="secondary">
           {t("MANAGER_DESCRIPTION") ||
-            "Manager settings for stations, locations, users, and known patients."}
+            "Manager settings for stations, locations, visit types, users, and known patients."}
         </Paragraph>
+
         {/* INVITE EMAIL */}
         <InviteEmailForm t={t} />
         <br />
@@ -90,4 +98,3 @@ const Settings = () => {
 };
 
 export default Settings;
-``;
