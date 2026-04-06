@@ -5,8 +5,10 @@
     "remove": "Remove",
     "add": "Add",
     "minutesShort": "min",
+    "name": "Name",
     "phone": "Tel",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "email": "Email"
   },
   "COUNT": "Count",
   "DATE_RANGE": "Date Range",

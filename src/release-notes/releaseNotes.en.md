@@ -2,6 +2,10 @@
 
 Releases with letter suffixes are candidate releases not pushed to production. Releases without letter suffixes are the production releases that include the candidate changes (if approved).
 
+## V2.4.4
+
+- Visit Type Editor implemented
+
 ## v2.4.3
 
 - Name of responsible adult required for child patients

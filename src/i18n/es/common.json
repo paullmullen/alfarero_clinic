@@ -2,9 +2,11 @@
   "action": "Acción",
   "common": {
     "cancel": "Cancelar",
+    "email": "Correo electrónico",
     "remove": "Eliminar",
     "add": "Agregar",
     "minutesShort": "min",
+    "name": "Nombre",
     "phone": "Teléfono",
     "loading": "Cargando..."
   },

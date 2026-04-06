@@ -1,7 +1,7 @@
 {
   "VISIT_TYPES": "Tipos de visita",
   "VISIT_TYPES_DESCRIPTION": "Edite los planes de atención predeterminados para los motivos comunes de consulta.",
-  "VISIT_TYPES_ALERT": "Estos son planes de atención tipo receta. El personal puede cambiar el recorrido de un paciente en la página de Anfitrión.",
+  "VISIT_TYPES_ALERT": "Estos son planes de atención típico. El personal puede cambiar el recorrido de un paciente en la página de Anfitrión.",
 
   "ADD_VISIT_TYPE": "Agregar tipo de visita",
   "CREATE": "Crear",

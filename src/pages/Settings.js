@@ -66,7 +66,6 @@ const Settings = () => {
 
         {/* VISIT TYPES */}
         <VisitTypesManager stations={stations} t={t} />
-        <div>Visit Types Placeholder</div>
         <br />
         <br />
         <Divider />

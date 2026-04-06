@@ -1,0 +1,9 @@
+{
+  "BACKGROUND_COLOR": "Color de fondo",
+  "LOCATIONS": "Ubicaciones",
+  "LOCATIONS_DESCRIPTION": "Editar ubicaciones predeterminadas para tipos comunes de visita.",
+  "ADD_LOCATION": "Agregar ubicación",
+  "CREATE": "Crear",
+  "PRINT_MESSAGE_HELP": "Este mensaje se imprimirá en la parte inferior de el ticket del paciente. Deje en blanco para no imprimir ningún mensaje.",
+  "PRINT_MESSAGE_PLACEHOLDER": "Mensaje para imprimir en el ticket del paciente"
+}

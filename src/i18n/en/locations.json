@@ -1,0 +1,9 @@
+{
+  "BACKGROUND_COLOR": "Background color",
+  "LOCATIONS": "Locations",
+  "LOCATIONS_DESCRIPTION": "Edit the default locations for common visit types.",
+  "ADD_LOCATION": "Add location",
+  "CREATE": "Create",
+  "PRINT_MESSAGE_HELP": "This message will be printed at the bottom of each patient's ticket. Leave blank to not print any message.",
+  "PRINT_MESSAGE_PLACEHOLDER": "Message to print at the bottom of each patient's ticket"
+}
