@@ -8,6 +8,7 @@ import surveys from "./surveys.json";
 import misc from "./misc.json";
 import visiTypes from "./visitTypes.json";
 import locations from "./locations.json";
+import print from "./print.json";
 
 export default {
   ...common,
@@ -20,4 +21,5 @@ export default {
   ...misc,
   ...visiTypes,
   ...locations,
+  ...print,
 };

@@ -1,0 +1,7 @@
+{
+  "PRINTMEMBERSHIPCARD": "Print membership card",
+  "PRINT_MESSAGE": "Message to print on the ticket",
+  "ticket": {
+    "reprint": "Reprint ticket "
+  }
+}

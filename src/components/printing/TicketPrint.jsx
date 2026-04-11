@@ -15,6 +15,8 @@ const TicketPrint = ({ patient }) => {
     created_at,
   } = patient;
 
+  console.log("Patient data for ticket:", patient);
+
   const [t] = useTranslation("global");
 
   const displayName = (
@@ -54,7 +56,7 @@ const TicketPrint = ({ patient }) => {
       <div style={styles.qrWrapper}>
         <QRCodeSVG
           value={`VISIT:${pt_no}`}
-          size={160}
+          size={100}
           level="M"
           includeMargin={true}
         />
@@ -68,7 +70,7 @@ const TicketPrint = ({ patient }) => {
 
 const styles = {
   ticket: {
-    width: "58mm",
+    width: "72mm",
     padding: "8px",
     fontFamily: "monospace",
     background: "white",
@@ -112,9 +114,11 @@ const styles = {
     marginBottom: "25px",
   },
   qrWrapper: {
-    display: "flex",
-    justifyContent: "center",
-    margin: "12px 0",
+    textAlign: "center",
+    margin: "8px 0",
+  },
+  pageBreak: {
+    pageBreakBefore: "always",
   },
 };
 

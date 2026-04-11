@@ -1,2 +1,2 @@
 Note the the cloud functions also have translation requirments.  
-Updates to es.json, in particular, need to be copied ot hte i18n folder in the dailyEmailCloudFunctions folder.
+Updates to es.json, in particular, need to be copied ot the i18n folder in the dailyEmailCloudFunctions folder.

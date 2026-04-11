@@ -1,0 +1,7 @@
+{
+  "PRINTMEMBERSHIPCARD": "Imprimir tarjeta de membresía",
+  "PRINT_MESSAGE": "Mensaje para imprimir en el boleto",
+  "ticket": {
+    "reprint": "Reimprimir boleto"
+  }
+}
