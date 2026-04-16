@@ -9,6 +9,7 @@ import misc from "./misc.json";
 import visiTypes from "./visitTypes.json";
 import locations from "./locations.json";
 import print from "./print.json";
+import scanner from "./scanner.json";
 
 export default {
   ...common,
@@ -22,4 +23,5 @@ export default {
   ...visiTypes,
   ...locations,
   ...print,
+  ...scanner,
 };

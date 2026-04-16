@@ -10,6 +10,7 @@ import UserPermissionsTable from "./settings/sections/UserPermissionsTable";
 import InviteEmailForm from "./settings/sections/InviteEmailForm";
 import KnownPatientsUploader from "./settings/sections/KnownPatientsUploader";
 import VisitTypesManager from "./settings/sections/VisitTypesManager";
+import ScannerQrGenerator from "./settings/sections/ScannerQRGenerator";
 
 import { useStations } from "./settings/hooks/useStations";
 import { useLocations } from "./settings/hooks/useLocations";
@@ -66,6 +67,12 @@ const Settings = () => {
 
         {/* VISIT TYPES */}
         <VisitTypesManager stations={stations} t={t} />
+        <br />
+        <br />
+        <Divider />
+
+        {/* SCANNER QR GENERATOR */}
+        <ScannerQrGenerator stations={stations} t={t} />
         <br />
         <br />
         <Divider />

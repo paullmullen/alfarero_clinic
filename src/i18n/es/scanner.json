@@ -1,0 +1,15 @@
+{
+  "SCANNER_QR_GENERATOR_TITLE": "Generador QR para escáner",
+  "SCANNER_QR_GENERATOR_DESCRIPTION": "Genere un código QR para configurar ROOM_ID, STATION_ID y DEVICE_ID en un escáner.",
+  "SCANNER_QR_STATION_ID": "Estación",
+  "SCANNER_QR_STATION_PLACEHOLDER": "Seleccione una estación",
+  "SCANNER_QR_ROOM_ID": "Room ID",
+  "SCANNER_QR_DEVICE_ID": "Device ID",
+  "SCANNER_QR_RAW_PAYLOAD": "Carga útil sin formato",
+  "SCANNER_QR_PRINT_NOTE": "Este código QR es solo para asignación de estación/dispositivo y no incluye secretos.",
+  "SCANNER_QR_FILL_FIELDS": "Seleccione una estación y complete los campos para generar un código QR.",
+
+  "SCANNER_QR_PRINT_BUTTON": "Imprimir QR",
+  "SCANNER_QR_PRINT_TITLE": "Configuración de estación del escáner",
+  "SCANNER_QR_PRINT_SUBTITLE": "Escanee este código para configurar la estación del escáner."
+}

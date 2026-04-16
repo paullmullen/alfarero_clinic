@@ -1,0 +1,14 @@
+{
+  "SCANNER_QR_GENERATOR_TITLE": "Scanner QR Generator",
+  "SCANNER_QR_GENERATOR_DESCRIPTION": "Generate a QR code to configure ROOM_ID, STATION_ID, and DEVICE_ID on a scanner.",
+  "SCANNER_QR_STATION_ID": "Station",
+  "SCANNER_QR_STATION_PLACEHOLDER": "Select a station",
+  "SCANNER_QR_ROOM_ID": "Room ID",
+  "SCANNER_QR_DEVICE_ID": "Device ID",
+  "SCANNER_QR_RAW_PAYLOAD": "Raw Payload",
+  "SCANNER_QR_PRINT_NOTE": "This QR is intended for station/device assignment only and does not include secrets.",
+  "SCANNER_QR_FILL_FIELDS": "Select a station and complete the fields to generate a QR code.",
+  "SCANNER_QR_PRINT_BUTTON": "Print QR",
+  "SCANNER_QR_PRINT_TITLE": "Scanner Station Configuration",
+  "SCANNER_QR_PRINT_SUBTITLE": "Scan this code to configure the scanner station settings."
+}
