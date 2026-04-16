@@ -19,6 +19,7 @@
   "appointment": {
     "actions": "Acciones",
     "admittedSuccess": "Paciente admitido exitosamente.",
+    "dpi": "DPI",
     "title": "Citas",
     "subtitle": "Pacientes potenciales para hoy. Aún no admitidos a la clínica.",
     "scheduled": "programadas",

@@ -61,41 +61,6 @@ const actionsCellStyle = {
   whiteSpace: "nowrap",
 };
 
-const statusList = [
-  "waiting",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "7",
-  "7",
-  "7",
-  "7",
-  "7",
-  "7",
-  "7",
-  "7",
-  "7",
-  "7",
-];
-
-const stationOrder = [
-  "reg",
-  "nur",
-  "doc",
-  "ped",
-  "og",
-  "lab",
-  "pha",
-  "pt",
-  "den",
-  "nut",
-  "psi",
-  "ora",
-];
-
 const normalizePhone = (raw) => {
   const digits = (raw ?? "").toString().replace(/\D/g, "");
   if (!digits) return null;
@@ -124,35 +89,79 @@ const normalizeLocationName = (value) =>
     .replace(/\s+/g, " ")
     .trim();
 
-const fillMissingStations = (stationsList, visits) => {
-  const result = [];
-  const visitsSet = new Set(visits || []);
-  let order = 0;
+const getAllStationCodes = (stationsList) => {
+  return [...(stationsList || [])]
+    .filter((s) => s?.value)
+    .sort((a, b) => {
+      const aOrder =
+        typeof a?.order === "number" ? a.order : Number.POSITIVE_INFINITY;
+      const bOrder =
+        typeof b?.order === "number" ? b.order : Number.POSITIVE_INFINITY;
 
-  stationOrder.forEach((stationValue) => {
-    const station = stationsList.find((s) => s.value === stationValue);
-    if (!station) return;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return String(a.value).localeCompare(String(b.value));
+    })
+    .map((s) => s.value);
+};
 
-    if (visitsSet.has(stationValue)) {
-      const nextStatus = statusList[order] || "pending";
-      result.push({
-        order,
-        station: station.value,
-        status: nextStatus,
-        ...(nextStatus === "waiting" && { waiting_start: Timestamp.now() }),
-      });
-    } else {
-      result.push({
-        order,
-        station: station.value,
+const normalizeRecipeStations = (recipeStations = []) => {
+  return (recipeStations || [])
+    .map((entry, index) => {
+      if (typeof entry === "string") {
+        return {
+          station: entry,
+          route_order: index + 1,
+        };
+      }
+
+      if (entry && typeof entry === "object" && entry.station) {
+        return {
+          station: entry.station,
+          route_order:
+            typeof entry.route_order === "number"
+              ? entry.route_order
+              : index + 1,
+        };
+      }
+
+      return null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.route_order - b.route_order);
+};
+
+const buildPlanOfCareFromRecipe = (stationsList, recipeStations = []) => {
+  const allStationCodes = getAllStationCodes(stationsList);
+  const normalizedRecipe = normalizeRecipeStations(recipeStations);
+
+  if (!normalizedRecipe.length) return [];
+
+  const firstRouteOrder = normalizedRecipe[0]?.route_order;
+
+  const plannedMap = new Map(
+    normalizedRecipe.map((entry) => [entry.station, entry]),
+  );
+
+  return allStationCodes.map((stationCode) => {
+    const plannedEntry = plannedMap.get(stationCode);
+
+    if (!plannedEntry) {
+      return {
+        station: stationCode,
+        route_order: null,
         status: "pending",
-      });
+      };
     }
 
-    order += 1;
-  });
+    const isFirstPlanned = plannedEntry.route_order === firstRouteOrder;
 
-  return result;
+    return {
+      station: stationCode,
+      route_order: plannedEntry.route_order,
+      status: isFirstPlanned ? "waiting" : "planned",
+      ...(isFirstPlanned ? { waiting_start: Timestamp.now() } : {}),
+    };
+  });
 };
 
 export default function AppointmentList({
@@ -213,6 +222,7 @@ export default function AppointmentList({
     const matchedRecipe = recipes.find((recipe) => {
       const candidates = [
         recipe.value,
+        recipe.label,
         ...(Array.isArray(recipe.aliases) ? recipe.aliases : []),
       ]
         .map(normalizeVisitType)
@@ -234,7 +244,8 @@ export default function AppointmentList({
       (recipe) => recipe.value === visitTypeCode,
     );
     if (!matchedRecipe) return [];
-    return fillMissingStations(stations, matchedRecipe.stations);
+
+    return buildPlanOfCareFromRecipe(stations, matchedRecipe.stations);
   };
 
   const resolveLocation = (appointment) => {
@@ -414,8 +425,14 @@ export default function AppointmentList({
         return;
       }
 
-      const nationalId = normalizeNationalId(freshAppointment.nationalIdNumber);
-      const normalizedTel = normalizePhone(freshAppointment.phone);
+      const nationalId =
+        normalizeNationalId(
+          freshAppointment.nationalIdNumber || freshAppointment.dpi,
+        ) || null;
+
+      const normalizedTel = normalizePhone(
+        freshAppointment.phone || freshAppointment.phoneNumber,
+      );
 
       const patientRef = doc(collection(firestore, "patients"));
       const ptNo = patientRef.id;
