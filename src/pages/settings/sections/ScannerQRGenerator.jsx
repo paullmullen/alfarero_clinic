@@ -16,9 +16,13 @@ const { Title, Paragraph, Text } = Typography;
 
 const DEFAULT_DEVICE_ID = "scanner_pi_01";
 
-// Temporary/simple auth for the cloud QR generator endpoint.
-// Replace this with your preferred source.
 const CLOUD_QR_ADMIN_TOKEN = process.env.REACT_APP_SCANNER_QR_ADMIN_TOKEN || "";
+
+const CLOUD_QR_ENDPOINT =
+  "https://us-central1-alfarero-478ad.cloudfunctions.net/generateScannerCloudQr";
+
+const STATION_QR_ENDPOINT =
+  "https://us-central1-alfarero-478ad.cloudfunctions.net/generateScannerStationQr";
 
 const ScannerQrGenerator = ({ stations = [], t }) => {
   const [qrType, setQrType] = useState("station_config");
@@ -31,8 +35,8 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
   const [password, setPassword] = useState("");
   const [security, setSecurity] = useState("wpa-psk");
 
-  const [cloudQrValue, setCloudQrValue] = useState("");
-  const [loadingCloudQr, setLoadingCloudQr] = useState(false);
+  const [generatedQrValue, setGeneratedQrValue] = useState("");
+  const [loadingGeneratedQr, setLoadingGeneratedQr] = useState(false);
 
   const stationOptions = useMemo(() => {
     return (stations || [])
@@ -83,42 +87,35 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
     });
   };
 
-  const payloadObject = useMemo(() => {
-    if (qrType === "station_config") {
-      if (!stationId || !roomId || !deviceId) return null;
-
-      return {
-        kind: "station_config",
-        version: 1,
-        station_id: stationId,
-        room_id: roomId,
-        device_id: deviceId,
-      };
-    }
-
+  const localPayloadObject = useMemo(() => {
     if (qrType === "wifi_config") {
       if (!ssid || password === "") return null;
 
       return {
         kind: "wifi_config",
         version: 1,
-        ssid,
-        password,
-        security,
+        payload: {
+          ssid,
+          password,
+          security,
+        },
+        auth: {
+          admin_token: CLOUD_QR_ADMIN_TOKEN,
+        },
       };
     }
 
     return null;
-  }, [qrType, stationId, roomId, deviceId, ssid, password, security]);
+  }, [qrType, ssid, password, security]);
 
   const qrValue = useMemo(() => {
-    if (qrType === "cloud_config") {
-      return cloudQrValue;
+    if (qrType === "cloud_config" || qrType === "station_config") {
+      return generatedQrValue;
     }
 
-    if (!payloadObject) return "";
-    return `MMCFG:${JSON.stringify(payloadObject)}`;
-  }, [qrType, payloadObject, cloudQrValue]);
+    if (!localPayloadObject) return "";
+    return `MMCFG:${JSON.stringify(localPayloadObject)}`;
+  }, [qrType, generatedQrValue, localPayloadObject]);
 
   const printTitle =
     qrType === "cloud_config"
@@ -146,21 +143,22 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
           ? t("SCANNER_QR_PRINT_SUBTITLE")
           : "Scan this code to configure the scanner station settings.";
 
+  const canGenerateStationQr = !!stationId && !!roomId && !!deviceId;
+  const canGenerateWifiQr = !!ssid && password !== "";
+  const canPrint = !!qrValue;
+
   const fetchCloudQr = async () => {
     try {
-      setLoadingCloudQr(true);
-      setCloudQrValue("");
+      setLoadingGeneratedQr(true);
+      setGeneratedQrValue("");
 
-      const response = await fetch(
-        "https://us-central1-alfarero-478ad.cloudfunctions.net/generateScannerCloudQr",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${CLOUD_QR_ADMIN_TOKEN}`,
-          },
+      const response = await fetch(CLOUD_QR_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${CLOUD_QR_ADMIN_TOKEN}`,
         },
-      );
+      });
 
       const data = await response.json();
 
@@ -168,7 +166,7 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
         throw new Error(data?.error || "Failed to generate cloud QR");
       }
 
-      setCloudQrValue(data.qrValue);
+      setGeneratedQrValue(data.qrValue);
       message.success(
         t ? t("SCANNER_QR_CLOUD_GENERATED") : "Cloud QR generated.",
       );
@@ -180,7 +178,56 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
           : "Failed to generate cloud QR.",
       );
     } finally {
-      setLoadingCloudQr(false);
+      setLoadingGeneratedQr(false);
+    }
+  };
+
+  const fetchStationQr = async () => {
+    if (!canGenerateStationQr) {
+      message.warning(
+        t
+          ? t("SCANNER_QR_FILL_FIELDS")
+          : "Complete the fields to generate a QR code.",
+      );
+      return;
+    }
+
+    try {
+      setLoadingGeneratedQr(true);
+      setGeneratedQrValue("");
+
+      const response = await fetch(STATION_QR_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${CLOUD_QR_ADMIN_TOKEN}`,
+        },
+        body: JSON.stringify({
+          room_id: roomId,
+          station_id: stationId,
+          device_id: deviceId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data?.ok || !data?.qrValue) {
+        throw new Error(data?.error || "Failed to generate station QR");
+      }
+
+      setGeneratedQrValue(data.qrValue);
+      message.success(
+        t ? t("SCANNER_QR_STATION_GENERATED") : "Station QR generated.",
+      );
+    } catch (err) {
+      console.error(err);
+      message.error(
+        t
+          ? t("SCANNER_QR_STATION_GENERATE_ERROR")
+          : "Failed to generate station QR.",
+      );
+    } finally {
+      setLoadingGeneratedQr(false);
     }
   };
 
@@ -236,7 +283,7 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
           </div>
         `;
 
-    const showRawPayload = qrType !== "cloud_config";
+    const showRawPayload = false;
 
     const html = `
       <html>
@@ -372,9 +419,7 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
             value={qrType}
             onChange={(value) => {
               setQrType(value);
-              if (value !== "cloud_config") {
-                setCloudQrValue("");
-              }
+              setGeneratedQrValue("");
             }}
             options={qrTypeOptions}
           />
@@ -416,6 +461,21 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
                 placeholder="scanner_reg_01"
               />
             </Form.Item>
+
+            <Space direction="vertical" size="middle">
+              <Button
+                onClick={fetchStationQr}
+                loading={loadingGeneratedQr}
+                disabled={!canGenerateStationQr}
+              >
+                {t ? t("SCANNER_QR_GENERATE_STATION") : "Generate Station QR"}
+              </Button>
+              {generatedQrValue && (
+                <Text type="success">
+                  {t ? t("SCANNER_QR_STATION_READY") : "QR ready to print."}
+                </Text>
+              )}
+            </Space>
           </>
         )}
 
@@ -455,19 +515,23 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
 
         {qrType === "cloud_config" && (
           <Space direction="vertical" size="middle">
-            <Button onClick={fetchCloudQr} loading={loadingCloudQr}>
-              Generar QR de nube
+            <Button onClick={fetchCloudQr} loading={loadingGeneratedQr}>
+              {t ? t("SCANNER_QR_GENERATE_CLOUD") : "Generate Cloud QR"}
             </Button>
-            {cloudQrValue && <Text type="success">QR listo para imprimir</Text>}
+            {generatedQrValue && (
+              <Text type="success">
+                {t ? t("SCANNER_QR_CLOUD_READY") : "QR ready to print."}
+              </Text>
+            )}
           </Space>
         )}
       </Form>
 
-      {qrValue ? (
+      {canPrint ? (
         <Space direction="vertical" size="middle" style={{ width: "100%" }}>
           <Space>
             <Button type="primary" onClick={handlePrint}>
-              Imprimir QR
+              {t ? t("SCANNER_QR_PRINT") : "Print QR"}
             </Button>
           </Space>
 
@@ -553,31 +617,6 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
               )}
 
               {qrType !== "cloud_config" && (
-                <>
-                  <div style={{ marginBottom: 8 }}>
-                    <Text strong>
-                      {t ? t("SCANNER_QR_RAW_PAYLOAD") : "Raw Payload"}:
-                    </Text>
-                  </div>
-
-                  <div
-                    style={{
-                      background: "#fafafa",
-                      border: "1px solid #d9d9d9",
-                      borderRadius: 8,
-                      padding: 12,
-                      wordBreak: "break-all",
-                      fontFamily: "monospace",
-                      fontSize: 12,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    {qrValue}
-                  </div>
-                </>
-              )}
-
-              {qrType !== "cloud_config" && (
                 <Paragraph
                   type="secondary"
                   style={{ marginTop: 20, textAlign: "center" }}
@@ -597,16 +636,24 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
       ) : (
         <Paragraph type="secondary">
           {qrType === "cloud_config"
-            ? cloudQrValue
+            ? generatedQrValue
               ? t
                 ? t("SCANNER_QR_CLOUD_READY")
-                : "QR listo para imprimir."
+                : "QR ready to print."
               : t
                 ? t("SCANNER_QR_CLOUD_NOT_READY")
                 : "Generate the cloud QR before printing."
-            : t
-              ? t("SCANNER_QR_FILL_FIELDS")
-              : "Complete the fields to generate a QR code."}
+            : qrType === "station_config"
+              ? generatedQrValue
+                ? t
+                  ? t("SCANNER_QR_STATION_READY")
+                  : "QR ready to print."
+                : t
+                  ? t("SCANNER_QR_FILL_FIELDS")
+                  : "Select a station and complete the fields to generate a QR code."
+              : t
+                ? t("SCANNER_QR_FILL_FIELDS")
+                : "Complete the fields to generate a QR code."}
         </Paragraph>
       )}
     </Card>
