@@ -10,5 +10,22 @@
   "SCANNER_QR_FILL_FIELDS": "Select a station and complete the fields to generate a QR code.",
   "SCANNER_QR_PRINT_BUTTON": "Print QR",
   "SCANNER_QR_PRINT_TITLE": "Scanner Station Configuration",
-  "SCANNER_QR_PRINT_SUBTITLE": "Scan this code to configure the scanner station settings."
+  "SCANNER_QR_PRINT_SUBTITLE": "Scan this code to configure the scanner station settings.",
+  "SCANNER_QR_TYPE": "QR Type",
+  "SCANNER_QR_TYPE_STATION": "Station Configuration",
+  "SCANNER_QR_TYPE_WIFI": "WiFi Configuration",
+  "SCANNER_QR_WIFI_SSID": "SSID",
+  "SCANNER_QR_WIFI_PASSWORD": "Password",
+  "SCANNER_QR_WIFI_SECURITY": "Security",
+  "SCANNER_QR_PRINT_TITLE_WIFI": "Scanner WiFi Configuration",
+  "SCANNER_QR_PRINT_SUBTITLE_WIFI": "Scan this code to configure the scanner WiFi settings.",
+  "SCANNER_QR_PRINT_NOTE_WIFI": "This QR  contains WiFi credentials. Handle it carefully.",
+  "SCANNER_QR_PRINT_NOTE_CLOUD": "Sensitive QR. Do not leave printed copies unattended.",
+  "SCANNER_QR_CLOUD_HIDDEN_NOTE": "Sensitive cloud configuration. Use Print only.",
+  "SCANNER_QR_CLOUD_NOT_READY": "Cloud QR is not ready. Missing app environment values.",
+  "SCANNER_QR_TYPE_CLOUD": "Cloud Configuration",
+  "SCANNER_QR_PRINT_TITLE_CLOUD": "Scanner Cloud Configuration",
+  "SCANNER_QR_PRINT_SUBTITLE_CLOUD": "Scan this code to configure the scanner cloud connection.",
+  "SCANNER_QR_CLOUD_GENERATED": "Cloud Configuration QR Code generated successfully.",
+  "SCANNER_QR_CLOUD_READY": "Cloud QR ready for printing."
 }

@@ -20,6 +20,13 @@
         }
       },
       {
+        "source": "/generateScannerCloudQr",
+        "function": {
+          "functionId": "generateScannerCloudQr",
+          "codebase": "api"
+        }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

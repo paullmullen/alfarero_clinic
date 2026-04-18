@@ -1,16 +1,38 @@
 /* eslint-disable */
 import React, { useMemo, useState } from "react";
-import { Card, Typography, Form, Select, Input, Space, Button } from "antd";
+import {
+  Card,
+  Typography,
+  Form,
+  Select,
+  Input,
+  Space,
+  Button,
+  message,
+} from "antd";
 import { QRCodeSVG } from "qrcode.react";
 
 const { Title, Paragraph, Text } = Typography;
 
 const DEFAULT_DEVICE_ID = "scanner_pi_01";
 
+// Temporary/simple auth for the cloud QR generator endpoint.
+// Replace this with your preferred source.
+const CLOUD_QR_ADMIN_TOKEN = process.env.REACT_APP_SCANNER_QR_ADMIN_TOKEN || "";
+
 const ScannerQrGenerator = ({ stations = [], t }) => {
+  const [qrType, setQrType] = useState("station_config");
+
   const [stationId, setStationId] = useState("");
   const [roomId, setRoomId] = useState("");
   const [deviceId, setDeviceId] = useState(DEFAULT_DEVICE_ID);
+
+  const [ssid, setSsid] = useState("");
+  const [password, setPassword] = useState("");
+  const [security, setSecurity] = useState("wpa-psk");
+
+  const [cloudQrValue, setCloudQrValue] = useState("");
+  const [loadingCloudQr, setLoadingCloudQr] = useState(false);
 
   const stationOptions = useMemo(() => {
     return (stations || [])
@@ -23,6 +45,21 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
         };
       });
   }, [stations, t]);
+
+  const qrTypeOptions = [
+    {
+      value: "station_config",
+      label: t ? t("SCANNER_QR_TYPE_STATION") : "Station Configuration",
+    },
+    {
+      value: "wifi_config",
+      label: t ? t("SCANNER_QR_TYPE_WIFI") : "WiFi Configuration",
+    },
+    {
+      value: "cloud_config",
+      label: t ? t("SCANNER_QR_TYPE_CLOUD") : "Cloud Configuration",
+    },
+  ];
 
   const handleStationChange = (value) => {
     setStationId(value);
@@ -47,29 +84,159 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
   };
 
   const payloadObject = useMemo(() => {
-    if (!stationId || !roomId || !deviceId) return null;
+    if (qrType === "station_config") {
+      if (!stationId || !roomId || !deviceId) return null;
 
-    return {
-      kind: "station_config",
-      version: 1,
-      station_id: stationId,
-      room_id: roomId,
-      device_id: deviceId,
-    };
-  }, [stationId, roomId, deviceId]);
+      return {
+        kind: "station_config",
+        version: 1,
+        station_id: stationId,
+        room_id: roomId,
+        device_id: deviceId,
+      };
+    }
+
+    if (qrType === "wifi_config") {
+      if (!ssid || password === "") return null;
+
+      return {
+        kind: "wifi_config",
+        version: 1,
+        ssid,
+        password,
+        security,
+      };
+    }
+
+    return null;
+  }, [qrType, stationId, roomId, deviceId, ssid, password, security]);
 
   const qrValue = useMemo(() => {
+    if (qrType === "cloud_config") {
+      return cloudQrValue;
+    }
+
     if (!payloadObject) return "";
     return `MMCFG:${JSON.stringify(payloadObject)}`;
-  }, [payloadObject]);
+  }, [qrType, payloadObject, cloudQrValue]);
+
+  const printTitle =
+    qrType === "cloud_config"
+      ? t
+        ? t("SCANNER_QR_PRINT_TITLE_CLOUD")
+        : "Scanner Cloud Configuration"
+      : qrType === "wifi_config"
+        ? t
+          ? t("SCANNER_QR_PRINT_TITLE_WIFI")
+          : "Scanner WiFi Configuration"
+        : t
+          ? t("SCANNER_QR_PRINT_TITLE")
+          : "Scanner Station Configuration";
+
+  const printSubtitle =
+    qrType === "cloud_config"
+      ? t
+        ? t("SCANNER_QR_PRINT_SUBTITLE_CLOUD")
+        : "Scan this code to configure the scanner cloud connection."
+      : qrType === "wifi_config"
+        ? t
+          ? t("SCANNER_QR_PRINT_SUBTITLE_WIFI")
+          : "Scan this code to configure the scanner WiFi settings."
+        : t
+          ? t("SCANNER_QR_PRINT_SUBTITLE")
+          : "Scan this code to configure the scanner station settings.";
+
+  const fetchCloudQr = async () => {
+    try {
+      setLoadingCloudQr(true);
+      setCloudQrValue("");
+
+      const response = await fetch(
+        "https://us-central1-alfarero-478ad.cloudfunctions.net/generateScannerCloudQr",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${CLOUD_QR_ADMIN_TOKEN}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data?.ok || !data?.qrValue) {
+        throw new Error(data?.error || "Failed to generate cloud QR");
+      }
+
+      setCloudQrValue(data.qrValue);
+      message.success(
+        t ? t("SCANNER_QR_CLOUD_GENERATED") : "Cloud QR generated.",
+      );
+    } catch (err) {
+      console.error(err);
+      message.error(
+        t
+          ? t("SCANNER_QR_CLOUD_GENERATE_ERROR")
+          : "Failed to generate cloud QR.",
+      );
+    } finally {
+      setLoadingCloudQr(false);
+    }
+  };
 
   const handlePrint = () => {
-    if (!qrValue) return;
+    if (!qrValue) {
+      message.warning(
+        t
+          ? t("SCANNER_QR_NOT_READY")
+          : "Generate or complete the QR configuration first.",
+      );
+      return;
+    }
 
     const qrSvg = document.getElementById("scanner-qr-svg")?.outerHTML || "";
     const printWindow = window.open("", "_blank", "width=900,height=1200");
 
     if (!printWindow) return;
+
+    const detailHtml =
+      qrType === "cloud_config"
+        ? `
+          <div class="note">
+            ${
+              t
+                ? t("SCANNER_QR_PRINT_NOTE_CLOUD")
+                : "Sensitive QR. Do not leave printed copies unattended."
+            }
+          </div>
+        `
+        : qrType === "wifi_config"
+          ? `
+          <div class="field">
+            <span class="label">${t ? t("SCANNER_QR_WIFI_SSID") : "SSID"}:</span>
+            ${ssid}
+          </div>
+          <div class="field">
+            <span class="label">${t ? t("SCANNER_QR_WIFI_SECURITY") : "Security"}:</span>
+            ${security}
+          </div>
+        `
+          : `
+          <div class="field">
+            <span class="label">${t ? t("SCANNER_QR_STATION_ID") : "Station"}:</span>
+            ${stationId}
+          </div>
+          <div class="field">
+            <span class="label">${t ? t("SCANNER_QR_ROOM_ID") : "Room ID"}:</span>
+            ${roomId}
+          </div>
+          <div class="field">
+            <span class="label">${t ? t("SCANNER_QR_DEVICE_ID") : "Device ID"}:</span>
+            ${deviceId}
+          </div>
+        `;
+
+    const showRawPayload = qrType !== "cloud_config";
 
     const html = `
       <html>
@@ -80,14 +247,12 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
               size: letter portrait;
               margin: 0.5in;
             }
-
             body {
               font-family: Arial, Helvetica, sans-serif;
               color: #000;
               margin: 0;
               padding: 0;
             }
-
             .page {
               width: 100%;
               max-width: 8in;
@@ -95,26 +260,22 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
               padding: 0.25in;
               box-sizing: border-box;
             }
-
             .title {
               text-align: center;
               font-size: 24px;
               font-weight: 700;
               margin-bottom: 8px;
             }
-
             .subtitle {
               text-align: center;
               font-size: 14px;
               margin-bottom: 24px;
             }
-
             .qr-wrap {
               display: flex;
               justify-content: center;
               margin-bottom: 24px;
             }
-
             .qr-box {
               border: 1px solid #ccc;
               border-radius: 12px;
@@ -122,22 +283,18 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
               display: inline-block;
               background: #fff;
             }
-
             .field {
               margin-bottom: 12px;
               font-size: 16px;
             }
-
             .label {
               font-weight: 700;
             }
-
             .payload-label {
               font-weight: 700;
               margin-top: 20px;
               margin-bottom: 8px;
             }
-
             .payload {
               background: #f7f7f7;
               border: 1px solid #ccc;
@@ -148,14 +305,12 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
               font-size: 12px;
               line-height: 1.5;
             }
-
             .note {
               text-align: center;
               color: #666;
               margin-top: 20px;
               font-size: 13px;
             }
-
             svg {
               display: block;
             }
@@ -163,52 +318,26 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
         </head>
         <body>
           <div class="page">
-            <div class="title">
-              ${t ? t("SCANNER_QR_PRINT_TITLE") : "Scanner Station Configuration"}
-            </div>
-
-            <div class="subtitle">
-              ${
-                t
-                  ? t("SCANNER_QR_PRINT_SUBTITLE")
-                  : "Scan this code to configure the scanner station settings."
-              }
-            </div>
+            <div class="title">${printTitle}</div>
+            <div class="subtitle">${printSubtitle}</div>
 
             <div class="qr-wrap">
-              <div class="qr-box">
-                ${qrSvg}
+              <div class="qr-box">${qrSvg}</div>
+            </div>
+
+            ${detailHtml}
+
+            ${
+              showRawPayload
+                ? `
+              <div class="payload-label">
+                ${t ? t("SCANNER_QR_RAW_PAYLOAD") : "Raw Payload"}:
               </div>
-            </div>
 
-            <div class="field">
-              <span class="label">${t ? t("SCANNER_QR_STATION_ID") : "Station"}:</span>
-              ${stationId}
-            </div>
-
-            <div class="field">
-              <span class="label">${t ? t("SCANNER_QR_ROOM_ID") : "Room ID"}:</span>
-              ${roomId}
-            </div>
-
-            <div class="field">
-              <span class="label">${t ? t("SCANNER_QR_DEVICE_ID") : "Device ID"}:</span>
-              ${deviceId}
-            </div>
-
-            <div class="payload-label">
-              ${t ? t("SCANNER_QR_RAW_PAYLOAD") : "Raw Payload"}:
-            </div>
-
-            <div class="payload">${qrValue}</div>
-
-            <div class="note">
-              ${
-                t
-                  ? t("SCANNER_QR_PRINT_NOTE")
-                  : "This QR is intended for station/device assignment only and does not include secrets."
-              }
-            </div>
+              <div class="payload">${qrValue}</div>
+            `
+                : ""
+            }
           </div>
         </body>
       </html>
@@ -234,45 +363,111 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
       <Paragraph type="secondary">
         {t
           ? t("SCANNER_QR_GENERATOR_DESCRIPTION")
-          : "Generate a QR code to configure ROOM_ID, STATION_ID, and DEVICE_ID on a scanner."}
+          : "Generate QR codes for scanner configuration."}
       </Paragraph>
 
       <Form layout="vertical">
-        <Form.Item label={t ? t("SCANNER_QR_STATION_ID") : "Station"} required>
+        <Form.Item label={t ? t("SCANNER_QR_TYPE") : "QR Type"} required>
           <Select
-            placeholder={
-              t ? t("SCANNER_QR_STATION_PLACEHOLDER") : "Select a station"
-            }
-            value={stationId || undefined}
-            onChange={handleStationChange}
-            options={stationOptions}
-            showSearch
-            optionFilterProp="label"
+            value={qrType}
+            onChange={(value) => {
+              setQrType(value);
+              if (value !== "cloud_config") {
+                setCloudQrValue("");
+              }
+            }}
+            options={qrTypeOptions}
           />
         </Form.Item>
 
-        <Form.Item label={t ? t("SCANNER_QR_ROOM_ID") : "Room ID"} required>
-          <Input
-            value={roomId}
-            onChange={(e) => setRoomId(e.target.value)}
-            placeholder="reg_room_1"
-          />
-        </Form.Item>
+        {qrType === "station_config" && (
+          <>
+            <Form.Item
+              label={t ? t("SCANNER_QR_STATION_ID") : "Station"}
+              required
+            >
+              <Select
+                placeholder={
+                  t ? t("SCANNER_QR_STATION_PLACEHOLDER") : "Select a station"
+                }
+                value={stationId || undefined}
+                onChange={handleStationChange}
+                options={stationOptions}
+                showSearch
+                optionFilterProp="label"
+              />
+            </Form.Item>
 
-        <Form.Item label={t ? t("SCANNER_QR_DEVICE_ID") : "Device ID"} required>
-          <Input
-            value={deviceId}
-            onChange={(e) => setDeviceId(e.target.value)}
-            placeholder="scanner_reg_01"
-          />
-        </Form.Item>
+            <Form.Item label={t ? t("SCANNER_QR_ROOM_ID") : "Room ID"} required>
+              <Input
+                value={roomId}
+                onChange={(e) => setRoomId(e.target.value)}
+                placeholder="reg_room_1"
+              />
+            </Form.Item>
+
+            <Form.Item
+              label={t ? t("SCANNER_QR_DEVICE_ID") : "Device ID"}
+              required
+            >
+              <Input
+                value={deviceId}
+                onChange={(e) => setDeviceId(e.target.value)}
+                placeholder="scanner_reg_01"
+              />
+            </Form.Item>
+          </>
+        )}
+
+        {qrType === "wifi_config" && (
+          <>
+            <Form.Item label={t ? t("SCANNER_QR_WIFI_SSID") : "SSID"} required>
+              <Input
+                value={ssid}
+                onChange={(e) => setSsid(e.target.value)}
+                placeholder="ClinicWiFi"
+              />
+            </Form.Item>
+
+            <Form.Item
+              label={t ? t("SCANNER_QR_WIFI_PASSWORD") : "Password"}
+              required
+            >
+              <Input.Password
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="WiFi password"
+              />
+            </Form.Item>
+
+            <Form.Item
+              label={t ? t("SCANNER_QR_WIFI_SECURITY") : "Security"}
+              required
+            >
+              <Select
+                value={security}
+                onChange={setSecurity}
+                options={[{ value: "wpa-psk", label: "WPA-PSK" }]}
+              />
+            </Form.Item>
+          </>
+        )}
+
+        {qrType === "cloud_config" && (
+          <Space direction="vertical" size="middle">
+            <Button onClick={fetchCloudQr} loading={loadingCloudQr}>
+              Generar QR de nube
+            </Button>
+            {cloudQrValue && <Text type="success">QR listo para imprimir</Text>}
+          </Space>
+        )}
       </Form>
 
       {qrValue ? (
         <Space direction="vertical" size="middle" style={{ width: "100%" }}>
           <Space>
             <Button type="primary" onClick={handlePrint}>
-              {t ? t("SCANNER_QR_PRINT_BUTTON") : "Print QR"}
+              Imprimir QR
             </Button>
           </Space>
 
@@ -284,22 +479,11 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
               padding: 24,
             }}
           >
-            <div
-              style={{
-                textAlign: "center",
-                marginBottom: 24,
-              }}
-            >
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
               <Title level={2} style={{ marginBottom: 8 }}>
-                {t
-                  ? t("SCANNER_QR_PRINT_TITLE")
-                  : "Scanner Station Configuration"}
+                {printTitle}
               </Title>
-              <Paragraph style={{ marginBottom: 0 }}>
-                {t
-                  ? t("SCANNER_QR_PRINT_SUBTITLE")
-                  : "Scan this code to configure the scanner station settings."}
-              </Paragraph>
+              <Paragraph style={{ marginBottom: 0 }}>{printSubtitle}</Paragraph>
             </div>
 
             <div
@@ -322,62 +506,107 @@ const ScannerQrGenerator = ({ stations = [], t }) => {
             </div>
 
             <div style={{ maxWidth: 700, margin: "0 auto" }}>
-              <div style={{ marginBottom: 12 }}>
-                <Text strong>
-                  {t ? t("SCANNER_QR_STATION_ID") : "Station"}:
-                </Text>{" "}
-                <Text>{stationId}</Text>
-              </div>
+              {qrType === "cloud_config" ? (
+                <Paragraph type="secondary" style={{ textAlign: "center" }}>
+                  {t
+                    ? t("SCANNER_QR_PRINT_NOTE_CLOUD")
+                    : "Sensitive QR. Do not leave printed copies unattended."}
+                </Paragraph>
+              ) : qrType === "wifi_config" ? (
+                <>
+                  <div style={{ marginBottom: 12 }}>
+                    <Text strong>
+                      {t ? t("SCANNER_QR_WIFI_SSID") : "SSID"}:
+                    </Text>{" "}
+                    <Text>{ssid}</Text>
+                  </div>
+                  <div style={{ marginBottom: 20 }}>
+                    <Text strong>
+                      {t ? t("SCANNER_QR_WIFI_SECURITY") : "Security"}:
+                    </Text>{" "}
+                    <Text>{security}</Text>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ marginBottom: 12 }}>
+                    <Text strong>
+                      {t ? t("SCANNER_QR_STATION_ID") : "Station"}:
+                    </Text>{" "}
+                    <Text>{stationId}</Text>
+                  </div>
 
-              <div style={{ marginBottom: 12 }}>
-                <Text strong>{t ? t("SCANNER_QR_ROOM_ID") : "Room ID"}:</Text>{" "}
-                <Text>{roomId}</Text>
-              </div>
+                  <div style={{ marginBottom: 12 }}>
+                    <Text strong>
+                      {t ? t("SCANNER_QR_ROOM_ID") : "Room ID"}:
+                    </Text>{" "}
+                    <Text>{roomId}</Text>
+                  </div>
 
-              <div style={{ marginBottom: 20 }}>
-                <Text strong>
-                  {t ? t("SCANNER_QR_DEVICE_ID") : "Device ID"}:
-                </Text>{" "}
-                <Text>{deviceId}</Text>
-              </div>
+                  <div style={{ marginBottom: 20 }}>
+                    <Text strong>
+                      {t ? t("SCANNER_QR_DEVICE_ID") : "Device ID"}:
+                    </Text>{" "}
+                    <Text>{deviceId}</Text>
+                  </div>
+                </>
+              )}
 
-              <div style={{ marginBottom: 8 }}>
-                <Text strong>
-                  {t ? t("SCANNER_QR_RAW_PAYLOAD") : "Raw Payload"}:
-                </Text>
-              </div>
+              {qrType !== "cloud_config" && (
+                <>
+                  <div style={{ marginBottom: 8 }}>
+                    <Text strong>
+                      {t ? t("SCANNER_QR_RAW_PAYLOAD") : "Raw Payload"}:
+                    </Text>
+                  </div>
 
-              <div
-                style={{
-                  background: "#fafafa",
-                  border: "1px solid #d9d9d9",
-                  borderRadius: 8,
-                  padding: 12,
-                  wordBreak: "break-all",
-                  fontFamily: "monospace",
-                  fontSize: 12,
-                  lineHeight: 1.5,
-                }}
-              >
-                {qrValue}
-              </div>
+                  <div
+                    style={{
+                      background: "#fafafa",
+                      border: "1px solid #d9d9d9",
+                      borderRadius: 8,
+                      padding: 12,
+                      wordBreak: "break-all",
+                      fontFamily: "monospace",
+                      fontSize: 12,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {qrValue}
+                  </div>
+                </>
+              )}
 
-              <Paragraph
-                type="secondary"
-                style={{ marginTop: 20, textAlign: "center" }}
-              >
-                {t
-                  ? t("SCANNER_QR_PRINT_NOTE")
-                  : "This QR is intended for station/device assignment only and does not include secrets."}
-              </Paragraph>
+              {qrType !== "cloud_config" && (
+                <Paragraph
+                  type="secondary"
+                  style={{ marginTop: 20, textAlign: "center" }}
+                >
+                  {qrType === "wifi_config"
+                    ? t
+                      ? t("SCANNER_QR_PRINT_NOTE_WIFI")
+                      : "This QR contains WiFi credentials. Handle it carefully."
+                    : t
+                      ? t("SCANNER_QR_PRINT_NOTE")
+                      : "This QR is intended for station/device assignment only and does not include secrets."}
+                </Paragraph>
+              )}
             </div>
           </div>
         </Space>
       ) : (
         <Paragraph type="secondary">
-          {t
-            ? t("SCANNER_QR_FILL_FIELDS")
-            : "Select a station and complete the fields to generate a QR code."}
+          {qrType === "cloud_config"
+            ? cloudQrValue
+              ? t
+                ? t("SCANNER_QR_CLOUD_READY")
+                : "QR listo para imprimir."
+              : t
+                ? t("SCANNER_QR_CLOUD_NOT_READY")
+                : "Generate the cloud QR before printing."
+            : t
+              ? t("SCANNER_QR_FILL_FIELDS")
+              : "Complete the fields to generate a QR code."}
         </Paragraph>
       )}
     </Card>

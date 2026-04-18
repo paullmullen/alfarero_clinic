@@ -8,6 +8,7 @@ import { sendInviteEmail } from "./sendInviteEmail.js";
 import { sendInventoryReport } from "./sendInventoryReport.js";
 import { sendEmail } from "./email/sendEmail.js";
 import { getOpsObservationsFeed } from "./getOpsObservationsFeed.js";
+import { generateScannerCloudQr } from "./generateScannerCloudQr.js";
 // import { receiveBarcodeUpdates } from "./receiveBarcodeUpdates.js";
 
 const db = admin.firestore();
@@ -35,4 +36,5 @@ export {
   sendEmail,
   getOpsObservationsFeed,
   // receiveBarcodeUpdates,
+  generateScannerCloudQr,
 };
