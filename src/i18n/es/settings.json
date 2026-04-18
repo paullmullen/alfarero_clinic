@@ -33,5 +33,18 @@
       "title": "Permisos de usuarios"
     }
   },
-  "USER_PERMISSIONS": "Permisos de usuarios"
+  "USER_PERMISSIONS": "Permisos de usuarios",
+  "SETTINGS_GROUP_CLINIC": "Configuración de la clínica",
+  "SETTINGS_GROUP_CLINIC_DESCRIPTION": "Administre la estructura de las operaciones de la clínica, incluyendo estaciones, ubicaciones de servicio y planes de atención predeterminados.",
+
+  "SETTINGS_GROUP_SCANNER": "Sistema de escáner",
+  "SETTINGS_GROUP_SCANNER_DESCRIPTION": "Genere e imprima códigos QR para configurar los dispositivos de escaneo.",
+
+  "SETTINGS_GROUP_USERS": "Usuarios y acceso",
+  "SETTINGS_GROUP_USERS_DESCRIPTION": "Controle los permisos y envíe invitaciones para acceder al sistema.",
+
+  "SETTINGS_GROUP_DATA": "Datos e importaciones",
+  "SETTINGS_GROUP_DATA_DESCRIPTION": "Ejecute herramientas de importación masiva y mantenimiento de datos de pacientes.",
+
+  "SETTINGS_JUMP_TO": "Ir a"
 }

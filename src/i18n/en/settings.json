@@ -33,5 +33,19 @@
       "title": "User Permissions"
     }
   },
-  "USER_PERMISSIONS": "User Permissions"
+  "USER_PERMISSIONS": "User Permissions",
+
+  "SETTINGS_GROUP_CLINIC": "Clinic Configuration",
+  "SETTINGS_GROUP_CLINIC_DESCRIPTION": "Manage the structure of clinic operations, including stations, service locations, and default plans of care.",
+
+  "SETTINGS_GROUP_SCANNER": "Scanner System",
+  "SETTINGS_GROUP_SCANNER_DESCRIPTION": "Generate and print QR codes used to configure scanner devices.",
+
+  "SETTINGS_GROUP_USERS": "Users & Access",
+  "SETTINGS_GROUP_USERS_DESCRIPTION": "Control permissions and send invitations for system access.",
+
+  "SETTINGS_GROUP_DATA": "Data & Imports",
+  "SETTINGS_GROUP_DATA_DESCRIPTION": "Run bulk import and maintenance tools for patient-related data.",
+
+  "SETTINGS_JUMP_TO": "Jump to"
 }
