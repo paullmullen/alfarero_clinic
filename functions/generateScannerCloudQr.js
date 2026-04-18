@@ -29,8 +29,13 @@ export const generateScannerCloudQr = onRequest({ cors: false }, (req, res) => {
       const payload = {
         kind: "cloud_config",
         version: 1,
-        endpoint_url: process.env.SCANNER_ENDPOINT_URL,
-        shared_secret: process.env.SCANNER_SHARED_SECRET,
+        payload: {
+          endpoint_url: process.env.SCANNER_ENDPOINT_URL,
+          shared_secret: process.env.SCANNER_SHARED_SECRET,
+        },
+        auth: {
+          admin_token: process.env.SCANNER_QR_ADMIN_TOKEN,
+        },
       };
 
       const qrValue = `MMCFG:${JSON.stringify(payload)}`;

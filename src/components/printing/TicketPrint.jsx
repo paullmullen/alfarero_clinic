@@ -1,8 +1,8 @@
 import React from "react";
 import full_logo_bw from "../../img/full_logo_bw.gif";
 import { useTranslation } from "react-i18next";
-import { Divider } from "antd";
 import { QRCodeSVG } from "qrcode.react";
+
 const TicketPrint = ({ patient }) => {
   const {
     pt_no,
@@ -13,112 +13,232 @@ const TicketPrint = ({ patient }) => {
     location_name,
     location_message,
     created_at,
-  } = patient;
-
-  console.log("Patient data for ticket:", patient);
+  } = patient || {};
 
   const [t] = useTranslation("global");
 
-  const displayName = (
-    <>
-      <div>
-        <strong>{patient_name}</strong>
-      </div>
+  const formatDate = (value) => {
+    if (!value) return "";
 
-      {guardian_name && age_group === "child" && (
-        <div>(Responsable: {guardian_name})</div>
-      )}
-    </>
-  );
+    let dateValue = value;
 
-  const date = created_at.toLocaleDateString("es-GT", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+    if (typeof value?.toDate === "function") {
+      dateValue = value.toDate();
+    } else if (!(value instanceof Date)) {
+      dateValue = new Date(value);
+    }
+
+    if (Number.isNaN(dateValue?.getTime?.())) return "";
+
+    return dateValue.toLocaleDateString("es-GT", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  const date = formatDate(created_at);
+  const translatedVisitType = type_of_visit ? t(type_of_visit) : "";
+  const qrValue = pt_no ? `VISIT:${pt_no}` : "";
 
   return (
-    <div style={styles.ticket}>
-      <img src={full_logo_bw} alt="logo" style={styles.logo} />
+    <>
+      <style>{`
+        @page {
+          size: letter portrait;
+          margin: 0.5in;
+        }
 
-      <div style={styles.center}>
-        <strong>MULTIMEDICA ALFARERO</strong>
-        <div>{location_name}</div>
-      </div>
-      <Divider />
-      <div style={styles.center}>
-        <div>{displayName}</div>
-        <Divider />
-        <div>{t(type_of_visit)}</div>
-        <div>{date}</div>
-      </div>
+        @media print {
+          html, body {
+            background: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+        }
+      `}</style>
 
-      <div style={styles.qrWrapper}>
-        <QRCodeSVG
-          value={`VISIT:${pt_no}`}
-          size={100}
-          level="M"
-          includeMargin={true}
-        />
-      </div>
+      <div style={styles.page}>
+        <div style={styles.ticketCard}>
+          <div style={styles.header}>
+            <img src={full_logo_bw} alt="logo" style={styles.logo} />
+            <div style={styles.clinicName}>MULTIMEDICA ALFARERO</div>
+            <div style={styles.locationName}>{location_name}</div>
+          </div>
 
-      <div style={styles.footer}>Traiga este ticket a cada estación.</div>
-      {location_message && <div style={styles.message}>{location_message}</div>}
-    </div>
+          <div style={styles.rule} />
+
+          <div style={styles.mainContent}>
+            <div style={styles.leftColumn}>
+              <div style={styles.sectionLabel}>Paciente</div>
+              <div style={styles.patientName}>{patient_name}</div>
+
+              {guardian_name && age_group === "child" && (
+                <div style={styles.guardianName}>
+                  Responsable: {guardian_name}
+                </div>
+              )}
+
+              <div style={styles.infoBlock}>
+                <div style={styles.sectionLabel}>Tipo de visita</div>
+                <div style={styles.infoValue}>{translatedVisitType}</div>
+              </div>
+
+              <div style={styles.infoBlock}>
+                <div style={styles.sectionLabel}>Fecha</div>
+                <div style={styles.infoValue}>{date}</div>
+              </div>
+
+              <div style={styles.infoBlock}>
+                <div style={styles.sectionLabel}>Código de visita</div>
+                <div style={styles.visitCode}>{pt_no}</div>
+              </div>
+            </div>
+
+            <div style={styles.rightColumn}>
+              <div style={styles.qrWrapper}>
+                {qrValue ? (
+                  <QRCodeSVG
+                    value={qrValue}
+                    size={220}
+                    level="M"
+                    includeMargin={true}
+                  />
+                ) : null}
+              </div>
+              <div style={styles.qrCaption}>
+                Presente este ticket en cada estación.
+              </div>
+            </div>
+          </div>
+
+          {location_message ? (
+            <>
+              <div style={styles.rule} />
+              <div style={styles.messageBox}>{location_message}</div>
+            </>
+          ) : null}
+        </div>
+      </div>
+    </>
   );
 };
 
 const styles = {
-  ticket: {
-    width: "72mm",
-    padding: "8px",
-    fontFamily: "monospace",
+  page: {
+    width: "100%",
+    minHeight: "100vh",
     background: "white",
     color: "black",
+    fontFamily: "Arial, Helvetica, sans-serif",
+    boxSizing: "border-box",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "flex-start",
+    padding: "0.25in 0",
+  },
+  ticketCard: {
+    width: "100%",
+    maxWidth: "9.5in",
+    border: "2px solid #000",
+    borderRadius: "12px",
+    padding: "0.35in",
+    boxSizing: "border-box",
+    background: "white",
+  },
+  header: {
+    textAlign: "center",
   },
   logo: {
-    width: "60%",
+    width: "260px",
+    maxWidth: "70%",
     display: "block",
-    margin: "0 auto 8px",
+    margin: "0 auto 12px",
   },
-  center: {
-    textAlign: "center",
-    marginBottom: "8px",
+  clinicName: {
+    fontSize: "24px",
+    fontWeight: 700,
+    letterSpacing: "0.5px",
+    marginBottom: "6px",
   },
-  section: {
+  locationName: {
+    fontSize: "18px",
+    fontWeight: 600,
+  },
+  rule: {
+    borderTop: "2px solid #000",
+    margin: "18px 0",
+  },
+  mainContent: {
+    display: "flex",
+    gap: "28px",
+    alignItems: "stretch",
+    justifyContent: "space-between",
+  },
+  leftColumn: {
+    flex: 1,
+    minWidth: 0,
+  },
+  rightColumn: {
+    width: "280px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  sectionLabel: {
+    fontSize: "13px",
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: "0.8px",
+    marginBottom: "6px",
+  },
+  patientName: {
+    fontSize: "30px",
+    fontWeight: 700,
+    lineHeight: 1.15,
     marginBottom: "10px",
-    fontSize: "12px",
   },
-  barcodeWrapper: {
-    textAlign: "center",
-    margin: "10px 0",
+  guardianName: {
+    fontSize: "18px",
+    marginBottom: "18px",
   },
-  barcodeText: {
-    textAlign: "center",
-    fontSize: "10px",
-    marginBottom: "10px",
+  infoBlock: {
+    marginTop: "16px",
   },
-  message: {
-    textAlign: "center",
-    fontSize: "10px",
-    marginTop: "8px",
-    marginBottom: "8px",
-    borderTop: "1px solid #000",
-    paddingTop: "8px",
-    borderBottom: "1px solid #000",
-    paddingBottom: "8px",
+  infoValue: {
+    fontSize: "22px",
+    lineHeight: 1.25,
   },
-  footer: {
-    textAlign: "center",
-    fontSize: "10px",
-    marginBottom: "25px",
+  visitCode: {
+    fontSize: "18px",
+    fontWeight: 700,
+    wordBreak: "break-all",
+    lineHeight: 1.3,
   },
   qrWrapper: {
-    textAlign: "center",
-    margin: "8px 0",
+    width: "250px",
+    minHeight: "250px",
+    border: "2px solid #000",
+    borderRadius: "10px",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "10px",
+    boxSizing: "border-box",
   },
-  pageBreak: {
-    pageBreakBefore: "always",
+  qrCaption: {
+    marginTop: "12px",
+    fontSize: "16px",
+    textAlign: "center",
+    fontWeight: 600,
+    lineHeight: 1.35,
+  },
+  messageBox: {
+    textAlign: "center",
+    fontSize: "18px",
+    lineHeight: 1.4,
+    padding: "6px 4px 0",
   },
 };
 
