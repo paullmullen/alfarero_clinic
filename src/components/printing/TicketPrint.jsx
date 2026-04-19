@@ -62,7 +62,6 @@ const TicketPrint = ({ patient }) => {
         <div style={styles.ticketCard}>
           <div style={styles.header}>
             <img src={full_logo_bw} alt="logo" style={styles.logo} />
-            <div style={styles.clinicName}>MULTIMEDICA ALFARERO</div>
             <div style={styles.locationName}>{location_name}</div>
           </div>
 

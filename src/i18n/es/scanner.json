@@ -1,6 +1,6 @@
 {
   "SCANNER_QR_GENERATOR_TITLE": "Generador QR para escáner",
-  "SCANNER_QR_GENERATOR_DESCRIPTION": "Genere un código QR para configurar ROOM_ID, STATION_ID y DEVICE_ID en un escáner.",
+  "SCANNER_QR_GENERATOR_DESCRIPTION": "Genere códigos QR para configurar escáners.  Hay 3 tipos de QR: Configuración de estación, Configuración de WiFi y Configuración de la nube. Elija el tipo deseado, complete los campos necesarios y genere el código QR para imprimirlo. Note que algunos Codigos QR contienen información sensible, así que manéjelos con cuidado.",
   "SCANNER_QR_STATION_ID": "Estación",
   "SCANNER_QR_STATION_PLACEHOLDER": "Seleccione una estación",
   "SCANNER_QR_ROOM_ID": "Room ID",
