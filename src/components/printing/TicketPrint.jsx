@@ -1,9 +1,45 @@
-import React from "react";
+/* eslint-disable no-unused-vars */
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import full_logo_bw from "../../img/full_logo_bw.gif";
 import { useTranslation } from "react-i18next";
-import { QRCodeSVG } from "qrcode.react";
+import JsBarcode from "jsbarcode";
+import QRCode from "qrcode";
 
-const TicketPrint = ({ patient }) => {
+const formatDateValue = (value) => {
+  if (!value) return "";
+
+  let dateValue = value;
+
+  if (typeof value?.toDate === "function") {
+    dateValue = value.toDate();
+  } else if (!(value instanceof Date)) {
+    dateValue = new Date(value);
+  }
+
+  if (Number.isNaN(dateValue?.getTime?.())) return "";
+
+  return dateValue.toLocaleDateString("es-GT", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
+
+const TicketPrint = ({
+  patient,
+  printFormat = "letter",
+  thermalDebugStage = 4,
+}) => {
+  const [t] = useTranslation("global");
+
+  if (printFormat === "ticket") {
+    return <TicketReceiptLayout patient={patient} t={t} />;
+  }
+
+  return <LetterTicketLayout patient={patient} t={t} />;
+};
+
+const LetterTicketLayout = ({ patient, t }) => {
   const {
     pt_no,
     patient_name,
@@ -15,31 +51,9 @@ const TicketPrint = ({ patient }) => {
     created_at,
   } = patient || {};
 
-  const [t] = useTranslation("global");
-
-  const formatDate = (value) => {
-    if (!value) return "";
-
-    let dateValue = value;
-
-    if (typeof value?.toDate === "function") {
-      dateValue = value.toDate();
-    } else if (!(value instanceof Date)) {
-      dateValue = new Date(value);
-    }
-
-    if (Number.isNaN(dateValue?.getTime?.())) return "";
-
-    return dateValue.toLocaleDateString("es-GT", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  };
-
-  const date = formatDate(created_at);
+  const date = formatDateValue(created_at);
   const translatedVisitType = type_of_visit ? t(type_of_visit) : "";
-  const qrValue = pt_no ? `VISIT:${pt_no}` : "";
+  const barcodeValue = pt_no || "";
 
   return (
     <>
@@ -95,16 +109,7 @@ const TicketPrint = ({ patient }) => {
             </div>
 
             <div style={styles.rightColumn}>
-              <div style={styles.qrWrapper}>
-                {qrValue ? (
-                  <QRCodeSVG
-                    value={qrValue}
-                    size={220}
-                    level="M"
-                    includeMargin={true}
-                  />
-                ) : null}
-              </div>
+              <LetterBarcode value={barcodeValue} />
               <div style={styles.qrCaption}>
                 Presente este ticket en cada estación.
               </div>
@@ -121,6 +126,166 @@ const TicketPrint = ({ patient }) => {
       </div>
     </>
   );
+};
+
+const TicketReceiptLayout = ({ patient, t }) => {
+  const {
+    pt_no,
+    patient_name,
+    guardian_name,
+    age_group,
+    type_of_visit,
+    location_name,
+    location_message,
+    created_at,
+  } = patient || {};
+
+  const date = formatDateValue(created_at);
+  const translatedVisitType = type_of_visit ? t(type_of_visit) : "";
+  const qrValue = pt_no || "";
+
+  return (
+    <>
+      <style>{`
+        @media print {
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+          }
+        }
+      `}</style>
+
+      <div
+        style={{
+          width: "64mm",
+          padding: "0 2mm",
+          margin: 8,
+          fontFamily: "Arial, sans-serif",
+          fontSize: "14px",
+          color: "black",
+          background: "white",
+          boxSizing: "border-box",
+        }}
+      >
+        <div>{location_name || ""}</div>
+
+        <div style={{ borderTop: "1px solid black", margin: "8px 0" }} />
+
+        <div>Paciente: {patient_name || ""}</div>
+
+        {guardian_name && age_group === "child" ? (
+          <div>Responsable: {guardian_name}</div>
+        ) : null}
+
+        <div>Tipo: {translatedVisitType}</div>
+        <div>Fecha: {date}</div>
+        <div>Codigo: {pt_no || ""}</div>
+
+        {location_message ? (
+          <>
+            <div style={{ borderTop: "1px solid black", margin: "8px 0" }} />
+            <div style={{ marginTop: "8px" }}>{location_message}</div>
+          </>
+        ) : null}
+        <ReceiptQR value={qrValue} />
+        <div style={{ textAlign: "center", marginTop: "10px" }}>
+          Presente este ticket en cada estación.
+        </div>
+
+        <div style={{ height: "30mm" }} />
+      </div>
+    </>
+  );
+};
+
+const LetterBarcode = ({ value }) => {
+  const imgSrc = useBarcodeImage(value, {
+    format: "CODE128",
+    width: 2,
+    height: 80,
+    displayValue: false,
+    margin: 0,
+  });
+
+  if (!value || !imgSrc) return null;
+
+  return (
+    <div style={styles.qrWrapper}>
+      <img src={imgSrc} alt="barcode" style={styles.letterBarcodeImage} />
+    </div>
+  );
+};
+
+const ReceiptQR = ({ value }) => {
+  const imgSrc = useQrImage(value);
+
+  if (!value || !imgSrc) return null;
+
+  return (
+    <img
+      src={imgSrc}
+      alt="qr"
+      style={{
+        display: "block",
+        width: "32mm",
+        height: "36mm",
+        margin: "10px auto",
+      }}
+    />
+  );
+};
+
+const useBarcodeImage = (value, options) => {
+  const [imgSrc, setImgSrc] = useState("");
+  const canvasRef = useRef(null);
+
+  const stableOptions = useMemo(() => options, [options]);
+
+  useEffect(() => {
+    if (!value) {
+      setImgSrc("");
+      return;
+    }
+
+    try {
+      const canvas = document.createElement("canvas");
+      canvasRef.current = canvas;
+
+      JsBarcode(canvas, value, stableOptions);
+
+      const dataUrl = canvas.toDataURL("image/png");
+      setImgSrc(dataUrl);
+    } catch (error) {
+      console.error("Failed to build barcode image:", error);
+      setImgSrc("");
+    }
+  }, [value, stableOptions]);
+
+  return imgSrc;
+};
+
+const useQrImage = (value) => {
+  const [imgSrc, setImgSrc] = useState("");
+
+  useEffect(() => {
+    if (!value) {
+      setImgSrc("");
+      return;
+    }
+
+    QRCode.toDataURL(value, {
+      margin: 2,
+      width: 300,
+    })
+      .then(setImgSrc)
+      .catch((error) => {
+        console.error("QR generation failed:", error);
+        setImgSrc("");
+      });
+  }, [value]);
+
+  return imgSrc;
 };
 
 const styles = {
@@ -153,12 +318,6 @@ const styles = {
     maxWidth: "70%",
     display: "block",
     margin: "0 auto 12px",
-  },
-  clinicName: {
-    fontSize: "24px",
-    fontWeight: 700,
-    letterSpacing: "0.5px",
-    marginBottom: "6px",
   },
   locationName: {
     fontSize: "18px",
@@ -217,7 +376,7 @@ const styles = {
   },
   qrWrapper: {
     width: "250px",
-    minHeight: "250px",
+    minHeight: "140px",
     border: "2px solid #000",
     borderRadius: "10px",
     display: "flex",
@@ -225,6 +384,11 @@ const styles = {
     alignItems: "center",
     padding: "10px",
     boxSizing: "border-box",
+  },
+  letterBarcodeImage: {
+    display: "block",
+    width: "100%",
+    height: "auto",
   },
   qrCaption: {
     marginTop: "12px",

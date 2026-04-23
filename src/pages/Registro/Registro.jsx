@@ -617,7 +617,13 @@ export const Registro = () => {
         }}
       >
         <div ref={ticketPrintRef}>
-          {ticketPatient ? <TicketPrint patient={ticketPatient} /> : null}
+          {ticketPatient ? (
+            <TicketPrint
+              patient={ticketPatient}
+              printFormat={useServiceLocation?.printing?.format || "letter"}
+              thermalDebugStage={1}
+            />
+          ) : null}
         </div>
       </div>
     </>

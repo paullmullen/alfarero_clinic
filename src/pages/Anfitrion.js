@@ -273,17 +273,11 @@ const Anfitrion = () => {
         return;
       }
 
-      const printWindow = window.open("", "_blank", "width=400,height=600");
+      const printWindow = window.open("", "_blank", "width=500,height=800");
       if (!printWindow) {
         reject(new Error("Popup blocked."));
         return;
       }
-
-      const styles = Array.from(
-        document.querySelectorAll("link[rel='stylesheet'], style"),
-      )
-        .map((el) => el.outerHTML)
-        .join("\n");
 
       const clone = node.cloneNode(true);
 
@@ -306,32 +300,55 @@ const Anfitrion = () => {
 
       printWindow.document.open();
       printWindow.document.write(`
-        <html>
-          <head>
-            ${styles}
-            <style>
-              html, body {
-                margin: 0;
-                padding: 0;
-                background: white;
-              }
-              @page {
-                margin: 0;
-              }
-            </style>
-          </head>
-          <body>${clone.outerHTML}</body>
-        </html>
-      `);
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Print Ticket</title>
+          <style>
+            html, body {
+              margin: 0;
+              padding: 0;
+              background: white;
+              height: auto;
+              overflow: visible;
+              font-family: Arial, sans-serif;
+            }
+
+            @page {
+              margin: 0;
+              size: 80mm 3276mm;
+            }
+
+            .print-root {
+              width: 80mm;
+              margin: 0;
+              padding: 0;
+              display: block;
+              overflow: visible;
+            }
+
+            .print-root * {
+              overflow: visible !important;
+              max-height: none !important;
+              box-sizing: border-box;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-root">
+            ${clone.outerHTML}
+          </div>
+        </body>
+      </html>
+    `);
       printWindow.document.close();
 
       printWindow.onload = () => {
         setTimeout(() => {
           printWindow.focus();
           printWindow.print();
-          printWindow.close();
           resolve();
-        }, 250);
+        }, 500);
       };
     });
   };
@@ -878,7 +895,13 @@ const Anfitrion = () => {
         }}
       >
         <div ref={ticketPrintRef}>
-          {ticketPatient ? <TicketPrint patient={ticketPatient} /> : null}
+          {ticketPatient ? (
+            <TicketPrint
+              patient={ticketPatient}
+              printFormat={selectedLocation?.printing?.format || "letter"}
+              thermalDebugStage={1}
+            />
+          ) : null}
         </div>
       </div>
     </>
