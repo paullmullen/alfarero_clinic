@@ -89,6 +89,22 @@ export const onRoomEventCreated = onDocumentCreated(
     const eventId = snap.id;
     const eventRef = snap.ref;
 
+    if (
+      roomEvent.processing_status === "resolved" ||
+      roomEvent.processing_status === "processing_by_receiveRoomScanEvent" ||
+      roomEvent.processed_by === "receiveRoomScanEvent"
+    ) {
+      logger.info(
+        "room_event handled by receiveRoomScanEvent; skipping trigger",
+        {
+          eventId,
+          processing_status: roomEvent.processing_status,
+          processed_by: roomEvent.processed_by || null,
+        },
+      );
+      return;
+    }
+
     // NOTE: visit_id is actually pt_no (visit key)
     const visitId = roomEvent.visit_id;
     const stationId = roomEvent.station_id;

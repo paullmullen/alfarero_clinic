@@ -2,6 +2,7 @@ import { onRequest } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import admin from "firebase-admin";
+import { applyScannerEventAdapter } from "./transitions/applyScannerEventAdapter.js";
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -35,9 +36,6 @@ export const receiveRoomScanEvent = onRequest(
         device_id,
         event_type,
         device_timestamp_utc,
-        source_type,
-        time_unsynced,
-        metadata,
       } = req.body || {};
 
       if (
@@ -50,28 +48,21 @@ export const receiveRoomScanEvent = onRequest(
         !device_timestamp_utc
       ) {
         return res.status(400).json({
-          error:
-            "Missing required fields: visit_id, raw_scan_value, room_id, station_id, device_id, event_type, device_timestamp_utc",
+          error: "Missing required fields",
         });
       }
 
       if (!ALLOWED_EVENT_TYPES.includes(event_type)) {
         return res.status(400).json({
-          error: `Invalid event_type. Allowed values: ${ALLOWED_EVENT_TYPES.join(
-            ", ",
-          )}`,
+          error: `Invalid event_type`,
         });
       }
 
-      const parsedTimestamp = Date.parse(device_timestamp_utc);
-      if (Number.isNaN(parsedTimestamp)) {
-        return res.status(400).json({
-          error:
-            "Invalid device_timestamp_utc. Must be a valid ISO-8601 string.",
-        });
-      }
+      // =========================
+      // STORE EVENT
+      // =========================
 
-      const eventDoc = {
+      const docRef = await db.collection("room_events").add({
         visit_id,
         raw_scan_value,
         room_id,
@@ -79,33 +70,153 @@ export const receiveRoomScanEvent = onRequest(
         device_id,
         event_type,
         device_timestamp_utc,
-        source_type: source_type || "MICRO_SCANNER",
-        time_unsynced: time_unsynced === true,
-        metadata: metadata || null,
-
-        // resolved/enriched later
-        patient_id: null,
-
-        // processing lifecycle
-        processing_status: "pending",
-        processing_error: null,
-
-        // trusted server receipt time
+        processing_status: "processing_by_receiveRoomScanEvent",
+        processed_by: "receiveRoomScanEvent",
         received_at: FieldValue.serverTimestamp(),
-      };
+      });
 
-      const docRef = await db.collection("room_events").add(eventDoc);
+      // =========================
+      // LOAD VISIT
+      // =========================
 
-      return res.status(201).json({
-        status: "ok",
+      const visitRef = db.collection("patients").doc(String(visit_id));
+      const visitSnap = await visitRef.get();
+
+      let display;
+
+      if (!visitSnap.exists) {
+        display = {
+          mode: "overlay",
+          updated_at: Date.now(),
+          overlay: {
+            severity: "error",
+            title: "Paciente no encontrado",
+            detail: visit_id,
+          },
+        };
+
+        // mark event resolved EVEN on error
+        await docRef.set(
+          {
+            processing_status: "resolved",
+            processing_error: "visit_not_found",
+            processed_by: "receiveRoomScanEvent",
+            processed_at: FieldValue.serverTimestamp(),
+            display_response: display,
+          },
+          { merge: true },
+        );
+
+        return res.status(200).json({
+          ok: false,
+          event_id: docRef.id,
+          display,
+        });
+      }
+
+      const visitData = visitSnap.data();
+
+      // =========================
+      // APPLY TRANSITION (KEY FIX)
+      // =========================
+
+      const transitionTimestamp = admin.firestore.Timestamp.now();
+
+      const result = applyScannerEventAdapter({
+        visitData,
+        station: station_id,
+        timestamp: transitionTimestamp,
+        source: "scanner",
+      });
+
+      if (result.changed) {
+        await visitRef.update({
+          plan_of_care: result.updatedPlanOfCare,
+        });
+      }
+
+      // =========================
+      // BUILD DISPLAY FROM RESULT
+      // =========================
+
+      const patientName =
+        visitData.patient_name ||
+        visitData.name ||
+        visitData.full_name ||
+        "Paciente";
+
+      if (result.targetStatus === "in_process") {
+        display = {
+          mode: "room_status",
+          updated_at: Date.now(),
+          room: { label: room_id },
+          station: { label: station_id },
+          status: {
+            code: "in_process",
+            label: "EN\nPROCESO",
+          },
+          patient: { name: patientName },
+          timing: {
+            started_at: new Date().toISOString(),
+          },
+        };
+      } else {
+        display = {
+          mode: "room_status",
+          updated_at: Date.now(),
+          room: { label: room_id },
+          station: { label: station_id },
+          status: {
+            code: "vacant",
+            label: "DISPONIBLE",
+          },
+          patient: { name: "—" },
+          timing: {
+            started_at: null,
+          },
+        };
+      }
+
+      // =========================
+      // MARK EVENT AS RESOLVED (CRITICAL)
+      // =========================
+
+      await docRef.set(
+        {
+          processing_status: "resolved",
+          processing_error: null,
+          processed_by: "receiveRoomScanEvent",
+          processed_at: FieldValue.serverTimestamp(),
+          display_response: display,
+        },
+        { merge: true },
+      );
+
+      // =========================
+      // RETURN RESPONSE
+      // =========================
+
+      return res.status(200).json({
+        ok: true,
         event_id: docRef.id,
+        display,
       });
     } catch (err) {
-      console.error("Error receiving room scan event:", {
-        message: err?.message || String(err),
-      });
+      console.error("Error receiving room scan event:", err);
 
-      return res.status(500).json({ error: "Internal server error" });
+      return res.status(500).json({
+        ok: false,
+        error: "Internal server error",
+        display: {
+          mode: "overlay",
+          updated_at: Date.now(),
+          overlay: {
+            severity: "error",
+            title: "Error",
+            detail: "No se pudo procesar el escaneo",
+          },
+        },
+      });
     }
   },
 );
