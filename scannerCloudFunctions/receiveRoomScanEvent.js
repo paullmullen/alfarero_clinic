@@ -3,6 +3,7 @@ import { defineSecret } from "firebase-functions/params";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import admin from "firebase-admin";
 import { applyScannerEventAdapter } from "./transitions/applyScannerEventAdapter.js";
+import { checkForWaitingPatient } from "./checkForWaitingPatient.js";
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -146,6 +147,7 @@ export const receiveRoomScanEvent = onRequest(
         "Paciente";
 
       if (result.targetStatus === "in_process") {
+        // SCAN-IN CASE (unchanged)
         display = {
           mode: "room_status",
           updated_at: Date.now(),
@@ -161,14 +163,29 @@ export const receiveRoomScanEvent = onRequest(
           },
         };
       } else {
+        // 🔥 SCAN-OUT CASE (NEW LOGIC)
+
+        const hasWaitingPatient = await checkForWaitingPatient({
+          db,
+          station_id,
+          location_id: visitData.location_id,
+          current_visit_id: visit_id,
+        });
+
+        const statusCode = hasWaitingPatient ? "patient_waiting" : "vacant";
+
+        const statusLabel = hasWaitingPatient
+          ? "PACIENTE\nEN ESPERA"
+          : "DISPONIBLE";
+
         display = {
           mode: "room_status",
           updated_at: Date.now(),
           room: { label: room_id },
           station: { label: station_id },
           status: {
-            code: "vacant",
-            label: "DISPONIBLE",
+            code: statusCode,
+            label: statusLabel,
           },
           patient: { name: "—" },
           timing: {
