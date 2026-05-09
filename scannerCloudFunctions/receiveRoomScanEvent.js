@@ -14,6 +14,106 @@ const SCANNER_SHARED_TOKEN = defineSecret("SCANNER_SHARED_TOKEN");
 
 const ALLOWED_EVENT_TYPES = ["scan_received", "boot_sync"];
 
+function getPatientName(visitData) {
+  return (
+    visitData.patient_name ||
+    visitData.name ||
+    visitData.full_name ||
+    "Paciente"
+  );
+}
+
+function buildRoomStatusDisplay({
+  room_id,
+  station_id,
+  statusCode,
+  statusLabel,
+  patientName = "—",
+  startedAt = null,
+}) {
+  return {
+    mode: "room_status",
+    updated_at: Date.now(),
+    room: { label: room_id },
+    station: { label: station_id },
+    status: {
+      code: statusCode,
+      label: statusLabel,
+    },
+    patient: { name: patientName },
+    timing: {
+      started_at: startedAt,
+    },
+  };
+}
+
+async function buildBootSyncDisplay({ room_id, station_id }) {
+  const activeVisitsSnap = await db
+    .collection("patients")
+    .where("complete", "==", false)
+    .limit(250)
+    .get();
+
+  let inProcessVisit = null;
+  let waitingVisit = null;
+
+  activeVisitsSnap.forEach((doc) => {
+    const data = doc.data();
+    const plan = Array.isArray(data.plan_of_care) ? data.plan_of_care : [];
+
+    const stationStep = plan.find((step) => step.station === station_id);
+
+    if (!stationStep) return;
+
+    console.log("BOOT SYNC STATION MATCH:", {
+      visit_id: doc.id,
+      station_id,
+      matched_step: stationStep,
+      patient_name: data.patient_name || data.name || data.full_name || null,
+      location_id: data.location_id || null,
+    });
+
+    if (stationStep.status === "in_process" && !inProcessVisit) {
+      inProcessVisit = { id: doc.id, data, stationStep };
+    }
+
+    if (stationStep.status === "waiting" && !waitingVisit) {
+      waitingVisit = { id: doc.id, data, stationStep };
+    }
+  });
+
+  if (inProcessVisit) {
+    return buildRoomStatusDisplay({
+      room_id,
+      station_id,
+      statusCode: "in_process",
+      statusLabel: "EN\nPROCESO",
+      patientName: getPatientName(inProcessVisit.data),
+      startedAt: new Date().toISOString(),
+    });
+  }
+
+  if (waitingVisit) {
+    return buildRoomStatusDisplay({
+      room_id,
+      station_id,
+      statusCode: "patient_waiting",
+      statusLabel: "PACIENTE\nEN ESPERA",
+      patientName: "—",
+      startedAt: null,
+    });
+  }
+
+  return buildRoomStatusDisplay({
+    room_id,
+    station_id,
+    statusCode: "vacant",
+    statusLabel: "DISPONIBLE",
+    patientName: "—",
+    startedAt: null,
+  });
+}
+
 export const receiveRoomScanEvent = onRequest(
   { secrets: [SCANNER_SHARED_TOKEN] },
   async (req, res) => {
@@ -30,6 +130,7 @@ export const receiveRoomScanEvent = onRequest(
       }
 
       const {
+        event_id,
         visit_id,
         raw_scan_value,
         room_id,
@@ -38,6 +139,17 @@ export const receiveRoomScanEvent = onRequest(
         event_type,
         device_timestamp_utc,
       } = req.body || {};
+
+      if (!event_type || !ALLOWED_EVENT_TYPES.includes(event_type)) {
+        return res.status(400).json({
+          error: "Invalid event_type",
+        });
+      }
+
+      // =========================
+      // BOOT / DISPLAY SYNC
+      // =========================
+
       if (event_type === "boot_sync") {
         if (!room_id || !station_id || !device_id || !device_timestamp_utc) {
           return res.status(400).json({
@@ -45,111 +157,30 @@ export const receiveRoomScanEvent = onRequest(
           });
         }
 
-        const activeVisitsSnap = await db
-          .collection("patients")
-          .where("complete", "==", false)
-          .limit(250)
-          .get();
-
-        let inProcessVisit = null;
-        let waitingVisit = null;
-
-        activeVisitsSnap.forEach((doc) => {
-          const data = doc.data();
-          const plan = Array.isArray(data.plan_of_care)
-            ? data.plan_of_care
-            : [];
-
-          const stationStep = plan.find((step) => step.station === station_id);
-
-          console.log("BOOT SYNC STATION MATCH:", {
-            visit_id: doc.id,
-            station_id,
-            matched_step: stationStep,
-            patient_name:
-              data.patient_name || data.name || data.full_name || null,
-            location_id: data.location_id || null,
-          });
-
-          if (!stationStep) return;
-
-          if (stationStep.status === "in_process" && !inProcessVisit) {
-            inProcessVisit = { id: doc.id, data };
-          }
-
-          if (stationStep.status === "waiting" && !waitingVisit) {
-            waitingVisit = { id: doc.id, data };
-          }
+        const display = await buildBootSyncDisplay({
+          room_id,
+          station_id,
         });
-
-        let display;
-
-        if (inProcessVisit) {
-          const patientName =
-            inProcessVisit.data.patient_name ||
-            inProcessVisit.data.name ||
-            inProcessVisit.data.full_name ||
-            "Paciente";
-
-          display = {
-            mode: "room_status",
-            updated_at: Date.now(),
-            room: { label: room_id },
-            station: { label: station_id },
-            status: {
-              code: "in_process",
-              label: "EN\nPROCESO",
-            },
-            patient: { name: patientName },
-            timing: {
-              started_at: new Date().toISOString(),
-            },
-          };
-        } else if (waitingVisit) {
-          display = {
-            mode: "room_status",
-            updated_at: Date.now(),
-            room: { label: room_id },
-            station: { label: station_id },
-            status: {
-              code: "patient_waiting",
-              label: "PACIENTE\nEN ESPERA",
-            },
-            patient: { name: "—" },
-            timing: {
-              started_at: null,
-            },
-          };
-        } else {
-          display = {
-            mode: "room_status",
-            updated_at: Date.now(),
-            room: { label: room_id },
-            station: { label: station_id },
-            status: {
-              code: "vacant",
-              label: "DISPONIBLE",
-            },
-            patient: { name: "—" },
-            timing: {
-              started_at: null,
-            },
-          };
-        }
 
         return res.status(200).json({
           ok: true,
           event_id: null,
+          duplicate: false,
           display,
         });
       }
+
+      // =========================
+      // NORMAL SCAN VALIDATION
+      // =========================
+
       if (
+        !event_id ||
         !visit_id ||
         !raw_scan_value ||
         !room_id ||
         !station_id ||
         !device_id ||
-        !event_type ||
         !device_timestamp_utc
       ) {
         return res.status(400).json({
@@ -157,9 +188,31 @@ export const receiveRoomScanEvent = onRequest(
         });
       }
 
-      if (!ALLOWED_EVENT_TYPES.includes(event_type)) {
-        return res.status(400).json({
-          error: `Invalid event_type`,
+      // =========================
+      // IDEMPOTENCY CHECK
+      // =========================
+
+      const docRef = db.collection("room_events").doc(String(event_id));
+      const existingEventSnap = await docRef.get();
+
+      if (existingEventSnap.exists) {
+        const existingEvent = existingEventSnap.data() || {};
+
+        if (existingEvent.display_response) {
+          return res.status(200).json({
+            ok: existingEvent.ok ?? true,
+            event_id: docRef.id,
+            duplicate: true,
+            display: existingEvent.display_response,
+          });
+        }
+
+        return res.status(202).json({
+          ok: false,
+          event_id: docRef.id,
+          duplicate: true,
+          processing_status: existingEvent.processing_status || "processing",
+          error: "Event already received and is still processing",
         });
       }
 
@@ -167,7 +220,8 @@ export const receiveRoomScanEvent = onRequest(
       // STORE EVENT
       // =========================
 
-      const docRef = await db.collection("room_events").add({
+      await docRef.create({
+        event_id,
         visit_id,
         raw_scan_value,
         room_id,
@@ -200,9 +254,9 @@ export const receiveRoomScanEvent = onRequest(
           },
         };
 
-        // mark event resolved EVEN on error
         await docRef.set(
           {
+            ok: false,
             processing_status: "resolved",
             processing_error: "visit_not_found",
             processed_by: "receiveRoomScanEvent",
@@ -215,6 +269,7 @@ export const receiveRoomScanEvent = onRequest(
         return res.status(200).json({
           ok: false,
           event_id: docRef.id,
+          duplicate: false,
           display,
         });
       }
@@ -222,7 +277,7 @@ export const receiveRoomScanEvent = onRequest(
       const visitData = visitSnap.data();
 
       // =========================
-      // APPLY TRANSITION (KEY FIX)
+      // APPLY TRANSITION
       // =========================
 
       const transitionTimestamp = admin.firestore.Timestamp.now();
@@ -244,31 +299,18 @@ export const receiveRoomScanEvent = onRequest(
       // BUILD DISPLAY FROM RESULT
       // =========================
 
-      const patientName =
-        visitData.patient_name ||
-        visitData.name ||
-        visitData.full_name ||
-        "Paciente";
+      const patientName = getPatientName(visitData);
 
       if (result.targetStatus === "in_process") {
-        // SCAN-IN CASE (unchanged)
-        display = {
-          mode: "room_status",
-          updated_at: Date.now(),
-          room: { label: room_id },
-          station: { label: station_id },
-          status: {
-            code: "in_process",
-            label: "EN\nPROCESO",
-          },
-          patient: { name: patientName },
-          timing: {
-            started_at: new Date().toISOString(),
-          },
-        };
+        display = buildRoomStatusDisplay({
+          room_id,
+          station_id,
+          statusCode: "in_process",
+          statusLabel: "EN\nPROCESO",
+          patientName,
+          startedAt: new Date().toISOString(),
+        });
       } else {
-        // 🔥 SCAN-OUT CASE (NEW LOGIC)
-
         const hasWaitingPatient = await checkForWaitingPatient({
           db,
           station_id,
@@ -277,33 +319,27 @@ export const receiveRoomScanEvent = onRequest(
         });
 
         const statusCode = hasWaitingPatient ? "patient_waiting" : "vacant";
-
         const statusLabel = hasWaitingPatient
           ? "PACIENTE\nEN ESPERA"
           : "DISPONIBLE";
 
-        display = {
-          mode: "room_status",
-          updated_at: Date.now(),
-          room: { label: room_id },
-          station: { label: station_id },
-          status: {
-            code: statusCode,
-            label: statusLabel,
-          },
-          patient: { name: "—" },
-          timing: {
-            started_at: null,
-          },
-        };
+        display = buildRoomStatusDisplay({
+          room_id,
+          station_id,
+          statusCode,
+          statusLabel,
+          patientName: "—",
+          startedAt: null,
+        });
       }
 
       // =========================
-      // MARK EVENT AS RESOLVED (CRITICAL)
+      // MARK EVENT AS RESOLVED
       // =========================
 
       await docRef.set(
         {
+          ok: true,
           processing_status: "resolved",
           processing_error: null,
           processed_by: "receiveRoomScanEvent",
@@ -320,6 +356,7 @@ export const receiveRoomScanEvent = onRequest(
       return res.status(200).json({
         ok: true,
         event_id: docRef.id,
+        duplicate: false,
         display,
       });
     } catch (err) {

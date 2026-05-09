@@ -8,10 +8,10 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-// 🔐 define secret
 const scannerSecret = defineSecret("SCANNER_SHARED_SECRET");
 
-// optional labels (can move later to Firestore)
+const ACTIVE_PATIENT_SYNC_LIMIT = 150;
+
 const STATION_LABELS_ES = {
   reg: "Registro",
   nur: "Enfermería",
@@ -76,6 +76,38 @@ function getPatientName(patient = {}) {
   );
 }
 
+function buildPollingInstruction({ statusCode, hasActivePatients }) {
+  if (statusCode === "in_process") {
+    return {
+      should_poll: true,
+      recommended_interval_ms: 10000,
+      reason: "station_in_process",
+    };
+  }
+
+  if (statusCode === "patient_waiting") {
+    return {
+      should_poll: true,
+      recommended_interval_ms: 10000,
+      reason: "patient_waiting",
+    };
+  }
+
+  if (hasActivePatients) {
+    return {
+      should_poll: true,
+      recommended_interval_ms: 30000,
+      reason: "location_active",
+    };
+  }
+
+  return {
+    should_poll: false,
+    recommended_interval_ms: null,
+    reason: "location_inactive",
+  };
+}
+
 function buildDisplayPayload({
   roomId,
   stationId,
@@ -85,30 +117,38 @@ function buildDisplayPayload({
   startedAt = null,
 }) {
   return {
-    ok: true,
-    state: {
-      mode: "room_status",
-      updated_at: Date.now(),
-      room: {
-        id: roomId || null,
-        label: roomId || "—",
-      },
-      station: {
-        id: stationId || null,
-        label: STATION_LABELS_ES[stationId] || stationId || "—",
-      },
-      status: {
-        code: statusCode,
-        label: statusLabel,
-      },
-      patient: {
-        name: patient ? getPatientName(patient) : "—",
-        visit_id: patient?.pt_no || patient?.visit_id || patient?.id || null,
-      },
-      timing: {
-        started_at: startedAt,
-      },
+    mode: "room_status",
+    updated_at: Date.now(),
+    room: {
+      id: roomId || null,
+      label: roomId || "—",
     },
+    station: {
+      id: stationId || null,
+      label: STATION_LABELS_ES[stationId] || stationId || "—",
+    },
+    status: {
+      code: statusCode,
+      label: statusLabel,
+    },
+    patient: {
+      name: patient ? getPatientName(patient) : "—",
+      visit_id: patient?.pt_no || patient?.visit_id || patient?.id || null,
+    },
+    timing: {
+      started_at: startedAt,
+    },
+  };
+}
+
+function buildResponse({ state, statusCode, hasActivePatients }) {
+  return {
+    ok: true,
+    state,
+    polling: buildPollingInstruction({
+      statusCode,
+      hasActivePatients,
+    }),
   };
 }
 
@@ -127,7 +167,6 @@ export const syncStationDisplayState = onRequest(
         });
       }
 
-      // 🔐 auth
       const token = getBearerToken(req);
       const expectedSecret = scannerSecret.value();
 
@@ -154,7 +193,8 @@ export const syncStationDisplayState = onRequest(
         query = query.where("location_id", "==", location_id);
       }
 
-      const snap = await query.limit(250).get();
+      const snap = await query.limit(ACTIVE_PATIENT_SYNC_LIMIT).get();
+      const hasActivePatients = !snap.empty;
 
       let inProcessMatch = null;
       let waitingMatch = null;
@@ -188,36 +228,54 @@ export const syncStationDisplayState = onRequest(
       }
 
       if (inProcessMatch) {
+        const statusCode = "in_process";
+
         return res.status(200).json(
-          buildDisplayPayload({
-            roomId: room_id,
-            stationId,
-            statusCode: "in_process",
-            statusLabel: "EN PROCESO",
-            patient: inProcessMatch.patient,
-            startedAt: inProcessMatch.startedAt,
+          buildResponse({
+            statusCode,
+            hasActivePatients,
+            state: buildDisplayPayload({
+              roomId: room_id,
+              stationId,
+              statusCode,
+              statusLabel: "EN PROCESO",
+              patient: inProcessMatch.patient,
+              startedAt: inProcessMatch.startedAt,
+            }),
           }),
         );
       }
 
       if (waitingMatch) {
+        const statusCode = "patient_waiting";
+
         return res.status(200).json(
-          buildDisplayPayload({
-            roomId: room_id,
-            stationId,
-            statusCode: "patient_waiting",
-            statusLabel: "PACIENTE EN ESPERA",
-            patient: waitingMatch.patient,
+          buildResponse({
+            statusCode,
+            hasActivePatients,
+            state: buildDisplayPayload({
+              roomId: room_id,
+              stationId,
+              statusCode,
+              statusLabel: "PACIENTE EN ESPERA",
+              patient: waitingMatch.patient,
+            }),
           }),
         );
       }
 
+      const statusCode = "available";
+
       return res.status(200).json(
-        buildDisplayPayload({
-          roomId: room_id,
-          stationId,
-          statusCode: "available",
-          statusLabel: "DISPONIBLE",
+        buildResponse({
+          statusCode,
+          hasActivePatients,
+          state: buildDisplayPayload({
+            roomId: room_id,
+            stationId,
+            statusCode,
+            statusLabel: "DISPONIBLE",
+          }),
         }),
       );
     } catch (err) {

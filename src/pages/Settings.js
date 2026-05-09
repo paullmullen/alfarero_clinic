@@ -218,7 +218,11 @@ const Settings = () => {
             "Generate and print QR codes used to configure scanner devices."
           }
         >
-          <ScannerQrGenerator stations={stations} t={t} />
+          <ScannerQrGenerator
+            stations={stations}
+            locations={locations}
+            t={t}
+          />{" "}
         </SectionBlock>
 
         <SectionBlock

@@ -36,5 +36,7 @@
   "SCANNER_QR_STATION_READY": "Código QR de estación listo para imprimir.",
   "SCANNER_QR_STATION_GENERATED": "Código QR de estación generado exitosamente.",
   "SCANNER_QR_STATION_GENERATE_ERROR": "Error al generar el código QR de estación.",
-  "SCANNER_QR_NOT_READY": "Genere o complete la configuración del QR primero."
+  "SCANNER_QR_NOT_READY": "Genere o complete la configuración del QR primero.",
+  "SCANNER_QR_LOCATION_ID": "Ubicación",
+  "SCANNER_QR_LOCATION_PLACEHOLDER": "Seleccione una ubicación"
 }
