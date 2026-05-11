@@ -6,6 +6,8 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
+const CLOSED_GRACE_PERIOD_MS = 15 * 60 * 1000;
+
 const db = admin.firestore();
 
 const scannerSecret = defineSecret("SCANNER_SHARED_SECRET");
@@ -25,6 +27,24 @@ const STATION_LABELS_ES = {
   ped: "Pediatría",
   obs: "Observación",
 };
+
+async function hasRecentPatientActivity({ locationId }) {
+  const cutoff = admin.firestore.Timestamp.fromMillis(
+    Date.now() - CLOSED_GRACE_PERIOD_MS,
+  );
+
+  let query = db
+    .collection("patients")
+    .where("complete", "==", true)
+    .where("last_update", ">=", cutoff);
+
+  if (locationId) {
+    query = query.where("location_id", "==", locationId);
+  }
+
+  const snap = await query.limit(1).get();
+  return !snap.empty;
+}
 
 function getBearerToken(req) {
   const header = req.get("authorization") || "";
@@ -77,6 +97,14 @@ function getPatientName(patient = {}) {
 }
 
 function buildPollingInstruction({ statusCode, hasActivePatients }) {
+  if (statusCode === "closed") {
+    return {
+      should_poll: false,
+      recommended_interval_ms: null,
+      reason: "location_closed",
+    };
+  }
+
   if (statusCode === "in_process") {
     return {
       should_poll: true,
@@ -116,8 +144,11 @@ function buildDisplayPayload({
   patient = null,
   startedAt = null,
 }) {
+  const isClosed = statusCode === "closed";
+
   return {
-    mode: "room_status",
+    mode: isClosed ? "closed" : "room_status",
+    operational_mode: isClosed ? "closed" : "open",
     updated_at: Date.now(),
     room: {
       id: roomId || null,
@@ -142,8 +173,11 @@ function buildDisplayPayload({
 }
 
 function buildResponse({ state, statusCode, hasActivePatients }) {
+  const operationalMode = statusCode === "closed" ? "closed" : "open";
+
   return {
     ok: true,
+    operational_mode: operationalMode,
     state,
     polling: buildPollingInstruction({
       statusCode,
@@ -195,6 +229,44 @@ export const syncStationDisplayState = onRequest(
 
       const snap = await query.limit(ACTIVE_PATIENT_SYNC_LIMIT).get();
       const hasActivePatients = !snap.empty;
+
+      if (!hasActivePatients) {
+        const hasRecentActivity = await hasRecentPatientActivity({
+          locationId: location_id,
+        });
+
+        if (!hasRecentActivity) {
+          const statusCode = "closed";
+
+          return res.status(200).json(
+            buildResponse({
+              statusCode,
+              hasActivePatients,
+              state: buildDisplayPayload({
+                roomId: room_id,
+                stationId,
+                statusCode,
+                statusLabel: "CERRADO",
+              }),
+            }),
+          );
+        }
+
+        const statusCode = "available";
+
+        return res.status(200).json(
+          buildResponse({
+            statusCode,
+            hasActivePatients: true,
+            state: buildDisplayPayload({
+              roomId: room_id,
+              stationId,
+              statusCode,
+              statusLabel: "DISPONIBLE",
+            }),
+          }),
+        );
+      }
 
       let inProcessMatch = null;
       let waitingMatch = null;
