@@ -42,6 +42,8 @@ const layout = { labelCol: { span: 8 } };
 const tailLayout = { wrapperCol: { offset: 8, span: 14 } };
 
 export const Registro = () => {
+  const { selectedLocation } = useServiceLocation();
+
   useHideMenu(false);
 
   const { showAlert } = useAlert();
@@ -620,7 +622,7 @@ export const Registro = () => {
           {ticketPatient ? (
             <TicketPrint
               patient={ticketPatient}
-              printFormat={useServiceLocation?.printing?.format || "letter"}
+              printFormat={selectedLocation?.printing?.format || "letter"}
               thermalDebugStage={1}
             />
           ) : null}

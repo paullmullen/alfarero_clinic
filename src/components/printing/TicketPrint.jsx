@@ -53,7 +53,7 @@ const LetterTicketLayout = ({ patient, t }) => {
 
   const date = formatDateValue(created_at);
   const translatedVisitType = type_of_visit ? t(type_of_visit) : "";
-  const barcodeValue = pt_no || "";
+  const qrValue = pt_no || "";
 
   return (
     <>
@@ -109,7 +109,7 @@ const LetterTicketLayout = ({ patient, t }) => {
             </div>
 
             <div style={styles.rightColumn}>
-              <LetterBarcode value={barcodeValue} />
+              <LetterQR value={qrValue} />
               <div style={styles.qrCaption}>
                 Presente este ticket en cada estación.
               </div>
@@ -217,22 +217,76 @@ const LetterBarcode = ({ value }) => {
   );
 };
 
-const ReceiptQR = ({ value }) => {
-  const imgSrc = useQrImage(value);
+const LetterQR = ({ value }) => {
+  return (
+    <div style={styles.qrWrapper}>
+      <QRCodeSvg value={value} size={180} />
+    </div>
+  );
+};
 
-  if (!value || !imgSrc) return null;
+const ReceiptQR = ({ value }) => {
+  return (
+    <div
+      style={{ display: "flex", justifyContent: "center", margin: "10px auto" }}
+    >
+      <QRCodeSvg value={value} size={150} />
+    </div>
+  );
+};
+
+const QRCodeSvg = ({ value, size = 180 }) => {
+  const qr = useMemo(() => {
+    if (!value) return null;
+
+    try {
+      return QRCode.create(value, {
+        errorCorrectionLevel: "M",
+        margin: 2,
+      });
+    } catch (error) {
+      console.error("QR generation failed:", error);
+      return null;
+    }
+  }, [value]);
+
+  if (!qr) return null;
+
+  const moduleCount = qr.modules.size;
+  const quietZone = 4;
+  const viewBoxSize = moduleCount + quietZone * 2;
+  const darkModules = [];
+
+  for (let row = 0; row < moduleCount; row += 1) {
+    for (let col = 0; col < moduleCount; col += 1) {
+      if (qr.modules.get(row, col)) {
+        darkModules.push(
+          <rect
+            key={`${row}-${col}`}
+            x={col + quietZone}
+            y={row + quietZone}
+            width="1"
+            height="1"
+          />,
+        );
+      }
+    }
+  }
 
   return (
-    <img
-      src={imgSrc}
-      alt="qr"
-      style={{
-        display: "block",
-        width: "32mm",
-        height: "36mm",
-        margin: "10px auto",
-      }}
-    />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
+      shapeRendering="crispEdges"
+      style={styles.letterQrImage}
+      role="img"
+      aria-label="Código QR de visita"
+    >
+      <rect width={viewBoxSize} height={viewBoxSize} fill="#fff" />
+      <g fill="#000">{darkModules}</g>
+    </svg>
   );
 };
 
@@ -261,29 +315,6 @@ const useBarcodeImage = (value, options) => {
       setImgSrc("");
     }
   }, [value, stableOptions]);
-
-  return imgSrc;
-};
-
-const useQrImage = (value) => {
-  const [imgSrc, setImgSrc] = useState("");
-
-  useEffect(() => {
-    if (!value) {
-      setImgSrc("");
-      return;
-    }
-
-    QRCode.toDataURL(value, {
-      margin: 2,
-      width: 300,
-    })
-      .then(setImgSrc)
-      .catch((error) => {
-        console.error("QR generation failed:", error);
-        setImgSrc("");
-      });
-  }, [value]);
 
   return imgSrc;
 };
@@ -402,6 +433,10 @@ const styles = {
     fontSize: "18px",
     lineHeight: 1.4,
     padding: "6px 4px 0",
+  },
+  letterQrImage: {
+    display: "block",
+    flexShrink: 0,
   },
 };
 

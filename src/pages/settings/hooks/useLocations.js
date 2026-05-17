@@ -27,6 +27,7 @@ export const useLocations = () => {
           background_color: d.data().background_color ?? "#ffffff",
           latitude: d.data().latitude ?? 0,
           longitude: d.data().longitude ?? 0,
+          printing: d.data().printing ?? { format: "letter" },
         }));
         setLocations(data);
       } catch (e) {

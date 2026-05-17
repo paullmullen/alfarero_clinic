@@ -59,12 +59,15 @@ export default function LocationsManager({
     }
   };
 
-  const commitPrintFormat = (location) => {
-    const draft = draftPrintFormats[location.id] || "letter";
+  const commitPrintFormat = (location, nextValue = null) => {
+    const draft = nextValue || draftPrintFormats[location.id] || "letter";
     const current = location.printing?.format || "letter";
 
     if (draft !== current) {
-      onUpdate(location.id, "printing.format", draft);
+      onUpdate(location.id, "printing", {
+        ...(location.printing || {}),
+        format: draft,
+      });
     }
   };
 
@@ -148,13 +151,13 @@ export default function LocationsManager({
                 >
                   <Select
                     value={draftPrintFormats[location.id] || "letter"}
-                    onChange={(value) =>
+                    onChange={(value) => {
                       setDraftPrintFormats((prev) => ({
                         ...prev,
                         [location.id]: value,
-                      }))
-                    }
-                    onBlur={() => commitPrintFormat(location)}
+                      }));
+                      commitPrintFormat(location, value);
+                    }}
                     options={[
                       {
                         value: "letter",

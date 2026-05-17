@@ -266,14 +266,20 @@ const Anfitrion = () => {
     [],
   );
 
-  const printTicketNode = (node) => {
+  const printTicketNode = (node, printFormat = "letter") => {
     return new Promise((resolve, reject) => {
       if (!node) {
         reject(new Error("No printable node found."));
         return;
       }
 
-      const printWindow = window.open("", "_blank", "width=500,height=800");
+      const isThermal = printFormat === "ticket";
+      const printWindow = window.open(
+        "",
+        "_blank",
+        isThermal ? "width=500,height=800" : "width=900,height=1100",
+      );
+
       if (!printWindow) {
         reject(new Error("Popup blocked."));
         return;
@@ -298,6 +304,36 @@ const Anfitrion = () => {
         canvas.replaceWith(img);
       });
 
+      const pageCss = isThermal
+        ? `
+            @page {
+              margin: 0;
+              size: 80mm 3276mm;
+            }
+
+            .print-root {
+              width: 80mm;
+              margin: 0;
+              padding: 0;
+              display: block;
+              overflow: visible;
+            }
+          `
+        : `
+            @page {
+              margin: 0.25in;
+              size: letter portrait;
+            }
+
+            .print-root {
+              width: 100%;
+              margin: 0;
+              padding: 0;
+              display: block;
+              overflow: visible;
+            }
+          `;
+
       printWindow.document.open();
       printWindow.document.write(`
       <html>
@@ -314,18 +350,7 @@ const Anfitrion = () => {
               font-family: Arial, sans-serif;
             }
 
-            @page {
-              margin: 0;
-              size: 80mm 3276mm;
-            }
-
-            .print-root {
-              width: 80mm;
-              margin: 0;
-              padding: 0;
-              display: block;
-              overflow: visible;
-            }
+            ${pageCss}
 
             .print-root * {
               overflow: visible !important;
@@ -381,6 +406,11 @@ const Anfitrion = () => {
         const patientLocation =
           locations?.find((loc) => loc.id === rawPatient.location_id) || null;
 
+        const patientPrintFormat =
+          patientLocation?.printing?.format ||
+          selectedLocation?.printing?.format ||
+          "letter";
+
         const reprintPatient = {
           pt_no: rawPatient.pt_no,
           patient_name: rawPatient.patient_name || "",
@@ -403,13 +433,14 @@ const Anfitrion = () => {
             rawPatient.start_time ||
             rawPatient.created_at ||
             new Date(),
+          print_format: patientPrintFormat,
         };
 
         setTicketPatient(reprintPatient);
 
         setTimeout(async () => {
           try {
-            await printTicketNode(ticketPrintRef.current);
+            await printTicketNode(ticketPrintRef.current, patientPrintFormat);
           } catch (err) {
             console.error("Ticket reprint failed:", err);
             message.error(
@@ -890,7 +921,7 @@ const Anfitrion = () => {
           position: "absolute",
           left: "-10000px",
           top: 0,
-          width: "320px",
+          width: ticketPatient?.print_format === "ticket" ? "320px" : "8.5in",
           pointerEvents: "none",
         }}
       >
@@ -898,7 +929,7 @@ const Anfitrion = () => {
           {ticketPatient ? (
             <TicketPrint
               patient={ticketPatient}
-              printFormat={selectedLocation?.printing?.format || "letter"}
+              printFormat={ticketPatient?.print_format || "letter"}
               thermalDebugStage={1}
             />
           ) : null}
