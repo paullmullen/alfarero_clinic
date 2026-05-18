@@ -35,6 +35,7 @@ import { updateStatsCollection } from "./services/statsService";
 import { upsertKnownPatient } from "./services/knownPatientsService";
 
 import TicketPrint from "../../components/printing/TicketPrint";
+import { printPatientTicket } from "../../components/printing/printPatientTicket";
 
 const { Title, Text } = Typography;
 
@@ -267,21 +268,45 @@ export const Registro = () => {
         });
       }
 
-      setTicketPatient(createdPatient);
+      try {
+        setTicketPatient(createdPatient);
 
-      setTimeout(async () => {
-        try {
-          await printTicketNode(ticketPrintRef.current);
-        } catch (err) {
-          console.error("Ticket print failed:", err);
-        }
+        setTimeout(async () => {
+          try {
+            await printPatientTicket({
+              patient: createdPatient,
+              location: effectiveLocation,
+              printableNode: ticketPrintRef.current,
+              visitTypeLabel: createdPatient.type_of_visit
+                ? t(createdPatient.type_of_visit)
+                : "",
+            });
+          } catch (err) {
+            console.error("Ticket print failed:", err);
 
-        showAlert("Success", t("patientWasCreated"), "success");
-        handleReset();
-      }, 0);
+            showAlert(
+              "Warning",
+              t("ticketPrintFailed") ||
+                "Patient was created, but the ticket did not print.",
+              "warning",
+            );
+          }
+
+          showAlert("Success", t("patientWasCreated"), "success");
+          handleReset();
+        }, 0);
+      } catch (error) {
+        console.log("Error creating/updating patient: ", error);
+
+        showAlert("Error", t("somethingWentWrong"), "error");
+
+        setDisabledButton(false);
+      }
     } catch (error) {
       console.log("Error creating/updating patient: ", error);
+
       showAlert("Error", t("somethingWentWrong"), "error");
+
       setDisabledButton(false);
     }
   };
@@ -622,7 +647,7 @@ export const Registro = () => {
           {ticketPatient ? (
             <TicketPrint
               patient={ticketPatient}
-              printFormat={selectedLocation?.printing?.format || "letter"}
+              printFormat={effectiveLocation?.printing?.format || "letter"}
               thermalDebugStage={1}
             />
           ) : null}

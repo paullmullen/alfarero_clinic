@@ -50,6 +50,7 @@ import {
   getPlannedRouteIcon,
 } from "../helpers/getPlanOfCareIcon";
 import TicketPrint from "../components/printing/TicketPrint";
+import { printPatientTicket } from "../components/printing/printPatientTicket";
 
 const { TextArea } = Input;
 const EditPatientData = lazy(() => import("../components/EditPatientData.js"));
@@ -266,118 +267,6 @@ const Anfitrion = () => {
     [],
   );
 
-  const printTicketNode = (node, printFormat = "letter") => {
-    return new Promise((resolve, reject) => {
-      if (!node) {
-        reject(new Error("No printable node found."));
-        return;
-      }
-
-      const isThermal = printFormat === "ticket";
-      const printWindow = window.open(
-        "",
-        "_blank",
-        isThermal ? "width=500,height=800" : "width=900,height=1100",
-      );
-
-      if (!printWindow) {
-        reject(new Error("Popup blocked."));
-        return;
-      }
-
-      const clone = node.cloneNode(true);
-
-      const originalCanvases = node.querySelectorAll("canvas");
-      const clonedCanvases = clone.querySelectorAll("canvas");
-
-      clonedCanvases.forEach((canvas, i) => {
-        const originalCanvas = originalCanvases[i];
-        if (!originalCanvas) return;
-
-        const img = document.createElement("img");
-        img.src = originalCanvas.toDataURL("image/png");
-        img.width = originalCanvas.width;
-        img.height = originalCanvas.height;
-        img.style.display = "block";
-        img.style.margin = "0 auto";
-
-        canvas.replaceWith(img);
-      });
-
-      const pageCss = isThermal
-        ? `
-            @page {
-              margin: 0;
-              size: 80mm 3276mm;
-            }
-
-            .print-root {
-              width: 80mm;
-              margin: 0;
-              padding: 0;
-              display: block;
-              overflow: visible;
-            }
-          `
-        : `
-            @page {
-              margin: 0.25in;
-              size: letter portrait;
-            }
-
-            .print-root {
-              width: 100%;
-              margin: 0;
-              padding: 0;
-              display: block;
-              overflow: visible;
-            }
-          `;
-
-      printWindow.document.open();
-      printWindow.document.write(`
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <title>Print Ticket</title>
-          <style>
-            html, body {
-              margin: 0;
-              padding: 0;
-              background: white;
-              height: auto;
-              overflow: visible;
-              font-family: Arial, sans-serif;
-            }
-
-            ${pageCss}
-
-            .print-root * {
-              overflow: visible !important;
-              max-height: none !important;
-              box-sizing: border-box;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="print-root">
-            ${clone.outerHTML}
-          </div>
-        </body>
-      </html>
-    `);
-      printWindow.document.close();
-
-      printWindow.onload = () => {
-        setTimeout(() => {
-          printWindow.focus();
-          printWindow.print();
-          resolve();
-        }, 500);
-      };
-    });
-  };
-
   const handleReprintTicket = useCallback(
     async (record) => {
       if (!printEnabled) {
@@ -440,7 +329,11 @@ const Anfitrion = () => {
 
         setTimeout(async () => {
           try {
-            await printTicketNode(ticketPrintRef.current, patientPrintFormat);
+            await printPatientTicket({
+              patient: ticketPatient,
+              location: selectedLocation,
+              printableNode: ticketPrintRef.current,
+            });
           } catch (err) {
             console.error("Ticket reprint failed:", err);
             message.error(
