@@ -300,12 +300,31 @@ const Anfitrion = () => {
           selectedLocation?.printing?.format ||
           "letter";
 
+        const rawVisitType = rawPatient.type_of_visit || "";
+        const translatedVisitType = rawVisitType
+          ? t(rawVisitType, { defaultValue: rawVisitType })
+          : "";
+
+        const visitTypeLabel =
+          rawPatient.visit_type ||
+          rawPatient.visit_type_label ||
+          translatedVisitType ||
+          rawVisitType ||
+          "";
+
         const reprintPatient = {
           pt_no: rawPatient.pt_no,
           patient_name: rawPatient.patient_name || "",
           guardian_name: rawPatient.guardian_name || "",
           age_group: rawPatient.age_group || null,
-          type_of_visit: rawPatient.type_of_visit || "",
+
+          // Print-only payload:
+          // keep the actual database record unchanged, but send the
+          // human-facing visit label to the ticket renderer.
+          type_of_visit: visitTypeLabel,
+          visit_type: visitTypeLabel,
+          visit_type_label: visitTypeLabel,
+
           location_name:
             patientLocation?.name ||
             selectedLocation?.name ||
@@ -330,9 +349,10 @@ const Anfitrion = () => {
         setTimeout(async () => {
           try {
             await printPatientTicket({
-              patient: ticketPatient,
-              location: selectedLocation,
+              patient: reprintPatient,
+              location: patientLocation || selectedLocation,
               printableNode: ticketPrintRef.current,
+              visitTypeLabel,
             });
           } catch (err) {
             console.error("Ticket reprint failed:", err);

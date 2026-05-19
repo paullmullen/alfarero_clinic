@@ -187,7 +187,6 @@ export const printEscPosPatientTicket = async ({
 }) => {
   const url =
     printServerUrl || location?.printing?.serverUrl || DEFAULT_PRINT_SERVER_URL;
-  console.log(`Sending print request to ${url} for patient ${patient.pt_no}`);
 
   const response = await fetch(`${url}/print/patient-ticket`, {
     method: "POST",

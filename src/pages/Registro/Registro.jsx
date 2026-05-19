@@ -231,6 +231,17 @@ export const Registro = () => {
       effectiveLocationName,
     });
 
+    const selectedVisitType = recipes.find(
+      (recipe) => recipe.value === patient.tipo,
+    );
+
+    const visitTypeLabel =
+      selectedVisitType?.visit_type ||
+      selectedVisitType?.label ||
+      formattedPatient.visit_type ||
+      formattedPatient.type_of_visit ||
+      "";
+
     try {
       const { ptNo } = await createPatientDoc({ firestore, formattedPatient });
 
@@ -239,7 +250,8 @@ export const Registro = () => {
         patient_name: formattedPatient.patient_name,
         guardian_name: formattedPatient.guardian_name,
         age_group: formattedPatient.age_group,
-        type_of_visit: formattedPatient.type_of_visit,
+        type_of_visit: visitTypeLabel,
+        visit_type: visitTypeLabel,
         location_name: effectiveLocationName,
         location_message: effectiveLocationMessage,
         created_at: new Date(),
@@ -277,9 +289,8 @@ export const Registro = () => {
               patient: createdPatient,
               location: effectiveLocation,
               printableNode: ticketPrintRef.current,
-              visitTypeLabel: createdPatient.type_of_visit
-                ? t(createdPatient.type_of_visit)
-                : "",
+              visitTypeLabel:
+                createdPatient.visit_type || createdPatient.type_of_visit || "",
             });
           } catch (err) {
             console.error("Ticket print failed:", err);
