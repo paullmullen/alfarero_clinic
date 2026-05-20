@@ -1,51 +1,37 @@
 {
-  "ACTIVE": "Active",
-  "ADD_LOCATION": "Add Location",
-  "ALL_LOCATIONS": "All Locations",
-  "CAN_EDIT": "Can Edit",
-  "INACTIVE": "Inactive",
-  "LOCATION": "Location",
-  "LOCATIONS": "Locations",
-  "LOGIN_PAGE_TITLE": "Sign in with Microsoft credentials",
+  "CAN_EDIT": "Can edit",
+  "LOGIN_PAGE_TITLE": "Login with Microsoft credentials",
   "LOGIN_WITH_MICROSOFT": "Sign in",
   "LOGOUT_BUTTON": "Log out",
-  "MANAGE_LOCATIONS": "Manage Locations",
-  "MANAGER_DESCRIPTION": "The manager permission designates the user as a recipient of an email when a new user registers for use of this app.",
-  "NOT_AUTHD_MESSAGE": "Contact your manager for access to this page.",
+  "MANAGER_DESCRIPTION": "The 'manager' permission designates the user as the recipient of an email when a new user registers to use this application.",
+  "NOT_AUTHD_MESSAGE": "Contact your manager to access this page.",
   "NOT_AUTHORIZED": "Not authorized.",
   "permissions": {
     "basic": "Basic",
-    "dailyEmail": "Daily Email",
+    "dailyEmail": "Daily email",
     "host": "Host",
     "manager": "Manager",
     "settings": "Admin",
-    "stats": "Stats",
-    "inventory_edit": "Edit \nInventory",
+    "stats": "Statistics",
+    "inventory_edit": "Inventory management",
     "shelf": "Shelf"
   },
-  "SAVE_SETTINGS": "Save Settings",
-  "SELECT_LOCATION": "Select Location",
+  "SAVE_SETTINGS": "Save settings",
   "SEND_INVITE_EMAIL": "Invite New User",
-  "SERVICE_LOCATION": "Service Location",
   "SETTINGS": "Admin",
   "settings": {
     "userPermissions": {
-      "title": "User Permissions"
+      "title": "User permissions"
     }
   },
-  "USER_PERMISSIONS": "User Permissions",
-
-  "SETTINGS_GROUP_CLINIC": "Clinic Configuration",
+  "USER_PERMISSIONS": "User permissions",
+  "SETTINGS_GROUP_CLINIC": "Clinic configuration",
   "SETTINGS_GROUP_CLINIC_DESCRIPTION": "Manage the structure of clinic operations, including stations, service locations, and default plans of care.",
-
-  "SETTINGS_GROUP_SCANNER": "Scanner System",
-  "SETTINGS_GROUP_SCANNER_DESCRIPTION": "Generate and print QR codes used to configure scanner devices.",
-
-  "SETTINGS_GROUP_USERS": "Users & Access",
-  "SETTINGS_GROUP_USERS_DESCRIPTION": "Control permissions and send invitations for system access.",
-
-  "SETTINGS_GROUP_DATA": "Data & Imports",
-  "SETTINGS_GROUP_DATA_DESCRIPTION": "Run bulk import and maintenance tools for patient-related data.",
-
+  "SETTINGS_GROUP_SCANNER": "Scanner system",
+  "SETTINGS_GROUP_SCANNER_DESCRIPTION": "Generate and print QR codes to configure scanner devices.",
+  "SETTINGS_GROUP_USERS": "Users and access",
+  "SETTINGS_GROUP_USERS_DESCRIPTION": "Control permissions and send invitations to access the system.",
+  "SETTINGS_GROUP_DATA": "Data and imports",
+  "SETTINGS_GROUP_DATA_DESCRIPTION": "Run bulk import tools and patient data maintenance tasks.",
   "SETTINGS_JUMP_TO": "Jump to"
 }

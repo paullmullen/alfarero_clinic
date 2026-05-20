@@ -1,15 +1,8 @@
 {
-  "ACTIVE": "Activado",
-  "ADD_LOCATION": "Añadir Ubicación",
-  "ALL_LOCATIONS": "Todas las ubicaciones",
   "CAN_EDIT": "Puede editar",
-  "INACTIVE": "Desactivado",
-  "LOCATION": "Ubicación",
-  "LOCATIONS": "Ubicaciones",
   "LOGIN_PAGE_TITLE": "Login con credenciales de Microsoft",
   "LOGIN_WITH_MICROSOFT": "Ingresar",
   "LOGOUT_BUTTON": "Cerrar sesión",
-  "MANAGE_LOCATIONS": "Manejo de ubicaciones",
   "MANAGER_DESCRIPTION": "El permiso de 'manager' designa al usuario como destinatario de un correo electrónico cuando un nuevo usuario se registra para usar esta aplicación.",
   "NOT_AUTHD_MESSAGE": "Contacte a su gerente para acceder a esta página.",
   "NOT_AUTHORIZED": "No autorizado.",
@@ -24,9 +17,7 @@
     "shelf": "Estante"
   },
   "SAVE_SETTINGS": "Guardar ajustes",
-  "SELECT_LOCATION": "Seleccione ubicación",
   "SEND_INVITE_EMAIL": "Invitar a Nuevo Usuario",
-  "SERVICE_LOCATION": "Ubicación de servicio",
   "SETTINGS": "Admin",
   "settings": {
     "userPermissions": {
@@ -36,15 +27,11 @@
   "USER_PERMISSIONS": "Permisos de usuarios",
   "SETTINGS_GROUP_CLINIC": "Configuración de la clínica",
   "SETTINGS_GROUP_CLINIC_DESCRIPTION": "Administre la estructura de las operaciones de la clínica, incluyendo estaciones, ubicaciones de servicio y planes de atención predeterminados.",
-
   "SETTINGS_GROUP_SCANNER": "Sistema de escáner",
   "SETTINGS_GROUP_SCANNER_DESCRIPTION": "Genere e imprima códigos QR para configurar los dispositivos de escaneo.",
-
   "SETTINGS_GROUP_USERS": "Usuarios y acceso",
   "SETTINGS_GROUP_USERS_DESCRIPTION": "Controle los permisos y envíe invitaciones para acceder al sistema.",
-
   "SETTINGS_GROUP_DATA": "Datos e importaciones",
   "SETTINGS_GROUP_DATA_DESCRIPTION": "Ejecute herramientas de importación masiva y mantenimiento de datos de pacientes.",
-
   "SETTINGS_JUMP_TO": "Ir a"
 }

@@ -195,7 +195,10 @@ export const printEscPosPatientTicket = async ({
     },
     body: JSON.stringify({
       patient,
-      location,
+      printer: {
+        host: location?.printing?.ticketPrinterHost || null,
+        port: location?.printing?.ticketPrinterPort || 9100,
+      },
     }),
   });
 
