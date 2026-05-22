@@ -75,6 +75,10 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
       value: "cloud_config",
       label: t ? t("SCANNER_QR_TYPE_CLOUD") : "Cloud Configuration",
     },
+    {
+      value: "show_identity",
+      label: t ? t("SCANNER_QR_TYPE_SHOW_IDENTITY") : "Show Scanner Identity",
+    },
   ];
 
   const handleStationChange = (value) => {
@@ -148,6 +152,17 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
       };
     }
 
+    if (qrType === "show_identity") {
+      return {
+        kind: "show_identity",
+        version: 1,
+        payload: {},
+        auth: {
+          admin_token: CLOUD_QR_ADMIN_TOKEN,
+        },
+      };
+    }
+
     return null;
   }, [qrType, ssid, password, security]);
 
@@ -161,31 +176,45 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
     return `MMCFG:${JSON.stringify(localPayloadObject)}`;
   }, [qrType, generatedQrValue, localPayloadObject]);
 
-  const printTitle =
-    qrType === "cloud_config"
-      ? t
-        ? t("SCANNER_QR_PRINT_TITLE_CLOUD")
-        : "Scanner Cloud Configuration"
-      : qrType === "wifi_config"
-        ? t
-          ? t("SCANNER_QR_PRINT_TITLE_WIFI")
-          : "Scanner WiFi Configuration"
-        : t
-          ? t("SCANNER_QR_PRINT_TITLE")
-          : "Scanner Station Configuration";
+  let printTitle;
 
-  const printSubtitle =
-    qrType === "cloud_config"
-      ? t
-        ? t("SCANNER_QR_PRINT_SUBTITLE_CLOUD")
-        : "Scan this code to configure the scanner cloud connection."
-      : qrType === "wifi_config"
-        ? t
-          ? t("SCANNER_QR_PRINT_SUBTITLE_WIFI")
-          : "Scan this code to configure the scanner WiFi settings."
-        : t
-          ? t("SCANNER_QR_PRINT_SUBTITLE")
-          : "Scan this code to configure the scanner station settings.";
+  if (qrType === "cloud_config") {
+    printTitle = t
+      ? t("SCANNER_QR_PRINT_TITLE_CLOUD")
+      : "Scanner Cloud Configuration";
+  } else if (qrType === "wifi_config") {
+    printTitle = t
+      ? t("SCANNER_QR_PRINT_TITLE_WIFI")
+      : "Scanner WiFi Configuration";
+  } else if (qrType === "show_identity") {
+    printTitle = t
+      ? t("SCANNER_QR_PRINT_TITLE_IDENTITY")
+      : "Show Scanner Identity";
+  } else {
+    printTitle = t
+      ? t("SCANNER_QR_PRINT_TITLE")
+      : "Scanner Station Configuration";
+  }
+
+  let printSubtitle;
+
+  if (qrType === "cloud_config") {
+    printSubtitle = t
+      ? t("SCANNER_QR_PRINT_SUBTITLE_CLOUD")
+      : "Scan this code to configure the scanner cloud connection.";
+  } else if (qrType === "wifi_config") {
+    printSubtitle = t
+      ? t("SCANNER_QR_PRINT_SUBTITLE_WIFI")
+      : "Scan this code to configure the scanner WiFi settings.";
+  } else if (qrType === "show_identity") {
+    printSubtitle = t
+      ? t("SCANNER_QR_PRINT_SUBTITLE_IDENTITY")
+      : "Scan this code to show device identity, IP address, and health URL on the Pi display.";
+  } else {
+    printSubtitle = t
+      ? t("SCANNER_QR_PRINT_SUBTITLE")
+      : "Scan this code to configure the scanner station settings.";
+  }
 
   const canGenerateStationQr =
     !!locationId && !!stationId && !!roomId && !!deviceId;
@@ -302,50 +331,63 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
 
     if (!printWindow) return;
 
-    const detailHtml =
-      qrType === "cloud_config"
-        ? `
-          <div class="note">
-            ${
-              t
-                ? t("SCANNER_QR_PRINT_NOTE_CLOUD")
-                : "Sensitive QR. Do not leave printed copies unattended."
-            }
-          </div>
-        `
-        : qrType === "wifi_config"
-          ? `
-          <div class="field">
-            <span class="label">${t ? t("SCANNER_QR_WIFI_SSID") : "SSID"}:</span>
-            ${ssid}
-          </div>
+    let detailHtml;
 
-          <div class="field">
-            <span class="label">${t ? t("SCANNER_QR_WIFI_SECURITY") : "Security"}:</span>
-            ${security}
-          </div>
-        `
-          : `
-          <div class="field">
-            <span class="label">${t ? t("SCANNER_QR_LOCATION_ID") : "Location"}:</span>
-            ${locationId}
-          </div>
+    if (qrType === "cloud_config") {
+      detailHtml = `
+        <div class="note">
+          ${
+            t
+              ? t("SCANNER_QR_PRINT_NOTE_CLOUD")
+              : "Sensitive QR. Do not leave printed copies unattended."
+          }
+        </div>
+      `;
+    } else if (qrType === "wifi_config") {
+      detailHtml = `
+        <div class="field">
+          <span class="label">${t ? t("SCANNER_QR_WIFI_SSID") : "SSID"}:</span>
+          ${ssid}
+        </div>
 
-          <div class="field">
-            <span class="label">${t ? t("SCANNER_QR_STATION_ID") : "Station"}:</span>
-            ${stationId}
-          </div>
+        <div class="field">
+          <span class="label">${t ? t("SCANNER_QR_WIFI_SECURITY") : "Security"}:</span>
+          ${security}
+        </div>
+      `;
+    } else if (qrType === "show_identity") {
+      detailHtml = `
+        <div class="note">
+          ${
+            t
+              ? t("SCANNER_QR_PRINT_NOTE_IDENTITY")
+              : "Scan this QR with the scanner to show the Pi identity, IP address, software version, and health URL on the display."
+          }
+        </div>
+      `;
+    } else {
+      detailHtml = `
+        <div class="field">
+          <span class="label">${t ? t("SCANNER_QR_LOCATION_ID") : "Location"}:</span>
+          ${locationId}
+        </div>
 
-          <div class="field">
-            <span class="label">${t ? t("SCANNER_QR_ROOM_ID") : "Room ID"}:</span>
-            ${roomId}
-          </div>
+        <div class="field">
+          <span class="label">${t ? t("SCANNER_QR_STATION_ID") : "Station"}:</span>
+          ${stationId}
+        </div>
 
-          <div class="field">
-            <span class="label">${t ? t("SCANNER_QR_DEVICE_ID") : "Device ID"}:</span>
-            ${deviceId}
-          </div>
-        `;
+        <div class="field">
+          <span class="label">${t ? t("SCANNER_QR_ROOM_ID") : "Room ID"}:</span>
+          ${roomId}
+        </div>
+
+        <div class="field">
+          <span class="label">${t ? t("SCANNER_QR_DEVICE_ID") : "Device ID"}:</span>
+          ${deviceId}
+        </div>
+      `;
+    }
 
     const showRawPayload = false;
 
@@ -480,6 +522,82 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
       printWindow.close();
     }, 300);
   };
+
+  let previewDetail;
+
+  if (qrType === "cloud_config") {
+    previewDetail = (
+      <Paragraph type="secondary" style={{ textAlign: "center" }}>
+        {t
+          ? t("SCANNER_QR_PRINT_NOTE_CLOUD")
+          : "Sensitive QR. Do not leave printed copies unattended."}
+      </Paragraph>
+    );
+  } else if (qrType === "wifi_config") {
+    previewDetail = (
+      <>
+        <div style={{ marginBottom: 12 }}>
+          <Text strong>{t ? t("SCANNER_QR_WIFI_SSID") : "SSID"}:</Text>{" "}
+          <Text>{ssid}</Text>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <Text strong>{t ? t("SCANNER_QR_WIFI_SECURITY") : "Security"}:</Text>{" "}
+          <Text>{security}</Text>
+        </div>
+
+        <Paragraph
+          type="secondary"
+          style={{ marginTop: 20, textAlign: "center" }}
+        >
+          {t
+            ? t("SCANNER_QR_PRINT_NOTE_WIFI")
+            : "This QR contains WiFi credentials. Handle it carefully."}
+        </Paragraph>
+      </>
+    );
+  } else if (qrType === "show_identity") {
+    previewDetail = (
+      <Paragraph type="secondary" style={{ textAlign: "center" }}>
+        {t
+          ? t("SCANNER_QR_PRINT_NOTE_IDENTITY")
+          : "Scan this QR to show the scanner identity, IP address, software version, and health URL on the Pi display."}
+      </Paragraph>
+    );
+  } else {
+    previewDetail = (
+      <>
+        <div style={{ marginBottom: 12 }}>
+          <Text strong>{t ? t("SCANNER_QR_LOCATION_ID") : "Location"}:</Text>{" "}
+          <Text>{locationId}</Text>
+        </div>
+
+        <div style={{ marginBottom: 12 }}>
+          <Text strong>{t ? t("SCANNER_QR_STATION_ID") : "Station"}:</Text>{" "}
+          <Text>{stationId}</Text>
+        </div>
+
+        <div style={{ marginBottom: 12 }}>
+          <Text strong>{t ? t("SCANNER_QR_ROOM_ID") : "Room ID"}:</Text>{" "}
+          <Text>{roomId}</Text>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <Text strong>{t ? t("SCANNER_QR_DEVICE_ID") : "Device ID"}:</Text>{" "}
+          <Text>{deviceId}</Text>
+        </div>
+
+        <Paragraph
+          type="secondary"
+          style={{ marginTop: 20, textAlign: "center" }}
+        >
+          {t
+            ? t("SCANNER_QR_PRINT_NOTE")
+            : "This QR is intended for station/device assignment only and does not include secrets."}
+        </Paragraph>
+      </>
+    );
+  }
 
   return (
     <Card style={{ marginBottom: 16 }}>
@@ -669,74 +787,7 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
             </div>
 
             <div style={{ maxWidth: 700, margin: "0 auto" }}>
-              {qrType === "cloud_config" ? (
-                <Paragraph type="secondary" style={{ textAlign: "center" }}>
-                  {t
-                    ? t("SCANNER_QR_PRINT_NOTE_CLOUD")
-                    : "Sensitive QR. Do not leave printed copies unattended."}
-                </Paragraph>
-              ) : qrType === "wifi_config" ? (
-                <>
-                  <div style={{ marginBottom: 12 }}>
-                    <Text strong>
-                      {t ? t("SCANNER_QR_WIFI_SSID") : "SSID"}:
-                    </Text>{" "}
-                    <Text>{ssid}</Text>
-                  </div>
-
-                  <div style={{ marginBottom: 20 }}>
-                    <Text strong>
-                      {t ? t("SCANNER_QR_WIFI_SECURITY") : "Security"}:
-                    </Text>{" "}
-                    <Text>{security}</Text>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={{ marginBottom: 12 }}>
-                    <Text strong>
-                      {t ? t("SCANNER_QR_LOCATION_ID") : "Location"}:
-                    </Text>{" "}
-                    <Text>{locationId}</Text>
-                  </div>
-
-                  <div style={{ marginBottom: 12 }}>
-                    <Text strong>
-                      {t ? t("SCANNER_QR_STATION_ID") : "Station"}:
-                    </Text>{" "}
-                    <Text>{stationId}</Text>
-                  </div>
-
-                  <div style={{ marginBottom: 12 }}>
-                    <Text strong>
-                      {t ? t("SCANNER_QR_ROOM_ID") : "Room ID"}:
-                    </Text>{" "}
-                    <Text>{roomId}</Text>
-                  </div>
-
-                  <div style={{ marginBottom: 20 }}>
-                    <Text strong>
-                      {t ? t("SCANNER_QR_DEVICE_ID") : "Device ID"}:
-                    </Text>{" "}
-                    <Text>{deviceId}</Text>
-                  </div>
-                </>
-              )}
-
-              {qrType !== "cloud_config" && (
-                <Paragraph
-                  type="secondary"
-                  style={{ marginTop: 20, textAlign: "center" }}
-                >
-                  {qrType === "wifi_config"
-                    ? t
-                      ? t("SCANNER_QR_PRINT_NOTE_WIFI")
-                      : "This QR contains WiFi credentials. Handle it carefully."
-                    : t
-                      ? t("SCANNER_QR_PRINT_NOTE")
-                      : "This QR is intended for station/device assignment only and does not include secrets."}
-                </Paragraph>
-              )}
+              {previewDetail}
             </div>
           </div>
         </Space>
@@ -758,9 +809,13 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
                 : t
                   ? t("SCANNER_QR_FILL_FIELDS")
                   : "Select a location and station, then complete the fields to generate a QR code."
-              : t
-                ? t("SCANNER_QR_FILL_FIELDS")
-                : "Complete the fields to generate a QR code."}
+              : qrType === "show_identity"
+                ? t
+                  ? t("SCANNER_QR_IDENTITY_READY")
+                  : "Identity QR is ready to print."
+                : t
+                  ? t("SCANNER_QR_FILL_FIELDS")
+                  : "Complete the fields to generate a QR code."}
         </Paragraph>
       )}
     </Card>

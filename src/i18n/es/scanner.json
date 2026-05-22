@@ -38,5 +38,9 @@
   "SCANNER_QR_STATION_GENERATE_ERROR": "Error al generar el código QR de estación.",
   "SCANNER_QR_NOT_READY": "Genere o complete la configuración del QR primero.",
   "SCANNER_QR_LOCATION_ID": "Ubicación",
-  "SCANNER_QR_LOCATION_PLACEHOLDER": "Seleccione una ubicación"
+  "SCANNER_QR_LOCATION_PLACEHOLDER": "Seleccione una ubicación",
+  "SCANNER_QR_TYPE_SHOW_IDENTITY": "Mostrar identidad del scanner",
+  "SCANNER_QR_PRINT_TITLE_IDENTITY": "Mostrar identidad del scanner",
+  "SCANNER_QR_PRINT_SUBTITLE_IDENTITY": "Escanee este código para mostrar la identidad del scanner, dirección IP, versión de software y URL de salud en la pantalla de la Raspberry Pi.",
+  "SCANNER_QR_PRINT_NOTE_IDENTITY": "Escanee este código QR para mostrar la identidad del scanner, dirección IP, versión de software y URL de salud en la pantalla de la Raspberry Pi."
 }
