@@ -15,6 +15,7 @@ import LocationsManager from "./settings/sections/LocationsManager";
 import UserPermissionsTable from "./settings/sections/UserPermissionsTable";
 import InviteEmailForm from "./settings/sections/InviteEmailForm";
 import KnownPatientsUploader from "./settings/sections/KnownPatientsUploader";
+import OrganizationsManager from "./settings/sections/OrganizationsManagter";
 import VisitTypesManager from "./settings/sections/VisitTypesManager";
 import ScannerQrGenerator from "./settings/sections/ScannerQRGenerator";
 
@@ -131,10 +132,12 @@ const Settings = () => {
   const scannerRef = useRef(null);
   const usersRef = useRef(null);
   const dataRef = useRef(null);
+  const organizationsRef = useRef(null);
 
   const sectionRefs = useMemo(
     () => ({
       clinic: clinicRef,
+      organizations: organizationsRef,
       scanner: scannerRef,
       users: usersRef,
       data: dataRef,
@@ -147,6 +150,11 @@ const Settings = () => {
       key: "clinic",
       label: t("SETTINGS_GROUP_CLINIC") || "Clinic Configuration",
       icon: <SettingOutlined />,
+    },
+    {
+      key: "organizations",
+      label: t("organizations") || "Organizations",
+      icon: <DatabaseOutlined />,
     },
     {
       key: "scanner",
@@ -203,6 +211,12 @@ const Settings = () => {
               stations={stations}
               t={t}
             />
+
+            <Divider style={{ margin: 0 }} />
+
+            <div ref={organizationsRef}>
+              <OrganizationsManager t={t} />
+            </div>
 
             <Divider style={{ margin: 0 }} />
 

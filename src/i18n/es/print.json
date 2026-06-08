@@ -9,5 +9,6 @@
   "PRINT_TICKET": "Tamaño Recibo",
   "ticket": {
     "reprint": "Reimprimir boleto"
-  }
+  },
+  "ticketPrintFailed": "Error al imprimir el boleto."
 }

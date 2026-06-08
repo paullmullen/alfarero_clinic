@@ -46,7 +46,10 @@ export function buildFormattedPatient({
     national_id_number: nationalId,
     new_patient: isNewPatient,
 
-    // 👇 NEW FIELD
+    // NEW
+    organization_id: patient.organization_id ?? null,
+    organization_name: patient.organization_name ?? null,
+
     guardian_name: patient.guardian_name ?? null,
 
     location_id: effectiveLocationId,

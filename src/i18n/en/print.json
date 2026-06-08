@@ -9,5 +9,6 @@
   "PRINT_TICKET": "Receipt Size",
   "ticket": {
     "reprint": "Reprint ticket "
-  }
+  },
+  "ticketPrintFailed": "Failed to print ticket."
 }

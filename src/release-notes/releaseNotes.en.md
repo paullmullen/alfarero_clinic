@@ -2,6 +2,11 @@
 
 Releases with letter suffixes are candidate releases not pushed to production. Releases without letter suffixes are the production releases that include the candidate changes (if approved).
 
+## V3.0.0
+
+- Implementation of the new printer/scanner features
+- Implementation of "organization" as a new patient characteristic
+
 ## V2.4.4
 
 - Visit Type Editor implemented

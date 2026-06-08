@@ -84,6 +84,7 @@ export const printEscPosPatientTicket = async ({
         patient_name: patient.patient_name || "",
         guardian_name: patient.guardian_name || "",
         age_group: patient.age_group || "",
+        organization: patient.organization || "",
         type_of_visit: patient.type_of_visit || "",
         visit_type_label: visitTypeLabel || patient.type_of_visit || "",
         location_name: patient.location_name || "",

@@ -246,6 +246,8 @@ const Anfitrion = () => {
         type_of_visit: item.type_of_visit ?? "",
         location_id: item.location_id ?? "",
         location_name: item.location_name ?? "",
+        organization_id: item.organization_id ?? null,
+        organization_name: item.organization_name ?? "",
         patient_name:
           displayName +
           "\n" +
@@ -317,7 +319,8 @@ const Anfitrion = () => {
           patient_name: rawPatient.patient_name || "",
           guardian_name: rawPatient.guardian_name || "",
           age_group: rawPatient.age_group || null,
-
+          organization:
+            rawPatient.organization_name || rawPatient.organization || "",
           // Print-only payload:
           // keep the actual database record unchanged, but send the
           // human-facing visit label to the ticket renderer.
@@ -537,6 +540,10 @@ const Anfitrion = () => {
                             motivo: record.reason_for_visit ?? "",
                             guardian_name: record.guardian_name ?? "",
                             age_group: record.age_group ?? null,
+
+                            organization_id: record.organization_id ?? null,
+                            organization_name: record.organization_name ?? "",
+
                             pt_no: record.pt_no,
                           }}
                           onSave={() => console.log("Patient data saved")}

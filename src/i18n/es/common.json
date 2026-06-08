@@ -25,6 +25,7 @@
   "NAME": "Nombre",
   "name": "Nombre",
   "no": "No",
+  "NO": "No",
   "PLEASE_ENTER_EMAIL": "Favor de ingresar correo electrónico.",
   "PLEASE_ENTER_VALID_EMAIL": "Favor de ingresar una dirección de correo electrónico válida.",
   "SAVE": "Guardar",
@@ -39,5 +40,6 @@
   "TODAY": "Hoy",
   "UPDATE": "Actualizar",
   "UPLOAD": "Subir",
-  "yes": "Sí"
+  "yes": "Sí",
+  "YES": "Sí"
 }

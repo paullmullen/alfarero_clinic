@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useHideMenu } from "../../hooks/useHideMenu";
 import { useAlert } from "../../hooks/alert";
 import { firestore } from "../../helpers/firebaseConfig";
+import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import { stations } from "../../helpers/stations";
 import { useServiceLocation } from "../../providers/ServiceLocationProvider";
 
@@ -55,6 +56,7 @@ export const Registro = () => {
 
   const ticketPrintRef = useRef(null);
   const [ticketPatient, setTicketPatient] = useState(null);
+  const [organizations, setOrganizations] = useState([]);
 
   // Only used when global location is "__ALL__"
   const [registroLocationId, setRegistroLocationId] = useState(null);
@@ -96,6 +98,28 @@ export const Registro = () => {
       form.setFieldValue("guardian_name", undefined);
     }
   }, [ageGroup, form]);
+
+  useEffect(() => {
+    const loadOrganizations = async () => {
+      const q = query(
+        collection(firestore, "organizations"),
+        where("active", "==", true),
+        orderBy("order", "asc"),
+        orderBy("name", "asc"),
+      );
+
+      const snap = await getDocs(q);
+
+      setOrganizations(
+        snap.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        })),
+      );
+    };
+
+    loadOrganizations();
+  }, []);
 
   const handleReset = () => {
     form.setFieldsValue({ stations: [], guardian_name: undefined });
@@ -215,9 +239,15 @@ export const Registro = () => {
     const normalizedTel = normalizePhone(patient.tel);
     const isNewPatient = kpLookup?.status === "found" ? false : true;
 
+    const selectedOrganization = organizations.find(
+      (o) => o.id === patient.organization_id,
+    );
+
     const formattedPatient = buildFormattedPatient({
       patient: {
         ...patient,
+        organization_id: selectedOrganization?.id || null,
+        organization_name: selectedOrganization?.name || null,
         guardian_name:
           patient.age_group === "child"
             ? (patient.guardian_name || "").trim()
@@ -250,6 +280,11 @@ export const Registro = () => {
         patient_name: formattedPatient.patient_name,
         guardian_name: formattedPatient.guardian_name,
         age_group: formattedPatient.age_group,
+
+        organization_id: formattedPatient.organization_id,
+        organization_name: formattedPatient.organization_name,
+        organization: formattedPatient.organization_name || "",
+
         type_of_visit: visitTypeLabel,
         visit_type: visitTypeLabel,
         location_name: effectiveLocationName,
@@ -275,6 +310,7 @@ export const Registro = () => {
           patientName: patient.paciente,
           gender: patient.gender,
           ageGroup: patient.age_group,
+          organization: selectedOrganization?.name || null,
           tel: normalizedTel ?? null,
           ptNo,
         });
@@ -580,6 +616,20 @@ export const Registro = () => {
                   ]}
                 >
                   <Input type="tel" />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row>
+              <Col xs={24} sm={24}>
+                <Form.Item label={t("organization")} name="organization_id">
+                  <Select
+                    allowClear
+                    placeholder={t("selectOrganization")}
+                    options={organizations.map((org) => ({
+                      value: org.id,
+                      label: org.name,
+                    }))}
+                  />
                 </Form.Item>
               </Col>
             </Row>

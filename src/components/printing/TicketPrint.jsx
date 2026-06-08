@@ -45,6 +45,7 @@ const LetterTicketLayout = ({ patient, t }) => {
     patient_name,
     guardian_name,
     age_group,
+    organization,
     type_of_visit,
     location_name,
     location_message,
@@ -92,6 +93,13 @@ const LetterTicketLayout = ({ patient, t }) => {
                 </div>
               )}
 
+              {organization ? (
+                <div style={styles.infoBlock}>
+                  <div style={styles.sectionLabel}>Organización</div>
+                  <div style={styles.infoValue}>{organization}</div>
+                </div>
+              ) : null}
+
               <div style={styles.infoBlock}>
                 <div style={styles.sectionLabel}>Tipo de visita</div>
                 <div style={styles.infoValue}>{translatedVisitType}</div>
@@ -134,6 +142,7 @@ const TicketReceiptLayout = ({ patient, t }) => {
     patient_name,
     guardian_name,
     age_group,
+    organization,
     type_of_visit,
     location_name,
     location_message,
@@ -177,6 +186,8 @@ const TicketReceiptLayout = ({ patient, t }) => {
         {guardian_name && age_group === "child" ? (
           <div>Responsable: {guardian_name}</div>
         ) : null}
+
+        {organization ? <div>Organización: {organization}</div> : null}
 
         <div>Tipo: {translatedVisitType}</div>
         <div>Fecha: {date}</div>

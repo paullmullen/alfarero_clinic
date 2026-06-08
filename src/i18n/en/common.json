@@ -25,6 +25,7 @@
   "NAME": "Name",
   "name": "Name",
   "no": "No",
+  "NO": "No",
   "PLEASE_ENTER_EMAIL": "Please enter email",
   "PLEASE_ENTER_VALID_EMAIL": "Please enter a valid email",
   "SAVE": "Save",
@@ -39,5 +40,6 @@
   "TODAY": "Today",
   "UPDATE": "Update",
   "UPLOAD": "Upload",
-  "yes": "Yes"
+  "yes": "Yes",
+  "YES": "Yes"
 }

@@ -1,16 +1,41 @@
 /* eslint-disable */
 
 import React from "react";
-import { Form, Input, Button, Row, Col } from "antd";
+import { Form, Input, Button, Row, Col, Select } from "antd";
 import { useTranslation } from "react-i18next";
 import { updatePatientData } from "../helpers/updatePatientData";
+import { firestore } from "../helpers/firebaseConfig";
+import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { useEffect, useState } from "react";
 
 const EditPatientData = ({ initialValues, onSave }) => {
   const { pt_no } = initialValues;
   const [form] = Form.useForm();
   const [t] = useTranslation("global");
+  const [organizations, setOrganizations] = useState([]);
 
   const ageGroup = Form.useWatch("age_group", form);
+  useEffect(() => {
+    const loadOrganizations = async () => {
+      const q = query(
+        collection(firestore, "organizations"),
+        where("active", "==", true),
+        orderBy("order", "asc"),
+        orderBy("name", "asc"),
+      );
+
+      const snap = await getDocs(q);
+
+      setOrganizations(
+        snap.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        })),
+      );
+    };
+
+    loadOrganizations();
+  }, []);
 
   // ---- National ID helpers ----
   const toRawNationalId = (value) =>
@@ -34,14 +59,27 @@ const EditPatientData = ({ initialValues, onSave }) => {
   };
 
   const onFinish = (values) => {
-    const { paciente, tel, motivo, national_id_number, guardian_name } = values;
-
+    const {
+      paciente,
+      tel,
+      motivo,
+      national_id_number,
+      guardian_name,
+      organization_id,
+    } = values;
     const raw = toRawNationalId(national_id_number);
     const nationalIdInt = raw ? Number(raw) : null;
+
+    const selectedOrganization = organizations.find(
+      (o) => o.id === organization_id,
+    );
 
     updatePatientData(paciente, tel, motivo, pt_no, nationalIdInt, {
       guardian_name:
         values.age_group === "child" ? guardian_name?.trim() || null : null,
+
+      organization_id: selectedOrganization?.id || null,
+      organization_name: selectedOrganization?.name || null,
     });
 
     onSave();
@@ -171,6 +209,22 @@ const EditPatientData = ({ initialValues, onSave }) => {
             ]}
           >
             <Input type="tel" />
+          </Form.Item>
+        </Col>
+      </Row>
+
+      {/* Organization */}
+      <Row gutter={[16, 16]}>
+        <Col xs={24}>
+          <Form.Item label={t("organization")} name="organization_id">
+            <Select
+              allowClear
+              placeholder={t("selectOrganization")}
+              options={organizations.map((org) => ({
+                value: org.id,
+                label: org.name,
+              }))}
+            />
           </Form.Item>
         </Col>
       </Row>

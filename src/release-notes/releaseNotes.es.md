@@ -2,6 +2,11 @@
 
 Las versiones con sufijos de letras son versiones candidatas que no se han implementado en producción. Las versiones sin sufijos de letras son las versiones de producción que incluyen los cambios de las versiones candidatas (si han sido aprobados).
 
+## V3.0.0
+
+- Implementación de las nuevas características de scanners
+- Implementación de "organization" como parte de los datos del paciente
+
 ## V2.4.4
 
 - Editor de "Tipo de Visita" implementado
