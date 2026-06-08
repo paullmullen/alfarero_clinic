@@ -99,9 +99,9 @@ function getPatientName(patient = {}) {
 function buildPollingInstruction({ statusCode, hasActivePatients }) {
   if (statusCode === "closed") {
     return {
-      should_poll: false,
-      recommended_interval_ms: null,
-      reason: "location_closed",
+      should_poll: true,
+      recommended_interval_ms: 30 * 60 * 1000,
+      reason: "location_closed_ heartbeat",
     };
   }
 
@@ -130,8 +130,8 @@ function buildPollingInstruction({ statusCode, hasActivePatients }) {
   }
 
   return {
-    should_poll: false,
-    recommended_interval_ms: null,
+    should_poll: true,
+    recommended_interval_ms: 30 * 60 * 1000,
     reason: "location_inactive",
   };
 }
