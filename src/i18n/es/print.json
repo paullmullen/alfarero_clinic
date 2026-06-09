@@ -6,6 +6,8 @@
   "PRINT_FORMAT_THERMAL": "Térmico",
   "PRINT_FORMAT_HELP": "El formato de impresión determina el tamaño y diseño del boleto impreso. El formato 'Carta' es adecuado para impresoras estándar y ofrece un diseño más espacioso, mientras que el formato 'Térmico' es ideal para impresoras de recibos y produce boletos más compactos. Elija el formato que mejor se adapte a su impresora y necesidades de impresión.",
   "PRINT_LETTER": "Tamaño Carta",
+  "PRINT_SERVER_URL": "URL del servidor de impresión",
+  "PRINT_SERVER_URL_HELP": "La URL del servidor de impresión es la dirección del servidor que se utilizará para enviar los comandos de impresión.",
   "PRINT_TICKET": "Tamaño Recibo",
   "ticket": {
     "reprint": "Reimprimir boleto"
