@@ -104,7 +104,7 @@
  * ============================================================================
  */
 
-const DEFAULT_PRINT_SERVER_URL = "http://localhost:3333";
+const DEFAULT_PRINT_SERVER_URL = "http://192.168.2.48:3333";
 
 export const getPrintFormat = (location) => {
   return location?.printing?.format || "letter";

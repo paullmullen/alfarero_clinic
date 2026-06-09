@@ -19,6 +19,7 @@ const { TextArea } = Input;
 
 const DEFAULT_PRINTING = {
   format: "letter",
+  serverUrl: "",
   ticketPrinterHost: "",
   ticketPrinterPort: 9100,
 };
@@ -38,6 +39,7 @@ export default function LocationsManager({
   const [draftNames, setDraftNames] = useState({});
   const [draftMessages, setDraftMessages] = useState({});
   const [draftPrintFormats, setDraftPrintFormats] = useState({});
+  const [draftPrintServerUrls, setDraftPrintServerUrls] = useState({});
   const [draftPrinterHosts, setDraftPrinterHosts] = useState({});
   const [draftPrinterPorts, setDraftPrinterPorts] = useState({});
 
@@ -45,6 +47,7 @@ export default function LocationsManager({
     const nextNames = {};
     const nextMessages = {};
     const nextFormats = {};
+    const nextPrintServerUrls = {};
     const nextPrinterHosts = {};
     const nextPrinterPorts = {};
 
@@ -54,6 +57,7 @@ export default function LocationsManager({
       nextNames[loc.id] = loc.name || "";
       nextMessages[loc.id] = loc.message || "";
       nextFormats[loc.id] = printing.format || "letter";
+      nextPrintServerUrls[loc.id] = printing.serverUrl || "";
       nextPrinterHosts[loc.id] = printing.ticketPrinterHost || "";
       nextPrinterPorts[loc.id] = printing.ticketPrinterPort || 9100;
     }
@@ -61,6 +65,7 @@ export default function LocationsManager({
     setDraftNames(nextNames);
     setDraftMessages(nextMessages);
     setDraftPrintFormats(nextFormats);
+    setDraftPrintServerUrls(nextPrintServerUrls);
     setDraftPrinterHosts(nextPrinterHosts);
     setDraftPrinterPorts(nextPrinterPorts);
   }, [locations]);
@@ -96,6 +101,15 @@ export default function LocationsManager({
 
     if (draft !== current) {
       commitPrinting(location, { format: draft });
+    }
+  };
+
+  const commitPrintServerUrl = (location) => {
+    const draft = (draftPrintServerUrls[location.id] ?? "").trim();
+    const current = getPrinting(location).serverUrl || "";
+
+    if (draft !== current) {
+      commitPrinting(location, { serverUrl: draft });
     }
   };
 
@@ -228,6 +242,27 @@ export default function LocationsManager({
                       style={{ width: "100%" }}
                       size={12}
                     >
+                      <FormField
+                        label={t("PRINT_SERVER_URL") || "Print Server URL"}
+                        help={
+                          t("PRINT_SERVER_URL_HELP") ||
+                          "The base URL of the local print bridge for this location. Example: http://192.168.2.48:3333"
+                        }
+                      >
+                        <Input
+                          value={draftPrintServerUrls[location.id] ?? ""}
+                          onChange={(e) =>
+                            setDraftPrintServerUrls((prev) => ({
+                              ...prev,
+                              [location.id]: e.target.value,
+                            }))
+                          }
+                          onBlur={() => commitPrintServerUrl(location)}
+                          onPressEnter={() => commitPrintServerUrl(location)}
+                          placeholder="http://192.168.2.48:3333"
+                        />
+                      </FormField>
+
                       <FormField
                         label={
                           t("TICKET_PRINTER_HOST") ||

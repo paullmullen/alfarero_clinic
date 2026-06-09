@@ -62,7 +62,8 @@
  * ============================================================================
  */
 
-const DEFAULT_ESC_POS_ENDPOINT = "http://127.0.0.1:3333/print/patient-ticket";
+const DEFAULT_ESC_POS_ENDPOINT =
+  "http://192.168.2.48:3333/print/patient-ticket";
 
 export const printEscPosPatientTicket = async ({
   patient,
@@ -72,6 +73,7 @@ export const printEscPosPatientTicket = async ({
   if (!patient?.pt_no) {
     throw new Error("Cannot print ESC/POS ticket without patient.pt_no.");
   }
+  console.log(`Sending ESC/POS print request to ${endpoint}`);
 
   const response = await fetch(endpoint, {
     method: "POST",

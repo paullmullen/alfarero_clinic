@@ -364,6 +364,7 @@ const Anfitrion = () => {
                 defaultValue: "Ticket reprint failed.",
               }),
             );
+            message.error(err);
           }
         }, 0);
       } catch (error) {
@@ -373,6 +374,7 @@ const Anfitrion = () => {
             defaultValue: "Ticket reprint failed.",
           }),
         );
+        message.error(error);
       }
     },
     [rowsRaw, locations, selectedLocation, printEnabled, t],
