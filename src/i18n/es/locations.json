@@ -20,8 +20,8 @@
   "PRINT_LETTER": "Carta",
   "PRINT_MESSAGE": "Mensaje en ticket",
   "PRINT_TICKET": "Ticket térmico",
-  "TICKET_PRINTER_HOST": "IP de impresora de tickets",
-  "TICKET_PRINTER_HOST_HELP": "Dirección IP de la impresora térmica ESC/POS para esta ubicación.",
+  "TICKET_PRINTER_HOST": "IP de impresora de tickets (ej. 192.168.1.100)",
+  "TICKET_PRINTER_HOST_HELP": "Dirección IP de la impresora térmica ESC/POS para esta ubicación en formato IP (ej. 192.168.1.100).",
   "TICKET_PRINTER_PORT": "Puerto de impresora de tickets",
   "TICKET_PRINTER_PORT_HELP": "Puerto TCP de la impresora térmica. Normalmente 9100."
 }

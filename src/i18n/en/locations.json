@@ -20,8 +20,8 @@
   "PRINT_LETTER": "Letter",
   "PRINT_MESSAGE": "Ticket message",
   "PRINT_TICKET": "Thermal ticket",
-  "TICKET_PRINTER_HOST": "Ticket printer IP",
-  "TICKET_PRINTER_HOST_HELP": "IP address of the ESC/POS thermal printer for this location.",
+  "TICKET_PRINTER_HOST": "Ticket printer IP (e.g. 192.168.1.100)",
+  "TICKET_PRINTER_HOST_HELP": "IP address of the ESC/POS thermal printer for this location in the format of an IP address (e.g. 192.168.1.100).",
   "TICKET_PRINTER_PORT": "Ticket printer port",
   "TICKET_PRINTER_PORT_HELP": "TCP port of the thermal printer. Usually 9100."
 }

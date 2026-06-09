@@ -6,7 +6,7 @@
   "PRINT_FORMAT_THERMAL": "Thermal",
   "PRINT_FORMAT_HELP": "The print format determines the size and design of the printed ticket. The 'Letter' format is suitable for standard printers and offers a more spacious design, while the 'Thermal' format is ideal for receipt printers and produces more compact tickets. Choose the format that best fits your printer and printing needs.",
   "PRINT_LETTER": "Letter Size",
-  "PRINT_SERVER_URL": "Print Server URL",
+  "PRINT_SERVER_URL": "Print Server URL (http://...)",
   "PRINT_SERVER_URL_HELP": "The Print Server URL is the address of the server that will be used to send the print commands.",
   "PRINT_TICKET": "Receipt Size",
   "ticket": {
