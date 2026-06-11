@@ -1,8 +1,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
-import { sendEmail } from "./email/sendEmail.js";
-
+import { sendEmail } from "./email/mailer.js";
 if (!admin.apps.length) {
   admin.initializeApp();
 }
