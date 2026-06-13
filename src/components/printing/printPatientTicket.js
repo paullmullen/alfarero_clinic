@@ -104,8 +104,6 @@
  * ============================================================================
  */
 
-const DEFAULT_PRINT_SERVER_URL = "http://192.168.2.48:3333";
-
 export const getPrintFormat = (location) => {
   return location?.printing?.format || "letter";
 };
@@ -186,7 +184,16 @@ export const printEscPosPatientTicket = async ({
   printServerUrl,
 }) => {
   const url =
-    printServerUrl || location?.printing?.serverUrl || DEFAULT_PRINT_SERVER_URL;
+    printServerUrl ||
+    (location?.printing?.printServerHost
+      ? `http://${location.printing.printServerHost}:${
+          location.printing.printServerPort || 3333
+        }`
+      : null);
+
+  if (!url) {
+    throw new Error("Print server is not configured for this location.");
+  }
 
   const response = await fetch(`${url}/print/patient-ticket`, {
     method: "POST",

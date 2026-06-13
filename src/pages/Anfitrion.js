@@ -358,23 +358,29 @@ const Anfitrion = () => {
               visitTypeLabel,
             });
           } catch (err) {
+            const errorMessage =
+              err instanceof Error ? err.message : String(err);
+
             console.error("Ticket reprint failed:", err);
+
             message.error(
-              t("ticket.reprintFailed", {
+              `${t("ticket.reprintFailed", {
                 defaultValue: "Ticket reprint failed.",
-              }),
+              })} ${errorMessage}`,
             );
-            message.error(err);
           }
         }, 0);
       } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+
         console.error("Error preparing ticket reprint:", error);
+
         message.error(
-          t("ticket.reprintFailed", {
+          `${t("ticket.reprintFailed", {
             defaultValue: "Ticket reprint failed.",
-          }),
+          })} ${errorMessage}`,
         );
-        message.error(error);
       }
     },
     [rowsRaw, locations, selectedLocation, printEnabled, t],

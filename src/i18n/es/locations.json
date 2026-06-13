@@ -23,5 +23,14 @@
   "TICKET_PRINTER_HOST": "IP de impresora de tickets (ej. 192.168.1.100)",
   "TICKET_PRINTER_HOST_HELP": "Dirección IP de la impresora térmica ESC/POS para esta ubicación en formato IP (ej. 192.168.1.100).",
   "TICKET_PRINTER_PORT": "Puerto de impresora de tickets",
-  "TICKET_PRINTER_PORT_HELP": "Puerto TCP de la impresora térmica. Normalmente 9100."
+  "TICKET_PRINTER_PORT_HELP": "Puerto TCP de la impresora térmica. Normalmente 9100.",
+  "PRINT_SERVER_HOST": "Host o dirección IP del servidor de impresión",
+  "PRINT_SERVER_HOST_HELP": "Dirección IP o nombre del equipo que ejecuta el servidor local de impresión.",
+
+  "PRINT_SERVER_PORT": "Puerto del servidor de impresión",
+  "PRINT_SERVER_PORT_HELP": "Puerto TCP utilizado por el servidor local de impresión. Normalmente 3333.",
+
+  "PRINT_SERVER_URL_PREVIEW": "URL utilizada por la aplicación:",
+  "TICKET_PRINTER_URL_PREVIEW": "URL de impresora de tickets utilizada por la aplicación:",
+  "TICKET_PRINTER_PREVIEW": "Impresora de tickets configurada como:"
 }

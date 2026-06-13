@@ -23,5 +23,15 @@
   "TICKET_PRINTER_HOST": "Ticket printer IP (e.g. 192.168.1.100)",
   "TICKET_PRINTER_HOST_HELP": "IP address of the ESC/POS thermal printer for this location in the format of an IP address (e.g. 192.168.1.100).",
   "TICKET_PRINTER_PORT": "Ticket printer port",
-  "TICKET_PRINTER_PORT_HELP": "TCP port of the thermal printer. Usually 9100."
+  "TICKET_PRINTER_PORT_HELP": "TCP port of the thermal printer. Usually 9100.",
+
+  "PRINT_SERVER_HOST": "Print Server Host / IP Address",
+  "PRINT_SERVER_HOST_HELP": "The IP address or hostname of the computer running the local print server.",
+
+  "PRINT_SERVER_PORT": "Print Server Port",
+  "PRINT_SERVER_PORT_HELP": "The TCP port used by the local print server. Normally 3333.",
+
+  "PRINT_SERVER_URL_PREVIEW": "Print server URL used by the app:",
+  "TICKET_PRINTER_URL_PREVIEW": "Ticket printer URL used by the app:",
+  "TICKET_PRINTER_PREVIEW": "Ticket printer configured as:"
 }

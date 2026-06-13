@@ -19,14 +19,35 @@ const { TextArea } = Input;
 
 const DEFAULT_PRINTING = {
   format: "letter",
-  serverUrl: "",
+  printServerHost: "",
+  printServerPort: 3333,
   ticketPrinterHost: "",
   ticketPrinterPort: 9100,
+};
+
+const buildServerUrl = (host = "", port = 3333) => {
+  const cleanHost = String(host || "").trim();
+  const cleanPort = Number(port || 3333);
+
+  if (!cleanHost) return "";
+
+  return `http://${cleanHost}:${cleanPort}`;
+};
+
+const buildHostPort = (host = "", port = 9100) => {
+  const cleanHost = String(host || "").trim();
+  const cleanPort = Number(port || 9100);
+
+  if (!cleanHost) return "";
+
+  return `${cleanHost}:${cleanPort}`;
 };
 
 const getPrinting = (location = {}) => ({
   ...DEFAULT_PRINTING,
   ...(location.printing || {}),
+  printServerPort: Number(location.printing?.printServerPort || 3333),
+  ticketPrinterPort: Number(location.printing?.ticketPrinterPort || 9100),
 });
 
 export default function LocationsManager({
@@ -39,7 +60,8 @@ export default function LocationsManager({
   const [draftNames, setDraftNames] = useState({});
   const [draftMessages, setDraftMessages] = useState({});
   const [draftPrintFormats, setDraftPrintFormats] = useState({});
-  const [draftPrintServerUrls, setDraftPrintServerUrls] = useState({});
+  const [draftPrintServerHosts, setDraftPrintServerHosts] = useState({});
+  const [draftPrintServerPorts, setDraftPrintServerPorts] = useState({});
   const [draftPrinterHosts, setDraftPrinterHosts] = useState({});
   const [draftPrinterPorts, setDraftPrinterPorts] = useState({});
 
@@ -47,7 +69,8 @@ export default function LocationsManager({
     const nextNames = {};
     const nextMessages = {};
     const nextFormats = {};
-    const nextPrintServerUrls = {};
+    const nextPrintServerHosts = {};
+    const nextPrintServerPorts = {};
     const nextPrinterHosts = {};
     const nextPrinterPorts = {};
 
@@ -57,7 +80,8 @@ export default function LocationsManager({
       nextNames[loc.id] = loc.name || "";
       nextMessages[loc.id] = loc.message || "";
       nextFormats[loc.id] = printing.format || "letter";
-      nextPrintServerUrls[loc.id] = printing.serverUrl || "";
+      nextPrintServerHosts[loc.id] = printing.printServerHost || "";
+      nextPrintServerPorts[loc.id] = printing.printServerPort || 3333;
       nextPrinterHosts[loc.id] = printing.ticketPrinterHost || "";
       nextPrinterPorts[loc.id] = printing.ticketPrinterPort || 9100;
     }
@@ -65,7 +89,8 @@ export default function LocationsManager({
     setDraftNames(nextNames);
     setDraftMessages(nextMessages);
     setDraftPrintFormats(nextFormats);
-    setDraftPrintServerUrls(nextPrintServerUrls);
+    setDraftPrintServerHosts(nextPrintServerHosts);
+    setDraftPrintServerPorts(nextPrintServerPorts);
     setDraftPrinterHosts(nextPrinterHosts);
     setDraftPrinterPorts(nextPrinterPorts);
   }, [locations]);
@@ -87,10 +112,14 @@ export default function LocationsManager({
   };
 
   const commitPrinting = (location, patch) => {
+    const currentPrinting = getPrinting(location);
+
     const nextPrinting = {
-      ...getPrinting(location),
+      ...currentPrinting,
       ...patch,
     };
+
+    delete nextPrinting.serverUrl;
 
     onUpdate(location.id, "printing", nextPrinting);
   };
@@ -104,12 +133,23 @@ export default function LocationsManager({
     }
   };
 
-  const commitPrintServerUrl = (location) => {
-    const draft = (draftPrintServerUrls[location.id] ?? "").trim();
-    const current = getPrinting(location).serverUrl || "";
+  const commitPrintServerHost = (location) => {
+    const draft = (draftPrintServerHosts[location.id] ?? "").trim();
+    const current = getPrinting(location).printServerHost || "";
 
     if (draft !== current) {
-      commitPrinting(location, { serverUrl: draft });
+      commitPrinting(location, { printServerHost: draft });
+    }
+  };
+
+  const commitPrintServerPort = (location, nextValue = null) => {
+    const draft = Number(
+      nextValue || draftPrintServerPorts[location.id] || 3333,
+    );
+    const current = Number(getPrinting(location).printServerPort || 3333);
+
+    if (draft !== current) {
+      commitPrinting(location, { printServerPort: draft });
     }
   };
 
@@ -146,6 +186,19 @@ export default function LocationsManager({
       <Row gutter={[16, 16]}>
         {locations.map((location) => {
           const printFormat = draftPrintFormats[location.id] || "letter";
+          const printServerHost = draftPrintServerHosts[location.id] || "";
+          const printServerPort = draftPrintServerPorts[location.id] || 3333;
+          const printServerUrlPreview = buildServerUrl(
+            printServerHost,
+            printServerPort,
+          );
+          const ticketPrinterHost = draftPrinterHosts[location.id] || "";
+          const ticketPrinterPort = draftPrinterPorts[location.id] || 9100;
+
+          const ticketPrinterPreview = buildHostPort(
+            ticketPrinterHost,
+            ticketPrinterPort,
+          );
 
           return (
             <Col key={location.id} xs={24} md={12} lg={8}>
@@ -243,30 +296,62 @@ export default function LocationsManager({
                       size={12}
                     >
                       <FormField
-                        label={t("PRINT_SERVER_URL") || "Print Server URL"}
+                        label={
+                          t("PRINT_SERVER_HOST") ||
+                          "Print Server Host / IP Address"
+                        }
                         help={
-                          t("PRINT_SERVER_URL_HELP") ||
-                          "The base URL of the local print bridge for this location. Example: http://192.168.2.48:3333"
+                          t("PRINT_SERVER_HOST_HELP") ||
+                          "The IP address or hostname of the computer running the local print server."
                         }
                       >
                         <Input
-                          value={draftPrintServerUrls[location.id] ?? ""}
+                          value={draftPrintServerHosts[location.id] ?? ""}
                           onChange={(e) =>
-                            setDraftPrintServerUrls((prev) => ({
+                            setDraftPrintServerHosts((prev) => ({
                               ...prev,
                               [location.id]: e.target.value,
                             }))
                           }
-                          onBlur={() => commitPrintServerUrl(location)}
-                          onPressEnter={() => commitPrintServerUrl(location)}
-                          placeholder="http://192.168.2.48:3333"
+                          onBlur={() => commitPrintServerHost(location)}
+                          onPressEnter={() => commitPrintServerHost(location)}
+                          placeholder="10.122.21.162"
                         />
                       </FormField>
 
                       <FormField
+                        label={t("PRINT_SERVER_PORT") || "Print Server Port"}
+                        help={
+                          t("PRINT_SERVER_PORT_HELP") ||
+                          "The TCP port used by the local print server. Normally 3333."
+                        }
+                      >
+                        <InputNumber
+                          min={1}
+                          max={65535}
+                          value={draftPrintServerPorts[location.id] ?? 3333}
+                          onChange={(value) => {
+                            const nextValue = value || 3333;
+                            setDraftPrintServerPorts((prev) => ({
+                              ...prev,
+                              [location.id]: nextValue,
+                            }));
+                            commitPrintServerPort(location, nextValue);
+                          }}
+                          style={{ width: "100%" }}
+                        />
+                      </FormField>
+
+                      <Text type="secondary">
+                        {t("PRINT_SERVER_URL_PREVIEW") ||
+                          "Print server URL used by the app:"}{" "}
+                        {printServerUrlPreview || "—"}
+                      </Text>
+
+                      <FormField
                         label={
                           t("TICKET_PRINTER_HOST") ||
-                          "Ticket Printer IP Address"
+                          "Ticket Printer Host / IP Address"
                         }
                         help={
                           t("TICKET_PRINTER_HOST_HELP") ||
@@ -283,7 +368,7 @@ export default function LocationsManager({
                           }
                           onBlur={() => commitPrinterHost(location)}
                           onPressEnter={() => commitPrinterHost(location)}
-                          placeholder="192.168.1.50"
+                          placeholder="10.122.21.138"
                         />
                       </FormField>
 
@@ -311,6 +396,12 @@ export default function LocationsManager({
                           style={{ width: "100%" }}
                         />
                       </FormField>
+
+                      <Text type="secondary">
+                        {t("TICKET_PRINTER_URL_PREVIEW") ||
+                          "Ticket Printer URL used by the app:"}{" "}
+                        {ticketPrinterPreview || "—"}
+                      </Text>
                     </Space>
                   )}
 
