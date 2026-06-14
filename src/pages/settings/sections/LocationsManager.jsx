@@ -203,7 +203,11 @@ export default function LocationsManager({
           return (
             <Col key={location.id} xs={24} md={12} lg={8}>
               <div style={styles.card}>
-                <Space direction="vertical" style={{ width: "100%" }} size={32}>
+                <Space
+                  orientation="vertical"
+                  style={{ width: "100%" }}
+                  size={32}
+                >
                   <div style={styles.topRow}>
                     <Space size="small">
                       <Switch
@@ -291,7 +295,7 @@ export default function LocationsManager({
 
                   {printFormat === "ticket" && (
                     <Space
-                      direction="vertical"
+                      orientation="vertical"
                       style={{ width: "100%" }}
                       size={12}
                     >

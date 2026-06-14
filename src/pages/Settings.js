@@ -60,7 +60,7 @@ const JumpNav = ({ sections, onJump }) => {
       }}
       bodyStyle={{ padding: 16 }}
     >
-      <Space direction="vertical" size={8} style={{ width: "100%" }}>
+      <Space orientation="vertical" size={8} style={{ width: "100%" }}>
         <Text strong type="primary" style={{ fontSize: 24 }}>
           {t("SETTINGS_JUMP_TO")}
         </Text>
@@ -199,7 +199,7 @@ const Settings = () => {
             "Manage the structure of clinic operations, including stations, service locations, and default plans of care."
           }
         >
-          <Space direction="vertical" size={24} style={{ width: "100%" }}>
+          <Space orientation="vertical" size={24} style={{ width: "100%" }}>
             <StationsMaxWait stations={stations} onUpdate={updateMaxWait} />
 
             <Divider style={{ margin: 0 }} />
@@ -247,7 +247,7 @@ const Settings = () => {
             "Control permissions and send invitations for system access."
           }
         >
-          <Space direction="vertical" size={24} style={{ width: "100%" }}>
+          <Space orientation="vertical" size={24} style={{ width: "100%" }}>
             <UserPermissionsTable
               users={users}
               permissionKeys={permissionKeys}

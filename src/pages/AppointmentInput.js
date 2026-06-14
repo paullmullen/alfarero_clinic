@@ -661,7 +661,7 @@ export default function AppointmentInput() {
           {ti("title")}
         </Title>
 
-        <Space direction="vertical" style={{ width: "100%" }} size="middle">
+        <Space orientation="vertical" style={{ width: "100%" }} size="middle">
           <Text>{ti("description")}</Text>
 
           <ActionRowCard size="small">

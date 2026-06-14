@@ -676,7 +676,7 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
               />
             </Form.Item>
 
-            <Space direction="vertical" size="middle">
+            <Space orientation="vertical" size="middle">
               <Button
                 onClick={fetchStationQr}
                 loading={loadingGeneratedQr}
@@ -729,7 +729,7 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
         )}
 
         {qrType === "cloud_config" && (
-          <Space direction="vertical" size="middle">
+          <Space orientation="vertical" size="middle">
             <Button onClick={fetchCloudQr} loading={loadingGeneratedQr}>
               {t ? t("SCANNER_QR_GENERATE_CLOUD") : "Generate Cloud QR"}
             </Button>
@@ -744,7 +744,7 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
       </Form>
 
       {canPrint ? (
-        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+        <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
           <Space>
             <Button type="primary" onClick={handlePrint}>
               {t ? t("SCANNER_QR_PRINT") : "Print QR"}

@@ -513,7 +513,7 @@ const Anfitrion = () => {
                 {t("common.phone")} {String(name).split("\n")[4]}{" "}
               </td>
               <td align="right">
-                <Space direction="vertical" size="small">
+                <Space orientation="vertical" size="small">
                   <PrinterOutlined
                     style={{
                       fontSize: IconSizes.height,

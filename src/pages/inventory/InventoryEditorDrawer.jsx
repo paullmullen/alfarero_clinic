@@ -385,7 +385,7 @@ export default function InventoryEditorDrawer({
       onClose={onClose}
       destroyOnHidde
     >
-      <Space direction="vertical" style={{ width: "100%" }} size="middle">
+      <Space orientation="vertical" style={{ width: "100%" }} size="middle">
         <Space wrap>
           <Input
             placeholder={safeT(t, "inventory.editor.newName", "Name")}

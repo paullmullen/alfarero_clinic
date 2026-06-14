@@ -362,7 +362,7 @@ const VisitTypesManager = ({ stations = [], t }) => {
                     }
                   >
                     <Space
-                      direction="vertical"
+                      orientation="vertical"
                       style={{ width: "100%" }}
                       size="small"
                     >

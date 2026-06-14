@@ -152,7 +152,7 @@ export const Survey = () => {
               <Col xs={24} sm={24}>
                 <Form.Item label={t("firstVisit")} name="firstVisit">
                   <Radio.Group onChange={handleChangeFirstVisit}>
-                    <Space direction="vertical">
+                    <Space orientation="vertical">
                       <Radio value={1}>{t("yes")}</Radio>
                       <Radio value={0}>{t("no")}</Radio>
                     </Space>
@@ -179,7 +179,7 @@ export const Survey = () => {
               <Col xs={24} sm={24}>
                 <Form.Item label={t("satisfaction")} name="sat_gen">
                   <Radio.Group onChange={handleChangeSatisfaction}>
-                    <Space direction="horizontal">
+                    <Space orientation="horizontal">
                       <Radio value={1}>
                         <AngryIcon height="50px" width="50px">
                           {" "}
@@ -207,7 +207,7 @@ export const Survey = () => {
               <Col xs={24} sm={24}>
                 <Form.Item label={t("sat_anfi")} name="sat_anfi">
                   <Radio.Group onChange={handleChangeSatisfaction}>
-                    <Space direction="horizontal">
+                    <Space orientation="horizontal">
                       <Radio value={1}>
                         <AngryIcon height="50px" width="50px">
                           {" "}
@@ -236,7 +236,7 @@ export const Survey = () => {
                 <Col xs={24} sm={24}>
                   <Form.Item label={t("sat_"+item)} name={t("sat_"+item)}>
                     <Radio.Group onChange={handleChangeSatisfaction}>
-                      <Space direction="horizontal">
+                      <Space orientation="horizontal">
                         <Radio value={1}>
                           <AngryIcon height="50px" width="50px">
                             {" "}
