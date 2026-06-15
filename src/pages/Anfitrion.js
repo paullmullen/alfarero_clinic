@@ -302,6 +302,15 @@ const Anfitrion = () => {
           selectedLocation?.printing?.format ||
           "letter";
 
+        if (patientPrintFormat === "none") {
+          message.info(
+            t("ticket.printingDisabled", {
+              defaultValue: "Printing is disabled for this clinic.",
+            }),
+          );
+          return;
+        }
+
         const rawVisitType = rawPatient.type_of_visit || "";
         const translatedVisitType = rawVisitType
           ? t(rawVisitType, { defaultValue: rawVisitType })

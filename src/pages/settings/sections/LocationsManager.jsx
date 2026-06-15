@@ -203,11 +203,7 @@ export default function LocationsManager({
           return (
             <Col key={location.id} xs={24} md={12} lg={8}>
               <div style={styles.card}>
-                <Space
-                  orientation="vertical"
-                  style={{ width: "100%" }}
-                  size={32}
-                >
+                <Space direction="vertical" style={{ width: "100%" }} size={32}>
                   <div style={styles.topRow}>
                     <Space size="small">
                       <Switch
@@ -268,7 +264,7 @@ export default function LocationsManager({
                     label={t("PRINT_FORMAT") || "Print Format"}
                     help={
                       t("PRINT_FORMAT_HELP") ||
-                      "Choose whether this location prints on letter paper or a receipt printer."
+                      "Choose whether this location prints on letter paper, a receipt printer, or does not print tickets."
                     }
                   >
                     <Select
@@ -289,13 +285,17 @@ export default function LocationsManager({
                           value: "ticket",
                           label: t("PRINT_TICKET") || "Receipt / POS Ticket",
                         },
+                        {
+                          value: "none",
+                          label: t("PRINT_NONE") || "No print",
+                        },
                       ]}
                     />
                   </FormField>
 
                   {printFormat === "ticket" && (
                     <Space
-                      orientation="vertical"
+                      direction="vertical"
                       style={{ width: "100%" }}
                       size={12}
                     >

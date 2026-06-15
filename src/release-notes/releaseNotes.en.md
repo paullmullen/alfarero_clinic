@@ -2,6 +2,10 @@
 
 Releases with letter suffixes are candidate releases not pushed to production. Releases without letter suffixes are the production releases that include the candidate changes (if approved).
 
+## V3.0.1
+
+- Added "no printer" as an option in the location settings
+
 ## V3.0.0
 
 - Implementation of the new printer/scanner features

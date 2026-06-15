@@ -317,6 +317,15 @@ export const Registro = () => {
       }
 
       try {
+        const patientPrintFormat =
+          effectiveLocation?.printing?.format || "letter";
+
+        if (patientPrintFormat === "none") {
+          showAlert("Success", t("patientWasCreated"), "success");
+          handleReset();
+          return;
+        }
+
         setTicketPatient(createdPatient);
 
         setTimeout(async () => {
