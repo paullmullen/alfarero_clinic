@@ -5,7 +5,6 @@ Las versiones con sufijos de letras son versiones candidatas que no se han imple
 ## V3.0.1
 
 - Sin impresión ahora es una opción en admin - ubicaciones
--
 
 ## V3.0.0
 

@@ -11,12 +11,11 @@ import {
   message,
 } from "antd";
 import { QRCodeSVG } from "qrcode.react";
+import { auth } from "../../../helpers/firebaseConfig";
 
 const { Title, Paragraph, Text } = Typography;
 
 const DEFAULT_DEVICE_ID = "scanner_pi_01";
-
-const CLOUD_QR_ADMIN_TOKEN = process.env.REACT_APP_SCANNER_QR_ADMIN_TOKEN || "";
 
 const CLOUD_QR_ENDPOINT =
   "https://us-central1-alfarero-478ad.cloudfunctions.net/generateScannerCloudQr";
@@ -134,40 +133,16 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
     });
   };
 
-  const localPayloadObject = useMemo(() => {
-    if (qrType === "wifi_config") {
-      if (!ssid || password === "") return null;
-
-      return {
-        kind: "wifi_config",
-        version: 1,
-        payload: {
-          ssid,
-          password,
-          security,
-        },
-        auth: {
-          admin_token: CLOUD_QR_ADMIN_TOKEN,
-        },
-      };
-    }
-
-    if (qrType === "show_identity") {
-      return {
-        kind: "show_identity",
-        version: 1,
-        payload: {},
-        auth: {
-          admin_token: CLOUD_QR_ADMIN_TOKEN,
-        },
-      };
-    }
-
-    return null;
-  }, [qrType, ssid, password, security]);
+  const localPayloadObject = useMemo(
+    () =>
+      qrType === "show_identity"
+        ? { kind: "show_identity", version: 1, payload: {} }
+        : null,
+    [qrType],
+  );
 
   const qrValue = useMemo(() => {
-    if (qrType === "cloud_config" || qrType === "station_config") {
+    if (qrType !== "show_identity") {
       return generatedQrValue;
     }
 
@@ -223,6 +198,15 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
 
   const canPrint = !!qrValue;
 
+  const getAuthHeaders = async () => {
+    const token = await auth.currentUser?.getIdToken();
+    if (!token) throw new Error("Authentication required");
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
   const fetchCloudQr = async () => {
     try {
       setLoadingGeneratedQr(true);
@@ -230,10 +214,7 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
 
       const response = await fetch(CLOUD_QR_ENDPOINT, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${CLOUD_QR_ADMIN_TOKEN}`,
-        },
+        headers: await getAuthHeaders(),
       });
 
       const data = await response.json();
@@ -277,10 +258,7 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
 
       const response = await fetch(CLOUD_QR_ENDPOINT, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${CLOUD_QR_ADMIN_TOKEN}`,
-        },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({
           kind: "station_config",
           location_id: locationId,
@@ -308,6 +286,45 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
         t
           ? t("SCANNER_QR_STATION_GENERATE_ERROR")
           : "Failed to generate station QR.",
+      );
+    } finally {
+      setLoadingGeneratedQr(false);
+    }
+  };
+
+  const fetchWifiQr = async () => {
+    if (!canGenerateWifiQr) {
+      message.warning(
+        t ? t("SCANNER_QR_FILL_FIELDS") : "Complete the Wi-Fi fields first.",
+      );
+      return;
+    }
+
+    try {
+      setLoadingGeneratedQr(true);
+      setGeneratedQrValue("");
+
+      const response = await fetch(CLOUD_QR_ENDPOINT, {
+        method: "POST",
+        headers: await getAuthHeaders(),
+        body: JSON.stringify({
+          kind: "wifi_config",
+          ssid,
+          password,
+          security,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.ok || !data?.qrValue) {
+        throw new Error(data?.error || "Failed to generate Wi-Fi QR");
+      }
+      setGeneratedQrValue(data.qrValue);
+    } catch (err) {
+      console.error(err);
+      message.error(
+        t
+          ? t("SCANNER_QR_WIFI_GENERATE_ERROR")
+          : "Failed to generate Wi-Fi QR.",
       );
     } finally {
       setLoadingGeneratedQr(false);
@@ -725,6 +742,14 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
                 options={[{ value: "wpa-psk", label: "WPA-PSK" }]}
               />
             </Form.Item>
+
+            <Button
+              onClick={fetchWifiQr}
+              loading={loadingGeneratedQr}
+              disabled={!canGenerateWifiQr}
+            >
+              {t ? t("SCANNER_QR_GENERATE_WIFI") : "Generate Wi-Fi QR"}
+            </Button>
           </>
         )}
 
