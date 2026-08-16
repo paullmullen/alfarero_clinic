@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   Card,
   Typography,
@@ -34,6 +34,27 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
 
   const [generatedQrValue, setGeneratedQrValue] = useState("");
   const [loadingGeneratedQr, setLoadingGeneratedQr] = useState(false);
+  const generatedQrRequestId = useRef(0);
+
+  const beginGeneratedQrRequest = () => {
+    const requestId = generatedQrRequestId.current + 1;
+    generatedQrRequestId.current = requestId;
+    setLoadingGeneratedQr(true);
+    setGeneratedQrValue("");
+    return requestId;
+  };
+
+  const acceptGeneratedQrResponse = (requestId, value) => {
+    if (requestId !== generatedQrRequestId.current) return false;
+    setGeneratedQrValue(value);
+    return true;
+  };
+
+  const finishGeneratedQrRequest = (requestId) => {
+    if (requestId === generatedQrRequestId.current) {
+      setLoadingGeneratedQr(false);
+    }
+  };
 
   const locationOptions = useMemo(() => {
     return (locations || [])
@@ -208,10 +229,8 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
   };
 
   const fetchCloudQr = async () => {
+    const requestId = beginGeneratedQrRequest();
     try {
-      setLoadingGeneratedQr(true);
-      setGeneratedQrValue("");
-
       const response = await fetch(CLOUD_QR_ENDPOINT, {
         method: "POST",
         headers: await getAuthHeaders(),
@@ -223,7 +242,7 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
         throw new Error(data?.error || "Failed to generate cloud QR");
       }
 
-      setGeneratedQrValue(data.qrValue);
+      if (!acceptGeneratedQrResponse(requestId, data.qrValue)) return;
 
       message.success(
         t ? t("SCANNER_QR_CLOUD_GENERATED") : "Cloud QR generated.",
@@ -237,7 +256,7 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
           : "Failed to generate cloud QR.",
       );
     } finally {
-      setLoadingGeneratedQr(false);
+      finishGeneratedQrRequest(requestId);
     }
   };
 
@@ -252,9 +271,8 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
       return;
     }
 
+    const requestId = beginGeneratedQrRequest();
     try {
-      setLoadingGeneratedQr(true);
-      setGeneratedQrValue("");
 
       const response = await fetch(CLOUD_QR_ENDPOINT, {
         method: "POST",
@@ -274,7 +292,7 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
         throw new Error(data?.error || "Failed to generate station QR");
       }
 
-      setGeneratedQrValue(data.qrValue);
+      if (!acceptGeneratedQrResponse(requestId, data.qrValue)) return;
 
       message.success(
         t ? t("SCANNER_QR_STATION_GENERATED") : "Station QR generated.",
@@ -288,7 +306,7 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
           : "Failed to generate station QR.",
       );
     } finally {
-      setLoadingGeneratedQr(false);
+      finishGeneratedQrRequest(requestId);
     }
   };
 
@@ -300,9 +318,8 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
       return;
     }
 
+    const requestId = beginGeneratedQrRequest();
     try {
-      setLoadingGeneratedQr(true);
-      setGeneratedQrValue("");
 
       const response = await fetch(CLOUD_QR_ENDPOINT, {
         method: "POST",
@@ -318,7 +335,7 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
       if (!response.ok || !data?.ok || !data?.qrValue) {
         throw new Error(data?.error || "Failed to generate Wi-Fi QR");
       }
-      setGeneratedQrValue(data.qrValue);
+      acceptGeneratedQrResponse(requestId, data.qrValue);
     } catch (err) {
       console.error(err);
       message.error(
@@ -327,7 +344,7 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
           : "Failed to generate Wi-Fi QR.",
       );
     } finally {
-      setLoadingGeneratedQr(false);
+      finishGeneratedQrRequest(requestId);
     }
   };
 
@@ -633,8 +650,10 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
           <Select
             value={qrType}
             onChange={(value) => {
+              generatedQrRequestId.current += 1;
               setQrType(value);
               setGeneratedQrValue("");
+              setLoadingGeneratedQr(false);
             }}
             options={qrTypeOptions}
           />
@@ -807,7 +826,12 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
                   borderRadius: 12,
                 }}
               >
-                <QRCodeSVG id="scanner-qr-svg" value={qrValue} size={320} />
+                <QRCodeSVG
+                  key={`${qrType}:${qrValue}`}
+                  id="scanner-qr-svg"
+                  value={qrValue}
+                  size={320}
+                />
               </div>
             </div>
 
