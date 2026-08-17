@@ -10,7 +10,7 @@ if (!admin.apps.length) {
 }
 
 const db = getFirestore();
-const SCANNER_SHARED_TOKEN = defineSecret("SCANNER_SHARED_TOKEN");
+const scannerSecret = defineSecret("SCANNER_SHARED_SECRET");
 
 const ALLOWED_EVENT_TYPES = ["scan_received", "boot_sync"];
 
@@ -115,7 +115,7 @@ async function buildBootSyncDisplay({ room_id, station_id }) {
 }
 
 export const receiveRoomScanEvent = onRequest(
-  { secrets: [SCANNER_SHARED_TOKEN] },
+  { secrets: [scannerSecret] },
   async (req, res) => {
     try {
       if (req.method !== "POST") {
@@ -125,7 +125,7 @@ export const receiveRoomScanEvent = onRequest(
       const authHeader = req.headers.authorization || "";
       const token = authHeader.replace("Bearer ", "").trim();
 
-      if (token !== SCANNER_SHARED_TOKEN.value()) {
+      if (token !== scannerSecret.value()) {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
