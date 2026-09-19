@@ -82,6 +82,13 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
       });
   }, [stations, t]);
 
+  const locationDisplayValue = useMemo(() => {
+    if (!locationId) return "";
+    const selected = locationOptions.find((option) => option.value === locationId);
+    const name = selected?.label;
+    return name && name !== locationId ? `${locationId} (${name})` : locationId;
+  }, [locationId, locationOptions]);
+
   const qrTypeOptions = [
     {
       value: "station_config",
@@ -403,7 +410,7 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
       detailHtml = `
         <div class="field">
           <span class="label">${t ? t("SCANNER_QR_LOCATION_ID") : "Location"}:</span>
-          ${locationId}
+          ${locationDisplayValue}
         </div>
 
         <div class="field">
@@ -603,7 +610,7 @@ const ScannerQrGenerator = ({ stations = [], locations = [], t }) => {
       <>
         <div style={{ marginBottom: 12 }}>
           <Text strong>{t ? t("SCANNER_QR_LOCATION_ID") : "Location"}:</Text>{" "}
-          <Text>{locationId}</Text>
+          <Text>{locationDisplayValue}</Text>
         </div>
 
         <div style={{ marginBottom: 12 }}>
