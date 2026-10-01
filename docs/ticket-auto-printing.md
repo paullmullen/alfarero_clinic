@@ -2,8 +2,8 @@
 
 ## Configuration
 
-Open **Admin → Ticket printing** (`/settings/ticket-printing`). For each location,
-select the stations that should trigger an automatic ticket. Changes save when
+Open **Admin → Locations** (`/settings`). In each location card, below the
+print format, select the stations that should trigger an automatic ticket. Changes save when
 the selection changes. Clear the selection to disable automatic tickets.
 
 The selector includes all stations defined in the clinic's station collection

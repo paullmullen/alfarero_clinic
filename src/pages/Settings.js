@@ -8,7 +8,6 @@ import {
   SafetyCertificateOutlined,
   DatabaseOutlined,
 } from "@ant-design/icons";
-import { Link } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
 
 import StationsMaxWait from "./settings/sections/StationsMaxWait";
@@ -122,7 +121,7 @@ const SectionBlock = React.forwardRef(
 SectionBlock.displayName = "SectionBlock";
 
 const Settings = () => {
-  const { stations, updateMaxWait } = useStations();
+  const { stations, allStations, updateMaxWait } = useStations();
   const { locations, updateLocation, addLocation } = useLocations();
   const { users, permissionKeys, updatePermission } = useUsersWithPermissions();
   const [t] = useTranslation("global");
@@ -190,10 +189,6 @@ const Settings = () => {
           </Title>
         </div>
 
-        <Button style={{ marginBottom: 16 }}>
-          <Link to="/settings/ticket-printing">{t("TICKET_PRINTING_SETTINGS")}</Link>
-        </Button>
-
         <JumpNav sections={jumpSections} onJump={handleJump} />
 
         <SectionBlock
@@ -213,6 +208,7 @@ const Settings = () => {
               locations={locations}
               onUpdate={updateLocation}
               onAddLocation={addLocation}
+              autoPrintStations={allStations}
               stations={stations}
               t={t}
             />

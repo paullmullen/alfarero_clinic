@@ -19,8 +19,7 @@ export const useStations = ({ includeInactive = false } = {}) => {
             name: t(d.id),
             max_waiting_time: d.data().max_waiting_time ?? 0,
             ...d.data(),
-          }))
-          .filter((item) => includeInactive || item.active !== false);
+          }));
         setStations(items);
       } catch (e) {
         console.error("Error fetching stations:", e);
@@ -46,7 +45,8 @@ export const useStations = ({ includeInactive = false } = {}) => {
   };
 
   return {
-    stations,
+    stations: includeInactive ? stations : stations.filter((item) => item.active !== false),
+    allStations: stations,
     updateMaxWait,
   };
 };
