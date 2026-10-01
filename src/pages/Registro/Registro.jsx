@@ -27,6 +27,7 @@ import { useKnownPatientAutofill } from "./hooks/useKnownPatientAutofill";
 import { normalizePhone } from "./utils/phone";
 import { toRawDpi, formatDpi } from "./utils/dpi";
 import { buildPlanOfCare } from "./utils/planOfCare";
+import { shouldAutoPrintTicket } from "./utils/shouldAutoPrintTicket";
 
 import {
   buildFormattedPatient,
@@ -320,7 +321,10 @@ export const Registro = () => {
         const patientPrintFormat =
           effectiveLocation?.printing?.format || "letter";
 
-        if (patientPrintFormat === "none") {
+        if (
+          patientPrintFormat === "none" ||
+          !shouldAutoPrintTicket(effectiveLocation, formattedPatient.plan_of_care)
+        ) {
           showAlert("Success", t("patientWasCreated"), "success");
           handleReset();
           return;

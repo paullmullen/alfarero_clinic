@@ -3,7 +3,7 @@ import { firestore } from "../../../helpers/firebaseConfig";
 import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { useTranslation } from "react-i18next";
 
-export const useStations = () => {
+export const useStations = ({ includeInactive = false } = {}) => {
   const [t] = useTranslation("global");
   const [stations, setStations] = useState([]);
 
@@ -20,7 +20,7 @@ export const useStations = () => {
             max_waiting_time: d.data().max_waiting_time ?? 0,
             ...d.data(),
           }))
-          .filter((item) => item.active !== false);
+          .filter((item) => includeInactive || item.active !== false);
         setStations(items);
       } catch (e) {
         console.error("Error fetching stations:", e);
@@ -28,7 +28,7 @@ export const useStations = () => {
     };
 
     fetchStations();
-  }, [t]);
+  }, [t, includeInactive]);
 
   const updateMaxWait = async (stationId, value) => {
     try {

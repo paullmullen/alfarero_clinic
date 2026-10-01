@@ -18,6 +18,7 @@ const Escritorio = lazy(() => import("./Escritorio"));
 const IngresarHost = lazy(() => import("./IngresarHost"));
 // const Location = lazy(() => import("./Location"));
 const Survey = lazy(() => import("./Survey"));
+const TicketPrintingSettings = lazy(() => import("./settings/TicketPrintingSettings"));
 const Settings = lazy(() => import("./Settings"));
 const Stats = lazy(() => import("./Stats"));
 const Anfitrion = lazy(() => import("./Anfitrion"));
@@ -111,6 +112,15 @@ export const RouterPage = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/settings/ticket-printing"
+                element={
+                  <ProtectedRoute requiredPermission="settings">
+                    <TicketPrintingSettings />
+                  </ProtectedRoute>
+                }
+              />
+
               <Route
                 path="/settings"
                 element={

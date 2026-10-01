@@ -33,5 +33,11 @@
   "SETTINGS_GROUP_USERS_DESCRIPTION": "Control permissions and send invitations to access the system.",
   "SETTINGS_GROUP_DATA": "Data and imports",
   "SETTINGS_GROUP_DATA_DESCRIPTION": "Run bulk import tools and patient data maintenance tasks.",
-  "SETTINGS_JUMP_TO": "Jump to"
+  "SETTINGS_JUMP_TO": "Jump to",
+  "TICKET_PRINTING_SETTINGS": "Ticket printing",
+  "AUTO_PRINT_STATIONS": "Automatically print tickets for these stations",
+  "AUTO_PRINT_HELP": "When a new patient is saved, print one ticket if their Plan of Care includes any selected station. An empty selection means no automatic printing. Manual printing remains available.",
+  "AUTO_PRINT_PLACEHOLDER": "Select stations",
+  "AUTO_PRINT_SAVE_FAILED": "Could not save the automatic printing settings. Please try again.",
+  "BACK_TO_SETTINGS": "Back to Admin"
 }
