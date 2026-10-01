@@ -33,5 +33,11 @@
   "SETTINGS_GROUP_USERS_DESCRIPTION": "Controle los permisos y envíe invitaciones para acceder al sistema.",
   "SETTINGS_GROUP_DATA": "Datos e importaciones",
   "SETTINGS_GROUP_DATA_DESCRIPTION": "Ejecute herramientas de importación masiva y mantenimiento de datos de pacientes.",
-  "SETTINGS_JUMP_TO": "Ir a"
+  "SETTINGS_JUMP_TO": "Ir a",
+  "TICKET_PRINTING_SETTINGS": "Impresión de tickets",
+  "AUTO_PRINT_STATIONS": "Imprimir tickets automáticamente para estas estaciones",
+  "AUTO_PRINT_HELP": "Al guardar un nuevo paciente, se imprime un ticket si su Plan de Atención incluye alguna estación seleccionada. Sin selección, no hay impresión automática. La impresión manual sigue disponible.",
+  "AUTO_PRINT_PLACEHOLDER": "Seleccione estaciones",
+  "AUTO_PRINT_SAVE_FAILED": "No se pudo guardar la configuración de impresión automática. Inténtelo de nuevo.",
+  "BACK_TO_SETTINGS": "Volver a Administración"
 }

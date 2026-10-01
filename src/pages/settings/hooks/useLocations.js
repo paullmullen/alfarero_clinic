@@ -24,6 +24,7 @@ export const useLocations = () => {
           active: d.data().active ?? true,
           stations: d.data().stations ?? [],
           services: d.data().services ?? [],
+          auto_print_stations: d.data().auto_print_stations ?? [],
           background_color: d.data().background_color ?? "#ffffff",
           latitude: d.data().latitude ?? 0,
           longitude: d.data().longitude ?? 0,
@@ -49,8 +50,10 @@ export const useLocations = () => {
           loc.id === locationId ? { ...loc, [key]: value } : loc,
         ),
       );
+      return true;
     } catch (e) {
       console.error("Error updating location:", e);
+      return false;
     }
   };
 
@@ -59,6 +62,7 @@ export const useLocations = () => {
     try {
       const newLoc = {
         name: "New Location",
+        auto_print_stations: [],
         background_color: "#ffffff",
         stations: [],
         latitude: 14.6232421,

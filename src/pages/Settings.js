@@ -8,6 +8,7 @@ import {
   SafetyCertificateOutlined,
   DatabaseOutlined,
 } from "@ant-design/icons";
+import { Link } from "react-router-dom";
 import { useHideMenu } from "../hooks/useHideMenu";
 
 import StationsMaxWait from "./settings/sections/StationsMaxWait";
@@ -188,6 +189,10 @@ const Settings = () => {
             {t("SETTINGS") || "Settings"}
           </Title>
         </div>
+
+        <Button style={{ marginBottom: 16 }}>
+          <Link to="/settings/ticket-printing">{t("TICKET_PRINTING_SETTINGS")}</Link>
+        </Button>
 
         <JumpNav sections={jumpSections} onJump={handleJump} />
 
