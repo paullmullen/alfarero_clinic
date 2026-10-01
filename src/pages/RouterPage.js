@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useContext } from "react";
-import { Routes, Route, BrowserRouter as Router } from "react-router-dom";
+import { Routes, Route, BrowserRouter as Router, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { UiContext } from "../context/UiContext";
 import { ProtectedRoute } from "../components/ProtectedRoute";
@@ -18,7 +18,6 @@ const Escritorio = lazy(() => import("./Escritorio"));
 const IngresarHost = lazy(() => import("./IngresarHost"));
 // const Location = lazy(() => import("./Location"));
 const Survey = lazy(() => import("./Survey"));
-const TicketPrintingSettings = lazy(() => import("./settings/TicketPrintingSettings"));
 const Settings = lazy(() => import("./Settings"));
 const Stats = lazy(() => import("./Stats"));
 const Anfitrion = lazy(() => import("./Anfitrion"));
@@ -116,7 +115,7 @@ export const RouterPage = () => {
                 path="/settings/ticket-printing"
                 element={
                   <ProtectedRoute requiredPermission="settings">
-                    <TicketPrintingSettings />
+                    <Navigate to="/settings" replace />
                   </ProtectedRoute>
                 }
               />

@@ -11,6 +11,7 @@ import {
   Switch,
 } from "antd";
 import { HexColorPicker } from "react-colorful";
+import AutoPrintStations from "./AutoPrintStations";
 import LocationPicker from "../../../components/LocationPicker";
 import FormField from "../../../components/FormField";
 
@@ -55,6 +56,7 @@ export default function LocationsManager({
   onUpdate,
   onAddLocation,
   stations,
+  autoPrintStations = stations,
   t,
 }) {
   const [draftNames, setDraftNames] = useState({});
@@ -292,6 +294,13 @@ export default function LocationsManager({
                       ]}
                     />
                   </FormField>
+
+                  <AutoPrintStations
+                    location={location}
+                    stations={autoPrintStations}
+                    onUpdate={onUpdate}
+                    t={t}
+                  />
 
                   {printFormat === "ticket" && (
                     <Space
