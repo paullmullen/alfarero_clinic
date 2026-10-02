@@ -1,3 +1,4 @@
+import { buildWaitingHeatmapData } from "./waitingHeatmapData.js";
 import { createCanvas } from "canvas";
 import Chart from "chart.js/auto";
 import * as Matrix from "chartjs-chart-matrix";
@@ -28,9 +29,9 @@ const CellLabelPlugin = {
 
     meta.data.forEach((element, index) => {
       const raw = data[index];
-      const v = raw?.v ?? 0;
+      const v = raw?.v;
 
-      if (!element || !raw || !v) return;
+      if (!element || !Number.isFinite(v)) return;
 
       const props = element.getProps(["x", "y", "width", "height"], true);
 
@@ -64,8 +65,7 @@ export function generateWaitingHeatmapChart(
     includeInProgress = false,
     startOfToday = null,
     startOfTomorrow = null,
-    timezoneOffsetMinutes = 0,
-    topN = 10,
+    timezoneOffsetMinutes = 360,
     showDecimalMinutes = true,
   } = {},
 ) {
@@ -79,126 +79,15 @@ export function generateWaitingHeatmapChart(
   const canvas = createCanvas(800, 400);
   const ctx = canvas.getContext("2d");
 
-  const stationHourMap = {};
-  const stationLabels = new Set();
-  const hourLabels = new Set();
-
-  let totalSteps = 0;
-  let included = 0;
-  let noTimestamp = 0;
-  let noWaitingTime = 0;
-  let badStatus = 0;
-  let outOfRange = 0;
-
-  const validStatus = includeInProgress
-    ? new Set(["complete", "in_process", "queued"])
-    : new Set(["complete"]);
-
-  const start = startOfToday
-    ? startOfToday.toDate
-      ? startOfToday.toDate()
-      : startOfToday
-    : null;
-
-  const end = startOfTomorrow
-    ? startOfTomorrow.toDate
-      ? startOfTomorrow.toDate()
-      : startOfTomorrow
-    : null;
-
-  patientsSnapshot.forEach((doc) => {
-    const data = doc.data();
-    const plan = data.plan_of_care ?? [];
-
-    for (const step of plan) {
-      totalSteps++;
-
-      const hasTimestamp = !!step?.waiting_start?.toDate;
-      if (!hasTimestamp) {
-        noTimestamp++;
-        continue;
-      }
-
-      const ws = step.waiting_start.toDate();
-
-      const hasTime =
-        typeof step?.waiting_time === "number" &&
-        !Number.isNaN(step.waiting_time);
-
-      if (!hasTime) {
-        noWaitingTime++;
-        continue;
-      }
-
-      if (!validStatus.has(step?.status)) {
-        badStatus++;
-        continue;
-      }
-
-      if (start && end && !(ws >= start && ws < end)) {
-        outOfRange++;
-        continue;
-      }
-
-      const localStart = new Date(
-        ws.getTime() - timezoneOffsetMinutes * 60 * 1000,
-      );
-      const hour = localStart.getHours();
-
-      const station = step.station ?? "unknown";
-      const key = `${station}_${hour}`;
-
-      if (!stationHourMap[key]) stationHourMap[key] = [];
-
-      const minutes = step.waiting_time / 60;
-      stationHourMap[key].push(minutes);
-
-      stationLabels.add(station);
-      hourLabels.add(hour);
-      included++;
-    }
-  });
-
-  const stations = Array.from(stationLabels).sort();
-  const hours = Array.from(hourLabels).sort((a, b) => a - b);
-
-  const dataMatrixLocal = stations.map((station) =>
-    hours.map((hour) => {
-      const key = `${station}_${hour}`;
-      const times = stationHourMap[key] ?? [];
-      if (times.length === 0) return 0;
-
-      const avg = times.reduce((a, b) => a + b, 0) / times.length;
-      return showDecimalMinutes ? parseFloat(avg.toFixed(1)) : Math.round(avg);
-    }),
+  const { stations, hours, values, counts, diagnostics } = buildWaitingHeatmapData(
+    patientsSnapshot,
+    { includeInProgress, startOfToday, startOfTomorrow,
+      timezoneOffsetMinutes, showDecimalMinutes },
   );
-
   const labeledStations = stations.map(
     (s) => `${s} [${((thresholds?.[s] ?? 900) / 60).toFixed(0)} mins]`,
   );
-
-  if (debug) {
-    const header = "[WaitingHeatmap Diagnostics]";
-    console.log(`${header} Steps (total=${totalSteps})`);
-    console.log(
-      `${header} Included=${included}, Excluded: noTimestamp=${noTimestamp}, noWaitingTime=${noWaitingTime}, badStatus=${badStatus}, outOfRange=${outOfRange}`,
-    );
-
-    if (start && end) {
-      console.log(
-        `${header} Day window: start=${start.toISOString()} end=${end.toISOString()}`,
-      );
-    } else {
-      console.log(`${header} Day window not applied`);
-    }
-
-    console.log(
-      `${header} Distinct stations: ${stations.length} -> [${stations.join(", ")}]`,
-    );
-    console.log(
-      `${header} Distinct hours: ${hours.length} -> [${hours.join(", ")}]`,
-    );
-  }
+  if (debug) console.log("[WaitingHeatmap Diagnostics]", diagnostics);
 
   new Chart(ctx, {
     type: "matrix",
@@ -207,21 +96,22 @@ export function generateWaitingHeatmapChart(
       datasets: [
         {
           label: "Tiempo de espera",
-          data: dataMatrixLocal.flatMap((row, i) =>
+          data: values.flatMap((row, i) =>
             row.map((value, j) => ({
               x: `${hours[j]}:00`,
               y: labeledStations[i],
               v: value,
+              count: counts[i][j],
             })),
           ),
           backgroundColor: (ctx) => {
             const dataPoint = ctx?.dataset?.data?.[ctx.dataIndex];
-            const value = dataPoint?.v ?? 0;
+            const value = dataPoint?.v;
             const stationLabel = dataPoint?.y ?? "";
             const station = stationLabel.split(" [")[0];
             const maxValue = thresholds?.[station] ?? 900;
 
-            if (value === 0) return "rgba(255,255,255,1)";
+            if (!Number.isFinite(value)) return "rgba(255,255,255,1)";
 
             if (value * 60 <= maxValue) {
               const ratio = (value * 60) / maxValue;
@@ -253,6 +143,7 @@ export function generateWaitingHeatmapChart(
     options: {
       devicePixelRatio: 2,
       responsive: false,
+      animation: false,
       layout: { padding: { top: 10, right: 10, bottom: 24, left: 10 } },
       plugins: {
         title: { display: false },
@@ -294,3 +185,4 @@ export function generateWaitingHeatmapChart(
 
   return canvas.toDataURL();
 }
+

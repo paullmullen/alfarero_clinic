@@ -138,6 +138,7 @@ export async function sendDailyEmails({ reportShiftDays = 0 } = {}) {
   const last30DaysSnapshot = await fetchLast30DaysPatients({
     db,
     startOf30DaysAgoTimestamp,
+    startOfTomorrow,
   });
 
   const recipients = await fetchRecipients({ db });
@@ -222,7 +223,8 @@ export async function sendDailyEmails({ reportShiftDays = 0 } = {}) {
 
   const waitingChart = generateWaitingTimeChart(todaySnapshot);
 
-  const waitingHeatmap = generateWaitingHeatmapChart(todaySnapshot, {
+  // Include completed station encounters even when the overall visit is open.
+  const waitingHeatmap = generateWaitingHeatmapChart(last30DaysSnapshot, {
     thresholds,
     timezoneOffsetMinutes: TIMEZONE_OFFSET_MINUTES,
     startOfToday,
@@ -241,9 +243,14 @@ export async function sendDailyEmails({ reportShiftDays = 0 } = {}) {
     last30DaysSnapshot,
     TIMEZONE_OFFSET_MINUTES,
     DAYS,
+    startOfToday.toDate(),
   );
 
-  const observations = await fetchOpsObservations({ db, days: DAYS });
+  const observations = await fetchOpsObservations({
+    db,
+    startYMD: timeline.labels[0],
+    endYMD: timeline.labels.at(-1),
+  });
   const observationTypes = await fetchObservationTypes({ db });
 
   /**
@@ -290,6 +297,7 @@ export async function sendDailyEmails({ reportShiftDays = 0 } = {}) {
     labels: timeline.labels,
     locationVolumeData,
     locationsById,
+    volumeData: timeline.values,
     observations: observationsForChart,
     typesById: observationTypes,
     daysLabel: `(últimos ${DAYS} días)`,
@@ -372,3 +380,4 @@ export async function sendDailyEmails({ reportShiftDays = 0 } = {}) {
 
   return results;
 }
+
