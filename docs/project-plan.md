@@ -217,3 +217,76 @@ Each check mark represents a completed development milestone.
 Recommended file location:
 
 docs/project-plan.md
+
+
+---
+
+# Backlog Review — October 2, 2026
+
+This review takes precedence over older unchecked deployment milestones above.
+The historical checklist is retained; an unchecked item is not proof that work is still outstanding.
+
+## Newly added work
+
+| ID | Priority | Item | Status |
+| --- | --- | --- | --- |
+| REPORT-01 | High | Correct daily email waiting heatmap data | Reported defect; investigate and fix |
+| REPORT-02 | High | Investigate daily email total visit chart data | Suspected defect; reconcile before changing |
+| ANALYTICS-01 | Medium | Explore AI insights from accumulated clinic data | Discovery; follows reporting data validation |
+
+### REPORT-01 — Daily email waiting heatmap
+
+The user reports incorrect heatmap data. Trace the source query, station/encounter aggregation, units, clinic-local hour assignment, and eligibility filters through the rendered chart.
+
+Initial code-review lead (not a confirmed root cause): `waitingHeatmap.js` groups top-level cumulative `waiting_time` using the latest `waiting_start`, rather than iterating encounters. Check repeated station visits and incomplete encounters. Confirm whether completed-only filtering reflects the intended metric. Verify that missing samples are distinguishable from an actual zero wait.
+
+Done when a manually reconciled sample clinic day, including a repeated station encounter, matches the heatmap values and hour/station placement, and the generated email is visually verified.
+
+### REPORT-02 — Daily email total visit chart
+
+The user suspects incorrect daily visit totals. Establish the definition of a visit, then reconcile source records, daily totals, location subtotals, and the email chart for several known clinic days.
+
+Check clinic-local date boundaries, organization/location scope, duplicate records, missing timestamps, legacy schema, and incomplete visits. Preserve the earlier requirement that averages exclude clinic-closed zero-patient days; distinguish this from how the daily chart displays dates.
+
+Initial code-review lead (not a confirmed root cause): `buildLocationVolumeData` in `dailyVolumeWithObservations.js` skips patients without `location_id`. Determine whether historical records have this field and whether omitted records explain the discrepancy. Review upstream queries and pipeline before concluding.
+
+Done when total visits and location subtotals reconcile to independently counted source records, omitted/invalid records have an explicit treatment, and representative daily emails render the correct totals.
+
+### ANALYTICS-01 — AI insights discovery
+
+Explore which operational questions can be answered reliably from accumulated data. Begin with a field/history inventory, coverage and data-quality assessment, and a short ranked proposal.
+
+Candidate questions:
+- Where and when do queues and long waits develop?
+- How do patient volume, service mix, and visit duration change over time and by location?
+- Which station patterns suggest capacity or staffing adjustments?
+- Which days or workflows differ unusually from comparable clinic days?
+- Do recorded operational observations correspond with changes in volume or flow?
+
+Assess these as hypotheses, not established findings. Identify what ordinary statistics can establish and where AI adds value, such as explaining verified trends or surfacing patterns for review. Use aggregate/de-identified inputs for initial exploration. Document sample sizes, missingness, and limitations; do not infer causation from association.
+
+Done when a small set of useful, feasible insight prototypes is proposed with required fields, validation method, and expected operating cost. This item does not authorize deploying an AI feature or transferring patient-level data to a new service.
+
+## Existing work and status reconciliation
+
+| Area | Review status | Next action |
+| --- | --- | --- |
+| Scanner end-to-end installation verification | Completed per user confirmation on August 24 | Keep closed; older unchecked hardware checklist is stale |
+| Scanner image build, shrink, compression, checksum | Work carried out in September | Confirm fresh-card Raspberry Pi Imager acceptance before closing image deployment acceptance |
+| Scanner and local print-server deployment documentation, accessible PDFs | Baseline completed and closed by user in August | Reopen only for a specific defect/change |
+| Station-based automatic ticket printing | User reported working September 30 | Keep implementation closed |
+| Automatic ticket printing settings placement | User requested moving controls into Locations September 30; completion not established here | Verify latest implementation before treating as remaining work |
+| Local print-server operational deployment | Remaining work from August review; current completion needs reconciliation | Check clean Windows install, versioned distribution, startup/recovery/logging, error handling, address/mode validation, Spanish characters, real clinic acceptance |
+| Timing/statistics verification and retry safety | Older plan contains unchecked items; not independently verified in this review | Check actual coverage; relate to reporting defects where the same aggregation is involved |
+| Deferred release lifecycle | Deferred; later scanner publication work may supersede parts | Reconcile manifest/publication status; retain update policy, rollback, cleanup, version/health visibility, audit history and diagnostics as candidates |
+| Other future improvements | Deferred | Offline buffering, monitoring, replacement/reprovisioning support, batch preparation, credential rotation, support matrix, external API surface, optional mobile scanning |
+| Frontend bundle optimization | Low priority | Retain `docs/tech-debt.md`; revisit after operational/reporting work |
+| Shared transition engine | Conditional, deferred | Refactor only if actual usage justifies it |
+
+## Recommended order
+
+1. Investigate REPORT-01 and REPORT-02 together, retaining separate acceptance criteria.
+2. Reconcile outstanding local print-server deployment and the requested Locations settings placement.
+3. Verify image deployment acceptance only if the fresh-card test remains outstanding.
+4. Undertake ANALYTICS-01 once reporting inputs and metric definitions are trusted.
+5. Retain optional lifecycle, monitoring, performance, and architecture work as deferred.
