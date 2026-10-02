@@ -12,10 +12,11 @@ async function fetchTodayPatients({ db, startOfToday, startOfTomorrow }) {
     .get();
 }
 
-async function fetchLast30DaysPatients({ db, startOf30DaysAgoTimestamp }) {
+async function fetchLast30DaysPatients({ db, startOf30DaysAgoTimestamp, startOfTomorrow }) {
   return await db
     .collection("patients")
     .where("start_time", ">=", startOf30DaysAgoTimestamp)
+    .where("start_time", "<", startOfTomorrow)
     .get();
 }
 
@@ -148,3 +149,4 @@ export {
   fetchObservationTypes,
   fetchOpsObservations,
 };
+

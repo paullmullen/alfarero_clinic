@@ -151,17 +151,18 @@ function computeDailyVolumeTimeline(
   last30DaysSnapshot,
   timezoneOffsetMinutes,
   days = 14,
+  reportDate = new Date(),
 ) {
   // Build last N local days (including today) as YYYY-MM-DD labels
-  const todayLocal = new Date(Date.now() - timezoneOffsetMinutes * 60 * 1000);
-  todayLocal.setHours(0, 0, 0, 0);
+  const todayLocal = new Date(reportDate.getTime() - timezoneOffsetMinutes * 60 * 1000);
+  todayLocal.setUTCHours(0, 0, 0, 0);
 
   const labels = [];
   const counts = {};
 
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(todayLocal);
-    d.setDate(d.getDate() - i);
+    d.setUTCDate(d.getUTCDate() - i);
     const ymd = d.toISOString().split("T")[0];
     labels.push(ymd);
     counts[ymd] = 0;
@@ -326,3 +327,4 @@ export {
   computeStationPlanVsComplete, // <-- ADD THIS
   computeDailyVolumeTimeline, // <-- NEW
 };
+
