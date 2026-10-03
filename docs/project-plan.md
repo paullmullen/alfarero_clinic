@@ -232,7 +232,7 @@ The historical checklist is retained; an unchecked item is not proof that work i
 | --- | --- | --- | --- |
 | REPORT-01 | High | Correct daily email waiting heatmap data | Resolved — user confirmed changes work as intended October 2 |
 | REPORT-02 | High | Investigate daily email total visit chart data | Resolved — user confirmed changes work as intended October 2 |
-| ANALYTICS-01 | Medium | Explore AI insights from accumulated clinic data | Discovery; follows reporting data validation |
+| ANALYTICS-01 | Medium | Zone 3 analytics ingestion and three analysis streams | Ingestion implementation under review; deployment/backfill/acceptance pending |
 
 ### REPORT-01 — Daily email waiting heatmap
 
@@ -294,3 +294,16 @@ Done when a small set of useful, feasible insight prototypes is proposed with re
 ## October 2 chart investigation follow-up
 
 Confirmed defects and validation steps are documented in [daily-email-chart-validation.md](daily-email-chart-validation.md). Regression and rendering tests pass using synthetic data. REPORT-01 and REPORT-02 are closed based on the user's October 2 confirmation that the changes worked as intended. This records user acceptance; no independent production-record reconciliation is claimed. The earlier suspicion about cell-label centering was checked against the matrix implementation and was not a defect.
+
+
+## Zone 3 analytics implementation scope — October 3
+
+The first implementation is [analytics ingestion](analytics-ingestion.md): resumable projections, daily summaries, change tracking, and a coverage report. Includes patient visit reasons, gender, age group, timings, and operational context; excludes identity/contact fields. Zone3 and missing/blank patient location tags are in scope. Encounter histories and legacy records remain distinguishable.
+
+Follow-on work:
+1. Forecast patient volume in one timeline showing recent actuals, tomorrow, seven-day and fourteen-day outlooks.
+2. Deepen daily anomaly explanations using measured differences and staff context.
+3. On-request improvement-opportunity reports; consider weekly/monthly cadence after evaluation.
+4. Future classification and trend analysis of reported visit reasons.
+
+Appointments, staff observations, derived insights, and observation types are retained separately. Missing context locations remain unknown; partial service closures do not imply complete clinic closure. The first slice introduces no AI model, no extension dependency, and no external patient-data transfer. Model development remains separate from ingestion.
