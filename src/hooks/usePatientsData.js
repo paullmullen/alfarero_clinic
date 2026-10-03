@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { fetchPatientsData } from "../helpers/fetchPatientsData";
+import { buildArrivalTimeData } from "../helpers/buildArrivalTimeData";
 
 export function usePatientsData(t) {
   return useCallback(
@@ -10,20 +11,15 @@ export function usePatientsData(t) {
         "both"
       );
 
-      const hours = new Array(24).fill(0);
-      const processed = data.map((p) => {
-        const date = new Date(p.start_time);
-        const hour = date.getHours();
-        hours[hour]++;
-
-        return { ...p, station_type: t(p.station_type) };
-      });
-
-      const arrival = hours.map((count, hour) => ({ hour, count }));
+      const processed = data.map((p) => ({
+        ...p,
+        station_type: t(p.station_type),
+      }));
+      const arrival = buildArrivalTimeData(data);
 
       return { processed, arrival };
     },
     [t]
   );
 }
-``;
+
