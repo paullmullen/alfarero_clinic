@@ -230,8 +230,8 @@ The historical checklist is retained; an unchecked item is not proof that work i
 
 | ID | Priority | Item | Status |
 | --- | --- | --- | --- |
-| REPORT-01 | High | Correct daily email waiting heatmap data | Code defects corrected on review branch; live-day reconciliation pending |
-| REPORT-02 | High | Investigate daily email total visit chart data | Missing-location omission and historical-date defects corrected on review branch; live-day reconciliation pending |
+| REPORT-01 | High | Correct daily email waiting heatmap data | Resolved — user confirmed changes work as intended October 2 |
+| REPORT-02 | High | Investigate daily email total visit chart data | Resolved — user confirmed changes work as intended October 2 |
 | ANALYTICS-01 | Medium | Explore AI insights from accumulated clinic data | Discovery; follows reporting data validation |
 
 ### REPORT-01 — Daily email waiting heatmap
@@ -285,7 +285,7 @@ Done when a small set of useful, feasible insight prototypes is proposed with re
 
 ## Recommended order
 
-1. Investigate REPORT-01 and REPORT-02 together, retaining separate acceptance criteria.
+1. REPORT-01 and REPORT-02 are resolved following user confirmation on October 2.
 2. Reconcile outstanding local print-server deployment and the requested Locations settings placement.
 3. Verify image deployment acceptance only if the fresh-card test remains outstanding.
 4. Undertake ANALYTICS-01 once reporting inputs and metric definitions are trusted.
@@ -293,4 +293,4 @@ Done when a small set of useful, feasible insight prototypes is proposed with re
 
 ## October 2 chart investigation follow-up
 
-Confirmed defects and validation steps are documented in [daily-email-chart-validation.md](daily-email-chart-validation.md). Regression and rendering tests pass using synthetic data. REPORT-01 and REPORT-02 remain open until the fixes are merged, deployed, and reconciled against a known production clinic day. The earlier suspicion about cell-label centering was checked against the matrix implementation and was not a defect.
+Confirmed defects and validation steps are documented in [daily-email-chart-validation.md](daily-email-chart-validation.md). Regression and rendering tests pass using synthetic data. REPORT-01 and REPORT-02 are closed based on the user's October 2 confirmation that the changes worked as intended. This records user acceptance; no independent production-record reconciliation is claimed. The earlier suspicion about cell-label centering was checked against the matrix implementation and was not a defect.
