@@ -2,6 +2,14 @@
 
 Releases with letter suffixes are candidate releases not pushed to production. Releases without letter suffixes are the production releases that include the candidate changes (if approved).
 
+## V3.0.3
+
+- se mató unos problemas con las gráficas en la página de estadisticas y en el email diaro.
+
+## V3.0.2
+
+- Se añadió la posibilidad de seleccionar qué estaciones deben figurar en el plan de atención para que se imprima automáticamente un ticket al realizar el registro.
+
 ## V3.0.1
 
 - Added "no printer" as an option in the location settings

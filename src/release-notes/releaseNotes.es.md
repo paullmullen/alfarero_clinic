@@ -2,6 +2,14 @@
 
 Las versiones con sufijos de letras son versiones candidatas que no se han implementado en producción. Las versiones sin sufijos de letras son las versiones de producción que incluyen los cambios de las versiones candidatas (si han sido aprobados).
 
+## V3.0.3
+
+- Fixed a couple of bugs in the graphs on the stats page and in the daily email.
+
+## V3.0.2
+
+- Nueva característica... selección de paradas cuales
+
 ## V3.0.1
 
 - Sin impresión ahora es una opción en admin - ubicaciones
