@@ -9,7 +9,8 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "**/dailyEmailCloudFunctions/**"
+      "**/dailyEmailCloudFunctions/**",
+      "**/analyticsFunctions/**"
     ],
     "rewrites": [
       {
@@ -44,6 +45,10 @@
     {
       "source": "scannerCloudFunctions",
       "codebase": "scanner"
+    },
+    {
+      "source": "analyticsFunctions",
+      "codebase": "analytics"
     }
   ],
   "emulators": {
