@@ -1,0 +1,14 @@
+{
+  "location_id": "Zone3",
+  "open_weekdays": [1, 2, 3, 4, 5],
+  "closures": [
+    {"date": "2026-01-01", "reason": "New Year holiday", "known_on": "2026-10-04"},
+    {"date": "2026-01-02", "reason": "New Year holiday", "known_on": "2026-10-04"},
+    {"date": "2026-01-21", "reason": "Staff training", "known_on": "2026-10-04"},
+    {"date": "2026-01-22", "reason": "Staff training", "known_on": "2026-10-04"},
+    {"date": "2026-01-23", "reason": "Staff training", "known_on": "2026-10-04"},
+    {"date": "2026-05-01", "reason": "Planned closure, unspecified", "known_on": "2026-10-04"},
+    {"date": "2026-06-29", "reason": "Planned closure, unspecified", "known_on": "2026-10-04"},
+    {"date": "2026-09-15", "reason": "Planned closure, unspecified", "known_on": "2026-10-04"}
+  ]
+}
