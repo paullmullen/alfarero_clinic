@@ -4,16 +4,22 @@ const weekday=day=>new Date(day+'T00:00:00Z').getUTCDay();
 export function validDay(day) {
   return /^\d{4}-\d{2}-\d{2}$/.test(day)&&Number.isFinite(Date.parse(day+'T00:00:00Z'))&&shift(day,0)===day;
 }
-export function predict(rows,target,asOf,calendar) {
+export function predict(rows,target,asOf,calendar,model="mean8") {
+  if(!["mean4","mean8","mean12","median8","trend8"].includes(model))throw new Error("Unknown model");
+  const count=model==="mean4"?4:model==="mean12"?12:8;
   const closure=calendar.closures.find(c=>c.date===target&&c.known_on<=asOf);
   if(closure)return {date:target,status:'confirmed_closed',expected:0,low:0,high:0,samples:0};
   if(!calendar.open_weekdays.includes(weekday(target)))return {date:target,status:'scheduled_closed',expected:0,low:0,high:0,samples:0};
   const values=rows.filter(r=>r.clinic_date<=asOf&&r.clinic_date>=shift(asOf,-112)&&weekday(r.clinic_date)===weekday(target)&&
     !calendar.closures.some(c=>c.date===r.clinic_date)&&Number.isInteger(r.registered_visits)&&r.registered_visits>0)
-    .sort((a,b)=>a.clinic_date.localeCompare(b.clinic_date)).slice(-8).map(r=>r.registered_visits);
+    .sort((a,b)=>a.clinic_date.localeCompare(b.clinic_date)).slice(-count).map(r=>r.registered_visits);
   if(values.length<4)return {date:target,status:'insufficient_history',expected:null,low:null,high:null,samples:values.length};
   const sorted=[...values].sort((a,b)=>a-b);
-  return {date:target,status:'baseline',expected:values.reduce((a,b)=>a+b,0)/values.length,
+  const mean=v=>v.reduce((a,b)=>a+b,0)/v.length;
+  let expected=mean(values);
+  if(model==="median8")expected=(sorted[Math.floor((sorted.length-1)/2)]+sorted[Math.floor(sorted.length/2)])/2;
+  if(model==="trend8"&&values.length===8)expected*=Math.max(.75,Math.min(1.25,mean(values.slice(-4))/mean(values.slice(0,4))));
+  return {date:target,status:'baseline',expected,
     low:sorted[0],high:sorted.at(-1),samples:values.length};
 }
 export function baseline(rows,asOf,calendar) {
