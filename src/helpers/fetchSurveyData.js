@@ -38,7 +38,7 @@ const fetchSurveyData = async (dateRange) => {
     const surveyQuery = query(
       collection(firestore, "surveys"),
       where("date", ">=", startTimestamp),
-      where("date", "<=", endTimestamp)
+      where("date", "<", endTimestamp)
     );
 
     const querySnapshot = await getDocs(surveyQuery);

@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { Divider, Button, Form, DatePicker, InputNumber, Spin } from "antd";
 import { useTranslation } from "react-i18next";
 import { getTodayAndTomorrowTimestamps } from "../helpers/dateHelpers";
+import { parseVisitTimestamp } from "../helpers/buildArrivalTimeData";
 import ExcelExport from "../helpers/Export";
 import { getBarColors } from "../utils/getBarColors.js";
 
@@ -54,12 +55,12 @@ export default function Stats() {
 
   // 📊 Local state
   const [statsData, setStatsData] = useState([]);
-  const [stationVisits, setStationVisits] = useState(null);
+  const [patientRange, setPatientRange] = useState(null);
+  const [surveyRange, setSurveyRange] = useState(null);
   const [patients, setPatients] = useState([]);
   const [arrivalTimeData, setArrivalTimeData] = useState([]);
   const [surveys, setSurveys] = useState([]);
   const [satScore, setSatScore] = useState([]);
-  const [ageGender, setAgeGender] = useState([]);
   const [daysAgo, setDaysAgo] = useState([]); // used in trends export
   const [rollingAverages, setRollingAverages] = useState([]);
   const [rollingLoading, setRollingLoading] = useState(false);
@@ -174,16 +175,19 @@ export default function Stats() {
   useEffect(() => {
     let active = true;
     const loadAll = async () => {
-      const stations = await loadStations(dateRange);
+      const stations = await loadStations();
+      if (!active) return;
       setStatsData(stations);
 
       const { processed, arrival } = await loadPatients(dateRange);
       if (!active) return;
-      setStationVisits({ dateRange, patients: processed });
+      setPatientRange(dateRange);
       setPatients(processed);
       setArrivalTimeData(arrival);
 
       const { surveys: sData, satScore: sSat } = await loadSurveys(dateRange);
+      if (!active) return;
+      setSurveyRange(dateRange);
       setSurveys(sData);
       setSatScore(sSat);
 
@@ -211,7 +215,7 @@ export default function Stats() {
   ]);
 
   // 🧮 Recompute demographics
-  useEffect(() => {
+  const ageGender = useMemo(() => {
     const sums = patients.reduce(
       (acc, p) => {
         acc.adult_masculine +=
@@ -231,12 +235,12 @@ export default function Stats() {
         child_feminine: 0,
       },
     );
-    setAgeGender([
+    return [
       { group: "ADULT_MASCULINE", count: sums.adult_masculine },
       { group: "ADULT_FEMININE", count: sums.adult_feminine },
       { group: "CHILD_MASCULINE", count: sums.child_masculine },
       { group: "CHILD_FEMININE", count: sums.child_feminine },
-    ]);
+    ];
   }, [patients]);
 
   // 🎨 Chart color selection
@@ -244,23 +248,48 @@ export default function Stats() {
     return getBarColors(statsData);
   }, [statsData]);
 
-  const stationVisitData = useMemo(() => {
-    if (stationVisits?.dateRange !== dateRange) return [];
+  const stationChartData = useMemo(() => {
+    if (patientRange !== dateRange) return [];
 
-    const counts = new Map(statsData.map(({ station_type }) => [station_type, 0]));
-    const endTime = dateRange[1].toMillis();
-    for (const patient of stationVisits.patients) {
-      if (new Date(patient.start_time).getTime() >= endTime) continue;
-      for (const { station, status } of patient.plan_of_care ?? []) {
-        if (!station || status === "pending") continue;
-        counts.set(station, (counts.get(station) ?? 0) + 1);
+    const stations = new Map();
+    for (const { station_type } of statsData) stations.set(station_type, []);
+    for (const patient of patients) {
+      for (const encounter of patient.plan_of_care ?? []) {
+        if (!encounter.station) continue;
+        if (!stations.has(encounter.station)) stations.set(encounter.station, []);
+        stations.get(encounter.station).push(encounter);
       }
     }
-    return Array.from(counts, ([station_type, range_count]) => ({
+
+    const averageMinutes = (encounters, startField, endField) => {
+      let count = 0;
+      let total = 0;
+      for (const encounter of encounters) {
+        const start = parseVisitTimestamp(encounter[startField]);
+        const end = parseVisitTimestamp(encounter[endField]);
+        if (!start || !end) continue;
+        total += Math.abs(end - start);
+        count++;
+      }
+      return count ? total / count / 60000 : 0;
+    };
+
+    return Array.from(stations, ([station_type, encounters]) => ({
       station_type,
-      range_count,
+      range_count: encounters.filter(({ status }) => status !== "pending")
+        .length,
+      range_avg_waiting_time: averageMinutes(
+        encounters,
+        "waiting_start",
+        "waiting_end",
+      ),
+      range_avg_procedure_time: averageMinutes(
+        encounters,
+        "in_process_start",
+        "in_process_end",
+      ),
     }));
-  }, [dateRange, stationVisits, statsData]);
+  }, [dateRange, patientRange, patients, statsData]);
 
   // 🔢 Change trend window (wired to InputNumber)
   const handleDaysCountChange = useCallback((e) => {
@@ -338,7 +367,7 @@ export default function Stats() {
       <br />
       {/* ======================= CHARTS ======================= */}
       <StationBarChart
-        data={stationVisitData}
+        data={stationChartData}
         colors={barColorsMemo}
         titleRenderer={() => renderLegendStations(1)}
       />
@@ -347,7 +376,7 @@ export default function Stats() {
       <br />
       <br />
       <SatScoreChart
-        data={satScore}
+        data={surveyRange === dateRange ? satScore : []}
         colors={{
           1: "#d73027",
           2: "#fc8d59",
@@ -362,7 +391,7 @@ export default function Stats() {
       <br />
       <br />
       <ArrivalChart
-        data={arrivalTimeData}
+        data={patientRange === dateRange ? arrivalTimeData : []}
         t={t}
         titleRenderer={() => renderLegendStations(3)}
       />
@@ -371,10 +400,7 @@ export default function Stats() {
       <br />
       <br />
       <WaitingTimeChart
-        data={statsData.map((d) => ({
-          ...d,
-          range_avg_waiting_time: d.range_avg_waiting_time / 60000,
-        }))}
+        data={stationChartData}
         t={t}
         titleRenderer={() => renderLegendStations(4)}
       />
@@ -383,10 +409,7 @@ export default function Stats() {
       <br />
       <br />
       <ProcedureTimeChart
-        data={statsData.map((d) => ({
-          ...d,
-          range_avg_procedure_time: d.range_avg_procedure_time / 60000,
-        }))}
+        data={stationChartData}
         t={t}
         titleRenderer={() => renderLegendStations(7)}
       />
@@ -395,7 +418,11 @@ export default function Stats() {
       <br />
       <br />
       <DemographicsChart
-        data={ageGender.map((d) => ({ ...d, translatedGroup: t(d.group) }))}
+        data={
+          patientRange === dateRange
+            ? ageGender.map((d) => ({ ...d, translatedGroup: t(d.group) }))
+            : []
+        }
         titleRenderer={() => renderLegendStations(5)}
       />
       <br />

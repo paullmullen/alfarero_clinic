@@ -1,6 +1,6 @@
 const CLINIC_TIMEZONE = "America/Guatemala";
 
-function arrivalDate(value) {
+export function parseVisitTimestamp(value) {
   if (value == null || value === "") return null;
   let date;
   if (value instanceof Date) date = value;
@@ -24,7 +24,7 @@ export function buildArrivalTimeData(patients = []) {
     hourCycle: "h23",
   });
   for (const patient of patients) {
-    const date = arrivalDate(patient?.start_time);
+    const date = parseVisitTimestamp(patient?.start_time);
     if (!date) continue;
     const hour = Number(formatter.formatToParts(date)
       .find((part) => part.type === "hour")?.value);

@@ -1,6 +1,9 @@
 import { useCallback } from "react";
 import { fetchPatientsData } from "../helpers/fetchPatientsData";
-import { buildArrivalTimeData } from "../helpers/buildArrivalTimeData";
+import {
+  buildArrivalTimeData,
+  parseVisitTimestamp,
+} from "../helpers/buildArrivalTimeData";
 
 export function usePatientsData(t) {
   return useCallback(
@@ -11,11 +14,16 @@ export function usePatientsData(t) {
         "both"
       );
 
-      const processed = data.map((p) => ({
+      const endTime = dateRange[1].toMillis();
+      const inRange = data.filter((patient) => {
+        const start = parseVisitTimestamp(patient.start_time);
+        return start !== null && start.getTime() < endTime;
+      });
+      const processed = inRange.map((p) => ({
         ...p,
         station_type: t(p.station_type),
       }));
-      const arrival = buildArrivalTimeData(data);
+      const arrival = buildArrivalTimeData(inRange);
 
       return { processed, arrival };
     },
