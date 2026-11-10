@@ -2,13 +2,13 @@
 
 Las versiones con sufijos de letras son versiones candidatas que no se han implementado en producción. Las versiones sin sufijos de letras son las versiones de producción que incluyen los cambios de las versiones candidatas (si han sido aprobados).
 
-## V3.0.3
+## V3.0.4
 
-- Fixed a couple of bugs in the graphs on the stats page and in the daily email.
+- se mató unos problemas con las gráficas en la página de estadisticas y en el email diaro.
 
 ## V3.0.2
 
-- Nueva característica... selección de paradas cuales
+- Se añadió la posibilidad de seleccionar qué estaciones deben figurar en el plan de atención para que se imprima automáticamente un ticket al realizar el registro.
 
 ## V3.0.1
 
