@@ -8,7 +8,7 @@ Las versiones con sufijos de letras son versiones candidatas que no se han imple
 
 ## V3.0.2
 
-- Se añadió la posibilidad de seleccionar qué estaciones deben figurar en el plan de atención para que se imprima automáticamente un ticket al realizar el registro.
+- Se añadió la posibilidad de seleccionar cuales estaciones deben figurar en el plan de atención para que se imprima automáticamente un ticket al realizar el registro.
 
 ## V3.0.1
 
