@@ -54,6 +54,7 @@ export default function Stats() {
 
   // 📊 Local state
   const [statsData, setStatsData] = useState([]);
+  const [stationVisits, setStationVisits] = useState(null);
   const [patients, setPatients] = useState([]);
   const [arrivalTimeData, setArrivalTimeData] = useState([]);
   const [surveys, setSurveys] = useState([]);
@@ -171,11 +172,14 @@ export default function Stats() {
 
   // 🚀 Load everything when dateRange or columnChanger changes
   useEffect(() => {
+    let active = true;
     const loadAll = async () => {
       const stations = await loadStations(dateRange);
       setStatsData(stations);
 
       const { processed, arrival } = await loadPatients(dateRange);
+      if (!active) return;
+      setStationVisits({ dateRange, patients: processed });
       setPatients(processed);
       setArrivalTimeData(arrival);
 
@@ -193,6 +197,9 @@ export default function Stats() {
       setRollingLoading(false);
     };
     loadAll();
+    return () => {
+      active = false;
+    };
   }, [
     loadStations,
     loadPatients,
@@ -236,6 +243,24 @@ export default function Stats() {
   const barColorsMemo = useMemo(() => {
     return getBarColors(statsData);
   }, [statsData]);
+
+  const stationVisitData = useMemo(() => {
+    if (stationVisits?.dateRange !== dateRange) return [];
+
+    const counts = new Map(statsData.map(({ station_type }) => [station_type, 0]));
+    const endTime = dateRange[1].toMillis();
+    for (const patient of stationVisits.patients) {
+      if (new Date(patient.start_time).getTime() >= endTime) continue;
+      for (const { station, status } of patient.plan_of_care ?? []) {
+        if (!station || status === "pending") continue;
+        counts.set(station, (counts.get(station) ?? 0) + 1);
+      }
+    }
+    return Array.from(counts, ([station_type, range_count]) => ({
+      station_type,
+      range_count,
+    }));
+  }, [dateRange, stationVisits, statsData]);
 
   // 🔢 Change trend window (wired to InputNumber)
   const handleDaysCountChange = useCallback((e) => {
@@ -313,7 +338,7 @@ export default function Stats() {
       <br />
       {/* ======================= CHARTS ======================= */}
       <StationBarChart
-        data={statsData}
+        data={stationVisitData}
         colors={barColorsMemo}
         titleRenderer={() => renderLegendStations(1)}
       />

@@ -9,7 +9,7 @@ export function useDateRange(initialStart, initialEnd) {
   // Store the "picker range" as the exact days user selected (dayjs)
   const [pickerRange, setPickerRange] = useState([
     dayjs(initialStart.toDate()),
-    dayjs(initialEnd.toDate()),
+    dayjs(initialEnd.toDate()).subtract(1, "day"),
   ]);
 
   const handleDateChange = useCallback(async (values) => {
