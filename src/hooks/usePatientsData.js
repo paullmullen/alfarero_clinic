@@ -22,6 +22,14 @@ export function usePatientsData(t) {
       const processed = inRange.map((p) => ({
         ...p,
         station_type: t(p.station_type),
+        servicesString: Array.isArray(p.plan_of_care)
+          ? p.plan_of_care
+              .filter(({ status }) => status !== "pending")
+              .map(({ station }) => station)
+              .join(", ") || t("NO_SERVICE")
+          : p.complete
+            ? t("NO_SERVICE")
+            : "",
       }));
       const arrival = buildArrivalTimeData(inRange);
 
