@@ -117,7 +117,7 @@ async function fetchOpsObservations({
   startYMD,
   endYMD,
   days = 14,
-  limitN = 800,
+  limitN = 200,
 }) {
   let s = (startYMD || "").toString().trim();
   let e = (endYMD || "").toString().trim();
@@ -128,15 +128,18 @@ async function fetchOpsObservations({
     e = range.endYMD;
   }
 
-  const snap = await db
-    .collection("ops_observations")
-    .where("ymd", ">=", s)
-    .where("ymd", "<=", e)
-    .orderBy("ymd", "desc")
-    .limit(limitN)
-    .get();
-
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() || {}) }));
+  const rows = [];
+  let cursor;
+  do {
+    let query = db.collection("ops_observations")
+      .where("ymd", ">=", s).where("ymd", "<=", e)
+      .orderBy("ymd", "desc").limit(limitN);
+    if (cursor) query = query.startAfter(cursor);
+    const snap = await query.get();
+    rows.push(...snap.docs.map(d => ({ id: d.id, ...(d.data() || {}) })));
+    cursor = snap.size === limitN ? snap.docs.at(-1) : null;
+  } while (cursor);
+  return rows;
 }
 
 export {

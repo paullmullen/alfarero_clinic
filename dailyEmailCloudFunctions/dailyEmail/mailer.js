@@ -11,6 +11,6 @@ export async function sendEmail(opts) {
     return graph.sendEmail(opts);
   }
 
-  const gmail = await import("./gmailSmtpMailer.js");
+  const gmail = await import("./gmalSmtpMailer.js");
   return gmail.sendEmail(opts);
 }

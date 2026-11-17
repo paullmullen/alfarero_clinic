@@ -8,8 +8,12 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
+import { createTestEmailHandler } from "./ops/testEmail.js";
 
 import { runDailyEmailPipeline } from "./dailyEmail/pipeline.js";
+import { sendEmail } from "./dailyEmail/mailer.js";
+import { sendWeeklyOperationalEmail } from "./ops/sendWeeklyEmail.js";
 import {
   initDailyEmailDeps,
   sendDailyEmails,
@@ -30,14 +34,46 @@ if (process.env.FUNCTIONS_EMULATOR) {
 
 initDailyEmailDeps({ db, Timestamp });
 
+// Friday 17:30 Guatemala time; separate from the existing 17:00 daily report.
+export const scheduledWeeklyOperationalEmail = onSchedule(
+  {
+    memory: "512MiB",
+    schedule: "30 17 * * 5",
+    timeZone: "America/Guatemala",
+    timeoutSeconds: 120,
+    retryCount: 0,
+    secrets: ["MAIL_PROVIDER", "GMAIL_USER", "GMAIL_APP_PASSWORD", "O365_TENANT_ID", "O365_CLIENT_ID", "O365_CLIENT_SECRET", "O365_SENDER"],
+  },
+  async () => {
+    const results = await sendWeeklyOperationalEmail({ db, sendEmail });
+    console.log("Weekly operational email results", {
+      sent: results.filter(r => r.status === "sent").length,
+      failed: results.filter(r => r.status === "failed").length,
+    });
+  },
+);
+
 function applyCors(req, res) {
   const origin = req.headers.origin || "*";
   res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.setHeader("Access-Control-Max-Age", "3600");
 }
+
+export const testOperationalEmail = onRequest(
+  {
+    memory: "512MiB",
+    timeoutSeconds: 120,
+    secrets: ["MAIL_PROVIDER", "GMAIL_USER", "GMAIL_APP_PASSWORD", "O365_TENANT_ID", "O365_CLIENT_ID", "O365_CLIENT_SECRET", "O365_SENDER"],
+  },
+  async (req, res) => {
+    applyCors(req, res);
+    if (req.method === "OPTIONS") return res.status(204).send("");
+    return createTestEmailHandler({ db, auth: getAuth(), sendDailyEmails, sendWeeklyOperationalEmail, sendEmail })(req, res);
+  },
+);
 
 export const manualDailyEmail = onRequest(
   {
