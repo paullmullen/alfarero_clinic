@@ -37,10 +37,20 @@ test('missing authentication and unauthorized callers cannot generate mail', asy
   assert.equal(denied.calls.length, 0);
 });
 
-test('unverified addresses, invalid dates and wrong methods are rejected', async () => {
-  const unverified = harness({ auth: { verifyIdToken: async () => ({ uid: 'caller' }), getUser: async () => ({ email: 'self@example.test', emailVerified: false }) } });
-  await unverified.handler(request({ kind: 'weekly' }), unverified.res);
-  assert.equal(unverified.res.statusCode, 403);
+test('provider accounts without the Firebase verified flag can send only to their account address', async () => {
+  const h = harness({ auth: { verifyIdToken: async () => ({ uid: 'caller' }), getUser: async () => ({ email: 'self@example.test', emailVerified: false }) } });
+  await h.handler(request({ kind: 'weekly', recipient: 'other@example.test' }), h.res);
+  assert.equal(h.res.statusCode, 200);
+  assert.deepEqual(h.calls.map(m => m.to), ['self@example.test']);
+});
+
+test('missing addresses, disabled accounts, invalid dates and wrong methods are rejected', async () => {
+  for (const user of [{}, { email: 'self@example.test', disabled: true }]) {
+    const h = harness({ auth: { verifyIdToken: async () => ({ uid: 'caller' }), getUser: async () => user } });
+    await h.handler(request({ kind: 'weekly' }), h.res);
+    assert.equal(h.res.statusCode, 403);
+    assert.equal(h.calls.length, 0);
+  }
   for (const body of [{ kind: 'other' }, { kind: 'daily', reportShiftDays: -1 }, { kind: 'daily', reportShiftDays: 15 }, { kind: 'daily', reportShiftDays: 0.5 }]) {
     const h = harness(); await h.handler(request(body), h.res); assert.equal(h.res.statusCode, 400); assert.equal(h.calls.length, 0);
   }

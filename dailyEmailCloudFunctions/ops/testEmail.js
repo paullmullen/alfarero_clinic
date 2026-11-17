@@ -20,8 +20,8 @@ export function createTestEmailHandler({ db, auth, sendDailyEmails, sendWeeklyOp
         return res.status(403).json({ error: "Email report access is required." });
       }
       const user = await auth.getUser(caller.uid);
-      if (!user.email || !user.emailVerified || user.disabled) {
-        return res.status(403).json({ error: "A verified account email is required." });
+      if (!user.email || user.disabled) {
+        return res.status(403).json({ error: "An email address on your active account is required." });
       }
       const { kind, reportShiftDays = 0 } = req.body ?? {};
       if (!["daily", "weekly"].includes(kind) || !Number.isInteger(reportShiftDays) || reportShiftDays < 0 || reportShiftDays > 14) {
