@@ -90,6 +90,7 @@ function buildDailyEmailHTML({
   patientInsights,
   charts,
   insightsHTML,
+  operationalContextHTML = "",
   totals,
   milestone,
 }) {
@@ -187,6 +188,8 @@ pero no se reportan en columnas separadas.
 </p>
 
 <!-- Charts -->
+
+${operationalContextHTML}
 
 <div style="padding-bottom:${SECTION_GAP};">
 

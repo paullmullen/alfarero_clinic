@@ -2,6 +2,7 @@
 import { useState, useCallback } from "react";
 import { message } from "antd";
 import { useTranslation } from "react-i18next";
+import { auth } from "../helpers/firebaseConfig";
 
 /**
  * TEMPORARY DEVELOPMENT SWITCH
@@ -34,6 +35,7 @@ const TEMP_REPORT_SHIFT_DAYS = 0;
  */
 export function useEmailTrigger() {
   const [loading, setLoading] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
   const { t } = useTranslation("global");
 
   const triggerEmail = useCallback(async () => {
@@ -77,5 +79,30 @@ export function useEmailTrigger() {
     }
   }, [t]);
 
-  return { triggerEmail, loading };
+  const triggerTestEmail = useCallback(async (kind, reportShiftDays = 0) => {
+    setTestLoading(true);
+    try {
+      if (!auth.currentUser) throw new Error(t("TEST_EMAIL_SIGN_IN", { defaultValue: "Sign in to send a test." }));
+      const token = await auth.currentUser.getIdToken();
+      const projectId = auth.app.options.projectId;
+      const res = await fetch(`https://us-central1-${projectId}.cloudfunctions.net/testOperationalEmail`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ kind, reportShiftDays }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      if (data.status === "no_data") {
+        message.info(t("TEST_EMAIL_NO_DATA", { defaultValue: "No completed visits or operational observations for that date. Try an earlier date." }));
+      } else {
+        message.success(t("TEST_EMAIL_SENT", { defaultValue: "Test sent only to {{email}}", email: data.recipient }));
+      }
+    } catch (error) {
+      message.error(`${t("EMAIL_SEND_ERROR")}: ${error.message}`);
+    } finally {
+      setTestLoading(false);
+    }
+  }, [t]);
+
+  return { triggerEmail, loading, triggerTestEmail, testLoading };
 }

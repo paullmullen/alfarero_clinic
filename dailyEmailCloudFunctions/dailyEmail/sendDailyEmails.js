@@ -1,4 +1,5 @@
 import { sendEmail } from "./mailer.js";
+import { buildOperationalReview, fetchOperationalReview, renderOperationalReview, shiftDay } from "../ops/operationalReview.js";
 import { buildDailyEmailHTML } from "./template.js";
 import { renderKeyObservationsHTML } from "./renderKeyObservationsHTML.js";
 import { createRequire } from "module";
@@ -107,7 +108,7 @@ function translateKey(key) {
  * - This is intended for manual/debug runs.
  * - Scheduled production runs should call this with the default of 0.
  */
-export async function sendDailyEmails({ reportShiftDays = 0 } = {}) {
+export async function sendDailyEmails({ reportShiftDays = 0, send = sendEmail, recipientsOverride, persist = true } = {}) {
   if (!db || !Timestamp) {
     throw new Error("dailyEmail deps not initialized.");
   }
@@ -128,7 +129,21 @@ export async function sendDailyEmails({ reportShiftDays = 0 } = {}) {
   });
 
   if (todaySnapshot.empty) {
-    return [];
+    // Closures can be the most important context on a day with no completed visits.
+    const review = await fetchOperationalReview({ db, endDay: getClinicYMD(undefined, safeReportShiftDays), days: 1 });
+    if (!review.entries && !review.flagTypes.length) return [];
+    const recipients = recipientsOverride ?? await fetchRecipients({ db });
+    const results = [];
+    for (const { email } of recipients) {
+      try {
+        await send({ to: email, subject: "Informe Diario: Contexto Operativo",
+          html: `<!doctype html><html lang="es"><head><meta charset="utf-8"></head><body><p>No hay visitas completadas en la consulta del día. Esto no confirma ausencia de pacientes ni cierre de la clínica.</p>${renderOperationalReview(review)}</body></html>`, attachments: [] });
+        results.push({ email, status: "sent" });
+      } catch (error) {
+        results.push({ email, status: "failed", error: error.message ?? String(error) });
+      }
+    }
+    return results;
   }
 
   const startOf30DaysAgoTimestamp = getStartOf30DaysAgoTimestamp(Timestamp, {
@@ -141,7 +156,7 @@ export async function sendDailyEmails({ reportShiftDays = 0 } = {}) {
     startOfTomorrow,
   });
 
-  const recipients = await fetchRecipients({ db });
+  const recipients = recipientsOverride ?? await fetchRecipients({ db });
 
   if (recipients.length === 0) {
     console.log("No users with dailyEmail permission found.");
@@ -246,10 +261,11 @@ export async function sendDailyEmails({ reportShiftDays = 0 } = {}) {
     startOfToday.toDate(),
   );
 
+  const clinicDate = getClinicYMD(undefined, safeReportShiftDays);
   const observations = await fetchOpsObservations({
     db,
-    startYMD: timeline.labels[0],
-    endYMD: timeline.labels.at(-1),
+    startYMD: shiftDay(clinicDate, -27),
+    endYMD: clinicDate,
   });
   const observationTypes = await fetchObservationTypes({ db });
 
@@ -275,9 +291,7 @@ export async function sendDailyEmails({ reportShiftDays = 0 } = {}) {
     timeZone: "America/Guatemala",
   });
 
-  const clinicDate = getClinicYMD(undefined, safeReportShiftDays);
-
-  const observationsForChart = Array.isArray(observations) ? observations : [];
+  const observationsForChart = observations.filter(o => o.ymd >= timeline.labels[0] && o.ymd <= timeline.labels.at(-1));
 
   const observationsForKeyList = [...observationsForChart].sort((a, b) => {
     const at = a?.date?.toMillis ? a.date.toMillis() : 0;
@@ -336,7 +350,7 @@ export async function sendDailyEmails({ reportShiftDays = 0 } = {}) {
 
   const aiInsights = enrichedInsights.concat(observationInsights);
 
-  await persistInsights({ db, Timestamp }, enrichedInsights, clinicDate);
+  if (persist) await persistInsights({ db, Timestamp }, enrichedInsights, clinicDate);
 
   const insightsHTML = renderInsightsHTML(aiInsights);
 
@@ -354,6 +368,10 @@ export async function sendDailyEmails({ reportShiftDays = 0 } = {}) {
       keyObservationsHTML,
     },
     insightsHTML,
+    operationalContextHTML: renderOperationalReview(buildOperationalReview({
+      observations, insights: enrichedInsights.map(i => ({ ...i, clinic_date: clinicDate })),
+      endDay: clinicDate, days: 1,
+    })),
     totals: { totalPatients },
     milestone: { nextMilestone, projectedDateStr },
   });
@@ -362,7 +380,7 @@ export async function sendDailyEmails({ reportShiftDays = 0 } = {}) {
 
   for (const { email } of recipients) {
     try {
-      await sendEmail({
+      await send({
         to: email,
         subject: "Informe Diario de Pacientes",
         html,
