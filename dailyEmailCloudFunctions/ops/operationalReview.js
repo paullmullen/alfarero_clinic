@@ -78,7 +78,6 @@ export function renderOperationalReview(review) {
     <h3>${daily ? "Señales para revisar" : "Patrones automatizados guardados"}</h3>${flagsHTML}
     ${prompts.length ? `<h3>Para conversar con el equipo</h3><ul>${prompts.slice(0, 3).map(p => `<li>${e(p)}</li>`).join("")}</ul>` : ""}
     ${daily ? "" : "<p>Elegir una mejora concreta, una persona responsable y una fecha de revisión. Este correo no registra acciones ni confirma que se hayan realizado.</p>"}
-    <p style="color:#666;font-size:12px;">Recurrencia: ${e(review.historyStart)} al ${e(review.endDay)}, incluido el período actual. Un reporte puede mencionar varios servicios; no sumar filas como incidentes independientes. Los cierres pueden ser parciales o cambios continuos. ${review.unknownLocationEntries} reporte(s) sin ubicación registrada; no se atribuyen a una clínica específica. Las señales no confirman causas; tiempos manuales, registros incompletos y actualizaciones pueden afectar los resultados.</p>
   </section>`;
 }
 
