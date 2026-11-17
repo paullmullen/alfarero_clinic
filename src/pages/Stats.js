@@ -51,8 +51,7 @@ export default function Stats() {
   const loadPatients = usePatientsData(t);
   const loadSurveys = useSurveyData();
   const loadDaysAgo = useDaysAgoData();
-  const { triggerEmail, loading: emailLoading, triggerTestEmail, testLoading } = useEmailTrigger();
-  const [testShiftDays, setTestShiftDays] = useState(0);
+  const { triggerEmail, loading: emailLoading } = useEmailTrigger();
 
   // 📊 Local state
   const [statsData, setStatsData] = useState([]);
@@ -334,26 +333,9 @@ export default function Stats() {
             marginTop: 12,
           }}
         >
-          <Button type="primary" onClick={triggerEmail} loading={emailLoading} disabled={testLoading}>
+          <Button type="primary" onClick={triggerEmail} loading={emailLoading}>
             {t("DAILY_EMAIL")}
           </Button>
-        </div>
-        <div style={{ maxWidth: 720, margin: "16px auto", padding: 16, border: "1px solid #ddd", borderRadius: 8 }}>
-          <strong>{t("TEST_EMAIL_TITLE", { defaultValue: "Test reports — only to me" })}</strong>
-          <p>{t("TEST_EMAIL_HELP", { defaultValue: "Send the daily or weekly report only to your signed-in account email. This does not send to the mailing list or update saved insights." })}</p>
-          <label>
-            {t("TEST_EMAIL_DAYS", { defaultValue: "Report ending how many days ago?" })}{" "}
-            <InputNumber min={0} max={14} precision={0} value={testShiftDays} disabled={testLoading}
-              onChange={value => setTestShiftDays(value ?? 0)} />
-          </label>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 12 }}>
-            <Button disabled={emailLoading} loading={testLoading} onClick={() => triggerTestEmail("daily", testShiftDays)}>
-              {t("TEST_EMAIL_DAILY", { defaultValue: "Send daily test to me" })}
-            </Button>
-            <Button disabled={emailLoading} loading={testLoading} onClick={() => triggerTestEmail("weekly", testShiftDays)}>
-              {t("TEST_EMAIL_WEEKLY", { defaultValue: "Send weekly test to me" })}
-            </Button>
-          </div>
         </div>
         <br /> <br />
         <hr></hr>

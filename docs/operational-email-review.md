@@ -31,14 +31,14 @@ Operational counts are snapshots at send time, not finalized end-of-day reconcil
 
 ## Send a test only to yourself
 
-Statistics has a **Test reports — only to me** panel (English/Spanish) with daily and weekly test buttons. Choose 0–14 calendar days ago for the report end date; 0 uses the current Guatemala clinic date. A weekly test covers the seven days ending on that date. Tests use the same generators and email provider, prefix subjects with `[PRUEBA / TEST]`, and do not persist operational insights. A daily test with no completed visits, observations or saved flags reports that no email was generated; try an earlier date. Weekly tests can show an empty-period report.
+The temporary Statistics self-test panel was removed after user testing. The authenticated test endpoint remains available for maintenance. It accepts daily or weekly reports ending 0–14 calendar days ago; 0 uses the current Guatemala clinic date. A weekly test covers the seven days ending on that date. Tests use the same generators and email provider, prefix subjects with `[PRUEBA / TEST]`, and do not persist operational insights. A daily test with no completed visits, observations or saved flags reports that no email was generated. Weekly tests can show an empty-period report.
 
 The new POST endpoint `testOperationalEmail` validates a Firebase ID token with revocation checking. The caller must have stats, settings, or dailyEmail permission and an email address on an enabled Firebase Auth account. The Firebase `emailVerified` flag is not required, since provider sign-ins may not populate it. Both recipient override and transport validation enforce that single account email; recipient fields in the request cannot select another address. Provider failures return an error rather than a false success. The existing broadcast daily button remains separate.
 
-To enable self-testing before scheduling the weekly rollout, deploy **only** `functions:daily:testOperationalEmail` and the updated frontend. This does not deploy or enable the new weekly schedule. Test-function deployment:
+For maintenance, the test endpoint can be deployed independently of the weekly schedule:
 
 ```powershell
 firebase deploy --only functions:daily:testOperationalEmail --project alfarero-478ad
 ```
 
-Build and deploy the frontend using the normal project configuration. The new endpoint includes the updated generators in its deployment even if the scheduled daily function has not been redeployed. The Gmail provider import now matches the existing `gmalSmtpMailer.js` filename, fixing the previous missing-module path. The UI shows provider acceptance, not a guarantee of inbox delivery.
+Build and deploy the frontend using the normal project configuration to remove the temporary controls. The test endpoint includes the updated generators in its deployment even if the scheduled daily function has not been redeployed. The Gmail provider import matches the existing `gmalSmtpMailer.js` filename. Provider acceptance is not a guarantee of inbox delivery.
