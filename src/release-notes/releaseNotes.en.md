@@ -2,6 +2,11 @@
 
 Releases with letter suffixes are candidate releases not pushed to production. Releases without letter suffixes are the production releases that include the candidate changes (if approved).
 
+## V3.0.5
+
+- Fixed a formatting problem on the upload appointments page
+- Added a new category of observations: Change of schedule
+
 ## V3.0.4
 
 - Fixed some bugs that distorted the graphs/statistics on the estadisticas page.

@@ -26,6 +26,7 @@
     "title": "Observaciones Operativas Diarias",
     "type": "Clase de observación",
     "types": {
+      "cambiohora": "Cambio de horario",
       "emergency": "Incidente o evento de urgencia",
       "equipment_failure": "Falla de equipamiento",
       "extended_service": "Servicios Extraordinarios o Extendidos",

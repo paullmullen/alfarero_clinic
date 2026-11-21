@@ -2,6 +2,11 @@
 
 Las versiones con sufijos de letras son versiones candidatas que no se han implementado en producción. Las versiones sin sufijos de letras son las versiones de producción que incluyen los cambios de las versiones candidatas (si han sido aprobados).
 
+## V3.0.5
+
+- Se corrigio problema de formato de pagina para cargar citas
+- Se añadío nuevo tipo de observaciones operativas: Cambio de hora
+
 ## V3.0.4
 
 - se mató unos problemas con las gráficas en la página de estadisticas y en el email diaro.

@@ -26,6 +26,7 @@
     "title": "Daily Operational Observations",
     "type": "Type of Observation",
     "types": {
+      "cambiohora": "Change of Hours",
       "emergency": "Incident or Emergency",
       "equipment_failure": "Equipment Failure",
       "extended_service": "Extra Service Hours",
