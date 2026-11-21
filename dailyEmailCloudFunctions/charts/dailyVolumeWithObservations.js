@@ -333,6 +333,8 @@ export function generateDailyVolumeWithObservations({
 
         const laneMid = Math.round((laneTop + laneBottom) / 2) + 2;
 
+        const favorableColor = "rgba(46, 125, 50, 0.95)";
+        const unfavorableColor = "rgba(198, 40, 40, 0.95)";
         const maxStack = 3;
         const markerR = 6;
         const stackGap = 14;
@@ -366,8 +368,8 @@ export function generateDailyVolumeWithObservations({
 
             const fill =
               ev.impact === "positive"
-                ? "rgba(46, 125, 50, 0.95)"
-                : "rgba(198, 40, 40, 0.95)";
+                ? favorableColor
+                : unfavorableColor;
 
             drawDot(ctx, x, y, markerR, fill);
           }
@@ -382,9 +384,9 @@ export function generateDailyVolumeWithObservations({
               (e) => e.impact !== "positive",
             );
             const pillFill = allPositive
-              ? "rgba(46, 125, 50, 0.95)"
+              ? favorableColor
               : allNegative
-                ? "rgba(198, 40, 40, 0.95)"
+                ? unfavorableColor
                 : "rgba(90, 90, 90, 0.90)";
 
             drawPill(ctx, x, y, `+${hiddenCount}`, pillFill);
@@ -393,13 +395,22 @@ export function generateDailyVolumeWithObservations({
 
         if (showLegend) {
           ctx.font = "12px Arial, sans-serif";
-          ctx.fillStyle = "rgba(0,0,0,0.70)";
+          ctx.textAlign = "left";
           ctx.textBaseline = "top";
-          ctx.fillText(
-            "Observaciones: 🟢 Favorable   🔴 Desfavorable   +N más",
-            chartArea.left,
-            laneBottom + 6,
-          );
+
+          const neutralColor = "rgba(0,0,0,0.70)";
+          const legendLabels = [
+            ["Observaciones:", neutralColor],
+            ["Favorable", favorableColor],
+            ["Desfavorable", unfavorableColor],
+            ["+N más", neutralColor],
+          ];
+          let x = chartArea.left;
+          for (const [label, color] of legendLabels) {
+            ctx.fillStyle = color;
+            ctx.fillText(label, x, laneBottom + 6);
+            x += ctx.measureText(label).width + 10;
+          }
         }
 
         ctx.restore();
