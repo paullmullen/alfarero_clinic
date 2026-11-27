@@ -2,6 +2,10 @@
 
 Las versiones con sufijos de letras son versiones candidatas que no se han implementado en producción. Las versiones sin sufijos de letras son las versiones de producción que incluyen los cambios de las versiones candidatas (si han sido aprobados).
 
+## V3.0.6
+
+- Se añadió la sección Observadores en Usuarios y acceso. Los administradores pueden agregar o quitar direcciones de correo para los informes diarios y semanales sin conceder acceso a la aplicación ni exigir registro.
+
 ## V3.0.5
 
 - Se corrigio problema de formato de pagina para cargar citas

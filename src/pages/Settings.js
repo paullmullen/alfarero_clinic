@@ -13,6 +13,7 @@ import { useHideMenu } from "../hooks/useHideMenu";
 import StationsMaxWait from "./settings/sections/StationsMaxWait";
 import LocationsManager from "./settings/sections/LocationsManager";
 import UserPermissionsTable from "./settings/sections/UserPermissionsTable";
+import ObserversManager from "./settings/sections/ObserversManager";
 import InviteEmailForm from "./settings/sections/InviteEmailForm";
 import KnownPatientsUploader from "./settings/sections/KnownPatientsUploader";
 import OrganizationsManager from "./settings/sections/OrganizationsManagter";
@@ -263,6 +264,10 @@ const Settings = () => {
             <Divider style={{ margin: 0 }} />
 
             <InviteEmailForm t={t} />
+
+            <Divider style={{ margin: 0 }} />
+
+            <ObserversManager />
           </Space>
         </SectionBlock>
 

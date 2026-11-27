@@ -58,7 +58,7 @@ function fakeDb(collections) {
       orderBy(k, dir = 'asc') { field = k; direction = dir; return q; },
       select() { return q; }, limit(n) { size = n; return q; }, startAfter(doc) { cursor = doc.id; return q; },
       async get() {
-        let rows = (collections[name] ?? []).map((data, i) => ({ id: String(i), data: () => data }));
+        let rows = (collections[name] ?? []).map((data, i) => ({ id: name === "report_observers" ? data.email : String(i), data: () => data }));
         rows = rows.filter(d => filters.every(([k, op, val]) => op === '>=' ? d.data()[k] >= val : d.data()[k] <= val));
         if (field) rows.sort((a, b) => (String(a.data()[field]).localeCompare(String(b.data()[field])) || Number(a.id) - Number(b.id)) * (direction === 'desc' ? -1 : 1));
         if (cursor !== undefined) rows = rows.slice(rows.findIndex(d => d.id === cursor) + 1);
@@ -84,11 +84,13 @@ test('a reported closure still sends daily context when no visits are completed'
   const { sendDailyEmails, initDailyEmailDeps } = await import('../dailyEmail/sendDailyEmails.js');
   const { getClinicYMD } = await import('../dailyEmail/time.js');
   const db = fakeDb({ users: [{ email: 'team@example.test', permissions: { dailyEmail: true } }],
+    report_observers: [{ email: 'observer@example.test' }],
     ops_observations: [{ ymd: getClinicYMD(), typeId: 'planned_closure', servicesAffected: ['lab'], notes: 'Cerrado AM' }] });
   initDailyEmailDeps({ db, Timestamp: { fromDate: date => ({ toDate: () => date }) } });
   const messages = [];
   const result = await sendDailyEmails({ send: async message => messages.push(message) });
-  assert.equal(result[0].status, 'sent');
+  assert.deepEqual(result.map(r => r.status), ['sent', 'sent']);
+  assert.deepEqual(messages.map(m => m.to), ['team@example.test', 'observer@example.test']);
   assert.match(messages[0].html, /Cerrado AM/);
   assert.match(messages[0].html, /Esto no confirma ausencia de pacientes/);
   const testMessages = [];
@@ -97,18 +99,18 @@ test('a reported closure still sends daily context when no visits are completed'
   assert.deepEqual(testMessages.map(m => m.to), ['self@example.test']);
 });
 
-test('weekly delivery uses exactly daily opt-ins, sends empty-coverage report, and continues after failure', async () => {
+test('weekly delivery includes opted-in users and observers once, and continues after failure', async () => {
   const db = fakeDb({ users: [
     { email: 'one@example.test', permissions: { dailyEmail: true } },
     { email: 'no@example.test', permissions: { dailyEmail: false } },
-    { email: 'two@example.test', permissions: { dailyEmail: true } },
-  ] });
+    { email: 'TWO@example.test', permissions: { dailyEmail: true } },
+  ], report_observers: [{ email: 'two@example.test' }, { email: 'observer@example.test' }] });
   const sent = [];
   const result = await sendWeeklyOperationalEmail({ db, endDay: '2026-11-13', sendEmail: async message => {
     sent.push(message); if (message.to === 'one@example.test') throw new Error('temporary failure');
   } });
-  assert.deepEqual(sent.map(m => m.to), ['one@example.test', 'two@example.test']);
-  assert.deepEqual(result.map(r => r.status), ['failed', 'sent']);
+  assert.deepEqual(sent.map(m => m.to), ['one@example.test', 'TWO@example.test', 'observer@example.test']);
+  assert.deepEqual(result.map(r => r.status), ['failed', 'sent', 'sent']);
   assert.match(sent[1].subject, /2026-11-07 al 2026-11-13/);
   assert.match(sent[1].html, /No se registraron observaciones/);
 });

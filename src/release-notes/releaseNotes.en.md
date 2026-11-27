@@ -2,6 +2,10 @@
 
 Releases with letter suffixes are candidate releases not pushed to production. Releases without letter suffixes are the production releases that include the candidate changes (if approved).
 
+## V3.0.6
+
+- Added Observers under Users and access. Administrators can add or remove email addresses for the daily and weekly reports without granting app access or requiring registration.
+
 ## V3.0.5
 
 - Fixed a formatting problem on the upload appointments page

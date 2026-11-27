@@ -1,11 +1,40 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Preserve existing app access while making derived analytics server-only.
+    function hasSettingsPermission() {
+      return request.auth != null &&
+        grantsSettings(get(/databases/$(database)/documents/users/$(request.auth.uid)).data.permissions);
+    }
+
+    function grantsSettings(permissions) {
+      return (permissions is map && permissions.get('settings', false) == true) ||
+        (permissions is list && permissions.size() > 0 &&
+          permissions[0] is map && permissions[0].get('settings', false) == true);
+    }
+
+    match /users/{uid} {
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == uid &&
+        request.resource.data.uid == uid &&
+        request.resource.data.permissions == {'host': false, 'settings': false, 'stats': false};
+      allow update: if hasSettingsPermission() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['permissions', 'updated']);
+    }
+
+    match /report_observers/{email} {
+      allow read, delete: if hasSettingsPermission();
+      allow create, update: if hasSettingsPermission() &&
+        request.resource.data.keys().hasOnly(['email']) &&
+        request.resource.data.email == email &&
+        email.size() <= 254 &&
+        email.matches("[a-z0-9.!#$%&'*+=?^_`{|}~-]+@[a-z0-9-]+([.][a-z0-9-]+)+");
+    }
+
+    // Preserve existing app access outside protected collections.
     match /{collection}/{document=**} {
       allow read, write: if !(collection in [
         'analytics_records', 'analytics_daily', 'analytics_dirty_days',
-        'analytics_ingestion', 'analytics_reports'
+        'analytics_ingestion', 'analytics_reports', 'users', 'report_observers'
       ]);
     }
   }

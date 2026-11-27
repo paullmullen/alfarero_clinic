@@ -21,20 +21,30 @@ async function fetchLast30DaysPatients({ db, startOf30DaysAgoTimestamp, startOfT
 }
 
 async function fetchRecipients({ db }) {
-  const usersSnapshot = await db.collection("users").get();
-  const recipients = [];
+  const [usersSnapshot, observersSnapshot] = await Promise.all([
+    db.collection("users").get(),
+    db.collection("report_observers").get(),
+  ]);
+  const recipients = new Map();
 
   usersSnapshot.forEach((doc) => {
     const data = doc.data();
-    if (data?.permissions?.dailyEmail === true && data.email) {
-      recipients.push({
-        name: data.name ?? "Compañero",
-        email: data.email,
-      });
+    if (data?.permissions?.dailyEmail === true && typeof data.email === "string") {
+      const email = data.email.trim();
+      if (email && !recipients.has(email.toLowerCase())) {
+        recipients.set(email.toLowerCase(), { name: data.name ?? "Compañero", email });
+      }
     }
   });
 
-  return recipients;
+  observersSnapshot.forEach((doc) => {
+    const { email } = doc.data();
+    if (typeof email === "string" && email === doc.id && !recipients.has(email)) {
+      recipients.set(email, { name: "Compañero", email });
+    }
+  });
+
+  return [...recipients.values()];
 }
 
 async function fetchStationThresholds({ db }) {
